@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net", "prometheus-net\prometheus-net.csproj", "{EE3B50BE-577B-4664-A347-CC737B7D5612}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tester", "tester\tester.csproj", "{C0212A44-AE68-4315-BC20-3B8BB40A3F98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.tests", "prometheus-net.tests\prometheus-net.tests.csproj", "{276D072F-BC78-4B4F-988C-CF2B82F65603}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE3B50BE-577B-4664-A347-CC737B7D5612}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE3B50BE-577B-4664-A347-CC737B7D5612}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE3B50BE-577B-4664-A347-CC737B7D5612}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE3B50BE-577B-4664-A347-CC737B7D5612}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{276D072F-BC78-4B4F-988C-CF2B82F65603}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{276D072F-BC78-4B4F-988C-CF2B82F65603}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{276D072F-BC78-4B4F-988C-CF2B82F65603}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{276D072F-BC78-4B4F-988C-CF2B82F65603}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
