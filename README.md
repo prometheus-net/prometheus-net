@@ -1,6 +1,6 @@
 # Prometheus .NET Client
 
-This is an experimental version
+This is an experimental version (unofficial)
 
 See prometheus [here](http://prometheus.io/)
 
