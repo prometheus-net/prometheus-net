@@ -58,7 +58,7 @@ hist.Observe(0.4);
 ```
 
 The default buckets are intended to cover a typical web/rpc request from milliseconds to seconds.
-They can be overridden by passing `buckets` argument to `Histogram`.
+They can be overridden passing in the `buckets` argument.
 
 ### Labels
 
