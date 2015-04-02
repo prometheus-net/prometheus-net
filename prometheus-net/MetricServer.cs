@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Reactive.Concurrency;
+using Prometheus.Advanced;
 using Prometheus.Internal;
 
 namespace Prometheus
@@ -11,11 +12,12 @@ namespace Prometheus
         private const string PROTO_HEADER = "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited";
         private readonly HttpListener _httpListener = new HttpListener();
         private static readonly string ProtoHeaderNoSpace = PROTO_HEADER.Replace(" ", "");
+        private readonly ICollectorRegistry _registry;
 
-
-        public MetricServer(int port)
+        public MetricServer(int port, string url = "metrics/", ICollectorRegistry registry = null)
         {
-            _httpListener.Prefixes.Add(string.Format("http://+:{0}/metrics/", port));
+            _registry = registry ?? DefaultCollectorRegistry.Instance;
+            _httpListener.Prefixes.Add(string.Format("http://+:{0}/{1}", port, url));
         }
 
         public void Start(IScheduler scheduler = null)
@@ -25,7 +27,7 @@ namespace Prometheus
             StartLoop(scheduler ?? Scheduler.Default);
         }
 
-        private static void ProcessScrapeRequest(HttpListenerContext context)
+        private void ProcessScrapeRequest(HttpListenerContext context)
         {
             var response = context.Response;
             response.StatusCode = 200;
@@ -41,7 +43,7 @@ namespace Prometheus
 
             response.AddHeader("Content-Type", type);
 
-            var collected = MetricsRegistry.Instance.CollectAll();
+            var collected = _registry.CollectAll();
             using (var outputStream = response.OutputStream)
             {
                 if (type == text)
@@ -58,6 +60,7 @@ namespace Prometheus
 
         private void StartLoop(IScheduler scheduler)
         {
+            //TODO: refactor to avoid delegate allocations
             scheduler.Schedule(_httpListener, (listener, action) => listener.BeginGetContext(ar =>
             {
                 var t = (Tuple<HttpListener, Action<HttpListener>>)ar.AsyncState;
@@ -69,7 +72,7 @@ namespace Prometheus
                 }
                 catch (Exception e)
                 {
-                    Trace.WriteLine(string.Format("Error: {0}", e));
+                    Trace.WriteLine(string.Format("Error in MetricsServer: {0}", e));
                 }
                 t.Item2(t.Item1);
             }, Tuple.Create(listener, action)));

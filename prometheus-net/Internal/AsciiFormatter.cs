@@ -3,14 +3,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using io.prometheus.client;
-using ProtoBuf;
+using Prometheus.Advanced;
 
 namespace Prometheus.Internal
 {
-    public class AsciiFormatter
+    internal class AsciiFormatter
     {
-        public static void Format(Stream destination, IEnumerable<io.prometheus.client.MetricFamily> metrics)
+        public static void Format(Stream destination, IEnumerable<MetricFamily> metrics)
         {
             var metricFamilys = metrics.ToArray();
             using (var streamWriter = new StreamWriter(destination, Encoding.ASCII))
@@ -22,7 +21,7 @@ namespace Prometheus.Internal
             }
         }
 
-        private static void WriteFamily(StreamWriter streamWriter, io.prometheus.client.MetricFamily metricFamily)
+        private static void WriteFamily(StreamWriter streamWriter, MetricFamily metricFamily)
         {
             streamWriter.WriteLine("# HELP {0} {1}", metricFamily.name, metricFamily.help);
             streamWriter.WriteLine("# TYPE {0} {1}", metricFamily.name, metricFamily.type);
@@ -32,7 +31,7 @@ namespace Prometheus.Internal
             }
         }
 
-        private static void WriteMetric(StreamWriter streamWriter, io.prometheus.client.MetricFamily family, io.prometheus.client.Metric metric)
+        private static void WriteMetric(StreamWriter streamWriter, MetricFamily family, Metric metric)
         {
             var familyName = family.name;
 

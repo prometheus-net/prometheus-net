@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using io.prometheus.client;
 using NUnit.Framework;
+using Prometheus.Advanced;
 using Prometheus.Internal;
 using Should;
 
@@ -13,7 +13,7 @@ namespace Prometheus.Tests
         [SetUp]
         public void setup()
         {
-            MetricsRegistry.Instance.Clear();
+            DefaultCollectorRegistry.Instance.Clear();
         }
 
         [Test]
@@ -24,14 +24,13 @@ namespace Prometheus.Tests
             gauge.Value.ShouldEqual(1);
             gauge.Inc(3.2);
             gauge.Value.ShouldEqual(4.2);
-            gauge.Observe(4);
+            gauge.Set(4);
             gauge.Value.ShouldEqual(4);
             gauge.Dec(0.2);
             gauge.Value.ShouldEqual(3.8);
 
             Assert.Throws<InvalidOperationException>(() => gauge.Labels("1"));
             
-
             var counter = Metrics.CreateCounter("name2", "help2", "label1");
             counter.Inc();
             counter.Inc(3.2);
@@ -44,12 +43,55 @@ namespace Prometheus.Tests
         }
 
         [Test]
-        public void api_usage_labels()
+        public void counter_collection()
         {
-            var gauge = Metrics.CreateGauge("name1", "help1");
-            gauge.Inc();
-            gauge.Value.ShouldEqual(1);
+            var counter = Metrics.CreateCounter("name1", "help1", "label1");
 
+            counter.Inc();
+            counter.Inc(3.2);
+            counter.Labels("abc").Inc(3.2);
+
+            MetricFamily[] exported = DefaultCollectorRegistry.Instance.CollectAll().ToArray();
+
+            exported.Length.ShouldEqual(1);
+            var familiy1 = exported[0];
+            familiy1.name.ShouldEqual("name1");
+            familiy1.help.ShouldEqual("help1");
+            var metrics = familiy1.metric;
+            metrics.Count.ShouldEqual(2);
+
+            foreach (var metric in metrics)
+            {
+                metric.gauge.ShouldBeNull();
+                metric.histogram.ShouldBeNull();
+                metric.summary.ShouldBeNull();
+                metric.untyped.ShouldBeNull();
+                metric.counter.ShouldNotBeNull();
+            }
+
+            metrics[0].counter.value.ShouldEqual(4.2);
+            metrics[0].label.Count.ShouldEqual(0);
+            
+            metrics[1].counter.value.ShouldEqual(3.2);
+            var labelPairs = metrics[1].label;
+            labelPairs.Count.ShouldEqual(1);
+            labelPairs[0].name.ShouldEqual("label1");
+            labelPairs[0].value.ShouldEqual("abc");
+        }
+
+        [Test]
+        public void custom_registry()
+        {
+            var myRegistry = new DefaultCollectorRegistry();
+            var counter1 = Metrics.WithCustomRegistry(myRegistry).CreateCounter("counter1", "help1"); //registered on a custom registry
+            
+            var counter2 = Metrics.CreateCounter("counter1", "help1"); //created on different registry - same name is hence permitted
+
+            counter1.Inc(3);
+            counter2.Inc(4);
+
+            myRegistry.CollectAll().ToArray()[0].metric[0].counter.value.ShouldEqual(3); //counter1 == 3
+            DefaultCollectorRegistry.Instance.CollectAll().ToArray()[0].metric[0].counter.value.ShouldEqual(4); //counter2 == 4
         }
 
         [Test]
@@ -59,10 +101,10 @@ namespace Prometheus.Tests
 
             gauge.Inc();
             gauge.Inc(3.2);
-            gauge.Observe(4);
+            gauge.Set(4);
             gauge.Dec(0.2);
 
-            var exported = MetricsRegistry.Instance.CollectAll().ToArray();
+            var exported = DefaultCollectorRegistry.Instance.CollectAll().ToArray();
 
             exported.Length.ShouldEqual(1);
             var familiy1 = exported[0];
@@ -99,7 +141,7 @@ namespace Prometheus.Tests
             histogram.Observe(1.5);
             histogram.Observe(3.9);
 
-            var metric = histogram.Collect();
+            var metric = histogram.Collect().metric[0];
             metric.histogram.ShouldNotBeNull();
             metric.histogram.sample_count.ShouldEqual(9ul);
             metric.histogram.sample_sum.ShouldEqual(16.7);
@@ -120,11 +162,10 @@ namespace Prometheus.Tests
             var labelled2 = gauge.Labels("1");
 
             labelled1.ShouldBeSameAs(labelled2);
-
         }
 
         [Test]
-        public void cannot_create_different_types_of_metrics_with_the_same_name()
+        public void cannot_create_metrics_with_the_same_name()
         {
             Metrics.CreateGauge("name1", "h");
             try
@@ -134,7 +175,7 @@ namespace Prometheus.Tests
             }
             catch (InvalidOperationException e)
             {
-                e.Message.ShouldEqual("A metric of type Gauge has already been declared with name 'name1'");
+                e.Message.ShouldEqual("A collector with name 'name1' has already been registered!");
             }
         }
 
@@ -157,16 +198,17 @@ namespace Prometheus.Tests
             Assert.Throws<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my-metric"));
             Assert.Throws<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my!metric"));
             Assert.Throws<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my%metric"));
+            Assert.Throws<ArgumentException>(() => Metrics.CreateHistogram("a", "help1", null, "le"));
             Metrics.CreateGauge("a", "help1", "my:metric");
-            Metrics.CreateGauge("a", "help1", "good_name");
+            Metrics.CreateGauge("b", "help1", "good_name");
 
             try
             {
-                Metrics.CreateGauge("a", "help1", "__reserved");
+                Metrics.CreateGauge("c", "help1", "__reserved");
             }
             catch (ArgumentException e)
             {
-                e.Message.ShouldEqual("LabelValues starting with double underscore are reserved!");
+                e.Message.ShouldEqual("Labels starting with double underscore are reserved!");
             }
         }
     }

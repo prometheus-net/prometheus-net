@@ -1,54 +1,66 @@
 using System;
-using io.prometheus.client;
+using Prometheus.Advanced;
 using Prometheus.Internal;
-using MetricFamily = Prometheus.Internal.MetricFamily;
 
 namespace Prometheus
 {
-    public class Counter : Metric
+    public class Counter : Collector<Counter.Child>
     {
-        private double _value;
-        private readonly object _lock = new object();
-        internal Counter(MetricFamily family, LabelValues labelValues)
-            : base(family, labelValues)
+
+        internal Counter(string name, string help, string[] labelNames)
+            : base(name, help, labelNames)
         {
         }
 
         public void Inc(double increment = 1)
         {
-            if (increment < 0)
+            Unlabelled.Inc(increment);
+        }
+
+        public class Child : Advanced.Child
+        {
+            private double _value;
+            private readonly object _lock = new object();
+
+            protected override void Populate(Metric metric)
             {
-                throw new InvalidOperationException("Counter cannot go down");
+                metric.counter = new Advanced.Counter();
+                metric.counter.value = Value;
             }
 
-            lock (_lock)
+            public void Inc(double increment = 1)
             {
-                _value += increment;
+                if (increment < 0)
+                {
+                    throw new InvalidOperationException("Counter cannot go down");
+                }
+
+                lock (_lock)
+                {
+                    _value += increment;
+                }
+            }
+
+            public double Value
+            {
+                get
+                {
+                    lock (_lock)
+                    {
+                        return _value;
+                    }
+                }
             }
         }
 
         public double Value
         {
-            get { return _value; }
+            get { return Unlabelled.Value; }
         }
 
-        internal override MetricType Type
+        protected override MetricType Type
         {
             get { return MetricType.COUNTER; }
-        }
-
-        protected override void Populate(io.prometheus.client.Metric metric)
-        {
-            metric.counter = new io.prometheus.client.Counter();
-            lock (_lock)
-            {
-                metric.counter.value = _value;
-            }
-        }
-
-        public Counter Labels(params string[] labelValues)
-        {
-            return (Counter) Family.GetOrAdd(labelValues, (family, values) => new Counter(family, values));
         }
     }
 }

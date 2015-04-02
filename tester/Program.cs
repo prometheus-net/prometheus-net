@@ -8,20 +8,31 @@ namespace tester
     {
         static void Main(string[] args)
         {
-            var metricServer = new MetricServer(1234);
+            var metricServer = new MetricServer(port: 1234);
             metricServer.Start();
 
-            var counter = Metrics.CreateCounter("test4", "helpcounter", "labelCounter");
-            var gauge = Metrics.CreateGauge("test3", "helpgauge", "testLabel");
-            var hist = Metrics.CreateHistogram("test_hist", "helpbucket", buckets: new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 });//.WithLabel("testlabel", "2");
-            var summary = Metrics.CreateSummary("test_summary", "help3", "smm");
+            var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new []{ "method", "endpoint"});
+            counter.Labels("GET", "/").Inc();
+            counter.Labels("POST", "/cancel").Inc();
+
+
+            var gauge = Metrics.CreateGauge("gauge", "help text");
+            gauge.Inc(3.4);
+            gauge.Dec(2.1);
+            gauge.Set(5.3);
+
+            var hist = Metrics.CreateHistogram("myHistogram", "help text", buckets: new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 });
+            hist.Observe(0.4);
+
+            var summary = Metrics.CreateSummary("mySummary", "help text");
+            summary.Observe(5.3);
 
             var random = new Random();
             Observable.Interval(TimeSpan.FromSeconds(0.5)).Subscribe(l =>
             {
                 counter.Inc();
-                counter.Labels("test").Inc(2);
-                gauge.Observe(random.NextDouble() + 2);
+                counter.Labels("GET", "/").Inc(2);
+                gauge.Set(random.NextDouble() + 2);
                 hist.Observe(random.NextDouble());
                 summary.Observe(random.NextDouble());
             });

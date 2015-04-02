@@ -52,18 +52,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Counter.cs" />
-    <Compile Include="Datacontracts.cs" />
+    <Compile Include="Advanced\Datacontracts.cs" />
     <Compile Include="Gauge.cs" />
     <Compile Include="Histogram.cs" />
+    <Compile Include="Advanced\ICollectorRegistry.cs" />
     <Compile Include="Internal\AsciiFormatter.cs" />
-    <Compile Include="Internal\IMetric.cs" />
+    <Compile Include="Advanced\ICollector.cs" />
     <Compile Include="Internal\LabelValues.cs" />
-    <Compile Include="Internal\MetricFamily.cs" />
+    <Compile Include="Advanced\Collector.cs" />
     <Compile Include="Internal\ProtoFormatter.cs" />
-    <Compile Include="Metric.cs" />
+    <Compile Include="Advanced\MetricFactory.cs" />
     <Compile Include="Metrics.cs" />
     <Compile Include="MetricServer.cs" />
-    <Compile Include="Internal\MetricsRegistry.cs" />
+    <Compile Include="Advanced\DefaultCollectorRegistry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Summary.cs" />
   </ItemGroup>
@@ -71,6 +72,7 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

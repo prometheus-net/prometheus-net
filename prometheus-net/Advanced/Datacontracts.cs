@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 
 // Generated from: prometheus.proto
-namespace io.prometheus.client
+namespace Prometheus.Advanced
 {
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"LabelPair")]
   public partial class LabelPair : global::ProtoBuf.IExtensible
@@ -119,9 +119,9 @@ namespace io.prometheus.client
       get { return _sample_sum; }
       set { _sample_sum = value; }
     }
-    private readonly global::System.Collections.Generic.List<io.prometheus.client.Quantile> _quantile = new global::System.Collections.Generic.List<io.prometheus.client.Quantile>();
+    private readonly global::System.Collections.Generic.List<Quantile> _quantile = new global::System.Collections.Generic.List<Quantile>();
     [global::ProtoBuf.ProtoMember(3, Name=@"quantile", DataFormat = global::ProtoBuf.DataFormat.Default)]
-    public global::System.Collections.Generic.List<io.prometheus.client.Quantile> quantile
+    public global::System.Collections.Generic.List<Quantile> quantile
     {
       get { return _quantile; }
     }
@@ -170,9 +170,9 @@ namespace io.prometheus.client
       get { return _sample_sum; }
       set { _sample_sum = value; }
     }
-    private readonly global::System.Collections.Generic.List<io.prometheus.client.Bucket> _bucket = new global::System.Collections.Generic.List<io.prometheus.client.Bucket>();
+    private readonly global::System.Collections.Generic.List<Bucket> _bucket = new global::System.Collections.Generic.List<Bucket>();
     [global::ProtoBuf.ProtoMember(3, Name=@"bucket", DataFormat = global::ProtoBuf.DataFormat.Default)]
-    public global::System.Collections.Generic.List<io.prometheus.client.Bucket> bucket
+    public global::System.Collections.Generic.List<Bucket> bucket
     {
       get { return _bucket; }
     }
@@ -213,50 +213,50 @@ namespace io.prometheus.client
   {
     public Metric() {}
 
-      private global::System.Collections.Generic.List<io.prometheus.client.LabelPair> _label;
+      private global::System.Collections.Generic.List<LabelPair> _label;
     [global::ProtoBuf.ProtoMember(1, Name=@"label", DataFormat = global::ProtoBuf.DataFormat.Default)]
-    public global::System.Collections.Generic.List<io.prometheus.client.LabelPair> label
+    public global::System.Collections.Generic.List<LabelPair> label
     {
       get { return _label; }
         set { _label = value; }
     }
   
-    private io.prometheus.client.Gauge _gauge = null;
+    private Gauge _gauge = null;
     [global::ProtoBuf.ProtoMember(2, IsRequired = false, Name=@"gauge", DataFormat = global::ProtoBuf.DataFormat.Default)]
     [global::System.ComponentModel.DefaultValue(null)]
-    public io.prometheus.client.Gauge gauge
+    public Gauge gauge
     {
       get { return _gauge; }
       set { _gauge = value; }
     }
-    private io.prometheus.client.Counter _counter = null;
+    private Counter _counter = null;
     [global::ProtoBuf.ProtoMember(3, IsRequired = false, Name=@"counter", DataFormat = global::ProtoBuf.DataFormat.Default)]
     [global::System.ComponentModel.DefaultValue(null)]
-    public io.prometheus.client.Counter counter
+    public Counter counter
     {
       get { return _counter; }
       set { _counter = value; }
     }
-    private io.prometheus.client.Summary _summary = null;
+    private Summary _summary = null;
     [global::ProtoBuf.ProtoMember(4, IsRequired = false, Name=@"summary", DataFormat = global::ProtoBuf.DataFormat.Default)]
     [global::System.ComponentModel.DefaultValue(null)]
-    public io.prometheus.client.Summary summary
+    public Summary summary
     {
       get { return _summary; }
       set { _summary = value; }
     }
-    private io.prometheus.client.Untyped _untyped = null;
+    private Untyped _untyped = null;
     [global::ProtoBuf.ProtoMember(5, IsRequired = false, Name=@"untyped", DataFormat = global::ProtoBuf.DataFormat.Default)]
     [global::System.ComponentModel.DefaultValue(null)]
-    public io.prometheus.client.Untyped untyped
+    public Untyped untyped
     {
       get { return _untyped; }
       set { _untyped = value; }
     }
-    private io.prometheus.client.Histogram _histogram = null;
+    private Histogram _histogram = null;
     [global::ProtoBuf.ProtoMember(7, IsRequired = false, Name=@"histogram", DataFormat = global::ProtoBuf.DataFormat.Default)]
     [global::System.ComponentModel.DefaultValue(null)]
-    public io.prometheus.client.Histogram histogram
+    public Histogram histogram
     {
       get { return _histogram; }
       set { _histogram = value; }
@@ -295,17 +295,17 @@ namespace io.prometheus.client
       get { return _help; }
       set { _help = value; }
     }
-    private io.prometheus.client.MetricType _type = io.prometheus.client.MetricType.COUNTER;
+    private MetricType _type = MetricType.COUNTER;
     [global::ProtoBuf.ProtoMember(3, IsRequired = false, Name=@"type", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
-    [global::System.ComponentModel.DefaultValue(io.prometheus.client.MetricType.COUNTER)]
-    public io.prometheus.client.MetricType type
+    [global::System.ComponentModel.DefaultValue(MetricType.COUNTER)]
+    public MetricType type
     {
       get { return _type; }
       set { _type = value; }
     }
-    private readonly global::System.Collections.Generic.List<io.prometheus.client.Metric> _metric = new global::System.Collections.Generic.List<io.prometheus.client.Metric>();
+    private readonly global::System.Collections.Generic.List<Metric> _metric = new global::System.Collections.Generic.List<Metric>();
     [global::ProtoBuf.ProtoMember(4, Name=@"MetricFamily", DataFormat = global::ProtoBuf.DataFormat.Default)]
-    public global::System.Collections.Generic.List<io.prometheus.client.Metric> metric
+    public global::System.Collections.Generic.List<Metric> metric
     {
       get { return _metric; }
     }
