@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using ProtoBuf;
 
 namespace Prometheus.Internal

@@ -51,8 +51,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Advanced\PerfCounterCollector.cs" />
     <Compile Include="Counter.cs" />
-    <Compile Include="Advanced\Datacontracts.cs" />
+    <Compile Include="Advanced\DataContracts.cs" />
     <Compile Include="Gauge.cs" />
     <Compile Include="Histogram.cs" />
     <Compile Include="Advanced\ICollectorRegistry.cs" />

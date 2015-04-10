@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus.Advanced
 {
@@ -9,32 +9,62 @@ namespace Prometheus.Advanced
     {
         public readonly static DefaultCollectorRegistry Instance = new DefaultCollectorRegistry();
 
-        readonly ConcurrentDictionary<string, ICollector> _collectorsByName = new ConcurrentDictionary<string, ICollector>();
+        /// <summary>
+        /// a list with copy-on-write semantics implemented in-place below. This is to avoid any locks on the read side (ie, CollectAll())
+        /// </summary>
+        private List<ICollector> _collectors = new List<ICollector>();
+
+        public void RegisterStandardPerfCounters()
+        {
+            var perfCounterCollector = new PerfCounterCollector();
+            Register(perfCounterCollector);
+            perfCounterCollector.RegisterStandardPerfCounters();
+        }
 
         public IEnumerable<MetricFamily> CollectAll()
         {
-            return _collectorsByName.Values.Select(value => value.Collect());
+            //return _collectors.Select(value => value.Collect()).Where(c=>c != null);
+            
+            //replaced LINQ with code to avoid extra allocations
+            foreach (ICollector value in _collectors)
+            {
+                MetricFamily c = value.Collect();
+                if (c != null) yield return c;
+            }
         }
 
         public void Clear()
         {
-            _collectorsByName.Clear();
+            lock (_collectors)
+            {
+                _collectors = new List<ICollector>();
+            }
         }
 
         public void Register(ICollector collector)
         {
-            if (_collectorsByName.ContainsKey(collector.Name))
+            if (_collectors.Any(c => c.Name == collector.Name))
             {
                 throw new InvalidOperationException(string.Format("A collector with name '{0}' has already been registered!", collector.Name));
             }
 
-            _collectorsByName[collector.Name] = collector;
+            lock (_collectors)
+            {
+                var newList = new List<ICollector>(_collectors);
+                newList.Add(collector);
+                _collectors = newList;
+            }
         }
 
-        public void Remove(ICollector collector)
+        public bool Remove(ICollector collector)
         {
-            ICollector value;
-            _collectorsByName.TryRemove(collector.Name, out value);
+            lock (_collectors)
+            {
+                var newList = new List<ICollector>(_collectors);
+                bool removed = newList.Remove(collector);
+                _collectors = newList;
+                return removed;
+            }
         }
     }
 }

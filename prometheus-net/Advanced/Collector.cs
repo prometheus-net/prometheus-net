@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Concurrent;
-using System.ComponentModel;
 using System.Text.RegularExpressions;
+using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 
 namespace Prometheus.Advanced

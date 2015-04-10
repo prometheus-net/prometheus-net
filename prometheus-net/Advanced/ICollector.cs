@@ -1,3 +1,5 @@
+using Prometheus.Advanced.DataContracts;
+
 namespace Prometheus.Advanced
 {
     public interface ICollector

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus.Internal
 {

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 
 namespace Prometheus
@@ -51,7 +52,7 @@ namespace Prometheus
             //TODO: this will break thread-safety if the very same histogram instance is registered on multiple CollectorRegistries
             //TODO: we should investigate if HdrHistogram can be a good candidate to use here internally - that's heavily optimized
 
-            private Advanced.Histogram _wireMetric;
+            private Advanced.DataContracts.Histogram _wireMetric;
             private double[] _buckets;
             
             internal override void Init(ICollector parent, LabelValues labelValues)
@@ -66,7 +67,7 @@ namespace Prometheus
                 }
 
                 _bucketCounts = new ulong[_buckets.Length];
-                _wireMetric = new Advanced.Histogram();
+                _wireMetric = new Advanced.DataContracts.Histogram();
                 for (int i = 0; i < _bucketCounts.Length; i++)
                 {
                     _wireMetric.bucket.Add(new Bucket()

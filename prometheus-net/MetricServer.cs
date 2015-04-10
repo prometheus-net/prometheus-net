@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Reactive.Concurrency;
 using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 
 namespace Prometheus
@@ -18,6 +19,10 @@ namespace Prometheus
         {
             _registry = registry ?? DefaultCollectorRegistry.Instance;
             _httpListener.Prefixes.Add(string.Format("http://+:{0}/{1}", port, url));
+            if (_registry == DefaultCollectorRegistry.Instance)
+            {
+                DefaultCollectorRegistry.Instance.RegisterStandardPerfCounters();
+            }
         }
 
         public void Start(IScheduler scheduler = null)

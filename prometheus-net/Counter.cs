@@ -1,5 +1,6 @@
 using System;
 using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 
 namespace Prometheus
@@ -24,7 +25,7 @@ namespace Prometheus
 
             protected override void Populate(Metric metric)
             {
-                metric.counter = new Advanced.Counter();
+                metric.counter = new Advanced.DataContracts.Counter();
                 metric.counter.value = Value;
             }
 

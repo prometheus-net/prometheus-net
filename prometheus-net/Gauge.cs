@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 
 namespace Prometheus
@@ -20,7 +21,7 @@ namespace Prometheus
 
             protected override void Populate(Metric metric)
             {
-                metric.gauge = new Advanced.Gauge();
+                metric.gauge = new Advanced.DataContracts.Gauge();
                 lock (_lock)
                 {
                     metric.gauge.value = _value;

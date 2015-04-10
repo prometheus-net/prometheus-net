@@ -1,4 +1,5 @@
 ﻿using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus
 {
@@ -12,7 +13,7 @@ namespace Prometheus
 
             protected override void Populate(Metric metric)
             {
-                metric.summary = new Advanced.Summary();
+                metric.summary = new Advanced.DataContracts.Summary();
                 lock (_lock)
                 {
                     metric.summary.sample_count = _count;

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using NUnit.Framework;
 using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 using Should;
 
