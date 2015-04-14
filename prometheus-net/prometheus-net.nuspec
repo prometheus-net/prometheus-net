@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>prometheus-net</id>
+    <version>$version$</version>
+    <authors>andrasm</authors>
+    <owners>andrasm</owners>
+    <licenseUrl>https://raw.githubusercontent.com/andrasm/prometheus-net/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/andrasm/prometheus-net</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>.NET client for prometheus.io</description>
+    <releaseNotes>experimental release</releaseNotes>
+    <tags>metrics prometheus</tags>
+    <dependencies>
+      <group targetFramework="net40">
+        <dependency id="protobuf-net" version="2.0.0.668" />
+        <dependency id="Rx-Core" version="2.2.5"/>
+        <dependency id="Rx-Interfaces" version="2.2.5"/>
+     </group>
+    </dependencies>
+  </metadata>
+</package>

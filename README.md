@@ -6,8 +6,10 @@ See prometheus [here](http://prometheus.io/)
 
 ## Installation
 
-Build the vs solution and reference prometheus-net.dll in your project.
-TODO: nuget support
+Nuget package: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
+
+>Install-Package prometheus-net
+
 
 ## Instrumenting
 
