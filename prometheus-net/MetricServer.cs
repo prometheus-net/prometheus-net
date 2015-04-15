@@ -67,9 +67,9 @@ namespace Prometheus
             //delegate allocations below - but that's fine as it's not really on the "critical path" (polled relatively infrequently) - and it's much more readable this way
             scheduler.Schedule(repeatAction => _httpListener.BeginGetContext(ar =>
             {
-                var httpListenerContext = _httpListener.EndGetContext(ar);
                 try
                 {
+                    var httpListenerContext = _httpListener.EndGetContext(ar);
                     ProcessScrapeRequest(httpListenerContext);
                 }
                 catch (Exception e)
