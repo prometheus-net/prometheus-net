@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Reactive.Concurrency;
 using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 
 namespace Prometheus
@@ -65,12 +64,10 @@ namespace Prometheus
 
         private void StartLoop(IScheduler scheduler)
         {
-            //TODO: refactor to avoid delegate allocations
-            scheduler.Schedule(_httpListener, (listener, action) => listener.BeginGetContext(ar =>
+            //delegate allocations below - but that's fine as it's not really on the "critical path" (polled relatively infrequently) - and it's much more readable this way
+            scheduler.Schedule(repeatAction => _httpListener.BeginGetContext(ar =>
             {
-                var t = (Tuple<HttpListener, Action<HttpListener>>)ar.AsyncState;
-                var listInner = t.Item1;
-                var httpListenerContext = listInner.EndGetContext(ar);
+                var httpListenerContext = _httpListener.EndGetContext(ar);
                 try
                 {
                     ProcessScrapeRequest(httpListenerContext);
@@ -79,8 +76,8 @@ namespace Prometheus
                 {
                     Trace.WriteLine(string.Format("Error in MetricsServer: {0}", e));
                 }
-                t.Item2(t.Item1);
-            }, Tuple.Create(listener, action)));
+                repeatAction.Invoke();
+            }, null));
         }
 
         public void Stop()
