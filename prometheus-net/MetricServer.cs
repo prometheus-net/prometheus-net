@@ -14,10 +14,14 @@ namespace Prometheus
         private static readonly string ProtoHeaderNoSpace = PROTO_HEADER.Replace(" ", "");
         private readonly ICollectorRegistry _registry;
 
-        public MetricServer(int port, string url = "metrics/", ICollectorRegistry registry = null)
+        public MetricServer(int port, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, url, registry)
+        {
+        }
+
+        public MetricServer(string hostname, int port, string url = "metrics/", ICollectorRegistry registry = null)
         {
             _registry = registry ?? DefaultCollectorRegistry.Instance;
-            _httpListener.Prefixes.Add(string.Format("http://+:{0}/{1}", port, url));
+            _httpListener.Prefixes.Add(string.Format("http://{0}:{1}/{2}", hostname, port, url));
             if (_registry == DefaultCollectorRegistry.Instance)
             {
                 DefaultCollectorRegistry.Instance.RegisterStandardPerfCounters();
