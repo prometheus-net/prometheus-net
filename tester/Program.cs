@@ -8,7 +8,7 @@ namespace tester
     {
         static void Main(string[] args)
         {
-            var metricServer = new MetricServer(port: 1234);
+            var metricServer = new MetricServer(hostname:"localhost", port: 1234);
             metricServer.Start();
 
             var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new []{ "method", "endpoint"});
