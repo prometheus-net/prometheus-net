@@ -37,7 +37,7 @@ Gauges can go up and down.
 var gauge = Metrics.CreateGauge("gauge", "help text");
 gauge.Inc(3.4);
 gauge.Dec(2.1);
-gauge.Observe(5.3);
+gauge.Set(5.3);
 ```
 
 ### Summary
