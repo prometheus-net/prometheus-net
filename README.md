@@ -2,6 +2,8 @@
 
 This is an experimental version (unofficial)
 
+It's tested on Windows/.NET4 and Ubuntu/Mono 3.12.1.
+
 See prometheus [here](http://prometheus.io/)
 
 ## Installation
@@ -9,6 +11,7 @@ See prometheus [here](http://prometheus.io/)
 Nuget package: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
 
 >Install-Package prometheus-net
+
 
 
 ## Instrumenting
@@ -84,4 +87,13 @@ Metrics are usually exposed over HTTP, to be read by the Prometheus server.
 ```csharp
 var metricServer = new MetricServer(port: 1234);
 metricServer.Start();
+```
+
+## Unit testing
+For simple usage the API uses static classes, which - in unit tests - can cause errors like this: "A collector with name '<NAME>' has already been registered!"
+
+To address this you can add this line to your test setup:
+
+```csharp
+DefaultCollectorRegistry.Instance.Clear();
 ```

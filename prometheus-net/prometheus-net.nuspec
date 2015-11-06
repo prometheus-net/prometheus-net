@@ -9,7 +9,10 @@
     <projectUrl>https://github.com/andrasm/prometheus-net</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
-    <releaseNotes>experimental release</releaseNotes>
+    <releaseNotes>
+* 0.0.4 - merged pull requests
+* 0.0.3 - initial version
+      </releaseNotes>
     <tags>metrics prometheus</tags>
     <dependencies>
       <group targetFramework="net40">
