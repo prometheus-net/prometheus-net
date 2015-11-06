@@ -43,8 +43,9 @@ namespace Prometheus
             const string text = "text/plain; version=0.0.4";
 
             string type = PROTO_HEADER;
-            
-            if (!context.Request.Headers.Get("Accept").Replace(" ", "").Contains(ProtoHeaderNoSpace))
+
+            var acceptHeader = context.Request.Headers.Get("Accept");
+            if (acceptHeader == null || !acceptHeader.Replace(" ", "").Contains(ProtoHeaderNoSpace))
             {
                 type = text;
             }
