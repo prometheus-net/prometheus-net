@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Net;
 using System.Reactive.Linq;
 using Prometheus;
 
@@ -35,10 +37,19 @@ namespace tester
                 gauge.Set(random.NextDouble() + 2);
                 hist.Observe(random.NextDouble());
                 summary.Observe(random.NextDouble());
+
+                var httpRequest = (HttpWebRequest) WebRequest.Create("http://localhost:1234/metrics");
+                httpRequest.Method = "GET";
+
+                using (var httpResponse = (HttpWebResponse) httpRequest.GetResponse())
+                {
+                    var text = new StreamReader(httpResponse.GetResponseStream()).ReadToEnd();
+                    Console.WriteLine(text);
+                }
+
+                Console.WriteLine("ENTER to quit");
             });
 
-
-            Console.WriteLine("ENTER to quit");
             Console.ReadLine();
             metricServer.Stop();
         }
