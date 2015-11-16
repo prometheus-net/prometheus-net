@@ -11,19 +11,19 @@ namespace Prometheus.Advanced
         private const string METRIC_NAME_RE = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
 
         private readonly ConcurrentDictionary<LabelValues, T> _labelledMetrics = new ConcurrentDictionary<LabelValues, T>();
-        protected readonly T Unlabelled;
-
+        
         // ReSharper disable StaticFieldInGenericType
         readonly static Regex MetricName = new Regex(METRIC_NAME_RE);
         readonly static Regex LabelNameRegex = new Regex("^[a-zA-Z_:][a-zA-Z0-9_:]*$");
         readonly static Regex ReservedLabelRegex = new Regex("^__.*$");
+        readonly static LabelValues EmptyLabelValues = new LabelValues(new string[0], new string[0]);
         // ReSharper restore StaticFieldInGenericType
 
         protected abstract MetricType Type { get; }
 
         public T Labels(params string[] labelValues)
         {
-            var key = new LabelValues(_labelNames, labelValues);
+            var key = new LabelValues(LabelNames, labelValues);
             return GetOrAddLabelled(key);
         }
 
@@ -37,11 +37,16 @@ namespace Prometheus.Advanced
             });
         }
 
+        protected T Unlabelled
+        {
+            get { return GetOrAddLabelled(EmptyLabelValues); }
+        }
+
         protected Collector(string name, string help, string[] labelNames)
         {
             _name = name;
             _help = help;
-            _labelNames = labelNames;
+            LabelNames = labelNames;
 
             if (!MetricName.IsMatch(name))
             {
@@ -59,9 +64,6 @@ namespace Prometheus.Advanced
                     throw new ArgumentException("Labels starting with double underscore are reserved!");
                 }
             }
-
-            Unlabelled = GetOrAddLabelled(LabelValues.Empty);
-
         }
 
         public string Name
@@ -71,7 +73,8 @@ namespace Prometheus.Advanced
 
         private readonly string _name;
         private readonly string _help;
-        private readonly string[] _labelNames;
+
+        public string[] LabelNames { get; private set; }
 
         public MetricFamily Collect()
         {
