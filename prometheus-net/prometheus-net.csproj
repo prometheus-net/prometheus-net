@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Advanced\Child.cs" />
     <Compile Include="Advanced\PerfCounterCollector.cs" />
     <Compile Include="Counter.cs" />
     <Compile Include="Advanced\DataContracts.cs" />
