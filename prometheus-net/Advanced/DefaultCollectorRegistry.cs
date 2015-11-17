@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus.Advanced
@@ -14,7 +15,7 @@ namespace Prometheus.Advanced
         public void RegisterStandardPerfCounters()
         {
             var perfCounterCollector = new PerfCounterCollector();
-            Register(perfCounterCollector);
+            GetOrAdd(perfCounterCollector);
             perfCounterCollector.RegisterStandardPerfCounters();
         }
 
@@ -35,10 +36,14 @@ namespace Prometheus.Advanced
             _collectors.Clear();
         }
 
-        public void Register(ICollector collector)
+        public ICollector GetOrAdd(ICollector collector)
         {
-            if (!_collectors.TryAdd(collector.Name, collector))
-                throw new InvalidOperationException(string.Format("A collector with name '{0}' has already been registered!", collector.Name));
+            var collectorToUse = _collectors.GetOrAdd(collector.Name, collector);
+
+            if (!collector.LabelNames.SequenceEqual(collectorToUse.LabelNames))
+                throw new InvalidOperationException("Collector with same name must have same label names");
+
+            return collectorToUse;
         }
 
         public bool Remove(ICollector collector)
