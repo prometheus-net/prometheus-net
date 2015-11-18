@@ -11,6 +11,9 @@ namespace Prometheus.Advanced
         private const string METRIC_NAME_RE = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
 
         private readonly ConcurrentDictionary<LabelValues, T> _labelledMetrics = new ConcurrentDictionary<LabelValues, T>();
+        private readonly string _name;
+        private readonly string _help;
+        private readonly Lazy<T> _unlabelledLazy;
         
         // ReSharper disable StaticFieldInGenericType
         readonly static Regex MetricName = new Regex(METRIC_NAME_RE);
@@ -39,7 +42,7 @@ namespace Prometheus.Advanced
 
         protected T Unlabelled
         {
-            get { return GetOrAddLabelled(EmptyLabelValues); }
+            get { return _unlabelledLazy.Value; }
         }
 
         protected Collector(string name, string help, string[] labelNames)
@@ -64,15 +67,14 @@ namespace Prometheus.Advanced
                     throw new ArgumentException("Labels starting with double underscore are reserved!");
                 }
             }
+
+            _unlabelledLazy = new Lazy<T>(() => GetOrAddLabelled(EmptyLabelValues));
         }
 
         public string Name
         {
             get { return _name; }
         }
-
-        private readonly string _name;
-        private readonly string _help;
 
         public string[] LabelNames { get; private set; }
 
