@@ -1,5 +1,7 @@
 # Prometheus .NET Client
 
+[![Build Status](https://travis-ci.org/andrasm/prometheus-net.svg?branch=master)](https://travis-ci.org/andrasm/prometheus-net)
+
 This is an experimental version (unofficial)
 
 It's tested on Windows/.NET4 and Ubuntu/Mono 3.12.1.
