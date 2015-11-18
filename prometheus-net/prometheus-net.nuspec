@@ -10,7 +10,11 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
-* 0.0.4 - merged pull requests
+* 0.0.6:
+- Do not create unlabelled metric if label names are specified
+* 0.0.5:
+- Allow specifying hostname in URL
+- Fix null ref exception if 'Accept' header is not specified
 * 0.0.3 - initial version
       </releaseNotes>
     <tags>metrics prometheus</tags>
