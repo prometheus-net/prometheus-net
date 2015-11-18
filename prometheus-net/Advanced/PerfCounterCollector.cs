@@ -114,5 +114,6 @@ namespace Prometheus.Advanced
         }
 
         public string Name { get; private set; }
+        public string[] LabelNames { get {return new string[0];} }
     }
 }

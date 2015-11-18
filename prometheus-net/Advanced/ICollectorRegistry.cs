@@ -5,7 +5,7 @@ namespace Prometheus.Advanced
 {
     public interface ICollectorRegistry
     {
-        void Register(ICollector collector);
+        ICollector GetOrAdd(ICollector collector);
         bool Remove(ICollector collector);
         IEnumerable<MetricFamily> CollectAll();
     }

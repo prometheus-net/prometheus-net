@@ -6,5 +6,7 @@ namespace Prometheus.Advanced
     {
         MetricFamily Collect();
         string Name { get; }
+
+        string[] LabelNames { get; }
     }
 }
