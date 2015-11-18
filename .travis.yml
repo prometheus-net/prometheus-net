@@ -4,7 +4,7 @@ install:
   - nuget restore prometheus-net.sln
   - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner
 script:
-  - xbuild /p:Configuration=Release solution-name.sln
+  - xbuild /p:Configuration=Release prometheus-net.sln
   - ls -la
   - find . -name "prometheus-net.tests.dll"
   - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ./prometheus-net.tests/bin/Release/prometheus-net.tests.dll
