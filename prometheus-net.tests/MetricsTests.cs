@@ -166,17 +166,17 @@ namespace Prometheus.Tests
         }
 
         [Test]
-        public void cannot_create_metrics_with_the_same_name()
+        public void cannot_create_metrics_with_the_same_name_but_different_labels()
         {
             Metrics.CreateGauge("name1", "h");
             try
             {
-                Metrics.CreateCounter("name1", "h");
+                Metrics.CreateCounter("name1", "h", "label1");
                 Assert.Fail("should have thrown");
             }
             catch (InvalidOperationException e)
             {
-                e.Message.ShouldEqual("A collector with name 'name1' has already been registered!");
+                e.Message.ShouldEqual("Collector with same name must have same label names");
             }
         }
 
