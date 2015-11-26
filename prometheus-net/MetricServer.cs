@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Reactive.Concurrency;
@@ -13,18 +14,23 @@ namespace Prometheus
         private readonly HttpListener _httpListener = new HttpListener();
         private static readonly string ProtoHeaderNoSpace = PROTO_HEADER.Replace(" ", "");
         private readonly ICollectorRegistry _registry;
-
-        public MetricServer(int port, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, url, registry)
+        
+        public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, standardCollectors, url, registry)
         {
         }
 
-        public MetricServer(string hostname, int port, string url = "metrics/", ICollectorRegistry registry = null)
+        public MetricServer(string hostname, int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null)
         {
             _registry = registry ?? DefaultCollectorRegistry.Instance;
             _httpListener.Prefixes.Add(string.Format("http://{0}:{1}/{2}", hostname, port, url));
             if (_registry == DefaultCollectorRegistry.Instance)
             {
-                DefaultCollectorRegistry.Instance.RegisterStandardPerfCounters();
+                // Default to perf counter collectors if none speified
+                // For no collectors, pass an empty collection
+                if (standardCollectors == null)
+                    standardCollectors = new[] {new PerfCounterCollector()};
+
+                DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(standardCollectors);
             }
         }
 
