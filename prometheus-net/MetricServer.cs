@@ -10,7 +10,6 @@ namespace Prometheus
 {
     public class MetricServer
     {
-        public event Action PreCollect;
         private const string PROTO_HEADER = "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited";
         private readonly HttpListener _httpListener = new HttpListener();
         private static readonly string ProtoHeaderNoSpace = PROTO_HEADER.Replace(" ", "");
@@ -58,9 +57,6 @@ namespace Prometheus
             }
 
             response.AddHeader("Content-Type", type);
-
-            if (PreCollect != null)
-                PreCollect();
 
             var collected = _registry.CollectAll();
             using (var outputStream = response.OutputStream)
