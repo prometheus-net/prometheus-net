@@ -3,13 +3,15 @@
   <metadata>
     <id>prometheus-net</id>
     <version>$version$</version>
-    <authors>andrasm</authors>
+    <authors>andrasm,qed-</authors>
     <owners>andrasm</owners>
     <licenseUrl>https://raw.githubusercontent.com/andrasm/prometheus-net/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/andrasm/prometheus-net</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 0.0.7:
+- Added the notion of OnDemandCollectors + a DotNetStatsCollector to avoid having to use .net perf counters
 * 0.0.6:
 - Do not create unlabelled metric if label names are specified
 * 0.0.5:
