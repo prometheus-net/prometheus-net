@@ -4,7 +4,13 @@ using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus
 {
-    public class Counter : Collector<Counter.Child>
+    public interface ICounter
+    {
+        void Inc(double increment = 1);
+        double Value { get; }
+    }
+
+    public class Counter : Collector<Counter.Child>, ICounter
     {
 
         internal Counter(string name, string help, string[] labelNames)
@@ -17,7 +23,7 @@ namespace Prometheus
             Unlabelled.Inc(increment);
         }
 
-        public class Child : Advanced.Child
+        public class Child : Advanced.Child, ICounter
         {
             private double _value;
             private readonly object _lock = new object();

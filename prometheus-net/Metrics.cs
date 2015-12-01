@@ -1,7 +1,4 @@
-﻿using System;
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
+﻿using Prometheus.Advanced;
 
 namespace Prometheus
 {

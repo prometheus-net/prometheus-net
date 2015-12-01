@@ -1,12 +1,18 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
 
 namespace Prometheus
 {
-    public class Gauge : Collector<Gauge.Child>
+    public interface IGauge
+    {
+        void Inc(double increment = 1);
+        void Set(double val);
+        void Dec(double decrement = 1);
+        double Value { get; }
+    }
+
+    public class Gauge : Collector<Gauge.Child>, IGauge
     {
         internal Gauge(string name, string help, string[] labelNames)
             : base(name, help, labelNames)
@@ -14,7 +20,7 @@ namespace Prometheus
         }
 
 
-        public class Child : Advanced.Child
+        public class Child : Advanced.Child, IGauge
         {
             private double _value;
             private readonly object _lock = new object();
