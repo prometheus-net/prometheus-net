@@ -3,9 +3,14 @@ using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus
 {
-    public class Summary : Collector<Summary.Child>
+    public interface ISummary
     {
-        public class Child : Advanced.Child
+        void Observe(double val);
+    }
+
+    public class Summary : Collector<Summary.Child>, ISummary
+    {
+        public class Child : Advanced.Child, ISummary
         {
             private double _sum = 0;
             private ulong _count = 0;

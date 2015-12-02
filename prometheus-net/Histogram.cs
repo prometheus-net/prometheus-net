@@ -7,7 +7,12 @@ using Prometheus.Internal;
 
 namespace Prometheus
 {
-    public class Histogram : Collector<Histogram.Child>
+    public interface IHistogram
+    {
+        void Observe(double val);
+    }
+
+    public class Histogram : Collector<Histogram.Child>, IHistogram
     {
         private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
         private readonly double[] _buckets;
@@ -41,7 +46,7 @@ namespace Prometheus
             Unlabelled.Init(this, LabelValues.Empty);
         }
 
-        public class Child : Advanced.Child
+        public class Child : Advanced.Child, IHistogram
         {
             private double _sum = 0;
             private ulong _count = 0;

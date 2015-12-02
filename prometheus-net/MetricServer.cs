@@ -8,7 +8,13 @@ using Prometheus.Internal;
 
 namespace Prometheus
 {
-    public class MetricServer
+    public interface IMetricServer
+    {
+        void Start(IScheduler scheduler = null);
+        void Stop();
+    }
+
+    public class MetricServer : IMetricServer
     {
         private const string PROTO_HEADER = "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited";
         private readonly HttpListener _httpListener = new HttpListener();
