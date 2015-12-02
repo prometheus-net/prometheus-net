@@ -10,6 +10,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 0.0.8:
+- Introduced interfaces for all the metrics to make unlabelled collectors and their children polymorph
 * 0.0.7:
 - Added the notion of OnDemandCollectors + a DotNetStatsCollector to avoid having to use .net perf counters
 * 0.0.6:
