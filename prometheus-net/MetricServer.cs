@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Reactive.Concurrency;
 using Prometheus.Advanced;
-using Prometheus.Internal;
 
 namespace Prometheus
 {
@@ -16,10 +16,9 @@ namespace Prometheus
 
     public class MetricServer : IMetricServer
     {
-        private const string PROTO_HEADER = "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited";
         private readonly HttpListener _httpListener = new HttpListener();
-        private static readonly string ProtoHeaderNoSpace = PROTO_HEADER.Replace(" ", "");
         private readonly ICollectorRegistry _registry;
+        private readonly ScrapeHandler _scrapeHandler = new ScrapeHandler();
         
         public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, standardCollectors, url, registry)
         {
@@ -47,36 +46,10 @@ namespace Prometheus
             StartLoop(scheduler ?? Scheduler.Default);
         }
 
-        private void ProcessScrapeRequest(HttpListenerContext context)
+        public string ProcessScrapeRequest(IEnumerable<string> acceptTypesHeader, Stream outputStream)
         {
-            var response = context.Response;
-            response.StatusCode = 200;
-
-            const string text = "text/plain; version=0.0.4";
-
-            string type = PROTO_HEADER;
-
-            var acceptHeader = context.Request.Headers.Get("Accept");
-            if (acceptHeader == null || !acceptHeader.Replace(" ", "").Contains(ProtoHeaderNoSpace))
-            {
-                type = text;
-            }
-
-            response.AddHeader("Content-Type", type);
-
             var collected = _registry.CollectAll();
-            using (var outputStream = response.OutputStream)
-            {
-                if (type == text)
-                {
-                    AsciiFormatter.Format(outputStream, collected);
-                }
-                else
-                {
-                    ProtoFormatter.Format(outputStream, collected);
-                }
-            }
-            response.Close();
+            return _scrapeHandler.ProcessScrapeRequest(collected, acceptTypesHeader, outputStream);
         }
 
         private void StartLoop(IScheduler scheduler)
@@ -87,7 +60,19 @@ namespace Prometheus
                 try
                 {
                     var httpListenerContext = _httpListener.EndGetContext(ar);
-                    ProcessScrapeRequest(httpListenerContext);
+                    var request = httpListenerContext.Request;
+                    var response = httpListenerContext.Response;
+                    
+                    var acceptHeader = request.Headers.Get("Accept");
+                    var acceptHeaders = acceptHeader == null ? null : acceptHeader.Split(',');
+
+                    using (var outputStream = response.OutputStream)
+                    {
+                        response.ContentType = ProcessScrapeRequest(acceptHeaders, outputStream);
+                    }
+                        
+                    response.StatusCode = 200;
+                    response.Close();
                 }
                 catch (Exception e)
                 {
