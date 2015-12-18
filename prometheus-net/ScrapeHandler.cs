@@ -12,21 +12,24 @@ namespace Prometheus
         private const string TextContentType = "text/plain; version=0.0.4";
         private const string ProtoAcceptType = "application/vnd.google.protobuf";
 
-        public string ProcessScrapeRequest(
-            IEnumerable<Advanced.DataContracts.MetricFamily> collected, 
-            IEnumerable<string> acceptHeaders, 
+        public void ProcessScrapeRequest(
+            IEnumerable<Advanced.DataContracts.MetricFamily> collected,
+            string contentType,
             Stream outputStream)
         {
-            if (ProtobufAccepted(acceptHeaders))
+            if (contentType == ProtoContentType)
             {
                 ProtoFormatter.Format(outputStream, collected);
-                return ProtoContentType;
             }
             else
             {
                 AsciiFormatter.Format(outputStream, collected);
-                return TextContentType;
             }
+        }
+
+        public static string GetContentType(IEnumerable<string> acceptHeaders)
+        {
+            return ProtobufAccepted(acceptHeaders) ? ProtoContentType : TextContentType;
         }
 
         private static bool ProtobufAccepted(IEnumerable<string> acceptTypesHeader)
