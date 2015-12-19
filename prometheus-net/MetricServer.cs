@@ -46,10 +46,10 @@ namespace Prometheus
             StartLoop(scheduler ?? Scheduler.Default);
         }
 
-        public string ProcessScrapeRequest(IEnumerable<string> acceptTypesHeader, Stream outputStream)
+        public void ProcessScrapeRequest(string contentType, Stream outputStream)
         {
             var collected = _registry.CollectAll();
-            return _scrapeHandler.ProcessScrapeRequest(collected, acceptTypesHeader, outputStream);
+            _scrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
         }
 
         private void StartLoop(IScheduler scheduler)
@@ -62,16 +62,19 @@ namespace Prometheus
                     var httpListenerContext = _httpListener.EndGetContext(ar);
                     var request = httpListenerContext.Request;
                     var response = httpListenerContext.Response;
+
+                    response.StatusCode = 200;
                     
                     var acceptHeader = request.Headers.Get("Accept");
                     var acceptHeaders = acceptHeader == null ? null : acceptHeader.Split(',');
+                    var contentType = ScrapeHandler.GetContentType(acceptHeaders);
+                    response.ContentType = contentType;
 
                     using (var outputStream = response.OutputStream)
                     {
-                        response.ContentType = ProcessScrapeRequest(acceptHeaders, outputStream);
+                        ProcessScrapeRequest(contentType, outputStream);
                     }
-                        
-                    response.StatusCode = 200;
+
                     response.Close();
                 }
                 catch (Exception e)
