@@ -14,7 +14,7 @@ namespace Prometheus.Internal
             var metricFamilys = metrics.ToArray();
             using (var streamWriter = new StreamWriter(destination, Encoding.ASCII))
             {
-                streamWriter.NewLine = "\r";
+                streamWriter.NewLine = "\n";
                 foreach (var metricFamily in metricFamilys)
                 {
                     WriteFamily(streamWriter, metricFamily);
