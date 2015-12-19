@@ -10,6 +10,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 0.0.10:
+- Fix header writing order
 * 0.0.9:
 - Generalise scraping so it can be called externally without using the embedded http handler
 * 0.0.8:
