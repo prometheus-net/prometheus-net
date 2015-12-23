@@ -6,7 +6,7 @@ using Prometheus.Internal;
 
 namespace Prometheus
 {
-    internal class ScrapeHandler
+    public class ScrapeHandler
     {
         private const string ProtoContentType = "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited";
         private const string TextContentType = "text/plain; version=0.0.4";
