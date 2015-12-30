@@ -15,9 +15,8 @@ namespace Prometheus
 
     public class MetricServer : IMetricServer
     {
-        private readonly HttpListener _httpListener = new HttpListener();
-        private readonly ICollectorRegistry _registry;
-        private readonly ScrapeHandler _scrapeHandler = new ScrapeHandler();
+        readonly HttpListener _httpListener = new HttpListener();
+        readonly ICollectorRegistry _registry;
         
         public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, standardCollectors, url, registry)
         {
@@ -66,7 +65,7 @@ namespace Prometheus
                     using (var outputStream = response.OutputStream)
                     {
                         var collected = _registry.CollectAll();
-                        _scrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
+                        ScrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
                     }
 
                     response.Close();
