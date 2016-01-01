@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Reactive.Concurrency;
 using Prometheus.Advanced;
@@ -16,9 +15,8 @@ namespace Prometheus
 
     public class MetricServer : IMetricServer
     {
-        private readonly HttpListener _httpListener = new HttpListener();
-        private readonly ICollectorRegistry _registry;
-        private readonly ScrapeHandler _scrapeHandler = new ScrapeHandler();
+        readonly HttpListener _httpListener = new HttpListener();
+        readonly ICollectorRegistry _registry;
         
         public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, standardCollectors, url, registry)
         {
@@ -46,12 +44,6 @@ namespace Prometheus
             StartLoop(scheduler ?? Scheduler.Default);
         }
 
-        public void ProcessScrapeRequest(string contentType, Stream outputStream)
-        {
-            var collected = _registry.CollectAll();
-            _scrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
-        }
-
         private void StartLoop(IScheduler scheduler)
         {
             //delegate allocations below - but that's fine as it's not really on the "critical path" (polled relatively infrequently) - and it's much more readable this way
@@ -72,7 +64,8 @@ namespace Prometheus
 
                     using (var outputStream = response.OutputStream)
                     {
-                        ProcessScrapeRequest(contentType, outputStream);
+                        var collected = _registry.CollectAll();
+                        ScrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
                     }
 
                     response.Close();
