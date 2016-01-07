@@ -19,11 +19,11 @@ namespace Prometheus
         const string QuantileLabel = "quantile";
 
         // Default Summary quantile values.
-        public static readonly IDictionary<double, double> DefObjectives = new Dictionary<double, double>
+        public static readonly IList<QuantileEpsilonPair> DefObjectives = new List<QuantileEpsilonPair>()
         {
-            {0.5, 0.05},
-            {0.9, 0.01},
-            {0.99, 0.001}
+            new QuantileEpsilonPair(0.5, 0.05),
+            new QuantileEpsilonPair(0.9, 0.01),
+            new QuantileEpsilonPair(0.99, 0.001)
         };
 
         // Default duration for which observations stay relevant
@@ -35,7 +35,7 @@ namespace Prometheus
         // Standard buffer size for collecting Summary observations
         const int DefBufCap = 500;
 
-        readonly IDictionary<double, double> _objectives;
+        readonly IList<QuantileEpsilonPair> _objectives;
         readonly TimeSpan _maxAge;
         readonly int _ageBuckets;
         readonly int _bufCap;
@@ -44,7 +44,7 @@ namespace Prometheus
             string name, 
             string help, 
             string[] labelNames, 
-            IDictionary<double, double> objectives = null, 
+            IList<QuantileEpsilonPair> objectives = null, 
             TimeSpan? maxAge = null, 
             int? ageBuckets = null, 
             int? bufCap = null)
@@ -79,7 +79,7 @@ namespace Prometheus
             // absolute error. If Objectives[q] = e, then the value reported
             // for q will be the φ-quantile value for some φ between q-e and q+e.
             // The default value is DefObjectives.
-            IDictionary<double, double> _objectives = new Dictionary<double, double>();
+            IList<QuantileEpsilonPair> _objectives = new List<QuantileEpsilonPair>();
             double[] _sortedObjectives;
             double _sum;
             uint _count;
@@ -149,21 +149,20 @@ namespace Prometheus
 
                 _headStream = _streams[0];
 
-                var idx = 0;
-                foreach (var objective in _objectives)
+                for (var i = 0; i < _objectives.Count; i++)
                 {
-                    _sortedObjectives[idx++] = objective.Key;
+                    _sortedObjectives[i] = _objectives[i].Quantile;
                 }
 
                 Array.Sort(_sortedObjectives);
 
                 _wireMetric = new Advanced.DataContracts.Summary();
 
-                foreach (var objective in _objectives)
+                for (var i = 0; i < _objectives.Count; i++)
                 {
                     _wireMetric.quantile.Add(new Quantile
                     {
-                        quantile = objective.Key
+                        quantile = _objectives[i].Quantile
                     });
                 }
             }

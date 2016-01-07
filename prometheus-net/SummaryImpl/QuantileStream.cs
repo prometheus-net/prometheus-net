@@ -76,22 +76,21 @@ namespace Prometheus.SummaryImpl
         // is guaranteed to be within (Quantile±Epsilon).
         //
         // See http://www.cs.rutgers.edu/~muthu/bquant.pdf for time, space, and error properties.
-        public static QuantileStream NewTargeted(IDictionary<double, double> targets)
+        public static QuantileStream NewTargeted(IList<QuantileEpsilonPair> targets)
         {
             return NewStream((stream, r) =>
             {
                 var m = double.MaxValue;
 
-                foreach (var target in targets)
+                for (var i = 0; i < targets.Count; i++)
                 {
-                    var quantile = target.Key;
-                    var epsilon = target.Value;
-
+                    var target = targets[i];
+                
                     double f;
-                    if (quantile*stream.N <= r)
-                        f = (2*epsilon*r)/quantile;
+                    if (target.Quantile* stream.N <= r)
+                        f = (2*target.Epsilon*r)/target.Quantile;
                     else
-                        f = (2*epsilon*(stream.N - r))/(1 - quantile);
+                        f = (2*target.Epsilon*(stream.N - r))/(1 - target.Quantile);
 
                     if (f < m)
                         m = f;

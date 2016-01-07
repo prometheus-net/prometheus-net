@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Prometheus.Advanced;
+using Prometheus.SummaryImpl;
 
 namespace Prometheus
 {
@@ -23,7 +24,7 @@ namespace Prometheus
             return DefaultFactory.CreateSummary(name, help, labelNames);
         }
 
-        public static Prometheus.Summary CreateSummary(string name, string help, string[] labelNames, IDictionary<double, double> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
+        public static Prometheus.Summary CreateSummary(string name, string help, string[] labelNames, IList<QuantileEpsilonPair> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
         {
             return DefaultFactory.CreateSummary(name, help, labelNames, objectives, maxAge, ageBuckets, bufCap);
         }

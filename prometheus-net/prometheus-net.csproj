@@ -71,6 +71,7 @@
     <Compile Include="Advanced\DefaultCollectorRegistry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SummaryImpl\QuantileComparer.cs" />
+    <Compile Include="SummaryImpl\QuantileEpsilonPair.cs" />
     <Compile Include="SummaryImpl\QuantileStream.cs" />
     <Compile Include="SummaryImpl\Sample.cs" />
     <Compile Include="SummaryImpl\SampleBuffer.cs" />

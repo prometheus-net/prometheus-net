@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
+using Prometheus.SummaryImpl;
 
 namespace Prometheus.Tests
 {
@@ -55,23 +56,23 @@ namespace Prometheus.Tests
             var want = sampleSum;
             Assert.That(Math.Abs(got-want)/want, Is.LessThanOrEqualTo(0.001));
 
-            var objectives = Summary.DefObjectives.Select(_ => _.Key).ToArray();
+            var objectives = Summary.DefObjectives.Select(_ => _.Quantile).ToArray();
             Array.Sort(objectives);
 
             for (var i = 0; i < objectives.Length; i++)
             {
                 var wantQ = Summary.DefObjectives.ElementAt(i);
-                var epsilon = Summary.DefObjectives[wantQ.Key];
+                var epsilon = wantQ.Epsilon;
                 var gotQ = m.quantile[i].quantile;
                 var gotV = m.quantile[i].value;
-                var minMax = GetBounds(allVars, wantQ.Key, epsilon);
+                var minMax = GetBounds(allVars, wantQ.Quantile, epsilon);
 
                 Assert.That(gotQ, Is.Not.NaN);
                 Assert.That(gotV, Is.Not.NaN);
                 Assert.That(minMax.Item1, Is.Not.NaN);
                 Assert.That(minMax.Item2, Is.Not.NaN);
 
-                Assert.That(gotQ, Is.EqualTo(wantQ.Key));
+                Assert.That(gotQ, Is.EqualTo(wantQ.Quantile));
                 Assert.That(gotV, Is.GreaterThanOrEqualTo(minMax.Item1));
                 Assert.That(gotV, Is.LessThanOrEqualTo(minMax.Item2));
             }
@@ -82,7 +83,7 @@ namespace Prometheus.Tests
         {
             var baseTime = new DateTime(2015, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             
-            var sum = new Summary("test_summary", "helpless", new string[0], objectives: new Dictionary<double, double> { {0.1d, 0.001d} }, maxAge: TimeSpan.FromSeconds(100), ageBuckets: 10);
+            var sum = new Summary("test_summary", "helpless", new string[0], objectives: new List<QuantileEpsilonPair> {new QuantileEpsilonPair(0.1d, 0.001d)}, maxAge: TimeSpan.FromSeconds(100), ageBuckets: 10);
             var child = new Summary.Child();
             child.Init(sum, LabelValues.Empty, baseTime);
             

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Prometheus.SummaryImpl;
 
 namespace Prometheus.Advanced
 {
@@ -30,7 +31,7 @@ namespace Prometheus.Advanced
             return (Prometheus.Summary) _registry.GetOrAdd(metric);
         }
 
-        public Prometheus.Summary CreateSummary(string name, string help, string[] labelNames, IDictionary<double, double> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
+        public Prometheus.Summary CreateSummary(string name, string help, string[] labelNames, IList<QuantileEpsilonPair> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
         {
             var metric = new Prometheus.Summary(name, help, labelNames, objectives, maxAge, ageBuckets, bufCap);
             return (Prometheus.Summary)_registry.GetOrAdd(metric);

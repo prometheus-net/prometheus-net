@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using Prometheus.SummaryImpl;
 
@@ -8,13 +9,13 @@ namespace Prometheus.Tests
     [TestFixture]
     public class QuantileStreamTests
     {
-        readonly IDictionary<double, double> _targets = new Dictionary<double, double>
+        readonly IList<QuantileEpsilonPair> _targets = new List<QuantileEpsilonPair>
         {
-            {0.01, 0.001},
-            {0.10, 0.01},
-            {0.50, 0.05},
-            {0.90, 0.01},
-            {0.99, 0.001}
+            new QuantileEpsilonPair(0.01, 0.001),
+            new QuantileEpsilonPair(0.10, 0.01),
+            new QuantileEpsilonPair(0.50, 0.05),
+            new QuantileEpsilonPair(0.90, 0.01),
+            new QuantileEpsilonPair(0.99, 0.001)
         };
 
         readonly double[] _lowQuantiles = {0.01, 0.1, 0.5};
@@ -62,7 +63,7 @@ namespace Prometheus.Tests
             Assert.That(q.Count, Is.EqualTo(100));
 
             // Before compression, Query should have 100% accuracy
-            foreach (var quantile in _targets.Keys)
+            foreach (var quantile in _targets.Select(_ => _.Quantile))
             {
                 var w = quantile*100;
                 var g = q.Query(quantile);
@@ -73,7 +74,7 @@ namespace Prometheus.Tests
         [Test]
         public void TestUncompressedSamples()
         {
-            var q = QuantileStream.NewTargeted(new Dictionary<double, double> {{0.99d, 0.001d}});
+            var q = QuantileStream.NewTargeted(new List<QuantileEpsilonPair> {new QuantileEpsilonPair(0.99d, 0.001d)});
 
             for (var i = 1; i <= 100; i++)
             {
@@ -86,7 +87,7 @@ namespace Prometheus.Tests
         [Test]
         public void TestUncompressedOne()
         {
-            var q = QuantileStream.NewTargeted(new Dictionary<double, double> { { 0.99d, 0.001d } });
+            var q = QuantileStream.NewTargeted(new List<QuantileEpsilonPair> { new QuantileEpsilonPair(0.99d, 0.001d) });
             q.Insert(3.14);
             var g = q.Query(0.90);
             Assert.That(g, Is.EqualTo(3.14));
@@ -95,7 +96,7 @@ namespace Prometheus.Tests
         [Test]
         public void TestDefaults()
         {
-            var q = QuantileStream.NewTargeted(new Dictionary<double, double> { { 0.99d, 0.001d } });
+            var q = QuantileStream.NewTargeted(new List<QuantileEpsilonPair> { new QuantileEpsilonPair(0.99d, 0.001d) });
             var g = q.Query(0.99);
             Assert.That(g, Is.EqualTo(0));
 
@@ -126,14 +127,12 @@ namespace Prometheus.Tests
 
             foreach (var target in _targets)
             {
-                var quantile = target.Key;
-                var epsilon = target.Value;
                 var n = (double) a.Length;
-                var k = (int)(quantile * n);
-                var lower = (int) ((quantile - epsilon)*n);
+                var k = (int)(target.Quantile * n);
+                var lower = (int) ((target.Quantile - target.Epsilon)*n);
                 if (lower < 1)
                     lower = 1;
-                var upper = (int) Math.Ceiling((quantile + epsilon)*n);
+                var upper = (int) Math.Ceiling((target.Quantile + target.Epsilon) *n);
                 if (upper > a.Length)
                     upper = a.Length;
 
@@ -141,10 +140,10 @@ namespace Prometheus.Tests
                 var min = a[lower - 1];
                 var max = a[upper - 1];
 
-                var g = s.Query(quantile);
+                var g = s.Query(target.Quantile);
 
-                Assert.That(g, Is.GreaterThanOrEqualTo(min), $"q={quantile}: want {w} [{min}, {max}], got {g}");
-                Assert.That(g, Is.LessThanOrEqualTo(max), $"q={quantile}: want {w} [{min}, {max}], got {g}");
+                Assert.That(g, Is.GreaterThanOrEqualTo(min), $"q={target.Quantile}: want {w} [{min}, {max}], got {g}");
+                Assert.That(g, Is.LessThanOrEqualTo(max), $"q={target.Quantile}: want {w} [{min}, {max}], got {g}");
             }
         }
 
