@@ -70,6 +70,11 @@
     <Compile Include="MetricServer.cs" />
     <Compile Include="Advanced\DefaultCollectorRegistry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SummaryImpl\QuantileComparer.cs" />
+    <Compile Include="SummaryImpl\QuantileStream.cs" />
+    <Compile Include="SummaryImpl\Sample.cs" />
+    <Compile Include="SummaryImpl\SampleBuffer.cs" />
+    <Compile Include="SummaryImpl\SampleStream.cs" />
     <Compile Include="ScrapeHandler.cs" />
     <Compile Include="Summary.cs" />
   </ItemGroup>

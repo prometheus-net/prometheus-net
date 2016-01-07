@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using NUnit.Framework;
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
 using Should;
 
 namespace Prometheus.Tests
@@ -12,7 +10,7 @@ namespace Prometheus.Tests
     public class MetricsTests
     {
         [SetUp]
-        public void setup()
+        public void Setup()
         {
             DefaultCollectorRegistry.Instance.Clear();
         }
@@ -151,6 +149,21 @@ namespace Prometheus.Tests
             metric.histogram.bucket[1].cumulative_count.ShouldEqual(5ul);
             metric.histogram.bucket[2].cumulative_count.ShouldEqual(8ul);
             metric.histogram.bucket[3].cumulative_count.ShouldEqual(9ul);
+        }
+
+        [Test]
+        public void summary_tests()
+        {
+            var summary = Metrics.CreateSummary("summ1", "help");
+
+            summary.Observe(1);
+            summary.Observe(2);
+            summary.Observe(3);
+
+            var metric = summary.Collect().metric[0];
+            metric.summary.ShouldNotBeNull();
+            metric.summary.sample_count.ShouldEqual(3ul);
+            metric.summary.sample_sum.ShouldEqual(6);
         }
 
         [Test]

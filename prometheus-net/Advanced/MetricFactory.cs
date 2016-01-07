@@ -1,4 +1,7 @@
-﻿namespace Prometheus.Advanced
+﻿using System;
+using System.Collections.Generic;
+
+namespace Prometheus.Advanced
 {
     public class MetricFactory
     {
@@ -25,6 +28,12 @@
         {
             var metric = new Prometheus.Summary(name, help, labelNames);
             return (Prometheus.Summary) _registry.GetOrAdd(metric);
+        }
+
+        public Prometheus.Summary CreateSummary(string name, string help, string[] labelNames, IDictionary<double, double> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
+        {
+            var metric = new Prometheus.Summary(name, help, labelNames, objectives, maxAge, ageBuckets, bufCap);
+            return (Prometheus.Summary)_registry.GetOrAdd(metric);
         }
 
         public Prometheus.Histogram CreateHistogram(string name, string help, double[] buckets = null, params string[] labelNames)

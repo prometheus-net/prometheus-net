@@ -48,6 +48,12 @@ namespace Prometheus.Internal
             {
                 streamWriter.WriteLine(SimpleValue(familyName, metric.summary.sample_sum, metric.label, "_sum"));
                 streamWriter.WriteLine(SimpleValue(familyName, metric.summary.sample_count, metric.label, "_count"));
+
+                foreach (var quantileValuePair in metric.summary.quantile)
+                {
+                    var quantile = double.IsPositiveInfinity(quantileValuePair.quantile) ? "+Inf" : quantileValuePair.quantile.ToString(CultureInfo.InvariantCulture);
+                    streamWriter.WriteLine(SimpleValue(familyName, quantileValuePair.value, metric.label.Concat(new []{new LabelPair{name= "quantile", value = quantile}})));
+                }
             }
             else if (metric.histogram != null)
             {
@@ -56,7 +62,7 @@ namespace Prometheus.Internal
                 foreach (var bucket in metric.histogram.bucket)
                 {
                     var value = double.IsPositiveInfinity(bucket.upper_bound) ? "+Inf" : bucket.upper_bound.ToString(CultureInfo.InvariantCulture);
-                    streamWriter.WriteLine(SimpleValue(familyName, bucket.cumulative_count, metric.label.Concat(new []{new LabelPair(){name = "le", value = value}}), "_bucket"));
+                    streamWriter.WriteLine(SimpleValue(familyName, bucket.cumulative_count, metric.label.Concat(new []{new LabelPair{name = "le", value = value}}), "_bucket"));
                 }
             }
             else

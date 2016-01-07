@@ -75,7 +75,7 @@ namespace Prometheus
                 _wireMetric = new Advanced.DataContracts.Histogram();
                 for (int i = 0; i < _bucketCounts.Length; i++)
                 {
-                    _wireMetric.bucket.Add(new Bucket()
+                    _wireMetric.bucket.Add(new Bucket
                     {
                         upper_bound = _buckets[i]
                     });
