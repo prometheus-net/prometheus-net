@@ -10,6 +10,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 0.0.11:
+- Summary metric ported from go
 * 0.0.10:
 - Fix header writing order
 * 0.0.9:
