@@ -10,6 +10,9 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 1.0.0:
+- Add CPU, num handles, start time, num threads metrics to dot net stats collector
+- Made DotNetStatsCollector default (previously it was PerfCounterCollector)
 * 0.0.11:
 - Summary metric ported from go
 * 0.0.10:

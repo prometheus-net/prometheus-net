@@ -28,10 +28,10 @@ namespace Prometheus
             _httpListener.Prefixes.Add(string.Format("http://{0}:{1}/{2}", hostname, port, url));
             if (_registry == DefaultCollectorRegistry.Instance)
             {
-                // Default to perf counter collectors if none speified
+                // Default to DotNetStatsCollector if none speified
                 // For no collectors, pass an empty collection
                 if (standardCollectors == null)
-                    standardCollectors = new[] {new PerfCounterCollector()};
+                    standardCollectors = new[] {new DotNetStatsCollector()};
 
                 DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(standardCollectors);
             }
