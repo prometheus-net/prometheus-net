@@ -35,16 +35,21 @@ namespace Prometheus.Advanced
                 _collectionCounts.Add(collectionCountsParent.Labels(gen.ToString()));
             }
 
-            _virtualMemorySize = Metrics.CreateGauge("process_virtual_bytes", "Process virtual memory size");
-            _workingSet = Metrics.CreateGauge("process_working_set", "Process working set");
-            _privateMemorySize = Metrics.CreateGauge("process_private_bytes", "Process private memory size");
+            // Metrics that make sense to compare between all operating systems
+            _startTime = Metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds");
+            _cpuTotal = Metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
+
+            // Windows specific metrics
+            _virtualMemorySize = Metrics.CreateGauge("process_windows_virtual_bytes", "Process virtual memory size");
+            _workingSet = Metrics.CreateGauge("process_windows_working_set", "Process working set");
+            _privateMemorySize = Metrics.CreateGauge("process_windows_private_bytes", "Process private memory size");
+            _openHandles = Metrics.CreateGauge("process_windows_open_handles", "Number of open handles");
+            _numThreads = Metrics.CreateGauge("process_windows_num_threads", "Total number of threads");
+
+            // .net specific metrics
             _totalMemory = Metrics.CreateGauge("dotnet_totalmemory", "Total known allocated memory");
             _perfErrors = Metrics.CreateCounter("dotnet_collection_errors_total", "Total number of errors that occured during collections");
-            _cpuTotal = Metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
-            _openHandles = Metrics.CreateGauge("process_open_handles", "Number of open handles");
-            _startTime = Metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds");
-            _numThreads = Metrics.CreateGauge("process_threads_total", "Total number of threads");
-
+            
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _startTime.Set((_process.StartTime.ToUniversalTime() - epoch).TotalSeconds);
         }
