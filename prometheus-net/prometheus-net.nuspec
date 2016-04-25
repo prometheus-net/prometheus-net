@@ -10,6 +10,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 1.1.1:
+- disposing of MetricServer loop on Stop()
 * 1.1.0:
 - Renamed some metric names to be in-line with prometheus guidelines (breaking change as far as the exported metrics are concerned)
 * 1.0.0:

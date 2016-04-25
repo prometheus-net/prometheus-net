@@ -17,6 +17,7 @@ namespace Prometheus
     {
         readonly HttpListener _httpListener = new HttpListener();
         readonly ICollectorRegistry _registry;
+        private IDisposable _schedulerDelegate;
         
         public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, standardCollectors, url, registry)
         {
@@ -47,7 +48,7 @@ namespace Prometheus
         private void StartLoop(IScheduler scheduler)
         {
             //delegate allocations below - but that's fine as it's not really on the "critical path" (polled relatively infrequently) - and it's much more readable this way
-            scheduler.Schedule(repeatAction => _httpListener.BeginGetContext(ar =>
+            _schedulerDelegate = scheduler.Schedule(repeatAction => _httpListener.BeginGetContext(ar =>
             {
                 try
                 {
@@ -80,6 +81,7 @@ namespace Prometheus
 
         public void Stop()
         {
+            if (_schedulerDelegate != null) _schedulerDelegate.Dispose();
             _httpListener.Stop();
             _httpListener.Close();
         }
