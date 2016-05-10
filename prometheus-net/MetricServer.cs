@@ -18,15 +18,22 @@ namespace Prometheus
         readonly HttpListener _httpListener = new HttpListener();
         readonly ICollectorRegistry _registry;
         private IDisposable _schedulerDelegate;
-
-        public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, standardCollectors, url, registry)
+        
+        public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : this("+", port, standardCollectors, url, registry, useHttps)
         {
         }
 
-        public MetricServer(string hostname, int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null)
+        public MetricServer(string hostname, int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false)
         {
             _registry = registry ?? DefaultCollectorRegistry.Instance;
-            _httpListener.Prefixes.Add(string.Format("http://{0}:{1}/{2}", hostname, port, url));
+            if (useHttps)
+            {
+                _httpListener.Prefixes.Add(string.Format("https://{0}:{1}/{2}", hostname, port, url));
+            }
+            else
+            {
+                _httpListener.Prefixes.Add(string.Format("http://{0}:{1}/{2}", hostname, port, url));
+            }
             if (_registry == DefaultCollectorRegistry.Instance)
             {
                 // Default to DotNetStatsCollector if none speified
