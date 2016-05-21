@@ -18,7 +18,7 @@ namespace Prometheus
         readonly HttpListener _httpListener = new HttpListener();
         readonly ICollectorRegistry _registry;
         private IDisposable _schedulerDelegate;
-        
+
         public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null) : this("+", port, standardCollectors, url, registry)
         {
         }
@@ -32,7 +32,7 @@ namespace Prometheus
                 // Default to DotNetStatsCollector if none speified
                 // For no collectors, pass an empty collection
                 if (standardCollectors == null)
-                    standardCollectors = new[] {new DotNetStatsCollector()};
+                    standardCollectors = new[] { new DotNetStatsCollector() };
 
                 DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(standardCollectors);
             }
@@ -48,35 +48,47 @@ namespace Prometheus
         private void StartLoop(IScheduler scheduler)
         {
             //delegate allocations below - but that's fine as it's not really on the "critical path" (polled relatively infrequently) - and it's much more readable this way
-            _schedulerDelegate = scheduler.Schedule(repeatAction => _httpListener.BeginGetContext(ar =>
-            {
-                try
+            _schedulerDelegate = scheduler.Schedule(
+                repeatAction =>
                 {
-                    var httpListenerContext = _httpListener.EndGetContext(ar);
-                    var request = httpListenerContext.Request;
-                    var response = httpListenerContext.Response;
-
-                    response.StatusCode = 200;
-                    
-                    var acceptHeader = request.Headers.Get("Accept");
-                    var acceptHeaders = acceptHeader == null ? null : acceptHeader.Split(',');
-                    var contentType = ScrapeHandler.GetContentType(acceptHeaders);
-                    response.ContentType = contentType;
-
-                    using (var outputStream = response.OutputStream)
+                    try
                     {
-                        var collected = _registry.CollectAll();
-                        ScrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
-                    }
+                        _httpListener.BeginGetContext(ar =>
+                        {
+                            try
+                            {
+                                var httpListenerContext = _httpListener.EndGetContext(ar);
+                                var request = httpListenerContext.Request;
+                                var response = httpListenerContext.Response;
 
-                    response.Close();
+                                response.StatusCode = 200;
+
+                                var acceptHeader = request.Headers.Get("Accept");
+                                var acceptHeaders = acceptHeader == null ? null : acceptHeader.Split(',');
+                                var contentType = ScrapeHandler.GetContentType(acceptHeaders);
+                                response.ContentType = contentType;
+
+                                using (var outputStream = response.OutputStream)
+                                {
+                                    var collected = _registry.CollectAll();
+                                    ScrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
+                                }
+
+                                response.Close();
+                            }
+                            catch (Exception e)
+                            {
+                                Trace.WriteLine(string.Format("Error in MetricsServer: {0}", e));
+                            }
+                            repeatAction.Invoke();
+                        }, null);
+                    }
+                    catch (Exception e)
+                    {
+                        Trace.WriteLine(string.Format("Error in MetricsServer: {0}", e));
+                    }
                 }
-                catch (Exception e)
-                {
-                    Trace.WriteLine(string.Format("Error in MetricsServer: {0}", e));
-                }
-                repeatAction.Invoke();
-            }, null));
+            );
         }
 
         public void Stop()

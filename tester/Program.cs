@@ -46,12 +46,14 @@ namespace tester
                     var text = new StreamReader(httpResponse.GetResponseStream()).ReadToEnd();
                     Console.WriteLine(text);
                 }
-
-                Console.WriteLine("ENTER to quit");
             });
 
+            Console.WriteLine("Press enter to stop metricServer");
             Console.ReadLine();
             metricServer.Stop();
+
+            Console.WriteLine("Press enter to stop tester");
+            Console.ReadLine();
         }
     }
 }
