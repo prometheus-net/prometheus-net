@@ -26,14 +26,8 @@ namespace Prometheus
         public MetricServer(string hostname, int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false)
         {
             _registry = registry ?? DefaultCollectorRegistry.Instance;
-            if (useHttps)
-            {
-                _httpListener.Prefixes.Add(string.Format("https://{0}:{1}/{2}", hostname, port, url));
-            }
-            else
-            {
-                _httpListener.Prefixes.Add(string.Format("http://{0}:{1}/{2}", hostname, port, url));
-            }
+            var s = useHttps ? "s" : "";
+            _httpListener.Prefixes.Add($"http{s}://{hostname}:{port}/{url}");
             if (_registry == DefaultCollectorRegistry.Instance)
             {
                 // Default to DotNetStatsCollector if none speified
