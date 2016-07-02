@@ -118,7 +118,6 @@ namespace Prometheus
 
                 if (bucketIndex == -1)
                 {
-                    Trace.WriteLine(string.Format("Couldn't find a bucket for {0} in metric {1}", val, ToString()));
                     return;
                 }
 
