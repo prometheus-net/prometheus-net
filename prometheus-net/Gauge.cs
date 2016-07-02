@@ -23,22 +23,23 @@ namespace Prometheus
         public class Child : Advanced.Child, IGauge
         {
             private double _value;
-            private readonly object _lock = new object();
 
             protected override void Populate(Metric metric)
             {
                 metric.gauge = new Advanced.DataContracts.Gauge();
-                lock (_lock)
-                {
-                    metric.gauge.value = _value;
-                }
+                metric.gauge.value = Value;
             }
 
             public void Inc(double increment = 1)
             {
-                lock (_lock)
+                double newCurrentValue = 0;
+                while (true)
                 {
-                    _value += increment;
+                    double currentValue = newCurrentValue;
+                    double newValue = currentValue + increment;
+                    newCurrentValue = Interlocked.CompareExchange(ref _value, newValue, currentValue);
+                    if (newCurrentValue == currentValue)
+                        return;
                 }
             }
 
@@ -57,10 +58,7 @@ namespace Prometheus
             {
                 get
                 {
-                    lock (_lock)
-                    {
-                        return _value;
-                    }
+                    return Interlocked.CompareExchange(ref _value, 0, 0);
                 }
             }
         }
