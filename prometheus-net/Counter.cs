@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
 
@@ -26,7 +27,6 @@ namespace Prometheus
         public class Child : Advanced.Child, ICounter
         {
             private double _value;
-            private readonly object _lock = new object();
 
             protected override void Populate(Metric metric)
             {
@@ -41,9 +41,14 @@ namespace Prometheus
                     throw new InvalidOperationException("Counter cannot go down");
                 }
 
-                lock (_lock)
+                double newCurrentValue = 0;
+                while (true)
                 {
-                    _value += increment;
+                    double currentValue = newCurrentValue;
+                    double newValue = currentValue + increment;
+                    newCurrentValue = Interlocked.CompareExchange(ref _value, newValue, currentValue);
+                    if (newCurrentValue == currentValue)
+                        return;
                 }
             }
 
@@ -51,10 +56,7 @@ namespace Prometheus
             {
                 get
                 {
-                    lock (_lock)
-                    {
-                        return _value;
-                    }
+                    return Interlocked.CompareExchange(ref _value, 0, 0);
                 }
             }
         }
