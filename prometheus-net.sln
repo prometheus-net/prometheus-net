@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net", "prometheus-net\prometheus-net.csproj", "{EE3B50BE-577B-4664-A347-CC737B7D5612}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tester", "tester\tester.csproj", "{C0212A44-AE68-4315-BC20-3B8BB40A3F98}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.tests", "prometheus-net.tests\prometheus-net.tests.csproj", "{276D072F-BC78-4B4F-988C-CF2B82F65603}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "prometheus-netcore", "prometheus-netcore\prometheus-netcore.xproj", "{B68DAAA5-8CA2-44BD-8342-9E60327CF72A}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "coretester", "coretester\coretester.xproj", "{4A24EE97-43AF-42C0-94A5-72EF2A8AA7E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +31,14 @@ Global
 		{276D072F-BC78-4B4F-988C-CF2B82F65603}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{276D072F-BC78-4B4F-988C-CF2B82F65603}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{276D072F-BC78-4B4F-988C-CF2B82F65603}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B68DAAA5-8CA2-44BD-8342-9E60327CF72A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B68DAAA5-8CA2-44BD-8342-9E60327CF72A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B68DAAA5-8CA2-44BD-8342-9E60327CF72A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B68DAAA5-8CA2-44BD-8342-9E60327CF72A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A24EE97-43AF-42C0-94A5-72EF2A8AA7E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A24EE97-43AF-42C0-94A5-72EF2A8AA7E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A24EE97-43AF-42C0-94A5-72EF2A8AA7E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A24EE97-43AF-42C0-94A5-72EF2A8AA7E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

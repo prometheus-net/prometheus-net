@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0-*",
+
+  "dependencies": {
+    "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
+    "Microsoft.AspNetCore.Server.Kestrel.Https": "1.0.0",
+    "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-beta8",
+    "NETStandard.Library": "1.6.0",
+    "protobuf-net": "2.1.0-alpha-1",
+    "System.Diagnostics.Process": "4.1.0",
+    "System.Reactive.Core": "3.0.0",
+    "System.Reactive.Interfaces": "3.0.0"
+  },
+
+  "frameworks": {
+    "netstandard1.6": {
+      "imports": "dnxcore50"
+    }
+  },
+
+  "buildOptions": {
+    "compile": {
+      "includeFiles": [
+        "../prometheus-net/Advanced/Child.cs",
+        "../prometheus-net/Advanced/Collector.cs",
+        "../prometheus-net/Advanced/DefaultCollectorRegistry.cs",
+        "../prometheus-net/Advanced/ICollector.cs",
+        "../prometheus-net/Advanced/ICollectorRegistry.cs",
+        "../prometheus-net/Advanced/IOnDemandCollector.cs",
+        "../prometheus-net/Advanced/MetricFactory.cs",
+
+        "../prometheus-net/Internal/AsciiFormatter.cs",
+        "../prometheus-net/Internal/LabelValues.cs",
+        "../prometheus-net/Internal/ProtoFormatter.cs",
+
+        "../prometheus-net/SummaryImpl/QuantileComparer.cs",
+        "../prometheus-net/SummaryImpl/QuantileEpsilonPair.cs",
+        "../prometheus-net/SummaryImpl/QuantileStream.cs",
+        "../prometheus-net/SummaryImpl/Sample.cs",
+        "../prometheus-net/SummaryImpl/SampleBuffer.cs",
+        "../prometheus-net/SummaryImpl/SampleStream.cs",
+
+        "../prometheus-net/Counter.cs",
+        "../prometheus-net/Gauge.cs",
+        "../prometheus-net/Histogram.cs",
+        "../prometheus-net/ScrapeHandler.cs",
+        "../prometheus-net/Summary.cs",
+        "../prometheus-net/Metrics.cs"
+      ]
+    }
+  }
+}
