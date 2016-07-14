@@ -58,6 +58,8 @@ namespace Prometheus.Advanced
         {
             try
             {
+                _process.Refresh();
+
                 for (var gen = 0; gen <= GC.MaxGeneration; gen++)
                 {
                     var collectionCount = _collectionCounts[gen];
