@@ -20,6 +20,7 @@ namespace Prometheus.Advanced
         private Gauge _openHandles;
         private Gauge _startTime;
         private Gauge _numThreads;
+        private Gauge _pid;
 
         public DotNetStatsCollector()
         {
@@ -38,13 +39,14 @@ namespace Prometheus.Advanced
             // Metrics that make sense to compare between all operating systems
             _startTime = Metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds");
             _cpuTotal = Metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
-
+            
             // Windows specific metrics
             _virtualMemorySize = Metrics.CreateGauge("process_windows_virtual_bytes", "Process virtual memory size");
             _workingSet = Metrics.CreateGauge("process_windows_working_set", "Process working set");
             _privateMemorySize = Metrics.CreateGauge("process_windows_private_bytes", "Process private memory size");
             _openHandles = Metrics.CreateGauge("process_windows_open_handles", "Number of open handles");
             _numThreads = Metrics.CreateGauge("process_windows_num_threads", "Total number of threads");
+            _pid = Metrics.CreateGauge("process_windows_processid", "Process ID");
 
             // .net specific metrics
             _totalMemory = Metrics.CreateGauge("dotnet_totalmemory", "Total known allocated memory");
@@ -52,6 +54,7 @@ namespace Prometheus.Advanced
             
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _startTime.Set((_process.StartTime.ToUniversalTime() - epoch).TotalSeconds);
+            _pid.Set(_process.Id);
         }
 
         public void UpdateMetrics()
