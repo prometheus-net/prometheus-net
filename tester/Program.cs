@@ -11,7 +11,7 @@ namespace tester
         static void Main(string[] args)
         {
             // use MetricServerTester or MetricPusherTester to select between metric handlers
-            var tester = new MetricPusherTester();
+            var tester = new MetricServerTester();
             tester.OnStart();
 
             var metricServer = tester.InitializeMetricHandler();
