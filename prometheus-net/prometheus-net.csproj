@@ -62,12 +62,15 @@
     <Compile Include="Gauge.cs" />
     <Compile Include="Histogram.cs" />
     <Compile Include="Advanced\ICollectorRegistry.cs" />
+    <Compile Include="IMetricServer.cs" />
     <Compile Include="Internal\AsciiFormatter.cs" />
     <Compile Include="Advanced\ICollector.cs" />
     <Compile Include="Internal\LabelValues.cs" />
     <Compile Include="Advanced\Collector.cs" />
     <Compile Include="Internal\ProtoFormatter.cs" />
     <Compile Include="Advanced\MetricFactory.cs" />
+    <Compile Include="MetricHandler.cs" />
+    <Compile Include="MetricPusher.cs" />
     <Compile Include="Metrics.cs" />
     <Compile Include="MetricServer.cs" />
     <Compile Include="Advanced\DefaultCollectorRegistry.cs" />

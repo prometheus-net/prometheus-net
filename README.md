@@ -91,6 +91,15 @@ var metricServer = new MetricServer(port: 1234);
 metricServer.Start();
 ```
 
+## Pushgateway support
+
+Metrics can be posted to a Pushgateway server over HTTP.
+
+```csharp
+var metricServer = new MetricPusher(endpoint: "http://pushgateway.example.org:9091/metrics", job: "some_job");
+metricServer.Start();
+```
+
 ## Unit testing
 For simple usage the API uses static classes, which - in unit tests - can cause errors like this: "A collector with name '<NAME>' has already been registered!"
 

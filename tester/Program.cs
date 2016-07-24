@@ -10,7 +10,11 @@ namespace tester
     {
         static void Main(string[] args)
         {
-            var metricServer = new MetricServer(hostname:"localhost", port: 1234);
+            // use MetricServerTester or MetricPusherTester to select between metric handlers
+            var tester = new MetricPusherTester();
+            tester.OnStart();
+
+            var metricServer = tester.InitializeMetricHandler();
             metricServer.Start();
 
             var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new []{ "method", "endpoint"});
@@ -38,19 +42,14 @@ namespace tester
                 hist.Observe(random.NextDouble());
                 summary.Observe(random.NextDouble());
 
-                var httpRequest = (HttpWebRequest) WebRequest.Create("http://localhost:1234/metrics");
-                httpRequest.Method = "GET";
-
-                using (var httpResponse = (HttpWebResponse) httpRequest.GetResponse())
-                {
-                    var text = new StreamReader(httpResponse.GetResponseStream()).ReadToEnd();
-                    Console.WriteLine(text);
-                }
+                tester.OnObservation();
             });
 
             Console.WriteLine("Press enter to stop metricServer");
             Console.ReadLine();
             metricServer.Stop();
+
+            tester.OnEnd();
 
             Console.WriteLine("Press enter to stop tester");
             Console.ReadLine();
