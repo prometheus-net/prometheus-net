@@ -9,15 +9,16 @@ namespace Prometheus.Internal
 {
     internal class AsciiFormatter
     {
+        private static readonly Encoding Encoding = new UTF8Encoding(false);
+
         public static void Format(Stream destination, IEnumerable<MetricFamily> metrics)
         {
             var metricFamilys = metrics.ToArray();
 
             // Use UTF-8 encoding, but provide the flag to ensure the Unicode Byte Order Mark is never
-            //  pre-pended to the output stream. If the BOM exists the push gateway won't understand
-            //  the metric data sent to it.
+            //  pre-pended to the output stream.
             //
-            using (var streamWriter = new StreamWriter(destination, new UTF8Encoding(false)))
+            using (var streamWriter = new StreamWriter(destination, Encoding))
             {
                 streamWriter.NewLine = "\n";
                 foreach (var metricFamily in metricFamilys)
