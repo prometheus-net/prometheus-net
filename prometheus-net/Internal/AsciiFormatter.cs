@@ -9,15 +9,14 @@ namespace Prometheus.Internal
 {
     internal class AsciiFormatter
     {
+        // Use UTF-8 encoding, but provide the flag to ensure the Unicode Byte Order Mark is never
+        // pre-pended to the output stream.
         private static readonly Encoding Encoding = new UTF8Encoding(false);
 
         public static void Format(Stream destination, IEnumerable<MetricFamily> metrics)
         {
             var metricFamilys = metrics.ToArray();
 
-            // Use UTF-8 encoding, but provide the flag to ensure the Unicode Byte Order Mark is never
-            //  pre-pended to the output stream.
-            //
             using (var streamWriter = new StreamWriter(destination, Encoding))
             {
                 streamWriter.NewLine = "\n";

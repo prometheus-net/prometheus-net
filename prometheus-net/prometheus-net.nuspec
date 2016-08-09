@@ -10,6 +10,12 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 1.1.5:
+- PushGateway support
+- Various internal improvements (replaced locks with Interlocked operations)    
+* 1.1.4:
+- Fixed some metrics not updating, added process ID metric
+- Replaced lock statements in Counter and Gauge with CAS
 * 1.1.3:
 - optionally use https in MetricServer
 * 1.1.2:
