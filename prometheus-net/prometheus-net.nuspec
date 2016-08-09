@@ -10,7 +10,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
-* 1.1.5:
+* 1.2.0:
 - PushGateway support
 - Various internal improvements (replaced locks with Interlocked operations)    
 * 1.1.4:
