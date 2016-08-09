@@ -7,49 +7,25 @@ using Prometheus.Advanced;
 
 namespace Prometheus
 {
-    public interface IMetricServer
-    {
-        void Start(IScheduler scheduler = null);
-        void Stop();
-    }
-
-    public class MetricServer : IMetricServer
+    public class MetricServer : MetricHandler
     {
         readonly HttpListener _httpListener = new HttpListener();
-        readonly ICollectorRegistry _registry;
-        private IDisposable _schedulerDelegate;
         
         public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : this("+", port, standardCollectors, url, registry, useHttps)
         {
         }
 
-        public MetricServer(string hostname, int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false)
+        public MetricServer(string hostname, int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : base(standardCollectors, registry)
         {
-            _registry = registry ?? DefaultCollectorRegistry.Instance;
             var s = useHttps ? "s" : "";
             _httpListener.Prefixes.Add($"http{s}://{hostname}:{port}/{url}");
-            if (_registry == DefaultCollectorRegistry.Instance)
-            {
-                // Default to DotNetStatsCollector if none speified
-                // For no collectors, pass an empty collection
-                if (standardCollectors == null)
-                    standardCollectors = new[] { new DotNetStatsCollector() };
-
-                DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(standardCollectors);
-            }
         }
 
-        public void Start(IScheduler scheduler = null)
+        protected override IDisposable StartLoop(IScheduler scheduler)
         {
             _httpListener.Start();
-
-            StartLoop(scheduler ?? Scheduler.Default);
-        }
-
-        private void StartLoop(IScheduler scheduler)
-        {
             //delegate allocations below - but that's fine as it's not really on the "critical path" (polled relatively infrequently) - and it's much more readable this way
-            _schedulerDelegate = scheduler.Schedule(
+            return scheduler.Schedule(
                 repeatAction =>
                 {
                     try
@@ -92,9 +68,9 @@ namespace Prometheus
             );
         }
 
-        public void Stop()
+        protected override void StopInner()
         {
-            if (_schedulerDelegate != null) _schedulerDelegate.Dispose();
+            base.StopInner();
             _httpListener.Stop();
             _httpListener.Close();
         }
