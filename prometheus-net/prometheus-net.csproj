@@ -57,6 +57,8 @@
     <Compile Include="Advanced\DotNetStatsCollector.cs" />
     <Compile Include="Advanced\IOnDemandCollector.cs" />
     <Compile Include="Advanced\PerfCounterCollector.cs" />
+    <Compile Include="Advanced\ThreadSafeLong.cs" />
+    <Compile Include="Advanced\ThreadSafeDouble.cs" />
     <Compile Include="Counter.cs" />
     <Compile Include="Advanced\DataContracts.cs" />
     <Compile Include="Gauge.cs" />

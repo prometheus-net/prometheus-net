@@ -20,9 +20,26 @@ namespace Prometheus
         }
 
 
+        public class Timer
+        {
+            private System.Diagnostics.Stopwatch _stopwatch;
+            private Gauge.Child _child;
+
+            public Timer(Gauge.Child child)
+            {
+                _child = child;
+                _stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            }
+
+            public void ApplyDuration()
+            {
+                _child.Set(_stopwatch.Elapsed.Seconds);
+            }
+        }
+
         public class Child : Advanced.Child, IGauge
         {
-            private double _value;
+            private ThreadSafeDouble _value;
 
             protected override void Populate(Metric metric)
             {
@@ -32,22 +49,24 @@ namespace Prometheus
 
             public void Inc(double increment = 1)
             {
-                double newCurrentValue = 0;
-                while (true)
-                {
-                    double currentValue = newCurrentValue;
-                    double newValue = currentValue + increment;
-                    newCurrentValue = Interlocked.CompareExchange(ref _value, newValue, currentValue);
-                    if (newCurrentValue == currentValue)
-                        return;
-                }
+                _value.Add(increment);
             }
 
             public void Set(double val)
             {
-                Interlocked.Exchange(ref _value, val);
+                _value.Value = val;
             }
 
+            public void SetToCurrentTime()
+            {
+                var unixTicks = System.DateTime.UtcNow.Ticks - new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc).Ticks;
+                Set(unixTicks / System.TimeSpan.TicksPerSecond);
+            }
+
+            public Gauge.Timer StartTimer()
+            {
+                return new Gauge.Timer(this);
+            }
 
             public void Dec(double decrement = 1)
             {
@@ -58,7 +77,7 @@ namespace Prometheus
             {
                 get
                 {
-                    return Interlocked.CompareExchange(ref _value, 0, 0);
+                    return _value.Value;
                 }
             }
         }
@@ -77,7 +96,6 @@ namespace Prometheus
         {
             Unlabelled.Set(val);
         }
-
 
         public void Dec(double decrement = 1)
         {
