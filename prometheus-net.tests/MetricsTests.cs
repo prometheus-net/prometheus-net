@@ -7,7 +7,8 @@ using Should;
 
 namespace Prometheus.Tests
 {
-    public class MetricsTests
+	[TestFixture]
+	public class MetricsTests
     {
         [SetUp]
         public void Setup()
@@ -33,6 +34,8 @@ namespace Prometheus.Tests
             var counter = Metrics.CreateCounter("name2", "help2", "label1");
             counter.Inc();
             counter.Inc(3.2);
+            Assert.Throws<InvalidOperationException>(() => counter.Inc(0));
+            Assert.Throws<InvalidOperationException>(() => counter.Inc(-1));
             counter.Value.ShouldEqual(4.2);
 
             counter.Labels("a").Value.ShouldEqual(0);
@@ -124,12 +127,10 @@ namespace Prometheus.Tests
             metrics[0].gauge.value.ShouldEqual(3.8);
         }
 
-      
-
         [Test]
         public void histogram_tests()
         {
-            Histogram histogram = Metrics.CreateHistogram("hist1", "help", new []{ 1.0, 2.0, 3.0});
+            Histogram histogram = Metrics.CreateHistogram("hist1", "help", new []{ 1.0, 2.0, 3.0, double.PositiveInfinity});
             histogram.Observe(1.5);
             histogram.Observe(2.5);
             histogram.Observe(1);
@@ -139,6 +140,7 @@ namespace Prometheus.Tests
             histogram.Observe(1.4);
             histogram.Observe(1.5);
             histogram.Observe(3.9);
+            histogram.Observe(double.NaN);
 
             var metric = histogram.Collect().metric[0];
             metric.histogram.ShouldNotBeNull();
@@ -149,6 +151,57 @@ namespace Prometheus.Tests
             metric.histogram.bucket[1].cumulative_count.ShouldEqual(5ul);
             metric.histogram.bucket[2].cumulative_count.ShouldEqual(8ul);
             metric.histogram.bucket[3].cumulative_count.ShouldEqual(9ul);
+        }
+
+        [Test]
+        public void histogram_default_buckets()
+        {
+            var histogram = Metrics.CreateHistogram("hist", "help");
+            histogram.Observe(0.03);
+
+            var metric = histogram.Collect().metric[0];
+            metric.histogram.ShouldNotBeNull();
+            metric.histogram.sample_count.ShouldEqual(1ul);
+            metric.histogram.sample_sum.ShouldEqual(0.03);
+            metric.histogram.bucket.Count.ShouldEqual(15);
+            metric.histogram.bucket[0].upper_bound.ShouldEqual(0.005);
+            metric.histogram.bucket[0].cumulative_count.ShouldEqual(0ul);
+            metric.histogram.bucket[1].upper_bound.ShouldEqual(0.01);
+            metric.histogram.bucket[1].cumulative_count.ShouldEqual(0ul);
+            metric.histogram.bucket[2].upper_bound.ShouldEqual(0.025);
+            metric.histogram.bucket[2].cumulative_count.ShouldEqual(0ul);
+            metric.histogram.bucket[3].upper_bound.ShouldEqual(0.05);
+            metric.histogram.bucket[3].cumulative_count.ShouldEqual(1ul);
+            metric.histogram.bucket[4].upper_bound.ShouldEqual(0.075);
+            metric.histogram.bucket[4].cumulative_count.ShouldEqual(1ul);
+        }
+
+        [Test]
+        public void histogram_no_buckets()
+        {
+            try
+            {
+                Metrics.CreateHistogram("hist", "help", new double[0]);
+                Assert.Fail("Expected an exception");
+            }
+            catch (ArgumentException ex)
+            {
+                Assert.AreEqual("Histogram must have at least one bucket", ex.Message);
+            }
+        }
+
+        [Test]
+        public void histogram_buckets_do_not_increase()
+        {
+            try
+            {
+                Metrics.CreateHistogram("hist", "help", new double[] { 0.5, 0.1 });
+                Assert.Fail("Expected an exception");
+            }
+            catch (ArgumentException ex)
+            {
+                Assert.AreEqual("Bucket values must be increasing", ex.Message);
+            }
         }
 
         [Test]

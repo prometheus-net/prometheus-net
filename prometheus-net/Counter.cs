@@ -26,7 +26,7 @@ namespace Prometheus
 
         public class Child : Advanced.Child, ICounter
         {
-            private double _value;
+            private ThreadSafeDouble _value;
 
             protected override void Populate(Metric metric)
             {
@@ -34,29 +34,19 @@ namespace Prometheus
                 metric.counter.value = Value;
             }
 
-            public void Inc(double increment = 1)
+            public void Inc(double increment = 1.0D)
             {
-                if (increment < 0)
-                {
-                    throw new InvalidOperationException("Counter cannot go down");
-                }
+                if (increment <= 0.0D)
+                    throw new InvalidOperationException("Counter can only go up");
 
-                double newCurrentValue = 0;
-                while (true)
-                {
-                    double currentValue = newCurrentValue;
-                    double newValue = currentValue + increment;
-                    newCurrentValue = Interlocked.CompareExchange(ref _value, newValue, currentValue);
-                    if (newCurrentValue == currentValue)
-                        return;
-                }
+                _value.Add(increment);
             }
 
             public double Value
             {
                 get
                 {
-                    return Interlocked.CompareExchange(ref _value, 0, 0);
+                    return _value.Value;
                 }
             }
         }
