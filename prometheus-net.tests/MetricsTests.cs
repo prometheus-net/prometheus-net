@@ -34,7 +34,7 @@ namespace Prometheus.Tests
             var counter = Metrics.CreateCounter("name2", "help2", "label1");
             counter.Inc();
             counter.Inc(3.2);
-            Assert.Throws<InvalidOperationException>(() => counter.Inc(0));
+            counter.Inc(0);
             Assert.Throws<InvalidOperationException>(() => counter.Inc(-1));
             counter.Value.ShouldEqual(4.2);
 
