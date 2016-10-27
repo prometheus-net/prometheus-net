@@ -7,7 +7,7 @@ using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus.Internal
 {
-    internal class AsciiFormatter
+    internal static class AsciiFormatter
     {
         // Use UTF-8 encoding, but provide the flag to ensure the Unicode Byte Order Mark is never
         // pre-pended to the output stream.
@@ -83,7 +83,17 @@ namespace Prometheus.Internal
             {
                 return familyName;
             }
-            return string.Format("{0}{{{1}}}", familyName, string.Join(",", labelPairs.Select(l => string.Format("{0}=\"{1}\"", l.name, l.value))));
+            return string.Format(
+                "{0}{{{1}}}", familyName,
+                string.Join(",", labelPairs.Select(l => string.Format("{0}=\"{1}\"", l.name, EscapeValue(l.value)))));
+        }
+
+        private static string EscapeValue(string val)
+        {
+            return val
+                    .Replace("\\", @"\\")
+                    .Replace("\n", @"\n")
+                    .Replace("\"", @"\""");
         }
 
         private static string SimpleValue(string family, double value, IEnumerable<LabelPair> labels, string namePostfix = null)
