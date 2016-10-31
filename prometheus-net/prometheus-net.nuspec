@@ -10,7 +10,9 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
-* 1.2.0:
+* 1.2.3:
+- Fixed label values escaping for ASCII formatter
+* 1.2.2:
 - PushGateway support
 - Various internal improvements (replaced locks with Interlocked operations)    
 * 1.1.4:
