@@ -87,5 +87,11 @@ namespace Prometheus
                 }
             }
         }
+        
+        protected override void StopInner()
+        {
+            // Flush unsaved metrics;  especially important for short jobs which don't have time to push anything at all
+            SendMetrics();
+        }       
     }
 }
