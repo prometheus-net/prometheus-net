@@ -10,6 +10,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 1.2.4:
+- Fixed MetricPusher not flushing metrics when stopped
 * 1.2.3:
 - Fixed label values escaping for ASCII formatter
 * 1.2.2:
