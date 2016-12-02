@@ -91,6 +91,19 @@ var metricServer = new MetricServer(port: 1234);
 metricServer.Start();
 ```
 
+## Using Netcore as Middleware (OWIN)
+
+Under .Netcore you can use a middleware aproach for OWIN. Install a route /metrics for the scraped results. 
+You install it in the configure method on startup with the .UseMetrics extensions from the namespace 'prometheus.middleware'.
+
+```csharp
+public void Configure(IApplicationBuilder app)
+{            
+    app.UseMetrics(app.ApplicationServices.GetRequiredService<ILogger<MetricsMiddleware>>());    
+    app.UseOwin(x => x.UseNancy( NancyConfiguration));
+}
+```
+
 ## Pushgateway support
 
 Metrics can be posted to a Pushgateway server over HTTP.
@@ -108,3 +121,4 @@ To address this you can add this line to your test setup:
 ```csharp
 DefaultCollectorRegistry.Instance.Clear();
 ```
+
