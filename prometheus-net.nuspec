@@ -1,15 +1,18 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>$id$</id>
+    <id>prometheus-net</id>
     <version>$version$</version>
-    <authors>andrasm,qed-</authors>
+    <authors>andrasm,qed-,lakario</authors>
     <owners>andrasm</owners>
     <licenseUrl>https://raw.githubusercontent.com/andrasm/prometheus-net/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/andrasm/prometheus-net</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+* 1.3.4
+- Added support for .NET 4.5 using System.Reactive 3.1.1.
+- .NET 4.0 support continues to target Rx 2.5
 * 1.2.4:
 - Fixed MetricPusher not flushing metrics when stopped
 * 1.2.3:
@@ -50,12 +53,13 @@
 * 0.0.3 - initial version
       </releaseNotes>
     <tags>metrics prometheus</tags>
-    <dependencies>
-      <group targetFramework="net40">
-        <dependency id="protobuf-net" version="2.0.0.668" />
-        <dependency id="Rx-Core" version="2.2.5"/>
-        <dependency id="Rx-Interfaces" version="2.2.5"/>
-     </group>
-    </dependencies>
   </metadata>
+  <files>
+    <file src="build_artifacts\NET40\Release\prometheus-net.dll" target="lib\net40\prometheus-net.dll" />
+    <file src="build_artifacts\NET40\Release\prometheus-net.pdb" target="lib\net40\prometheus-net.pdb" />
+    <file src="build_artifacts\NET40\Release\prometheus-net.xml" target="lib\net40\prometheus-net.xml" />
+    <file src="build_artifacts\NET45\Release\prometheus-net.dll" target="lib\net45\prometheus-net.dll" />
+    <file src="build_artifacts\NET45\Release\prometheus-net.pdb" target="lib\net45\prometheus-net.pdb" />
+    <file src="build_artifacts\NET45\Release\prometheus-net.xml" target="lib\net45\prometheus-net.xml" />
+  </files>
 </package>
