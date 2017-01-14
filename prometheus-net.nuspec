@@ -53,13 +53,20 @@
 * 0.0.3 - initial version
       </releaseNotes>
     <tags>metrics prometheus</tags>
+    <dependencies>
+      <group targetFramework="net40">
+        <dependency id="protobuf-net" version="2.0.0.668" />
+        <dependency id="Rx-Core" version="2.2.5"/>
+        <dependency id="Rx-Interfaces" version="2.2.5"/>
+      </group>
+      <group targetFramework="net45">
+        <dependency id="protobuf-net" version="2.0.0.668" />
+        <dependency id="System.Reactive" version="3.1.1"/>
+      </group>
+    </dependencies>
   </metadata>
   <files>
-    <file src="build_artifacts\NET40\Release\prometheus-net.dll" target="lib\net40\prometheus-net.dll" />
-    <file src="build_artifacts\NET40\Release\prometheus-net.pdb" target="lib\net40\prometheus-net.pdb" />
-    <file src="build_artifacts\NET40\Release\prometheus-net.xml" target="lib\net40\prometheus-net.xml" />
-    <file src="build_artifacts\NET45\Release\prometheus-net.dll" target="lib\net45\prometheus-net.dll" />
-    <file src="build_artifacts\NET45\Release\prometheus-net.pdb" target="lib\net45\prometheus-net.pdb" />
-    <file src="build_artifacts\NET45\Release\prometheus-net.xml" target="lib\net45\prometheus-net.xml" />
+    <file src="build_artifacts\NET40\Release\*.*" target="lib\net40" />
+    <file src="build_artifacts\NET45\Release\*.*" target="lib\net45" />
   </files>
 </package>
