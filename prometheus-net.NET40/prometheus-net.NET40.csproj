@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EE3B50BE-577B-4664-A347-CC737B7D5612}</ProjectGuid>
+    <ProjectGuid>{4D74C8AE-B9DC-47B1-BCE2-C70044401A08}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Prometheus</RootNamespace>
@@ -17,20 +17,20 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <OutputPath>..\build_artifacts\NET40\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>..\build_artifacts\NET40\Debug\prometheus-net.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\build_artifacts\NET40\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>..\build_artifacts\NET40\Release\prometheus-net.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="protobuf-net">
@@ -53,44 +53,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Advanced\Child.cs" />
-    <Compile Include="Advanced\DotNetStatsCollector.cs" />
-    <Compile Include="Advanced\IOnDemandCollector.cs" />
-    <Compile Include="Advanced\PerfCounterCollector.cs" />
-    <Compile Include="Advanced\ThreadSafeLong.cs" />
-    <Compile Include="Advanced\ThreadSafeDouble.cs" />
-    <Compile Include="Counter.cs" />
-    <Compile Include="Advanced\DataContracts.cs" />
-    <Compile Include="Gauge.cs" />
-    <Compile Include="Histogram.cs" />
-    <Compile Include="Advanced\ICollectorRegistry.cs" />
-    <Compile Include="IMetricServer.cs" />
-    <Compile Include="Internal\AsciiFormatter.cs" />
-    <Compile Include="Advanced\ICollector.cs" />
-    <Compile Include="Internal\LabelValues.cs" />
-    <Compile Include="Advanced\Collector.cs" />
-    <Compile Include="Internal\ProtoFormatter.cs" />
-    <Compile Include="Advanced\MetricFactory.cs" />
-    <Compile Include="MetricHandler.cs" />
-    <Compile Include="MetricPusher.cs" />
-    <Compile Include="Metrics.cs" />
-    <Compile Include="MetricServer.cs" />
-    <Compile Include="Advanced\DefaultCollectorRegistry.cs" />
+    <Compile Include="..\GlobalAssemblyInfo.cs">
+      <Link>Properties\GlobalAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SummaryImpl\QuantileComparer.cs" />
-    <Compile Include="SummaryImpl\QuantileEpsilonPair.cs" />
-    <Compile Include="SummaryImpl\QuantileStream.cs" />
-    <Compile Include="SummaryImpl\Sample.cs" />
-    <Compile Include="SummaryImpl\SampleBuffer.cs" />
-    <Compile Include="SummaryImpl\SampleStream.cs" />
-    <Compile Include="ScrapeHandler.cs" />
-    <Compile Include="Summary.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <Import Project="..\prometheus-net.shared\prometheus-net.shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -37,7 +37,7 @@ namespace Prometheus.Tests
                     sampleSum += v;
                 }
 
-                tasks.Add(Task.Run(() =>
+                tasks.Add(Task.Factory.StartNew(() =>
                 {
                     foreach (var v in vals)
                         sum.Observe(v);

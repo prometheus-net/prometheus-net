@@ -8,4 +8,5 @@ script:
   - ls -la
   - ls -la testrunner
   - find . -name "prometheus-net.tests.dll"
-  - mono ./testrunner/NUnit.Console.3.0.1/tools/nunit3-console.exe ./prometheus-net.tests/bin/Release/prometheus-net.tests.dll
+  - mono ./testrunner/NUnit.Console.3.0.1/tools/nunit3-console.exe ./prometheus-net.NET40.tests/bin/Release/prometheus-net.tests.dll
+  - mono ./testrunner/NUnit.Console.3.0.1/tools/nunit3-console.exe ./prometheus-net.NET45.tests/bin/Release/prometheus-net.tests.dll
