@@ -18,7 +18,7 @@ namespace Prometheus.Tests
         {
             var random = new Random(42);
             var mutations = n%10000 + 10000;
-            var concLevel = n%5 + 1;
+            var concLevel = (n / 10000) % 5 + 1;
             var total = mutations * concLevel;
                 
             var sum = new Summary("test_summary", "helpless", new string[0]);
