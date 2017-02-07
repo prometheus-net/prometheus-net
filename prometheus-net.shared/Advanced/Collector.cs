@@ -30,7 +30,15 @@ namespace Prometheus.Advanced
             return GetOrAddLabelled(key);
         }
 
-        private T GetOrAddLabelled(LabelValues key)
+		public void RemoveLabelled(params string[] labelValues)
+		{
+			var key = new LabelValues(LabelNames, labelValues);
+
+			T temp;
+			_labelledMetrics.TryRemove(key, out temp);
+		}
+
+		private T GetOrAddLabelled(LabelValues key)
         {
             return _labelledMetrics.GetOrAdd(key, labels1 =>
             {
