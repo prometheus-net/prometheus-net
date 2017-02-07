@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading;
 
 namespace Prometheus.Advanced
@@ -41,7 +42,7 @@ namespace Prometheus.Advanced
 
         public override string ToString()
         {
-            return Value.ToString();
+            return Value.ToString(CultureInfo.InvariantCulture);
         }
 
         public override bool Equals(object obj)
