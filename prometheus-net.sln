@@ -23,16 +23,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET40.tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET45.tests", "prometheus-net.NET45.tests\prometheus-net.NET45.tests.csproj", "{D866F87B-7088-432C-AE36-10324815A25E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET46", "prometheus-net.NET46\prometheus-net.NET46.csproj", "{63713F41-0DF7-4EAD-8A27-0C951DC1F5D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET46.tests", "prometheus-net.NET46.tests\prometheus-net.NET46.tests.csproj", "{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		prometheus-net.sharedtests\prometheus-net.sharedtests.projitems*{4010ed45-cbc7-4bf3-94a0-23ae2439d63b}*SharedItemsImports = 13
 		prometheus-net.shared\prometheus-net.shared.projitems*{4d74c8ae-b9dc-47b1-bce2-c70044401a08}*SharedItemsImports = 4
+		prometheus-net.shared\prometheus-net.shared.projitems*{63713f41-0df7-4ead-8a27-0c951dc1f5d0}*SharedItemsImports = 4
 		prometheus-net.sharedtests\prometheus-net.sharedtests.projitems*{d866f87b-7088-432c-ae36-10324815a25e}*SharedItemsImports = 4
 		prometheus-net.shared\prometheus-net.shared.projitems*{d866f87b-7088-432c-ae36-10324815a25e}*SharedItemsImports = 4
 		prometheus-net.shared\prometheus-net.shared.projitems*{e02a4181-e15f-40e7-8fa1-0859a15c5857}*SharedItemsImports = 13
 		prometheus-net.sharedtests\prometheus-net.sharedtests.projitems*{e5a9406e-1d18-42ed-ba5f-f8cb336fa13a}*SharedItemsImports = 4
 		prometheus-net.shared\prometheus-net.shared.projitems*{e5a9406e-1d18-42ed-ba5f-f8cb336fa13a}*SharedItemsImports = 4
 		prometheus-net.shared\prometheus-net.shared.projitems*{ee3b50be-577b-4664-a347-cc737b7d5612}*SharedItemsImports = 4
+		prometheus-net.sharedtests\prometheus-net.sharedtests.projitems*{eff521ab-2c4d-488b-91e8-79a4b4ce4adf}*SharedItemsImports = 4
+		prometheus-net.shared\prometheus-net.shared.projitems*{eff521ab-2c4d-488b-91e8-79a4b4ce4adf}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +66,14 @@ Global
 		{D866F87B-7088-432C-AE36-10324815A25E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D866F87B-7088-432C-AE36-10324815A25E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D866F87B-7088-432C-AE36-10324815A25E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63713F41-0DF7-4EAD-8A27-0C951DC1F5D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63713F41-0DF7-4EAD-8A27-0C951DC1F5D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63713F41-0DF7-4EAD-8A27-0C951DC1F5D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63713F41-0DF7-4EAD-8A27-0C951DC1F5D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
