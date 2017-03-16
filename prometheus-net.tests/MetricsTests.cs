@@ -3,7 +3,7 @@ using System.Linq;
 using NUnit.Framework;
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
-using Should;
+using Shouldly;
 
 namespace Prometheus.Tests
 {
@@ -21,13 +21,13 @@ namespace Prometheus.Tests
         {
             var gauge = Metrics.CreateGauge("name1", "help1");
             gauge.Inc();
-            gauge.Value.ShouldEqual(1);
+            gauge.Value.ShouldBe(1);
             gauge.Inc(3.2);
-            gauge.Value.ShouldEqual(4.2);
+            gauge.Value.ShouldBe(4.2);
             gauge.Set(4);
-            gauge.Value.ShouldEqual(4);
+            gauge.Value.ShouldBe(4);
             gauge.Dec(0.2);
-            gauge.Value.ShouldEqual(3.8);
+            gauge.Value.ShouldBe(3.8);
 
             Assert.Throws<InvalidOperationException>(() => gauge.Labels("1"));
             
@@ -36,12 +36,12 @@ namespace Prometheus.Tests
             counter.Inc(3.2);
             counter.Inc(0);
             Assert.Throws<InvalidOperationException>(() => counter.Inc(-1));
-            counter.Value.ShouldEqual(4.2);
+            counter.Value.ShouldBe(4.2);
 
-            counter.Labels("a").Value.ShouldEqual(0);
+            counter.Labels("a").Value.ShouldBe(0);
             counter.Labels("a").Inc(3.3);
             counter.Labels("a").Inc(1.1);
-            counter.Labels("a").Value.ShouldEqual(4.4);
+            counter.Labels("a").Value.ShouldBe(4.4);
         }
 
         [Test]
@@ -55,12 +55,12 @@ namespace Prometheus.Tests
 
             MetricFamily[] exported = DefaultCollectorRegistry.Instance.CollectAll().ToArray();
 
-            exported.Length.ShouldEqual(1);
+            exported.Length.ShouldBe(1);
             var familiy1 = exported[0];
-            familiy1.name.ShouldEqual("name1");
-            familiy1.help.ShouldEqual("help1");
+            familiy1.name.ShouldBe("name1");
+            familiy1.help.ShouldBe("help1");
             var metrics = familiy1.metric;
-            metrics.Count.ShouldEqual(2);
+            metrics.Count.ShouldBe(2);
 
             foreach (var metric in metrics)
             {
@@ -71,14 +71,14 @@ namespace Prometheus.Tests
                 metric.counter.ShouldNotBeNull();
             }
 
-            metrics[0].counter.value.ShouldEqual(4.2);
-            metrics[0].label.Count.ShouldEqual(0);
+            metrics[0].counter.value.ShouldBe(4.2);
+            metrics[0].label.Count.ShouldBe(0);
             
-            metrics[1].counter.value.ShouldEqual(3.2);
+            metrics[1].counter.value.ShouldBe(3.2);
             var labelPairs = metrics[1].label;
-            labelPairs.Count.ShouldEqual(1);
-            labelPairs[0].name.ShouldEqual("label1");
-            labelPairs[0].value.ShouldEqual("abc");
+            labelPairs.Count.ShouldBe(1);
+            labelPairs[0].name.ShouldBe("label1");
+            labelPairs[0].value.ShouldBe("abc");
         }
 
         [Test]
@@ -92,8 +92,8 @@ namespace Prometheus.Tests
             counter1.Inc(3);
             counter2.Inc(4);
 
-            myRegistry.CollectAll().ToArray()[0].metric[0].counter.value.ShouldEqual(3); //counter1 == 3
-            DefaultCollectorRegistry.Instance.CollectAll().ToArray()[0].metric[0].counter.value.ShouldEqual(4); //counter2 == 4
+            myRegistry.CollectAll().ToArray()[0].metric[0].counter.value.ShouldBe(3); //counter1 == 3
+            DefaultCollectorRegistry.Instance.CollectAll().ToArray()[0].metric[0].counter.value.ShouldBe(4); //counter2 == 4
         }
 
         [Test]
@@ -108,12 +108,12 @@ namespace Prometheus.Tests
 
             var exported = DefaultCollectorRegistry.Instance.CollectAll().ToArray();
 
-            exported.Length.ShouldEqual(1);
+            exported.Length.ShouldBe(1);
             var familiy1 = exported[0];
-            familiy1.name.ShouldEqual("name1");
-            familiy1.help.ShouldEqual("help1");
+            familiy1.name.ShouldBe("name1");
+            familiy1.help.ShouldBe("help1");
             var metrics = familiy1.metric;
-            metrics.Count.ShouldEqual(1);
+            metrics.Count.ShouldBe(1);
 
             foreach (var metric in metrics)
             {
@@ -124,7 +124,7 @@ namespace Prometheus.Tests
                 metric.gauge.ShouldNotBeNull();
             }
 
-            metrics[0].gauge.value.ShouldEqual(3.8);
+            metrics[0].gauge.value.ShouldBe(3.8);
         }
 
         [Test]
@@ -144,13 +144,13 @@ namespace Prometheus.Tests
 
             var metric = histogram.Collect().metric[0];
             metric.histogram.ShouldNotBeNull();
-            metric.histogram.sample_count.ShouldEqual(9ul);
-            metric.histogram.sample_sum.ShouldEqual(16.7);
-            metric.histogram.bucket.Count.ShouldEqual(4);
-            metric.histogram.bucket[0].cumulative_count.ShouldEqual(2ul);
-            metric.histogram.bucket[1].cumulative_count.ShouldEqual(5ul);
-            metric.histogram.bucket[2].cumulative_count.ShouldEqual(8ul);
-            metric.histogram.bucket[3].cumulative_count.ShouldEqual(9ul);
+            metric.histogram.sample_count.ShouldBe(9ul);
+            metric.histogram.sample_sum.ShouldBe(16.7);
+            metric.histogram.bucket.Count.ShouldBe(4);
+            metric.histogram.bucket[0].cumulative_count.ShouldBe(2ul);
+            metric.histogram.bucket[1].cumulative_count.ShouldBe(5ul);
+            metric.histogram.bucket[2].cumulative_count.ShouldBe(8ul);
+            metric.histogram.bucket[3].cumulative_count.ShouldBe(9ul);
         }
 
         [Test]
@@ -161,19 +161,19 @@ namespace Prometheus.Tests
 
             var metric = histogram.Collect().metric[0];
             metric.histogram.ShouldNotBeNull();
-            metric.histogram.sample_count.ShouldEqual(1ul);
-            metric.histogram.sample_sum.ShouldEqual(0.03);
-            metric.histogram.bucket.Count.ShouldEqual(15);
-            metric.histogram.bucket[0].upper_bound.ShouldEqual(0.005);
-            metric.histogram.bucket[0].cumulative_count.ShouldEqual(0ul);
-            metric.histogram.bucket[1].upper_bound.ShouldEqual(0.01);
-            metric.histogram.bucket[1].cumulative_count.ShouldEqual(0ul);
-            metric.histogram.bucket[2].upper_bound.ShouldEqual(0.025);
-            metric.histogram.bucket[2].cumulative_count.ShouldEqual(0ul);
-            metric.histogram.bucket[3].upper_bound.ShouldEqual(0.05);
-            metric.histogram.bucket[3].cumulative_count.ShouldEqual(1ul);
-            metric.histogram.bucket[4].upper_bound.ShouldEqual(0.075);
-            metric.histogram.bucket[4].cumulative_count.ShouldEqual(1ul);
+            metric.histogram.sample_count.ShouldBe(1ul);
+            metric.histogram.sample_sum.ShouldBe(0.03);
+            metric.histogram.bucket.Count.ShouldBe(15);
+            metric.histogram.bucket[0].upper_bound.ShouldBe(0.005);
+            metric.histogram.bucket[0].cumulative_count.ShouldBe(0ul);
+            metric.histogram.bucket[1].upper_bound.ShouldBe(0.01);
+            metric.histogram.bucket[1].cumulative_count.ShouldBe(0ul);
+            metric.histogram.bucket[2].upper_bound.ShouldBe(0.025);
+            metric.histogram.bucket[2].cumulative_count.ShouldBe(0ul);
+            metric.histogram.bucket[3].upper_bound.ShouldBe(0.05);
+            metric.histogram.bucket[3].cumulative_count.ShouldBe(1ul);
+            metric.histogram.bucket[4].upper_bound.ShouldBe(0.075);
+            metric.histogram.bucket[4].cumulative_count.ShouldBe(1ul);
         }
 
         [Test]
@@ -215,8 +215,8 @@ namespace Prometheus.Tests
 
             var metric = summary.Collect().metric[0];
             metric.summary.ShouldNotBeNull();
-            metric.summary.sample_count.ShouldEqual(3ul);
-            metric.summary.sample_sum.ShouldEqual(6);
+            metric.summary.sample_count.ShouldBe(3ul);
+            metric.summary.sample_sum.ShouldBe(6);
         }
 
         [Test]
@@ -242,7 +242,7 @@ namespace Prometheus.Tests
             }
             catch (InvalidOperationException e)
             {
-                e.Message.ShouldEqual("Collector with same name must have same label names");
+                e.Message.ShouldBe("Collector with same name must have same label names");
             }
         }
 
@@ -275,7 +275,7 @@ namespace Prometheus.Tests
             }
             catch (ArgumentException e)
             {
-                e.Message.ShouldEqual("Labels starting with double underscore are reserved!");
+                e.Message.ShouldBe("Labels starting with double underscore are reserved!");
             }
         }
     }

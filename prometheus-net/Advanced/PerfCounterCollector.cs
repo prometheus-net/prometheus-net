@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if !NETSTANDARD1_3
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -103,3 +105,5 @@ namespace Prometheus.Advanced
         }
     }
 }
+
+#endif

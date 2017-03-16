@@ -10,7 +10,7 @@
 // Generated from: prometheus.proto
 namespace Prometheus.Advanced.DataContracts
 {
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"LabelPair")]
+  [global::ProtoBuf.ProtoContract(Name=@"LabelPair")]
   public partial class LabelPair : global::ProtoBuf.IExtensible
   {
     public LabelPair() {}
@@ -36,7 +36,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Gauge")]
+  [global::ProtoBuf.ProtoContract(Name=@"Gauge")]
   public partial class Gauge : global::ProtoBuf.IExtensible
   {
     public Gauge() {}
@@ -54,7 +54,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Counter")]
+  [global::ProtoBuf.ProtoContract(Name=@"Counter")]
   public partial class Counter : global::ProtoBuf.IExtensible
   {
     public Counter() {}
@@ -72,7 +72,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Quantile")]
+  [global::ProtoBuf.ProtoContract(Name=@"Quantile")]
   public partial class Quantile : global::ProtoBuf.IExtensible
   {
     public Quantile() {}
@@ -98,7 +98,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Summary")]
+  [global::ProtoBuf.ProtoContract(Name=@"Summary")]
   public partial class Summary : global::ProtoBuf.IExtensible
   {
     public Summary() {}
@@ -131,7 +131,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Untyped")]
+  [global::ProtoBuf.ProtoContract(Name=@"Untyped")]
   public partial class Untyped : global::ProtoBuf.IExtensible
   {
     public Untyped() {}
@@ -149,7 +149,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Histogram")]
+  [global::ProtoBuf.ProtoContract(Name=@"Histogram")]
   public partial class Histogram : global::ProtoBuf.IExtensible
   {
     public Histogram() {}
@@ -182,7 +182,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Bucket")]
+  [global::ProtoBuf.ProtoContract(Name=@"Bucket")]
   public partial class Bucket : global::ProtoBuf.IExtensible
   {
     public Bucket() {}
@@ -208,7 +208,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"MetricFamily")]
+  [global::ProtoBuf.ProtoContract(Name=@"MetricFamily")]
   public partial class Metric : global::ProtoBuf.IExtensible
   {
     public Metric() {}
@@ -274,7 +274,7 @@ namespace Prometheus.Advanced.DataContracts
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"MetricFamily")]
+  [global::ProtoBuf.ProtoContract(Name=@"MetricFamily")]
   public partial class MetricFamily : global::ProtoBuf.IExtensible
   {
     public MetricFamily() {}

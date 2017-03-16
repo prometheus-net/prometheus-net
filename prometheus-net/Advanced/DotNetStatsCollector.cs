@@ -17,7 +17,9 @@ namespace Prometheus.Advanced
         private Gauge _workingSet;
         private Gauge _privateMemorySize;
         private Counter _cpuTotal;
+#if NET40 || NET45
         private Gauge _openHandles;
+#endif
         private Gauge _startTime;
         private Gauge _numThreads;
         private Gauge _pid;
@@ -44,7 +46,9 @@ namespace Prometheus.Advanced
             _virtualMemorySize = Metrics.CreateGauge("process_windows_virtual_bytes", "Process virtual memory size");
             _workingSet = Metrics.CreateGauge("process_windows_working_set", "Process working set");
             _privateMemorySize = Metrics.CreateGauge("process_windows_private_bytes", "Process private memory size");
+#if NET40 || NET45
             _openHandles = Metrics.CreateGauge("process_windows_open_handles", "Number of open handles");
+#endif
             _numThreads = Metrics.CreateGauge("process_windows_num_threads", "Total number of threads");
             _pid = Metrics.CreateGauge("process_windows_processid", "Process ID");
 
@@ -74,7 +78,9 @@ namespace Prometheus.Advanced
                 _workingSet.Set(_process.WorkingSet64);
                 _privateMemorySize.Set(_process.PrivateMemorySize64);
                 _cpuTotal.Inc(_process.TotalProcessorTime.TotalSeconds - _cpuTotal.Value);
+#if NET40 || NET45
                 _openHandles.Set(_process.HandleCount);
+#endif
                 _numThreads.Set(_process.Threads.Count);
             }
             catch (Exception)

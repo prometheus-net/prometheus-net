@@ -1,64 +1,55 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tester", "tester\tester.csproj", "{C0212A44-AE68-4315-BC20-3B8BB40A3F98}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "prometheus-net.shared", "prometheus-net.shared\prometheus-net.shared.shproj", "{E02A4181-E15F-40E7-8FA1-0859A15C5857}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net", "prometheus-net\prometheus-net.csproj", "{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET40", "prometheus-net.NET40\prometheus-net.NET40.csproj", "{4D74C8AE-B9DC-47B1-BCE2-C70044401A08}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET45", "prometheus-net.NET45\prometheus-net.NET45.csproj", "{EE3B50BE-577B-4664-A347-CC737B7D5612}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{37B6A73C-786B-4833-9D3B-2B4FA7456D10}"
-	ProjectSection(SolutionItems) = preProject
-		GlobalAssemblyInfo.cs = GlobalAssemblyInfo.cs
-		prometheus-net.nuspec = prometheus-net.nuspec
-	EndProjectSection
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "prometheus-net.sharedtests", "prometheus-net.sharedtests\prometheus-net.sharedtests.shproj", "{4010ED45-CBC7-4BF3-94A0-23AE2439D63B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET40.tests", "prometheus-net.NET40.tests\prometheus-net.NET40.tests.csproj", "{E5A9406E-1D18-42ED-BA5F-F8CB336FA13A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET45.tests", "prometheus-net.NET45.tests\prometheus-net.NET45.tests.csproj", "{D866F87B-7088-432C-AE36-10324815A25E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.tests", "prometheus-net.tests\prometheus-net.tests.csproj", "{AB95D899-C0F2-4652-B221-C063A8AC592D}"
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		prometheus-net.sharedtests\prometheus-net.sharedtests.projitems*{4010ed45-cbc7-4bf3-94a0-23ae2439d63b}*SharedItemsImports = 13
-		prometheus-net.shared\prometheus-net.shared.projitems*{4d74c8ae-b9dc-47b1-bce2-c70044401a08}*SharedItemsImports = 4
-		prometheus-net.sharedtests\prometheus-net.sharedtests.projitems*{d866f87b-7088-432c-ae36-10324815a25e}*SharedItemsImports = 4
-		prometheus-net.shared\prometheus-net.shared.projitems*{d866f87b-7088-432c-ae36-10324815a25e}*SharedItemsImports = 4
-		prometheus-net.shared\prometheus-net.shared.projitems*{e02a4181-e15f-40e7-8fa1-0859a15c5857}*SharedItemsImports = 13
-		prometheus-net.sharedtests\prometheus-net.sharedtests.projitems*{e5a9406e-1d18-42ed-ba5f-f8cb336fa13a}*SharedItemsImports = 4
-		prometheus-net.shared\prometheus-net.shared.projitems*{e5a9406e-1d18-42ed-ba5f-f8cb336fa13a}*SharedItemsImports = 4
-		prometheus-net.shared\prometheus-net.shared.projitems*{ee3b50be-577b-4664-a347-cc737b7d5612}*SharedItemsImports = 4
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4D74C8AE-B9DC-47B1-BCE2-C70044401A08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D74C8AE-B9DC-47B1-BCE2-C70044401A08}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D74C8AE-B9DC-47B1-BCE2-C70044401A08}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D74C8AE-B9DC-47B1-BCE2-C70044401A08}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EE3B50BE-577B-4664-A347-CC737B7D5612}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EE3B50BE-577B-4664-A347-CC737B7D5612}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EE3B50BE-577B-4664-A347-CC737B7D5612}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EE3B50BE-577B-4664-A347-CC737B7D5612}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E5A9406E-1D18-42ED-BA5F-F8CB336FA13A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E5A9406E-1D18-42ED-BA5F-F8CB336FA13A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E5A9406E-1D18-42ED-BA5F-F8CB336FA13A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E5A9406E-1D18-42ED-BA5F-F8CB336FA13A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D866F87B-7088-432C-AE36-10324815A25E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D866F87B-7088-432C-AE36-10324815A25E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D866F87B-7088-432C-AE36-10324815A25E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D866F87B-7088-432C-AE36-10324815A25E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Release|x64.ActiveCfg = Release|Any CPU
+		{C0212A44-AE68-4315-BC20-3B8BB40A3F98}.Release|x86.ActiveCfg = Release|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Debug|x64.Build.0 = Debug|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Debug|x86.Build.0 = Debug|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Release|x64.ActiveCfg = Release|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Release|x64.Build.0 = Release|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Release|x86.ActiveCfg = Release|Any CPU
+		{909D4E25-105D-4B6B-BCDA-7C63CF2801E7}.Release|x86.Build.0 = Release|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Debug|x64.Build.0 = Debug|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Debug|x86.Build.0 = Debug|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Release|x64.ActiveCfg = Release|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Release|x64.Build.0 = Release|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Release|x86.ActiveCfg = Release|Any CPU
+		{AB95D899-C0F2-4652-B221-C063A8AC592D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

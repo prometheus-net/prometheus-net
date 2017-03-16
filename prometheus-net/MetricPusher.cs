@@ -71,9 +71,9 @@ namespace Prometheus
                     using (var stream = new MemoryStream())
                     {
                         ScrapeHandler.ProcessScrapeRequest(_registry.CollectAll(), ContentType, stream);
-                        using (var client = new WebClient())
+                        using (var client = new NetworkClient())
                         {
-                            client.UploadData(_endpoint, "POST", stream.ToArray());
+                            client.UploadData(_endpoint, stream.ToArray());
                         }
                     }
                 }

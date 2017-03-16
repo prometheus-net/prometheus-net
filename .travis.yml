@@ -1,12 +1,6 @@
 language: csharp
 solution: prometheus-net.sln
 install:
-  - nuget restore prometheus-net.sln
-  - nuget install NUnit.Runners -Version 3.0.1 -OutputDirectory testrunner
+  - dotnet restore prometheus-net.sln
 script:
-  - xbuild /p:Configuration=Release prometheus-net.sln
-  - ls -la
-  - ls -la testrunner
-  - find . -name "prometheus-net.tests.dll"
-  - mono ./testrunner/NUnit.Console.3.0.1/tools/nunit3-console.exe ./prometheus-net.NET40.tests/bin/Release/prometheus-net.tests.dll
-  - mono ./testrunner/NUnit.Console.3.0.1/tools/nunit3-console.exe ./prometheus-net.NET45.tests/bin/Release/prometheus-net.tests.dll
+  - dotnet test --configuration Release "prometheus-net.tests/prometheus-net.tests.csproj"

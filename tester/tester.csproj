@@ -79,9 +79,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\prometheus-net.NET45\prometheus-net.NET45.csproj">
-      <Project>{ee3b50be-577b-4664-a347-cc737b7d5612}</Project>
-      <Name>prometheus-net.NET45</Name>
+    <ProjectReference Include="..\prometheus-net\prometheus-net.csproj">
+      <Project>{909d4e25-105d-4b6b-bcda-7c63cf2801e7}</Project>
+      <Name>prometheus-net</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
