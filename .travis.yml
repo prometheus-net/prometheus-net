@@ -1,5 +1,8 @@
 language: csharp
-solution: prometheus-net.sln
+dist: trusty
+sudo: required
+mono: none
+dotnet: 1.0.0
 install:
   - dotnet restore prometheus-net.sln
 script:
