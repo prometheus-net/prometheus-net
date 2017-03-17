@@ -6,4 +6,4 @@ dotnet: 1.0.0
 install:
   - dotnet restore prometheus-net.sln
 script:
-  - dotnet test --configuration Release "prometheus-net.tests/prometheus-net.tests.csproj"
+  - dotnet run --project "prometheus-net.tests/prometheus-net.tests.csproj" --configuration Release
