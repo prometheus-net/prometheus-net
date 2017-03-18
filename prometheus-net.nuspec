@@ -10,6 +10,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.NET client for prometheus.io</description>
     <releaseNotes>
+*
+- Added support for .NET 4.6
 * 1.3.4
 - Added support for .NET 4.5 using System.Reactive 3.1.1.
 - .NET 4.0 support continues to target Rx 2.5
@@ -63,10 +65,15 @@
         <dependency id="protobuf-net" version="2.0.0.668" />
         <dependency id="System.Reactive" version="3.1.1"/>
       </group>
+      <group targetFramework="net46">
+        <dependency id="protobuf-net" version="2.0.0.668" />
+        <dependency id="System.Reactive" version="3.1.1"/>
+      </group>
     </dependencies>
   </metadata>
   <files>
     <file src="build_artifacts\NET40\Release\*.*" target="lib\net40" />
     <file src="build_artifacts\NET45\Release\*.*" target="lib\net45" />
+    <file src="build_artifacts\NET46\Release\*.*" target="lib\net46" />
   </files>
 </package>
