@@ -75,8 +75,11 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="build_artifacts\NET40\Release\prometheus-net.*" target="lib\net40" />
-    <file src="build_artifacts\NET45\Release\prometheus-net.*" target="lib\net45" />
-    <file src="build_artifacts\NET46\Release\prometheus-net.*" target="lib\net46" />
+    <file src="build_artifacts\NET40\Release\prometheus-net.dll" target="lib\net40" />
+    <file src="build_artifacts\NET40\Release\prometheus-net.xml" target="lib\net40" />
+    <file src="build_artifacts\NET45\Release\prometheus-net.dll" target="lib\net45" />
+    <file src="build_artifacts\NET45\Release\prometheus-net.xml" target="lib\net45" />
+    <file src="build_artifacts\NET46\Release\prometheus-net.dll" target="lib\net46" />
+    <file src="build_artifacts\NET46\Release\prometheus-net.xml" target="lib\net46" />
   </files>
 </package>
