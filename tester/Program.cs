@@ -26,6 +26,7 @@ namespace tester
             gauge.Inc(3.4);
             gauge.Dec(2.1);
             gauge.Set(5.3);
+            gauge.SetTimestamp(DateTimeOffset.Now.AddDays(-1));
 
             var hist = Metrics.CreateHistogram("myHistogram", "help text", buckets: new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 });
             hist.Observe(0.4);
@@ -39,6 +40,7 @@ namespace tester
                 counter.Inc();
                 counter.Labels("GET", "/").Inc(2);
                 gauge.Set(random.NextDouble() + 2);
+                gauge.SetTimestamp(DateTimeOffset.Now.AddDays(-1));
                 hist.Observe(random.NextDouble());
                 summary.Observe(random.NextDouble());
 

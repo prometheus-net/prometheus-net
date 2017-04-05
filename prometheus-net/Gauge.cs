@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
+using System;
 
 namespace Prometheus
 {
@@ -100,6 +101,15 @@ namespace Prometheus
         public void Dec(double decrement = 1)
         {
             Unlabelled.Dec(decrement);
+        }
+
+        /// <summary>
+        /// Sets the timestamp that Prometheus should use when recording this metric.
+        /// If null, Prometheus will use the current time.
+        /// </summary>
+        public void SetTimestamp(DateTimeOffset? timestamp)
+        {
+            Unlabelled.SetTimestamp(timestamp);
         }
 
         public double Value
