@@ -10,8 +10,12 @@
 // Generated from: prometheus.proto
 namespace Prometheus.Advanced.DataContracts
 {
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"LabelPair")]
-  public partial class LabelPair : global::ProtoBuf.IExtensible
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name=@"LabelPair")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"LabelPair")]
+#endif
+    public partial class LabelPair : global::ProtoBuf.IExtensible
   {
     public LabelPair() {}
     
@@ -35,8 +39,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Gauge")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name=@"Gauge")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"Gauge")]
+#endif
   public partial class Gauge : global::ProtoBuf.IExtensible
   {
     public Gauge() {}
@@ -53,8 +61,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Counter")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name=@"Counter")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"Counter")]
+#endif
   public partial class Counter : global::ProtoBuf.IExtensible
   {
     public Counter() {}
@@ -71,8 +83,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Quantile")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name=@"Quantile")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"Quantile")]
+#endif
   public partial class Quantile : global::ProtoBuf.IExtensible
   {
     public Quantile() {}
@@ -97,8 +113,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Summary")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name=@"Summary")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"Summary")]
+#endif
   public partial class Summary : global::ProtoBuf.IExtensible
   {
     public Summary() {}
@@ -130,8 +150,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Untyped")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name = @"Untyped")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"Untyped")]
+#endif
   public partial class Untyped : global::ProtoBuf.IExtensible
   {
     public Untyped() {}
@@ -148,8 +172,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Histogram")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name = @"Histogram")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Histogram")]
+#endif
   public partial class Histogram : global::ProtoBuf.IExtensible
   {
     public Histogram() {}
@@ -181,8 +209,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Bucket")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name=@"Bucket")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"Bucket")]
+#endif
   public partial class Bucket : global::ProtoBuf.IExtensible
   {
     public Bucket() {}
@@ -207,8 +239,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"MetricFamily")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name=@"MetricFamily")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"MetricFamily")]
+#endif
   public partial class Metric : global::ProtoBuf.IExtensible
   {
     public Metric() {}
@@ -273,8 +309,12 @@ namespace Prometheus.Advanced.DataContracts
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
-  
-  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"MetricFamily")]
+
+#if (NETCOREAPP1_1)
+    [global::ProtoBuf.ProtoContract(Name=@"MetricFamily")]
+#else
+    [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"MetricFamily")]
+#endif
   public partial class MetricFamily : global::ProtoBuf.IExtensible
   {
     public MetricFamily() {}

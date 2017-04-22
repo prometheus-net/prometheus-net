@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if (!NETCOREAPP1_1)
+using System;
 using System.Linq;
 using NUnit.Framework;
 using Prometheus.Advanced;
@@ -280,3 +281,4 @@ namespace Prometheus.Tests
         }
     }
 }
+#endif

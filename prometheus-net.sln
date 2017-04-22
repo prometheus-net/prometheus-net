@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.7
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tester", "tester\tester.csproj", "{C0212A44-AE68-4315-BC20-3B8BB40A3F98}"
 EndProject
@@ -26,6 +26,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET46", "prometheus-net.NET46\prometheus-net.NET46.csproj", "{63713F41-0DF7-4EAD-8A27-0C951DC1F5D0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NET46.tests", "prometheus-net.NET46.tests\prometheus-net.NET46.tests.csproj", "{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.NETCORE11", "prometheus-net.NETCORE11\prometheus-net.NETCORE11.csproj", "{94C83714-BDDC-4AC8-A372-4330D707D381}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "prometheus-net.NETCORE11.tests", "prometheus-net.NETCORE11.tests\prometheus-net.NETCORE11.tests.csproj", "{1072B16C-D12C-4A69-BEC3-D50A3597B0A1}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -74,6 +78,14 @@ Global
 		{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EFF521AB-2C4D-488B-91E8-79A4B4CE4ADF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94C83714-BDDC-4AC8-A372-4330D707D381}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94C83714-BDDC-4AC8-A372-4330D707D381}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94C83714-BDDC-4AC8-A372-4330D707D381}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94C83714-BDDC-4AC8-A372-4330D707D381}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1072B16C-D12C-4A69-BEC3-D50A3597B0A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1072B16C-D12C-4A69-BEC3-D50A3597B0A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1072B16C-D12C-4A69-BEC3-D50A3597B0A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1072B16C-D12C-4A69-BEC3-D50A3597B0A1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
