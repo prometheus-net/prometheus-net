@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace Prometheus.Advanced
 {
+#if (!NETCOREAPP1_1)
     /// <summary>
     /// Collects metrics on standard Performance Counters
     /// </summary>
@@ -102,4 +103,5 @@ namespace Prometheus.Advanced
             }
         }
     }
+#endif
 }

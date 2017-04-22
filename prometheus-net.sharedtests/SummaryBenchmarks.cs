@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using NUnit.Framework.Compatibility;
 using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 

@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\GlobalAssemblyInfo.cs" Link="GlobalAssemblyInfo.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\Child.cs" Link="Advanced\Child.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\Collector.cs" Link="Advanced\Collector.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\DataContracts.cs" Link="Advanced\DataContracts.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\DefaultCollectorRegistry.cs" Link="Advanced\DefaultCollectorRegistry.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\DotNetStatsCollector.cs" Link="Advanced\DotNetStatsCollector.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\ICollector.cs" Link="Advanced\ICollector.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\ICollectorRegistry.cs" Link="Advanced\ICollectorRegistry.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\IOnDemandCollector.cs" Link="Advanced\IOnDemandCollector.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\MetricFactory.cs" Link="Advanced\MetricFactory.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\PerfCounterCollector.cs" Link="Advanced\PerfCounterCollector.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\ThreadSafeDouble.cs" Link="Advanced\ThreadSafeDouble.cs" />
+    <Compile Include="..\prometheus-net.shared\Advanced\ThreadSafeLong.cs" Link="Advanced\ThreadSafeLong.cs" />
+    <Compile Include="..\prometheus-net.shared\Counter.cs" Link="Counter.cs" />
+    <Compile Include="..\prometheus-net.shared\Gauge.cs" Link="Gauge.cs" />
+    <Compile Include="..\prometheus-net.shared\Histogram.cs" Link="Histogram.cs" />
+    <Compile Include="..\prometheus-net.shared\IMetricServer.cs" Link="IMetricServer.cs" />
+    <Compile Include="..\prometheus-net.shared\Internal\AsciiFormatter.cs" Link="Internal\AsciiFormatter.cs" />
+    <Compile Include="..\prometheus-net.shared\Internal\LabelValues.cs" Link="Internal\LabelValues.cs" />
+    <Compile Include="..\prometheus-net.shared\Internal\ProtoFormatter.cs" Link="Internal\ProtoFormatter.cs" />
+    <Compile Include="..\prometheus-net.shared\MetricHandler.cs" Link="MetricHandler.cs" />
+    <Compile Include="..\prometheus-net.shared\MetricPusher.cs" Link="MetricPusher.cs" />
+    <Compile Include="..\prometheus-net.shared\Metrics.cs" Link="Metrics.cs" />
+    <Compile Include="..\prometheus-net.shared\MetricServer.cs" Link="MetricServer.cs" />
+    <Compile Include="..\prometheus-net.shared\ScrapeHandler.cs" Link="ScrapeHandler.cs" />
+    <Compile Include="..\prometheus-net.shared\Summary.cs" Link="Summary.cs" />
+    <Compile Include="..\prometheus-net.shared\SummaryImpl\QuantileComparer.cs" Link="SummaryImpl\QuantileComparer.cs" />
+    <Compile Include="..\prometheus-net.shared\SummaryImpl\QuantileEpsilonPair.cs" Link="SummaryImpl\QuantileEpsilonPair.cs" />
+    <Compile Include="..\prometheus-net.shared\SummaryImpl\QuantileStream.cs" Link="SummaryImpl\QuantileStream.cs" />
+    <Compile Include="..\prometheus-net.shared\SummaryImpl\Sample.cs" Link="SummaryImpl\Sample.cs" />
+    <Compile Include="..\prometheus-net.shared\SummaryImpl\SampleBuffer.cs" Link="SummaryImpl\SampleBuffer.cs" />
+    <Compile Include="..\prometheus-net.shared\SummaryImpl\SampleStream.cs" Link="SummaryImpl\SampleStream.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Internal\" />
+    <Folder Include="Advanced\" />
+    <Folder Include="SummaryImpl\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="protobuf-net" Version="2.1.0" />
+    <PackageReference Include="System.Reactive" Version="3.1.1" />
+  </ItemGroup>
+
+</Project>

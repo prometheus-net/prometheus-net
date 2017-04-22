@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>    
+    <TargetFramework>netcoreapp1.1</TargetFramework>    
+    <AssemblyName>prometheus-net.tests</AssemblyName>    
+    <RootNamespace>prometheus-net.tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\prometheus-net.sharedtests\AsciiFormatterTests.cs" Link="AsciiFormatterTests.cs" />
+    <Compile Include="..\prometheus-net.sharedtests\MetricsTests.cs" Link="MetricsTests.cs" />
+    <Compile Include="..\prometheus-net.sharedtests\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
+    <Compile Include="..\prometheus-net.sharedtests\RandomExtensions.cs" Link="RandomExtensions.cs" />
+    <Compile Include="..\prometheus-net.sharedtests\SummaryBenchmarks.cs" Link="SummaryBenchmarks.cs" />
+    <Compile Include="..\prometheus-net.sharedtests\SummaryTests.cs" Link="SummaryTests.cs" />
+    <Compile Include="..\prometheus-net.sharedtests\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
+    <Compile Include="..\prometheus-net.sharedtests\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.1.11" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.1.11" />
+    <PackageReference Include="NUnit" Version="3.6.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\prometheus-net.NETCORE11\prometheus-net.NETCORE11.csproj" />
+  </ItemGroup>
+
+</Project>

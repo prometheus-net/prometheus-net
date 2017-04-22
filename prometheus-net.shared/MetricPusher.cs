@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if (!NETCOREAPP1_1)
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -95,3 +96,4 @@ namespace Prometheus
         }       
     }
 }
+#endif
