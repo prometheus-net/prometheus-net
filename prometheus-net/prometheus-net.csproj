@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;net40;net45</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3;net40;net45;net46</TargetFrameworks>
     <Description>.NET client for prometheus.io</Description>
     <PackageReleaseNotes>* 1.3.4
 - Added support for .NET 4.5 using System.Reactive 3.1.1.
@@ -52,6 +52,13 @@
     <PackageTags>metrics prometheus</PackageTags>
     <Copyright>Copyright © 2015 andrasm</Copyright>
   </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+    
+    <PackageReference Include="System.Reactive" Version="3.1.1" />
+  </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
     <Reference Include="System" />
