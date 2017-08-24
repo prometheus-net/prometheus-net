@@ -29,7 +29,7 @@ namespace Prometheus.Advanced
         {
             while (true)
             {
-                long initialValue = _value;
+                long initialValue = Interlocked.Read(ref _value);
                 double computedValue = BitConverter.Int64BitsToDouble(initialValue) + increment;
 
                 //Compare exchange will only set the computed value if it is equal to the expected value
