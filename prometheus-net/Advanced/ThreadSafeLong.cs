@@ -25,17 +25,7 @@ namespace Prometheus.Advanced
 
         public void Add(long increment)
         {
-            while (true)
-            {
-                long initialValue = _value;
-                long computedValue = initialValue + increment;
-
-                //Compare exchange will only set the computed value if it is equal to the expected value
-                //It will always return the the value of _value prior to the exchange (whether it happens or not)
-                //So, only exit the loop if the value was what we expected it to be (initialValue) at the time of exchange otherwise another thread updated and we need to try again.
-                if (initialValue == Interlocked.CompareExchange(ref _value, computedValue, initialValue))
-                    return;
-            }
+            Interlocked.Add(ref _value, increment);
         }
 
         public override string ToString()
