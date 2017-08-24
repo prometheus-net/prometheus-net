@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
@@ -47,8 +48,8 @@ namespace Prometheus
 
         public class Child : Advanced.Child, IHistogram
         {
-            private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
-            private ThreadSafeLong[] _bucketCounts;
+            private double _sum = 0.0D;
+            private long[] _bucketCounts;
             private double[] _upperBounds;
             
             internal override void Init(ICollector parent, LabelValues labelValues)
@@ -56,7 +57,7 @@ namespace Prometheus
                 base.Init(parent, labelValues);
 
                 _upperBounds = ((Histogram)parent)._buckets;
-                _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
+                _bucketCounts = new long[_upperBounds.Length];
             }
 
             protected override void Populate(Metric metric)
@@ -66,14 +67,14 @@ namespace Prometheus
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
-                    wireMetric.sample_count += (ulong)_bucketCounts[i].Value;
+                    wireMetric.sample_count += (ulong)_bucketCounts[i];
                     wireMetric.bucket.Add(new Bucket
                     {
                         upper_bound = _upperBounds[i],
                         cumulative_count = wireMetric.sample_count
                     });
                 }
-                wireMetric.sample_sum = _sum.Value;
+                wireMetric.sample_sum = _sum;
 
                 metric.histogram = wireMetric;
             }
@@ -88,12 +89,17 @@ namespace Prometheus
                 for (int i = 0; i < _upperBounds.Length; i++)
                 {
                     if (val <= _upperBounds[i])
-                    {
-                        _bucketCounts[i].Add(1);
+                    {                        
+                        Interlocked.Increment(ref _bucketCounts[i]);
                         break;
                     }
                 }
-                _sum.Add(val);
+                // Atomic increment
+                double initalValue, computedValue; 
+                do {
+                    initalValue = _sum;
+                    computedValue = initalValue + val;
+                } while ( initalValue != Interlocked.CompareExchange(ref _sum, computedValue, initalValue));
             }
         }
 

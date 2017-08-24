@@ -39,7 +39,7 @@ namespace Prometheus
 
         public class Child : Advanced.Child, IGauge
         {
-            private ThreadSafeDouble _value;
+            private double _value;
 
             protected override void Populate(Metric metric)
             {
@@ -49,12 +49,22 @@ namespace Prometheus
 
             public void Inc(double increment = 1)
             {
-                _value.Add(increment);
+                // Atomic increment
+                double initalValue, computedValue; 
+                do {
+                    initalValue = _value;
+                    computedValue = initalValue + increment;
+                } while ( initalValue != Interlocked.CompareExchange(ref _value, computedValue, initalValue));
             }
 
             public void Set(double val)
             {
-                _value.Value = val;
+                // Atomic increment
+                double initalValue, computedValue; 
+                do {
+                    initalValue = _value;
+                    computedValue = val;
+                } while ( initalValue != Interlocked.CompareExchange(ref _value, computedValue, initalValue));                
             }
 
             public void SetToCurrentTime()
@@ -77,7 +87,7 @@ namespace Prometheus
             {
                 get
                 {
-                    return _value.Value;
+                    return _value;
                 }
             }
         }
