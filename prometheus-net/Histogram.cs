@@ -97,6 +97,15 @@ namespace Prometheus
             }
         }
 
+        /// <summary>
+        /// Sets the timestamp that Prometheus should use when recording this metric.
+        /// If null, Prometheus will use the current time.
+        /// </summary>
+        public void SetTimestamp(DateTimeOffset? timestamp)
+        {
+            Unlabelled.SetTimestamp(timestamp);
+        }
+
         protected override MetricType Type
         {
             get { return MetricType.HISTOGRAM; }

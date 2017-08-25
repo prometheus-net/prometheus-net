@@ -43,31 +43,31 @@ namespace Prometheus.Internal
 
             if (metric.gauge!=null)
             {
-                streamWriter.WriteLine(SimpleValue(familyName, metric.gauge.value, metric.label));
+                streamWriter.WriteLine(SimpleValue(familyName, metric.gauge.value, metric.timestamp_ms, metric.label));
             }
             else if (metric.counter!=null)
             {
-                streamWriter.WriteLine(SimpleValue(familyName, metric.counter.value, metric.label));
+                streamWriter.WriteLine(SimpleValue(familyName, metric.counter.value, metric.timestamp_ms, metric.label));
             }
             else if (metric.summary != null)
             {
-                streamWriter.WriteLine(SimpleValue(familyName, metric.summary.sample_sum, metric.label, "_sum"));
-                streamWriter.WriteLine(SimpleValue(familyName, metric.summary.sample_count, metric.label, "_count"));
+                streamWriter.WriteLine(SimpleValue(familyName, metric.summary.sample_sum, metric.timestamp_ms, metric.label, "_sum"));
+                streamWriter.WriteLine(SimpleValue(familyName, metric.summary.sample_count, metric.timestamp_ms, metric.label, "_count"));
 
                 foreach (var quantileValuePair in metric.summary.quantile)
                 {
                     var quantile = double.IsPositiveInfinity(quantileValuePair.quantile) ? "+Inf" : quantileValuePair.quantile.ToString(CultureInfo.InvariantCulture);
-                    streamWriter.WriteLine(SimpleValue(familyName, quantileValuePair.value, metric.label.Concat(new []{new LabelPair{name= "quantile", value = quantile}})));
+                    streamWriter.WriteLine(SimpleValue(familyName, quantileValuePair.value, metric.timestamp_ms, metric.label.Concat(new []{new LabelPair{name= "quantile", value = quantile}})));
                 }
             }
             else if (metric.histogram != null)
             {
-                streamWriter.WriteLine(SimpleValue(familyName, metric.histogram.sample_sum, metric.label, "_sum"));
-                streamWriter.WriteLine(SimpleValue(familyName, metric.histogram.sample_count, metric.label, "_count"));
+                streamWriter.WriteLine(SimpleValue(familyName, metric.histogram.sample_sum, metric.timestamp_ms, metric.label, "_sum"));
+                streamWriter.WriteLine(SimpleValue(familyName, metric.histogram.sample_count, metric.timestamp_ms, metric.label, "_count"));
                 foreach (var bucket in metric.histogram.bucket)
                 {
                     var value = double.IsPositiveInfinity(bucket.upper_bound) ? "+Inf" : bucket.upper_bound.ToString(CultureInfo.InvariantCulture);
-                    streamWriter.WriteLine(SimpleValue(familyName, bucket.cumulative_count, metric.label.Concat(new []{new LabelPair{name = "le", value = value}}), "_bucket"));
+                    streamWriter.WriteLine(SimpleValue(familyName, bucket.cumulative_count, metric.timestamp_ms, metric.label.Concat(new []{new LabelPair{name = "le", value = value}}), "_bucket"));
                 }
             }
             else
@@ -96,9 +96,11 @@ namespace Prometheus.Internal
                     .Replace("\"", @"\""");
         }
 
-        private static string SimpleValue(string family, double value, IEnumerable<LabelPair> labels, string namePostfix = null)
+        private static string SimpleValue(string family, double value, long timestamp, IEnumerable<LabelPair> labels, string namePostfix = null)
         {
-            return string.Format("{0} {1}", WithLabels(family+(namePostfix ?? ""), labels), value.ToString(CultureInfo.InvariantCulture));
+            var timestampString = timestamp == 0 ? "" : " " + timestamp.ToString(CultureInfo.InvariantCulture);
+
+            return string.Format("{0} {1}{2}", WithLabels(family+(namePostfix ?? ""), labels), value.ToString(CultureInfo.InvariantCulture), timestampString);
         }
     }
 }
