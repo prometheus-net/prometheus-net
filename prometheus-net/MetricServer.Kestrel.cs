@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD1_3
+﻿#if NETSTANDARD1_3 || NETSTANDARD2_0
 
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using System.Security.Cryptography.X509Certificates;
+using System.Reflection;
 
 namespace Prometheus
 {
@@ -22,6 +23,8 @@ namespace Prometheus
         private IWebHost host;
         public bool IsRunning => host != null;
         private X509Certificate2 certificate;
+        private readonly int _port;
+        private readonly string pathBase;
 
         public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null,
             bool useHttps = false, X509Certificate2 certificate = null) :
@@ -37,7 +40,13 @@ namespace Prometheus
             }
             this.certificate = certificate;
             var s = useHttps ? "s" : "";
+#if NETSTANDARD1_3
             hostAddress = $"http{s}://{hostname}:{port}/{url}";
+#else
+            hostAddress = $"http{s}://{hostname}:{port}/";
+#endif
+            pathBase = $"/{url}";
+
             if (_registry == DefaultCollectorRegistry.Instance) {
                 // Default to DotNetStatsCollector if none speified
                 // For no collectors, pass an empty collection
@@ -46,6 +55,8 @@ namespace Prometheus
 
                 DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(standardCollectors);
             }
+
+            _port = port;
         }
 
         protected override IDisposable StartLoop(IScheduler scheduler)
@@ -61,15 +72,25 @@ namespace Prometheus
                 .UseConfiguration(config)
                  .UseKestrel(options =>
                  {
-                     if (certificate != null) {
-                         options.UseHttps(certificate);
-                     }
+                    if (certificate != null) {
+                        
+#if NETSTANDARD2_0
+                        options.Listen(IPAddress.Loopback, _port, listenOptions =>
+	                    {
+	                        listenOptions.UseHttps(certificate);
+	                    });
+#else
+                        options.UseHttps(certificate);
+#endif
+                    }
                  })
                  .UseUrls(hostAddress)
                  .ConfigureServices(services =>
                  {
                      services.AddSingleton<IStartup>(new Startup(_registry));
                  })
+                .UseSetting(WebHostDefaults.ApplicationKey, typeof(Startup).GetTypeInfo().Assembly.FullName)
+                .UseSetting("PathBase", pathBase)
                  .Build();
 
             host.Start();
@@ -102,6 +123,9 @@ namespace Prometheus
 
             public void Configure(IApplicationBuilder app)
             {
+#if NETSTANDARD2_0                
+                app.UsePathBase(Configuration["PathBase"]);
+#endif
                 app.Run(context => {
                     var response = context.Response;
                     var request = context.Request;

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Prometheus
 {
-#if NETSTANDARD1_3
+#if NETSTANDARD1_3 || NETSTANDARD2_0
     using System.Net.Http;
 
     internal class NetworkClient : IDisposable
