@@ -5,12 +5,14 @@ using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus.Internal
 {
-    internal class LabelValues
+    internal struct LabelValues : IEquatable<LabelValues>
     {
+        private readonly int _hashCode;
         private readonly string[] _values;
-        internal readonly List<LabelPair> WireLabels = new List<LabelPair>(); 
+        private readonly string[] _names;
+        
+        internal List<LabelPair> WireLabels; 
         internal static readonly LabelValues Empty = new LabelValues(new string[0], new string[0]);
-
 
         public LabelValues(string[] names, string[] values)
         {
@@ -18,18 +20,24 @@ namespace Prometheus.Internal
             {
                 throw new InvalidOperationException("Label values must be of same length as label names");
             }
+            
             _values = values;
-            WireLabels.AddRange(names.Zip(values, (s, s1) => new LabelPair() {name = s, value = s1}));
+            _names = names;
+            
+            // Calculating the hash code is fast but we don't need to re-calculate it for each comparison this object is involved in.
+            // Label values are fixed- caluclate it once up-front and remember the value.
+            _hashCode = CalculateHashCode(_values);
+            WireLabels = null;
         }
 
-
-        public override bool Equals(object obj)
+        internal void InitWireLabels()
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            var other = (LabelValues)obj;
+            WireLabels = new List<LabelPair>();
+            WireLabels.AddRange(_names.Zip(_values, (s, s1) => new LabelPair() {name = s, value = s1}));
+        }
 
+        public bool Equals(LabelValues other)
+        {
             if (other._values.Length != _values.Length) return false;
             for (int i = 0; i < _values.Length; i++)
             {
@@ -39,11 +47,33 @@ namespace Prometheus.Internal
             return true;
         }
 
+        public override bool Equals(object obj)
+        {
+            if (!(obj is LabelValues))
+            {
+                return false;
+            }
+            
+            var other = (LabelValues)obj;
+            return Equals(other);
+        }
+
         public override int GetHashCode()
+        {
+            return _hashCode;
+        }
+
+        private static int CalculateHashCode(string[] values)
         {
             unchecked
             {
-                return _values.Aggregate(1, (current, val) => current ^ val.GetHashCode() * 397);
+                int hashCode = 0;
+                for (int i = 0; i < values.Length; i++)
+                {
+                    hashCode ^= (values[i].GetHashCode() * 397);
+                }
+                
+                return hashCode;
             }
         }
 
