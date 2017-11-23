@@ -12,7 +12,10 @@ namespace Prometheus.Internal
         private readonly string[] _names;
         
         internal List<LabelPair> WireLabels; 
-        internal static readonly LabelValues Empty = new LabelValues(new string[0], new string[0]);
+        internal static readonly LabelValues Empty = new LabelValues(new string[0], new string[0])
+        {
+            WireLabels = new List<LabelPair>()
+        };
 
         public LabelValues(string[] names, string[] values)
         {
@@ -41,7 +44,8 @@ namespace Prometheus.Internal
             if (other._values.Length != _values.Length) return false;
             for (int i = 0; i < _values.Length; i++)
             {
-                if ((_values[i]) != other._values[i]) return false;
+                if (!string.Equals(_values[i], other._values[i], StringComparison.Ordinal)) 
+                    return false;
             }
 
             return true;

@@ -19,7 +19,7 @@ namespace Prometheus.Advanced
         readonly static Regex MetricName = new Regex(METRIC_NAME_RE);
         readonly static Regex LabelNameRegex = new Regex("^[a-zA-Z_:][a-zA-Z0-9_:]*$");
         readonly static Regex ReservedLabelRegex = new Regex("^__.*$");
-        readonly static LabelValues EmptyLabelValues = new LabelValues(new string[0], new string[0]);
+        readonly static LabelValues EmptyLabelValues = LabelValues.Empty;
         // ReSharper restore StaticFieldInGenericType
 
         protected abstract MetricType Type { get; }
