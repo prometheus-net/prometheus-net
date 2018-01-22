@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Prometheus.Advanced.DataContracts;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus.Advanced
 {
@@ -28,7 +28,7 @@ namespace Prometheus.Advanced
             {
                 onDemandCollector.UpdateMetrics();
             }
-            
+
             foreach (var value in _collectors.Values)
             {
                 var c = value.Collect();

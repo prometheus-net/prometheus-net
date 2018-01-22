@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Prometheus.SummaryImpl;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.SummaryImpl;
 
 namespace Prometheus.Tests
 {
@@ -18,8 +18,8 @@ namespace Prometheus.Tests
             new QuantileEpsilonPair(0.99, 0.001)
         };
 
-        readonly double[] _lowQuantiles = {0.01, 0.1, 0.5};
-        readonly double[] _highQuantiles = {0.99, 0.9, 0.5};
+        readonly double[] _lowQuantiles = { 0.01, 0.1, 0.5 };
+        readonly double[] _highQuantiles = { 0.99, 0.9, 0.5 };
 
         const double RelativeEpsilon = 0.01;
 
@@ -65,7 +65,7 @@ namespace Prometheus.Tests
             // Before compression, Query should have 100% accuracy
             foreach (var quantile in _targets.Select(_ => _.Quantile))
             {
-                var w = quantile*100;
+                var w = quantile * 100;
                 var g = q.Query(quantile);
                 Assert.AreEqual(g, w);
             }
@@ -74,7 +74,7 @@ namespace Prometheus.Tests
         [TestMethod]
         public void TestUncompressedSamples()
         {
-            var q = QuantileStream.NewTargeted(new List<QuantileEpsilonPair> {new QuantileEpsilonPair(0.99d, 0.001d)});
+            var q = QuantileStream.NewTargeted(new List<QuantileEpsilonPair> { new QuantileEpsilonPair(0.99d, 0.001d) });
 
             for (var i = 1; i <= 100; i++)
             {
@@ -108,10 +108,10 @@ namespace Prometheus.Tests
             for (int i = 0; i < a.Length; i++)
             {
                 var v = random.NormDouble();
-                
+
                 // Add 5% asymmetric outliers.
-                if (i%20 == 0)
-                    v = v*v + 1;
+                if (i % 20 == 0)
+                    v = v * v + 1;
 
                 stream.Insert(v);
                 a[i] = v;
@@ -127,12 +127,12 @@ namespace Prometheus.Tests
 
             foreach (var target in _targets)
             {
-                var n = (double) a.Length;
+                var n = (double)a.Length;
                 var k = (int)(target.Quantile * n);
-                var lower = (int) ((target.Quantile - target.Epsilon)*n);
+                var lower = (int)((target.Quantile - target.Epsilon) * n);
                 if (lower < 1)
                     lower = 1;
-                var upper = (int) Math.Ceiling((target.Quantile + target.Epsilon) *n);
+                var upper = (int)Math.Ceiling((target.Quantile + target.Epsilon) * n);
                 if (upper > a.Length)
                     upper = a.Length;
 
@@ -153,11 +153,11 @@ namespace Prometheus.Tests
 
             foreach (var qu in _lowQuantiles)
             {
-                var n = (double) a.Length;
-                var k = (int) (qu*n);
+                var n = (double)a.Length;
+                var k = (int)(qu * n);
 
-                var lowerRank = (int) ((1 - RelativeEpsilon) * qu *n);
-                var upperRank = (int) (Math.Ceiling((1 + RelativeEpsilon)* qu *n));
+                var lowerRank = (int)((1 - RelativeEpsilon) * qu * n);
+                var upperRank = (int)(Math.Ceiling((1 + RelativeEpsilon) * qu * n));
 
                 var w = a[k - 1];
                 var min = a[lowerRank - 1];
@@ -176,11 +176,11 @@ namespace Prometheus.Tests
 
             foreach (var qu in _highQuantiles)
             {
-                var n = (double) a.Length;
-                var k = (int) (qu*n);
+                var n = (double)a.Length;
+                var k = (int)(qu * n);
 
-                var lowerRank = (int) ((1 - (1 + RelativeEpsilon)*(1 - qu))*n);
-                var upperRank = (int) (Math.Ceiling((1 - (1 - RelativeEpsilon)*(1 - qu))*n));
+                var lowerRank = (int)((1 - (1 + RelativeEpsilon) * (1 - qu)) * n);
+                var upperRank = (int)(Math.Ceiling((1 - (1 - RelativeEpsilon) * (1 - qu)) * n));
                 var w = a[k - 1];
                 var min = a[lowerRank - 1];
                 var max = a[upperRank - 1];

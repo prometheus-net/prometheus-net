@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Prometheus.Advanced;
+﻿using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 using Prometheus.SummaryImpl;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Prometheus
 {
@@ -41,12 +41,12 @@ namespace Prometheus
         readonly int _bufCap;
 
         internal Summary(
-            string name, 
-            string help, 
-            string[] labelNames, 
-            IList<QuantileEpsilonPair> objectives = null, 
-            TimeSpan? maxAge = null, 
-            int? ageBuckets = null, 
+            string name,
+            string help,
+            string[] labelNames,
+            IList<QuantileEpsilonPair> objectives = null,
+            TimeSpan? maxAge = null,
+            int? ageBuckets = null,
             int? bufCap = null)
             : base(name, help, labelNames)
         {
@@ -66,7 +66,7 @@ namespace Prometheus
 
             if (_bufCap == 0)
                 _bufCap = DefBufCap;
-            
+
             if (labelNames.Any(_ => _ == QuantileLabel))
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
@@ -200,7 +200,7 @@ namespace Prometheus
                         }
                     }
                 }
-                
+
                 if (quantiles.Length > 0)
                     Array.Sort(quantiles, _quantileComparer);
 
@@ -208,7 +208,7 @@ namespace Prometheus
                 {
                     summary.quantile.Add(quantiles[i]);
                 }
-                
+
                 metric.summary = summary;
             }
 

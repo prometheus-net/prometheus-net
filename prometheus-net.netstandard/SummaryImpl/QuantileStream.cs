@@ -36,7 +36,7 @@ namespace Prometheus.SummaryImpl
 
         public static QuantileStream NewStream(Invariant invariant)
         {
-            return new QuantileStream(new SampleStream(invariant), new List<Sample> {Capacity = 500}, true);
+            return new QuantileStream(new SampleStream(invariant), new List<Sample> { Capacity = 500 }, true);
         }
 
         // NewLowBiased returns an initialized Stream for low-biased quantiles
@@ -85,12 +85,12 @@ namespace Prometheus.SummaryImpl
                 for (var i = 0; i < targets.Count; i++)
                 {
                     var target = targets[i];
-                
+
                     double f;
-                    if (target.Quantile* stream.N <= r)
-                        f = (2*target.Epsilon*r)/target.Quantile;
+                    if (target.Quantile * stream.N <= r)
+                        f = (2 * target.Epsilon * r) / target.Quantile;
                     else
-                        f = (2*target.Epsilon*(stream.N - r))/(1 - target.Quantile);
+                        f = (2 * target.Epsilon * (stream.N - r)) / (1 - target.Quantile);
 
                     if (f < m)
                         m = f;
@@ -102,7 +102,7 @@ namespace Prometheus.SummaryImpl
 
         public void Insert(double value)
         {
-            Insert(new Sample {Value = value, Width = 1});
+            Insert(new Sample { Value = value, Width = 1 });
         }
 
         void Insert(Sample sample)
@@ -125,7 +125,7 @@ namespace Prometheus.SummaryImpl
             if (!_sorted)
             {
                 _sorted = true;
-                _samples.Sort( SampleComparison);
+                _samples.Sort(SampleComparison);
             }
         }
         static int SampleComparison(Sample lhs, Sample rhs)
@@ -161,7 +161,7 @@ namespace Prometheus.SummaryImpl
                 if (l == 0)
                     return 0;
 
-                var i = (int) (l * q);
+                var i = (int)(l * q);
                 if (i > 0)
                     i -= 1;
 

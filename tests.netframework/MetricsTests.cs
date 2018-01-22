@@ -1,13 +1,13 @@
-﻿using System;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
+using System;
+using System.Linq;
 
 namespace Prometheus.Tests
 {
-	[TestClass]
-	public class MetricsTests
+    [TestClass]
+    public class MetricsTests
     {
         public MetricsTests()
         {
@@ -28,7 +28,7 @@ namespace Prometheus.Tests
             Assert.AreEqual(3.8, gauge.Value);
 
             Assert.ThrowsException<InvalidOperationException>(() => gauge.Labels("1"));
-            
+
             var counter = Metrics.CreateCounter("name2", "help2", "label1");
             counter.Inc();
             counter.Inc(3.2);
@@ -84,7 +84,7 @@ namespace Prometheus.Tests
         {
             var myRegistry = new DefaultCollectorRegistry();
             var counter1 = Metrics.WithCustomRegistry(myRegistry).CreateCounter("counter1", "help1"); //registered on a custom registry
-            
+
             var counter2 = Metrics.CreateCounter("counter1", "help1"); //created on different registry - same name is hence permitted
 
             counter1.Inc(3);
@@ -128,7 +128,7 @@ namespace Prometheus.Tests
         [TestMethod]
         public void histogram_tests()
         {
-            Histogram histogram = Metrics.CreateHistogram("hist1", "help", new []{ 1.0, 2.0, 3.0, double.PositiveInfinity});
+            Histogram histogram = Metrics.CreateHistogram("hist1", "help", new[] { 1.0, 2.0, 3.0, double.PositiveInfinity });
             histogram.Observe(1.5);
             histogram.Observe(2.5);
             histogram.Observe(1);
@@ -221,7 +221,7 @@ namespace Prometheus.Tests
         public void same_labels_return_same_instance()
         {
             var gauge = Metrics.CreateGauge("name1", "help1", "label1");
-            
+
             var labelled1 = gauge.Labels("1");
 
             var labelled2 = gauge.Labels("1");

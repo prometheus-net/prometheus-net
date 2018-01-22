@@ -1,15 +1,14 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Prometheus.Advanced;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Reactive.Concurrency;
-using Prometheus.Advanced;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -29,13 +28,15 @@ namespace Prometheus
         public KestrelMetricServer(string hostname, int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null,
             bool useHttps = false, X509Certificate2 certificate = null) : base(standardCollectors, registry)
         {
-            if (useHttps && certificate == null) {
+            if (useHttps && certificate == null)
+            {
                 throw new ArgumentNullException(nameof(certificate), $"{nameof(certificate)} is required when using https");
             }
             this.certificate = certificate;
             var s = useHttps ? "s" : "";
             hostAddress = $"http{s}://{hostname}:{port}/{url}";
-            if (_registry == DefaultCollectorRegistry.Instance) {
+            if (_registry == DefaultCollectorRegistry.Instance)
+            {
                 // Default to DotNetStatsCollector if none speified
                 // For no collectors, pass an empty collection
                 if (standardCollectors == null)
@@ -47,7 +48,8 @@ namespace Prometheus
 
         protected override IDisposable StartLoop(IScheduler scheduler)
         {
-            if (host != null) {
+            if (host != null)
+            {
                 throw new Exception("Server is already running.");
             }
             var configBuilder = new ConfigurationBuilder();
@@ -59,7 +61,8 @@ namespace Prometheus
                  .UseKestrel(options =>
                  {
                      // TODO: This changed in Kestrel with .NET Core 2.0. Must test that the updated logic still works.
-                     if (certificate != null) {
+                     if (certificate != null)
+                     {
                          options.Listen(IPAddress.Any, 443, listenOptions =>
                             listenOptions.UseHttps(certificate));
                      }
@@ -78,7 +81,8 @@ namespace Prometheus
 
         protected override void StopInner()
         {
-            if (host != null) {
+            if (host != null)
+            {
                 host.Dispose();
                 host = null;
             }
@@ -101,7 +105,8 @@ namespace Prometheus
 
             public void Configure(IApplicationBuilder app)
             {
-                app.Run(context => {
+                app.Run(context =>
+                {
                     var response = context.Response;
                     var request = context.Request;
                     response.StatusCode = 200;
@@ -110,7 +115,8 @@ namespace Prometheus
                     var contentType = ScrapeHandler.GetContentType(acceptHeader);
                     response.ContentType = contentType;
 
-                    using (var outputStream = response.Body) {
+                    using (var outputStream = response.Body)
+                    {
                         var collected = _registry.CollectAll();
                         ScrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
                     };

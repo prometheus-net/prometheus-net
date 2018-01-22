@@ -11,7 +11,7 @@ namespace Prometheus.Advanced
     {
         private const string MemCat = ".NET CLR Memory";
         private const string ProcCat = "Process";
-        
+
         private static readonly string[] StandardPerfCounters =
         {
             MemCat, "Gen 0 heap size",

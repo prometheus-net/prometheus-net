@@ -1,9 +1,7 @@
-﻿using System;
+﻿using Prometheus.Advanced;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Concurrency;
-using System.Text;
-using Prometheus.Advanced;
 
 namespace Prometheus
 {
@@ -40,7 +38,7 @@ namespace Prometheus
 
         protected virtual void StopInner()
         {
-            
+
         }
 
         protected abstract IDisposable StartLoop(IScheduler scheduler);

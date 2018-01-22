@@ -1,8 +1,8 @@
-using System;
-using System.Linq;
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
+using System;
+using System.Linq;
 
 namespace Prometheus
 {
@@ -18,7 +18,7 @@ namespace Prometheus
 
         internal Histogram(string name, string help, string[] labelNames, double[] buckets = null) : base(name, help, labelNames)
         {
-            if (labelNames.Any(l=>l == "le"))
+            if (labelNames.Any(l => l == "le"))
             {
                 throw new ArgumentException("'le' is a reserved label name");
             }
@@ -50,7 +50,7 @@ namespace Prometheus
             private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
             private ThreadSafeLong[] _bucketCounts;
             private double[] _upperBounds;
-            
+
             internal override void Init(ICollector parent, LabelValues labelValues)
             {
                 base.Init(parent, labelValues);

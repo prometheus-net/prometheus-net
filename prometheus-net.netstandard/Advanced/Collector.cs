@@ -1,8 +1,8 @@
+using Prometheus.Advanced.DataContracts;
+using Prometheus.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
 
 namespace Prometheus.Advanced
 {
@@ -14,7 +14,7 @@ namespace Prometheus.Advanced
         private readonly string _name;
         private readonly string _help;
         private readonly Lazy<T> _unlabelledLazy;
-        
+
         // ReSharper disable StaticFieldInGenericType
         readonly static Regex MetricName = new Regex(METRIC_NAME_RE);
         readonly static Regex LabelNameRegex = new Regex("^[a-zA-Z_:][a-zA-Z0-9_:]*$");
@@ -30,15 +30,15 @@ namespace Prometheus.Advanced
             return GetOrAddLabelled(key);
         }
 
-		public void RemoveLabelled(params string[] labelValues)
-		{
-			var key = new LabelValues(LabelNames, labelValues);
+        public void RemoveLabelled(params string[] labelValues)
+        {
+            var key = new LabelValues(LabelNames, labelValues);
 
-			T temp;
-			_labelledMetrics.TryRemove(key, out temp);
-		}
+            T temp;
+            _labelledMetrics.TryRemove(key, out temp);
+        }
 
-		private T GetOrAddLabelled(LabelValues key)
+        private T GetOrAddLabelled(LabelValues key)
         {
             return _labelledMetrics.GetOrAdd(key, labels1 =>
             {

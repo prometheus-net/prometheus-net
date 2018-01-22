@@ -15,7 +15,7 @@ namespace tester
             var metricServer = tester.InitializeMetricHandler();
             metricServer.Start();
 
-            var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new []{ "method", "endpoint"});
+            var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new[] { "method", "endpoint" });
             counter.Labels("GET", "/").Inc();
             counter.Labels("POST", "/cancel").Inc();
 

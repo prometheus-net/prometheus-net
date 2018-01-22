@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
+using System;
 using System.Diagnostics;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading.Tasks;
 
 namespace Prometheus.Tests
 {
@@ -19,7 +18,7 @@ namespace Prometheus.Tests
         public void BenchmarkSummaryObserve(int w)
         {
             var stopwatch = new Stopwatch();
-            
+
             const int N = 100000;
             var summary = new Summary("test_summary", "helpless", new string[0]);
             var tasks = new Task[w];
@@ -73,7 +72,7 @@ namespace Prometheus.Tests
                         child.Populate(metric, now);
                 });
             }
-            
+
             Task.WaitAll(tasks);
             stopwatch.Stop();
 

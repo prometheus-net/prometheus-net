@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using Prometheus.Advanced;
+﻿using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus

@@ -1,25 +1,25 @@
+using Prometheus.Advanced.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus.Internal
 {
     internal class LabelValues
     {
         private readonly string[] _values;
-        internal readonly List<LabelPair> WireLabels = new List<LabelPair>(); 
+        internal readonly List<LabelPair> WireLabels = new List<LabelPair>();
         internal static readonly LabelValues Empty = new LabelValues(new string[0], new string[0]);
 
 
         public LabelValues(string[] names, string[] values)
         {
-            if (names.Length!=values.Length)
+            if (names.Length != values.Length)
             {
                 throw new InvalidOperationException("Label values must be of same length as label names");
             }
             _values = values;
-            WireLabels.AddRange(names.Zip(values, (s, s1) => new LabelPair() {name = s, value = s1}));
+            WireLabels.AddRange(names.Zip(values, (s, s1) => new LabelPair() { name = s, value = s1 }));
         }
 
 

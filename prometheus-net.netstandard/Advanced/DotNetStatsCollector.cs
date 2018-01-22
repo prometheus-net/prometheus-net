@@ -26,11 +26,11 @@ namespace Prometheus.Advanced
         {
             _process = Process.GetCurrentProcess();
         }
-        
+
         public void RegisterMetrics()
         {
-            var collectionCountsParent = Metrics.CreateCounter("dotnet_collection_count_total", "GC collection count", new []{"generation"});
-            
+            var collectionCountsParent = Metrics.CreateCounter("dotnet_collection_count_total", "GC collection count", new[] { "generation" });
+
             for (var gen = 0; gen <= GC.MaxGeneration; gen++)
             {
                 _collectionCounts.Add(collectionCountsParent.Labels(gen.ToString()));
@@ -39,7 +39,7 @@ namespace Prometheus.Advanced
             // Metrics that make sense to compare between all operating systems
             _startTime = Metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds");
             _cpuTotal = Metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
-            
+
             // Windows specific metrics
             _virtualMemorySize = Metrics.CreateGauge("process_windows_virtual_bytes", "Process virtual memory size");
             _workingSet = Metrics.CreateGauge("process_windows_working_set", "Process working set");
@@ -51,7 +51,7 @@ namespace Prometheus.Advanced
             // .net specific metrics
             _totalMemory = Metrics.CreateGauge("dotnet_totalmemory", "Total known allocated memory");
             _perfErrors = Metrics.CreateCounter("dotnet_collection_errors_total", "Total number of errors that occured during collections");
-            
+
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _startTime.Set((_process.StartTime.ToUniversalTime() - epoch).TotalSeconds);
             _pid.Set(_process.Id);

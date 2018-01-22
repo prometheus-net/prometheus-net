@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Prometheus.Advanced.DataContracts;
+using Prometheus.Internal;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
 
 namespace Prometheus.Tests
 {

@@ -1,16 +1,16 @@
-﻿using System;
+﻿using Prometheus.Advanced;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Reactive.Concurrency;
-using Prometheus.Advanced;
 
 namespace Prometheus
 {
     public class MetricServer : MetricHandler
     {
         readonly HttpListener _httpListener = new HttpListener();
-        
+
         public MetricServer(int port, IEnumerable<IOnDemandCollector> standardCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : this("+", port, standardCollectors, url, registry, useHttps)
         {
         }

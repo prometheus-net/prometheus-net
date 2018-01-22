@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Prometheus.Advanced;
+﻿using Prometheus.Advanced;
 using Prometheus.SummaryImpl;
+using System;
+using System.Collections.Generic;
 
 namespace Prometheus
 {

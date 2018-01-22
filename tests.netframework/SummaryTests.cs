@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 using Prometheus.SummaryImpl;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Prometheus.Tests
 {
@@ -27,10 +27,10 @@ namespace Prometheus.Tests
         public void TestSummaryConcurrency(int n)
         {
             var random = new Random(42);
-            var mutations = n%10000 + 10000L;
+            var mutations = n % 10000 + 10000L;
             var concLevel = (n / 10000) % 5 + 1;
             var total = mutations * concLevel;
-                
+
             var sum = new Summary("test_summary", "helpless", new string[0]);
             var allVars = new double[total];
             double sampleSum = 0;
@@ -64,7 +64,7 @@ namespace Prometheus.Tests
 
             var got = m.sample_sum;
             var want = sampleSum;
-            Assert.IsTrue(Math.Abs(got-want) / want <= 0.001);
+            Assert.IsTrue(Math.Abs(got - want) / want <= 0.001);
 
             var objectives = Summary.DefObjectives.Select(_ => _.Quantile).ToArray();
             Array.Sort(objectives);
@@ -92,27 +92,27 @@ namespace Prometheus.Tests
         public void TestSummaryDecay()
         {
             var baseTime = new DateTime(2015, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            
-            var sum = new Summary("test_summary", "helpless", new string[0], objectives: new List<QuantileEpsilonPair> {new QuantileEpsilonPair(0.1d, 0.001d)}, maxAge: TimeSpan.FromSeconds(100), ageBuckets: 10);
+
+            var sum = new Summary("test_summary", "helpless", new string[0], objectives: new List<QuantileEpsilonPair> { new QuantileEpsilonPair(0.1d, 0.001d) }, maxAge: TimeSpan.FromSeconds(100), ageBuckets: 10);
             var child = new Summary.Child();
             child.Init(sum, LabelValues.Empty, baseTime);
-            
+
             Advanced.DataContracts.Summary m;
             var metric = new Metric();
-            
+
             for (var i = 0; i < 1000; i++)
             {
                 var now = baseTime.AddSeconds(i);
                 child.Observe(i, now);
-                
-                if (i%10 == 0)
+
+                if (i % 10 == 0)
                 {
                     child.Populate(metric, now);
                     m = metric.summary;
                     var got = m.quantile[0].value;
-                    var want = Math.Max((double) i/10, (double) i - 90);
+                    var want = Math.Max((double)i / 10, (double)i - 90);
 
-                    Assert.IsTrue(Math.Abs(got-want) <= 1, $"{i}. got {got} want {want}");
+                    Assert.IsTrue(Math.Abs(got - want) <= 1, $"{i}. got {got} want {want}");
                 }
             }
 
@@ -163,8 +163,8 @@ namespace Prometheus.Tests
             // be at most ε, but for some reason, it's sometimes slightly
             // higher. That's a bug.
             var n = (double)vars.Length;
-            var lower = (int) ((q - 2*epsilon)*n);
-            var upper = (int) Math.Ceiling((q + 2 * epsilon) * n);
+            var lower = (int)((q - 2 * epsilon) * n);
+            var upper = (int)Math.Ceiling((q + 2 * epsilon) * n);
 
             var min = vars[0];
             if (lower > 1)

@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Prometheus.Advanced.DataContracts;
+﻿using Prometheus.Advanced.DataContracts;
+using System.Collections.Generic;
 
 namespace Prometheus.Advanced
 {

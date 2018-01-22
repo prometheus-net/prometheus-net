@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Prometheus.Advanced.DataContracts;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus.Internal
 {
@@ -41,11 +41,11 @@ namespace Prometheus.Internal
         {
             var familyName = family.name;
 
-            if (metric.gauge!=null)
+            if (metric.gauge != null)
             {
                 streamWriter.WriteLine(SimpleValue(familyName, metric.gauge.value, metric.label));
             }
-            else if (metric.counter!=null)
+            else if (metric.counter != null)
             {
                 streamWriter.WriteLine(SimpleValue(familyName, metric.counter.value, metric.label));
             }
@@ -57,7 +57,7 @@ namespace Prometheus.Internal
                 foreach (var quantileValuePair in metric.summary.quantile)
                 {
                     var quantile = double.IsPositiveInfinity(quantileValuePair.quantile) ? "+Inf" : quantileValuePair.quantile.ToString(CultureInfo.InvariantCulture);
-                    streamWriter.WriteLine(SimpleValue(familyName, quantileValuePair.value, metric.label.Concat(new []{new LabelPair{name= "quantile", value = quantile}})));
+                    streamWriter.WriteLine(SimpleValue(familyName, quantileValuePair.value, metric.label.Concat(new[] { new LabelPair { name = "quantile", value = quantile } })));
                 }
             }
             else if (metric.histogram != null)
@@ -67,7 +67,7 @@ namespace Prometheus.Internal
                 foreach (var bucket in metric.histogram.bucket)
                 {
                     var value = double.IsPositiveInfinity(bucket.upper_bound) ? "+Inf" : bucket.upper_bound.ToString(CultureInfo.InvariantCulture);
-                    streamWriter.WriteLine(SimpleValue(familyName, bucket.cumulative_count, metric.label.Concat(new []{new LabelPair{name = "le", value = value}}), "_bucket"));
+                    streamWriter.WriteLine(SimpleValue(familyName, bucket.cumulative_count, metric.label.Concat(new[] { new LabelPair { name = "le", value = value } }), "_bucket"));
                 }
             }
             else
@@ -98,7 +98,7 @@ namespace Prometheus.Internal
 
         private static string SimpleValue(string family, double value, IEnumerable<LabelPair> labels, string namePostfix = null)
         {
-            return string.Format("{0} {1}", WithLabels(family+(namePostfix ?? ""), labels), value.ToString(CultureInfo.InvariantCulture));
+            return string.Format("{0} {1}", WithLabels(family + (namePostfix ?? ""), labels), value.ToString(CultureInfo.InvariantCulture));
         }
     }
 }
