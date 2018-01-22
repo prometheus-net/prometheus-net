@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.netstandard"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.netframework", "prometheus-net.netframework\prometheus-net.netframework.csproj", "{4257B52B-FE9A-4A40-9F0D-134577164030}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Resources", "Resources\Resources.csproj", "{608F1849-C417-4077-B60F-1BBF26762670}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "resources", "Resources\resources.csproj", "{608F1849-C417-4077-B60F-1BBF26762670}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.netcore", "prometheus-net.netcore\prometheus-net.netcore.csproj", "{558F2234-3CFF-4D06-8934-3DA3E223A3A4}"
 EndProject
