@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata minClientVersion="2.8">
+    <id>prometheus-net</id>
+    <authors>andrasm,qed-,lakario,sandersaares</authors>
+    <description>.NET client for prometheus.io</description>
+    <projectUrl>https://github.com/andrasm/prometheus-net</projectUrl>
+    <licenseUrl>https://raw.githubusercontent.com/andrasm/prometheus-net/master/LICENSE</licenseUrl>
+    <tags>metrics prometheus</tags>
+    <copyright>Copyright © 2015 andrasm</copyright>
+
+    <!-- Automatically set by release automation. -->
+    <version>__NUGETPACKAGEVERSION__</version>
+    <releaseNotes>__RELEASENOTES__</releaseNotes>
+
+    <dependencies>
+      <group>
+        <dependency id="NETStandard.Library" version="2.0.0" />
+        <dependency id="protobuf-net" version="2.3.4" />
+        <dependency id="System.Reactive" version="3.1.1" />
+      </group>
+
+      <group targetFramework="net461">
+      </group>
+
+      <group targetFramework="netcoreapp2.0">
+        <dependency id="Microsoft.AspNetCore.Hosting" version="2.0.1" />
+        <dependency id="Microsoft.AspNetCore.Server.Kestrel" version="2.0.1" />
+        <dependency id="Microsoft.AspNetCore.Server.Kestrel.Https" version="2.0.1" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
+    <file src="..\netstandard\**" target="lib\netstandard2.0" />
+
+    <file src="..\netstandard\**" target="lib\net461" />
+    <file src="..\netframework\**" target="lib\net461" />
+
+    <file src="..\netstandard\**" target="lib\netcoreapp2.0" />
+    <file src="..\netframework\**" target="lib\netcoreapp2.0" />
+  </files>
+</package>

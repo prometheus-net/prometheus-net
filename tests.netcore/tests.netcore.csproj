@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+
+    <RootNamespace>Prometheus.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <LangVersion>latest</LangVersion>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <LangVersion>latest</LangVersion>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\tests.netframework\AsciiFormatterTests.cs" Link="AsciiFormatterTests.cs" />
+    <Compile Include="..\tests.netframework\MetricsTests.cs" Link="MetricsTests.cs" />
+    <Compile Include="..\tests.netframework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
+    <Compile Include="..\tests.netframework\RandomExtensions.cs" Link="RandomExtensions.cs" />
+    <Compile Include="..\tests.netframework\SummaryBenchmarks.cs" Link="SummaryBenchmarks.cs" />
+    <Compile Include="..\tests.netframework\SummaryTests.cs" Link="SummaryTests.cs" />
+    <Compile Include="..\tests.netframework\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
+    <Compile Include="..\tests.netframework\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.2.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.2.0" />
+    <PackageReference Include="protobuf-net" Version="2.3.4" />
+    <PackageReference Include="System.Reactive" Version="3.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\prometheus-net.netcore\prometheus-net.netcore.csproj" />
+    <ProjectReference Include="..\prometheus-net.netstandard\prometheus-net.netstandard.csproj" />
+  </ItemGroup>
+
+</Project>

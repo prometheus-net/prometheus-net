@@ -2,11 +2,16 @@
 
 [![Build Status](https://travis-ci.org/andrasm/prometheus-net.svg?branch=master)](https://travis-ci.org/andrasm/prometheus-net)
 
-This is an experimental version (unofficial)
+This is a .NET client library for creating [Prometheus](http://prometheus.io/) exporters, targeting .NET Standard 2.0.
 
-It's tested on Windows/.NET4 and Ubuntu/Mono 3.12.1.
+## Breaking changes in 2.0
 
-See prometheus [here](http://prometheus.io/)
+To make the library easier to maintain and deliver, 2.0 introduces some breaking changes:
+
+* Drop dependency on Reactive Extensions, as it was only very lightly used and getting rid of it simplifies dependency management for users.
+* Target .NET Standard 2.0 and runtimes that support it - .NET Core 2.0 and .NET Framework 4.6.1.
+
+If any of these disrupt your workflow, use a 1.x release.
 
 ## Installation
 
