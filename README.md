@@ -1,24 +1,21 @@
-# Prometheus .NET Client
+# prometheus-net
 
-[![Build Status](https://travis-ci.org/andrasm/prometheus-net.svg?branch=master)](https://travis-ci.org/andrasm/prometheus-net)
+This is a .NET library for instrumenting your applications and exporting metrics to [Prometheus](http://prometheus.io/). The library targets .NET Standard 2.0 and compatible runtimes.
 
-This is a .NET client library for creating [Prometheus](http://prometheus.io/) exporters, targeting .NET Standard 2.0.
+## Breaking changes in version 2.0
 
-## Breaking changes in 2.0
+To make the library easier to maintain and deliver, version 2.0 introduces some breaking changes:
 
-To make the library easier to maintain and deliver, 2.0 introduces some breaking changes:
-
-* Drop dependency on Reactive Extensions, as it was only very lightly used and getting rid of it simplifies dependency management for users.
 * Target .NET Standard 2.0 and runtimes that support it - .NET Core 2.0 and .NET Framework 4.6.1.
+* Some classes renamed. For example, MetricsServer used to be Kestrel-based on .NET Core and HttpListener based on .NET Framework but now it is HttpListener based everywhere, with KestrelHttpServer being the Kestrel-specific server.
 
-If any of these disrupt your workflow, use a 1.x release.
+If you are migrating from version 1.x, you may need to make minor changes to your code to adjust for these changes.
 
 ## Installation
 
-Nuget package: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
+Nuget package for general use and serving via HttpListener: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
 
 >Install-Package prometheus-net
-
 
 
 ## Instrumenting
