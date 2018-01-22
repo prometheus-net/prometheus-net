@@ -7,17 +7,17 @@ using System.Text;
 
 namespace tester
 {
-    class MetricPusherTester
+    class MetricPusherTester : Tester
     {
         private IDisposable _schedulerDelegate;
         private HttpListener _httpListener;
 
-        public IMetricServer InitializeMetricHandler()
+        public override IMetricServer InitializeMetricHandler()
         {
             return new MetricPusher(endpoint: "http://localhost:9091/metrics", job: "some_job");
         }
 
-        public void OnStart()
+        public override void OnStart()
         {
             _httpListener = new HttpListener();
             _httpListener.Prefixes.Add("http://localhost:9091/");
@@ -54,7 +54,7 @@ namespace tester
                 });
         }
 
-        public void OnEnd()
+        public override void OnEnd()
         {
             _httpListener.Stop();
             _httpListener.Close();

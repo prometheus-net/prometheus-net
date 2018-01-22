@@ -10,6 +10,7 @@ namespace tester
         {
             // use MetricServerTester or MetricPusherTester to select between metric handlers
             var tester = new MetricServerTester();
+            tester.OnStart();
 
             var metricServer = tester.InitializeMetricHandler();
             metricServer.Start();
@@ -45,6 +46,8 @@ namespace tester
             Console.WriteLine("Press enter to stop metricServer");
             Console.ReadLine();
             metricServer.Stop();
+
+            tester.OnEnd();
 
             Console.WriteLine("Press enter to stop tester");
             Console.ReadLine();

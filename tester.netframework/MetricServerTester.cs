@@ -9,14 +9,14 @@ using Prometheus;
 
 namespace tester
 {
-    class MetricServerTester 
+    class MetricServerTester : Tester
     {
-        public IMetricServer InitializeMetricHandler()
+        public override IMetricServer InitializeMetricHandler()
         {
             return new MetricServer(hostname: "localhost", port: 1234);
         }
 
-        public void OnObservation()
+        public override void OnObservation()
         {
             var httpRequest = (HttpWebRequest)WebRequest.Create("http://localhost:1234/metrics");
             httpRequest.Method = "GET";
