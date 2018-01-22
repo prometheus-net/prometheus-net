@@ -84,13 +84,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\prometheus-net.netframework\prometheus-net.netframework.csproj">
+    <ProjectReference Include="..\Prometheus.NetFramework\Prometheus.NetFramework.csproj">
       <Project>{4257b52b-fe9a-4a40-9f0d-134577164030}</Project>
-      <Name>prometheus-net.netframework</Name>
+      <Name>Prometheus.NetFramework</Name>
     </ProjectReference>
-    <ProjectReference Include="..\prometheus-net.netstandard\prometheus-net.netstandard.csproj">
+    <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj">
       <Project>{ba482927-f0bc-462c-8ba0-c476d93621bc}</Project>
-      <Name>prometheus-net.netstandard</Name>
+      <Name>Prometheus.NetStandard</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

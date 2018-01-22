@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Prometheus</RootNamespace>
-    <AssemblyName>prometheus-net.netframework</AssemblyName>
+    <AssemblyName>Prometheus.NetFramework</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -21,7 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <DocumentationFile>bin\Debug\prometheus-net.netframework.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\Prometheus.NetFramework.xml</DocumentationFile>
     <LangVersion>latest</LangVersion>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <NoWarn>1591</NoWarn>
@@ -34,7 +34,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <DocumentationFile>bin\Release\prometheus-net.netframework.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\Prometheus.NetFramework.xml</DocumentationFile>
     <LangVersion>latest</LangVersion>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <NoWarn>1591</NoWarn>
@@ -74,9 +74,9 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="..\prometheus-net.netstandard\prometheus-net.netstandard.csproj">
+    <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj">
       <Project>{ba482927-f0bc-462c-8ba0-c476d93621bc}</Project>
-      <Name>prometheus-net.netstandard</Name>
+      <Name>Prometheus.NetStandard</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

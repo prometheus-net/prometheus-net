@@ -2,21 +2,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.netstandard", "prometheus-net.netstandard\prometheus-net.netstandard.csproj", "{BA482927-F0BC-462C-8BA0-C476D93621BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.NetStandard", "Prometheus.NetStandard\Prometheus.NetStandard.csproj", "{BA482927-F0BC-462C-8BA0-C476D93621BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.netframework", "prometheus-net.netframework\prometheus-net.netframework.csproj", "{4257B52B-FE9A-4A40-9F0D-134577164030}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.NetFramework", "Prometheus.NetFramework\Prometheus.NetFramework.csproj", "{4257B52B-FE9A-4A40-9F0D-134577164030}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "resources", "Resources\resources.csproj", "{608F1849-C417-4077-B60F-1BBF26762670}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Resources", "Resources\Resources.csproj", "{608F1849-C417-4077-B60F-1BBF26762670}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prometheus-net.netcore", "prometheus-net.netcore\prometheus-net.netcore.csproj", "{558F2234-3CFF-4D06-8934-3DA3E223A3A4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.NetCore", "Prometheus.NetCore\Prometheus.NetCore.csproj", "{558F2234-3CFF-4D06-8934-3DA3E223A3A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests.netcore", "tests.netcore\tests.netcore.csproj", "{09EED3ED-25BF-4942-8428-383B51DA0D86}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.NetCore", "Tests.NetCore\Tests.NetCore.csproj", "{09EED3ED-25BF-4942-8428-383B51DA0D86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests.netframework", "tests.netframework\tests.netframework.csproj", "{A45A8238-966E-482D-BF1A-95A25BB3169B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.NetFramework", "Tests.NetFramework\Tests.NetFramework.csproj", "{A45A8238-966E-482D-BF1A-95A25BB3169B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tester.netframework", "tester.netframework\tester.netframework.csproj", "{377A530B-43FA-4980-97DF-C21BB32B4F77}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester.NetFramework", "Tester.NetFramework\Tester.NetFramework.csproj", "{377A530B-43FA-4980-97DF-C21BB32B4F77}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tester.netcore", "tester.netcore\tester.netcore.csproj", "{5CB67E67-72BD-4514-97D1-336F72F82BBF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester.NetCore", "Tester.NetCore\Tester.NetCore.csproj", "{5CB67E67-72BD-4514-97D1-336F72F82BBF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

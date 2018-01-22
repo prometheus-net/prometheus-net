@@ -10,7 +10,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <DocumentationFile>bin\Release\netcoreapp2.0\prometheus-net.netcore.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\netcoreapp2.0\Prometheus.NetCore.xml</DocumentationFile>
     <LangVersion>latest</LangVersion>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <NoWarn>1701;1702;1705;1591</NoWarn>
@@ -19,7 +19,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <DocumentationFile>bin\Debug\netcoreapp2.0\prometheus-net.netcore.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\netcoreapp2.0\Prometheus.NetCore.xml</DocumentationFile>
     <LangVersion>latest</LangVersion>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <NoWarn>1701;1702;1705;1591</NoWarn>
@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\prometheus-net.netstandard\prometheus-net.netstandard.csproj" />
+    <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
   </ItemGroup>
 
 </Project>

@@ -23,14 +23,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\tests.netframework\AsciiFormatterTests.cs" Link="AsciiFormatterTests.cs" />
-    <Compile Include="..\tests.netframework\MetricsTests.cs" Link="MetricsTests.cs" />
-    <Compile Include="..\tests.netframework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
-    <Compile Include="..\tests.netframework\RandomExtensions.cs" Link="RandomExtensions.cs" />
-    <Compile Include="..\tests.netframework\SummaryBenchmarks.cs" Link="SummaryBenchmarks.cs" />
-    <Compile Include="..\tests.netframework\SummaryTests.cs" Link="SummaryTests.cs" />
-    <Compile Include="..\tests.netframework\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
-    <Compile Include="..\tests.netframework\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
+    <Compile Include="..\Tests.NetFramework\AsciiFormatterTests.cs" Link="AsciiFormatterTests.cs" />
+    <Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
+    <Compile Include="..\Tests.NetFramework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
+    <Compile Include="..\Tests.NetFramework\RandomExtensions.cs" Link="RandomExtensions.cs" />
+    <Compile Include="..\Tests.NetFramework\SummaryBenchmarks.cs" Link="SummaryBenchmarks.cs" />
+    <Compile Include="..\Tests.NetFramework\SummaryTests.cs" Link="SummaryTests.cs" />
+    <Compile Include="..\Tests.NetFramework\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
+    <Compile Include="..\Tests.NetFramework\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,8 +42,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\prometheus-net.netcore\prometheus-net.netcore.csproj" />
-    <ProjectReference Include="..\prometheus-net.netstandard\prometheus-net.netstandard.csproj" />
+    <ProjectReference Include="..\Prometheus.NetCore\Prometheus.NetCore.csproj" />
+    <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
   </ItemGroup>
 
 </Project>
