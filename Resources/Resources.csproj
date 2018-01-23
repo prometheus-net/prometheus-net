@@ -46,6 +46,8 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Nuspec\prometheus-net.Kestrel.nuspec" />
+    <None Include="Nuspec\prometheus-net.AspNetCore.nuspec" />
     <None Include="Nuspec\prometheus-net.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
