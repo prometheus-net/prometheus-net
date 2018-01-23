@@ -7,12 +7,12 @@ namespace tester
 {
     class MetricServerTester : Tester
     {
-        public override IMetricServer InitializeMetricHandler()
+        public override IMetricServer InitializeMetricServer()
         {
             return new MetricServer(hostname: "localhost", port: 1234);
         }
 
-        public override void OnObservation()
+        public override void OnTimeToObserveMetrics()
         {
             var httpRequest = (HttpWebRequest)WebRequest.Create("http://localhost:1234/metrics");
             httpRequest.Method = "GET";

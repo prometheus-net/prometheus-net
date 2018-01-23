@@ -10,12 +10,12 @@ namespace tester
     {
         static void Main(string[] args)
         {
-            // use MetricServerTester or MetricPusherTester to select between metric handlers
-            var tester = new MetricPusherTester();
+            // Replace this line with an appropriate type of tester to run different manual tests.
+            var tester = new AspNetCoreMiddlewareTester();
             tester.OnStart();
 
-            var metricServer = tester.InitializeMetricHandler();
-            metricServer.Start();
+            var metricServer = tester.InitializeMetricServer();
+            metricServer?.Start();
 
             var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new[] { "method", "endpoint" });
             counter.Labels("GET", "/").Inc();
@@ -51,7 +51,14 @@ namespace tester
                     hist.Observe(random.NextDouble());
                     summary.Observe(random.NextDouble());
 
-                    tester.OnObservation();
+                    try
+                    {
+                        tester.OnTimeToObserveMetrics();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine(ex);
+                    }
 
                     var sleepTime = updateInterval - duration.Elapsed;
 
@@ -72,7 +79,7 @@ namespace tester
             {
             }
 
-            metricServer.StopAsync().GetAwaiter().GetResult();
+            metricServer?.StopAsync().GetAwaiter().GetResult();
 
             tester.OnEnd();
 

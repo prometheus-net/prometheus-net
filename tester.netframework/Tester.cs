@@ -15,7 +15,7 @@ namespace tester
         /// <summary>
         /// Called when it is time to observe the exported metrics and report them to the user.
         /// </summary>
-        public virtual void OnObservation()
+        public virtual void OnTimeToObserveMetrics()
         {
         }
 
@@ -23,6 +23,10 @@ namespace tester
         {
         }
 
-        public abstract IMetricServer InitializeMetricHandler();
+        /// <summary>
+        /// Start/Stop are called on the metric server at the appropriate moments.
+        /// This may return null if the mechanism under test does not use IMetricTester method of registration.
+        /// </summary>
+        public abstract IMetricServer InitializeMetricServer();
     }
 }

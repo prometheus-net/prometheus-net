@@ -16,7 +16,7 @@ namespace tester
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private Task _pushGatewayTask;
 
-        public override IMetricServer InitializeMetricHandler()
+        public override IMetricServer InitializeMetricServer()
         {
             return new MetricPusher(endpoint: "http://localhost:9091/metrics", job: "some_job");
         }
