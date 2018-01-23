@@ -8,6 +8,7 @@ To make the library easier to maintain and deliver, version 2.0 introduces some 
 
 * Target .NET Standard 2.0 and runtimes that support it - .NET Core 2.0 and .NET Framework 4.6.1.
 * Some classes renamed. For example, MetricsServer used to be Kestrel-based on .NET Core and HttpListener based on .NET Framework but now it is HttpListener based everywhere, with KestrelHttpServer being the Kestrel-specific server.
+* Removed dependency on Reactive Extensions. Builtin async/await/Task mechanics are now used.
 
 If you are migrating from version 1.x, you may need to make minor changes to your code to adjust for these changes.
 

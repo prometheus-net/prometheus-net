@@ -1,6 +1,8 @@
 ﻿using Prometheus;
 using System;
-using System.Reactive.Linq;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace tester
 {
@@ -9,7 +11,7 @@ namespace tester
         static void Main(string[] args)
         {
             // use MetricServerTester or MetricPusherTester to select between metric handlers
-            var tester = new MetricServerTester();
+            var tester = new MetricPusherTester();
             tester.OnStart();
 
             var metricServer = tester.InitializeMetricHandler();
@@ -31,21 +33,46 @@ namespace tester
             var summary = Metrics.CreateSummary("mySummary", "help text");
             summary.Observe(5.3);
 
-            var random = new Random();
-            Observable.Interval(TimeSpan.FromSeconds(0.5)).Subscribe(l =>
-            {
-                counter.Inc();
-                counter.Labels("GET", "/").Inc(2);
-                gauge.Set(random.NextDouble() + 2);
-                hist.Observe(random.NextDouble());
-                summary.Observe(random.NextDouble());
+            var cts = new CancellationTokenSource();
 
-                tester.OnObservation();
-            });
+            var random = new Random();
+
+            // Update metrics on a regular interval until told to stop.
+            var updateInterval = TimeSpan.FromSeconds(0.5);
+            var updateTask = Task.Factory.StartNew(async delegate
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    var duration = Stopwatch.StartNew();
+
+                    counter.Inc();
+                    counter.Labels("GET", "/").Inc(2);
+                    gauge.Set(random.NextDouble() + 2);
+                    hist.Observe(random.NextDouble());
+                    summary.Observe(random.NextDouble());
+
+                    tester.OnObservation();
+
+                    var sleepTime = updateInterval - duration.Elapsed;
+
+                    if (sleepTime > TimeSpan.Zero)
+                        await Task.Delay(sleepTime, cts.Token);
+                }
+            }).Result;
 
             Console.WriteLine("Press enter to stop metricServer");
             Console.ReadLine();
-            metricServer.Stop();
+
+            cts.Cancel();
+            try
+            {
+                updateTask.GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+            }
+
+            metricServer.StopAsync().GetAwaiter().GetResult();
 
             tester.OnEnd();
 

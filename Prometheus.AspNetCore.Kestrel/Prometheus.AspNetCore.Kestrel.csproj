@@ -26,14 +26,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="KestrelMetricServer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="..\Resources\SolutionAssemblyInfo.cs" Link="SolutionAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="KestrelMetricServer.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Https" Version="2.0.1" />
     <PackageReference Include="protobuf-net" Version="2.3.4" />
-    <PackageReference Include="System.Reactive" Version="3.1.1" />
   </ItemGroup>
 
   <ItemGroup>

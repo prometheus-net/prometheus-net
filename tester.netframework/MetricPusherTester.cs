@@ -1,16 +1,20 @@
 ﻿using Prometheus;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Reactive.Concurrency;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace tester
 {
     class MetricPusherTester : Tester
     {
-        private IDisposable _schedulerDelegate;
         private HttpListener _httpListener;
+
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+        private Task _pushGatewayTask;
 
         public override IMetricServer InitializeMetricHandler()
         {
@@ -22,43 +26,62 @@ namespace tester
             _httpListener = new HttpListener();
             _httpListener.Prefixes.Add("http://localhost:9091/");
             _httpListener.Start();
-            _schedulerDelegate = Scheduler.Default.Schedule(
-                action =>
+
+            // Create a fake PushGateway on a background thread, to receive the data genertaed by MetricPusher.
+            _pushGatewayTask = Task.Factory.StartNew(delegate
+            {
+                try
                 {
-                    try
+                    while (!_cts.IsCancellationRequested)
                     {
-                        if (!_httpListener.IsListening)
-                        {
-                            return;
-                        }
-                        var httpListenerContext = _httpListener.GetContext();
-                        var request = httpListenerContext.Request;
-                        var response = httpListenerContext.Response;
+                        // There is no way to give a CancellationToken to GCA() so, we need to hack around it a bit.
+                        var getContext = _httpListener.GetContextAsync();
+                        getContext.Wait(_cts.Token);
+                        var context = getContext.Result;
+                        var request = context.Request;
+                        var response = context.Response;
 
-                        PrintRequestDetails(request.Url);
-
-                        string body;
-                        using (var reader = new StreamReader(request.InputStream))
+                        try
                         {
-                            body = reader.ReadToEnd();
+                            PrintRequestDetails(request.Url);
+
+                            string body;
+                            using (var reader = new StreamReader(request.InputStream))
+                            {
+                                body = reader.ReadToEnd();
+                            }
+                            Console.WriteLine(body);
+                            response.StatusCode = 204;
                         }
-                        Console.WriteLine(body);
-                        response.StatusCode = 204;
-                        response.Close();
-                        action.Invoke();
+                        catch (Exception ex) when (!(ex is OperationCanceledException))
+                        {
+                            Trace.WriteLine(string.Format("Error in fake PushGateway: {0}", ex));
+                        }
+                        finally
+                        {
+                            response.Close();
+                        }
                     }
-                    catch (HttpListenerException)
-                    {
-                        // Ignore possible exception at the end of the test
-                    }
-                });
+                }
+                finally
+                {
+                    _httpListener.Stop();
+                    _httpListener.Close();
+                }
+            }, TaskCreationOptions.LongRunning);
         }
 
         public override void OnEnd()
         {
-            _httpListener.Stop();
-            _httpListener.Close();
-            _schedulerDelegate.Dispose();
+            _cts.Cancel();
+
+            try
+            {
+                _pushGatewayTask.GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         private void PrintRequestDetails(Uri requestUrl)

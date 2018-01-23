@@ -17,7 +17,8 @@ namespace Prometheus.Internal
         {
             var metricFamilys = metrics.ToArray();
 
-            using (var streamWriter = new StreamWriter(destination, Encoding))
+            // Leave stream open as we are just using it, not the owner of the stream!
+            using (var streamWriter = new StreamWriter(destination, Encoding, bufferSize: 1024, leaveOpen: true))
             {
                 streamWriter.NewLine = "\n";
                 foreach (var metricFamily in metricFamilys)
