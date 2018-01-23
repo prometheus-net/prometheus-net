@@ -230,6 +230,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AspNetCoreMiddlewareTester.cs" />
+    <Compile Include="KestrelMetricServerTester.cs" />
     <Compile Include="MetricPusherTester.cs" />
     <Compile Include="MetricServerTester.cs" />
     <Compile Include="Program.cs" />
@@ -239,12 +240,11 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="prometheus-net.test.pfx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Prometheus.AspNetCore.Kestrel\Prometheus.AspNetCore.Kestrel.csproj">
-      <Project>{e025a255-5850-4566-9368-e5e203cdb7d2}</Project>
-      <Name>Prometheus.AspNetCore.Kestrel</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj">
       <Project>{7d0a36bb-5606-4d8f-b048-621c76b22881}</Project>
       <Name>Prometheus.AspNetCore</Name>

@@ -1,6 +1,7 @@
 ﻿using Prometheus;
 using System;
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,8 +11,15 @@ namespace tester
     {
         static void Main(string[] args)
         {
-            // Replace this line with an appropriate type of tester to run different manual tests.
-            var tester = new AspNetCoreMiddlewareTester();
+            // Replace the first line with an appropriate type of tester to run different manual tests.
+            var tester = new KestrelMetricServerTester();
+
+            // For testing Kestrel metric server with HTTPS, you need at least a self-signed certificate (one included here)
+            // and the matching domain pointed to 127.0.0.1 (e.g. hardcoded in the PCs hosts file) and you also need to
+            // import this certificate into your Trusted Root Certification Authorities certificate store to trust it.
+            //var certificate = new X509Certificate2("prometheus-net.test.pfx", "prometheus-net.test");
+            //var tester = new KestrelMetricServerTester("prometheus-net.test", certificate);
+
             tester.OnStart();
 
             var metricServer = tester.InitializeMetricServer();

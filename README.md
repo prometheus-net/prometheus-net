@@ -119,6 +119,17 @@ WebHost.CreateDefaultBuilder()
 
 This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
+## Kestrel stand-alone server
+
+In some situation, you may theoretically wish to start a stand-alone metric server using Kestrel instead of HttpListener.
+
+```csharp
+var metricServer = new KestrelMetricServer(port: 1234);
+metricServer.Start();
+```
+
+This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
+
 ## Unit testing
 For simple usage the API uses static classes, which - in unit tests - can cause errors like this: "A collector with name '<NAME>' has already been registered!"
 
