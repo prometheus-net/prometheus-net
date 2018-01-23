@@ -60,6 +60,10 @@ namespace Prometheus.Tests
             var metrics = familiy1.metric;
             Assert.AreEqual(2, metrics.Count);
 
+            // We need to sort the metrics as the order they are returned in is not fixed.
+            // Let's just sort by counter value, descending (arbitrarily).
+            metrics.Sort((a, b) => -a.counter.value.CompareTo(b.counter.value));
+
             foreach (var metric in metrics)
             {
                 Assert.IsNull(metric.gauge);
