@@ -14,10 +14,13 @@ If you are migrating from version 1.x, you may need to make minor changes to you
 
 ## Installation
 
-Nuget package for general use and serving via HttpListener: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
+Nuget package for general use and metrics export via HttpListener: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
 
 >Install-Package prometheus-net
 
+Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server: [prometheus-net.AspNetCore](https://www.nuget.org/packages/prometheus-net.AspNetCore)
+
+>Install-Package prometheus-net.AspNetCore
 
 ## Instrumenting
 
@@ -87,7 +90,7 @@ counter.Labels("POST", "/cancel").Inc();
 
 ## HTTP handler
 
-Metrics are usually exposed over HTTP, to be read by the Prometheus server.
+Metrics are usually exposed over HTTP, to be read by the Prometheus server. The default metric server uses HttpListener to open up an HTTP API for metrics export.
 
 ```csharp
 var metricServer = new MetricServer(port: 1234);
@@ -102,6 +105,19 @@ Metrics can be posted to a Pushgateway server over HTTP.
 var metricServer = new MetricPusher(endpoint: "http://pushgateway.example.org:9091/metrics", job: "some_job");
 metricServer.Start();
 ```
+
+## ASP.NET Core middleware
+
+For projects built with ASP.NET Core, a middleware plugin is provided.
+
+```csharp
+WebHost.CreateDefaultBuilder()
+	.Configure(app => app.UsePrometheusServer())
+	.Build()
+	.Run();
+```
+
+This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
 ## Unit testing
 For simple usage the API uses static classes, which - in unit tests - can cause errors like this: "A collector with name '<NAME>' has already been registered!"
