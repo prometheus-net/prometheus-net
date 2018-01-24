@@ -52,9 +52,9 @@ namespace Prometheus.Advanced
             }
         }
 
-        private void RegisterPerfCounter(string category, string name)
+        private void RegisterPerfCounter(MetricFactory factory, string category, string name)
         {
-            Gauge gauge = Metrics.CreateGauge(GetName(category, name), GetHelp(name));
+            Gauge gauge = factory.CreateGauge(GetName(category, name), GetHelp(name));
             _collectors.Add(Tuple.Create(gauge, new PerformanceCounter(category, name, _instanceName)));
         }
 
@@ -73,17 +73,19 @@ namespace Prometheus.Advanced
             return name.Replace("%", "pct").Replace(" ", "_").Replace(".", "dot").ToLowerInvariant();
         }
 
-        public void RegisterMetrics()
+        public void RegisterMetrics(ICollectorRegistry registry)
         {
+            var factory = Metrics.WithCustomRegistry(registry);
+
             for (int i = 0; i < StandardPerfCounters.Length; i += 2)
             {
                 var category = StandardPerfCounters[i];
                 var name = StandardPerfCounters[i + 1];
 
-                RegisterPerfCounter(category, name);
+                RegisterPerfCounter(factory, category, name);
             }
 
-            _perfErrors = Metrics.CreateCounter("performance_counter_errors_total",
+            _perfErrors = factory.CreateCounter("performance_counter_errors_total",
                 "Total number of errors that occured during performance counter collections");
         }
 

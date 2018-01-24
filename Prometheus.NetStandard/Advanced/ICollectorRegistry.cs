@@ -7,6 +7,7 @@ namespace Prometheus.Advanced
     {
         ICollector GetOrAdd(ICollector collector);
         bool Remove(ICollector collector);
+
         IEnumerable<MetricFamily> CollectAll();
     }
 }

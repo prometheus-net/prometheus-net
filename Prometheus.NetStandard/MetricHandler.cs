@@ -1,6 +1,5 @@
 ﻿using Prometheus.Advanced;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,21 +21,9 @@ namespace Prometheus
         // This is the task started for the purpose of exporting metrics.
         private Task _task;
 
-        protected MetricHandler(
-            IEnumerable<IOnDemandCollector> onDemandCollectors = null,
-            ICollectorRegistry registry = null)
+        protected MetricHandler(ICollectorRegistry registry = null)
         {
             _registry = registry ?? DefaultCollectorRegistry.Instance;
-
-            if (_registry == DefaultCollectorRegistry.Instance)
-            {
-                // Default to DotNetStatsCollector if none specified
-                // For no collectors, pass an empty collection
-                if (onDemandCollectors == null)
-                    onDemandCollectors = new[] { new DotNetStatsCollector() };
-
-                DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(onDemandCollectors);
-            }
         }
 
         public void Start()

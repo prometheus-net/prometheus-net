@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Prometheus.Advanced;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -21,11 +20,11 @@ namespace Prometheus
     /// </remarks>
     public sealed class KestrelMetricServer : MetricHandler
     {
-        public KestrelMetricServer(int port, string url = "/metrics", IEnumerable<IOnDemandCollector> onDemandCollectors = null, ICollectorRegistry registry = null, X509Certificate2 certificate = null) : this("+", port, url, onDemandCollectors, registry, certificate)
+        public KestrelMetricServer(int port, string url = "/metrics", ICollectorRegistry registry = null, X509Certificate2 certificate = null) : this("+", port, url, registry, certificate)
         {
         }
 
-        public KestrelMetricServer(string hostname, int port, string url = "/metrics", IEnumerable<IOnDemandCollector> onDemandCollectors = null, ICollectorRegistry registry = null, X509Certificate2 certificate = null) : base(onDemandCollectors, registry)
+        public KestrelMetricServer(string hostname, int port, string url = "/metrics", ICollectorRegistry registry = null, X509Certificate2 certificate = null) : base(registry)
         {
             _hostname = hostname;
             _port = port;

@@ -8,17 +8,33 @@ namespace Prometheus.Advanced
 {
     public class DefaultCollectorRegistry : ICollectorRegistry
     {
-        public readonly static DefaultCollectorRegistry Instance = new DefaultCollectorRegistry();
+        /// <summary>
+        /// The singleton registry used by default when the caller does not specify a custom/specific registry.
+        /// </summary>
+        public readonly static DefaultCollectorRegistry Instance;
+
+        static DefaultCollectorRegistry()
+        {
+            // We register the default on-demand collectors here. To avoid having the,
+            // use a custom instance instead of the singleton or call Clear() before the first use.
+            Instance = new DefaultCollectorRegistry();
+
+            Instance.RegisterOnDemandCollectors(new[] { new DotNetStatsCollector() });
+        }
+
         private readonly ConcurrentDictionary<string, ICollector> _collectors = new ConcurrentDictionary<string, ICollector>();
-        private readonly List<IOnDemandCollector> _onDemandCollectors = new List<IOnDemandCollector>();
+        private readonly ConcurrentBag<IOnDemandCollector> _onDemandCollectors = new ConcurrentBag<IOnDemandCollector>();
 
         public void RegisterOnDemandCollectors(IEnumerable<IOnDemandCollector> onDemandCollectors)
         {
-            _onDemandCollectors.AddRange(onDemandCollectors);
+            foreach (var collector in onDemandCollectors)
+            {
+                _onDemandCollectors.Add(collector);
+            }
 
             foreach (var onDemandCollector in _onDemandCollectors)
             {
-                onDemandCollector.RegisterMetrics();
+                onDemandCollector.RegisterMetrics(this);
             }
         }
 
@@ -36,9 +52,15 @@ namespace Prometheus.Advanced
             }
         }
 
+        /// <summary>
+        /// Clears all collectors and on-demand collectors from the registry.
+        /// </summary>
         public void Clear()
         {
             _collectors.Clear();
+
+            while (_onDemandCollectors.Count > 0)
+                _onDemandCollectors.TryTake(out _);
         }
 
         public ICollector GetOrAdd(ICollector collector)
@@ -53,8 +75,7 @@ namespace Prometheus.Advanced
 
         public bool Remove(ICollector collector)
         {
-            ICollector dummy;
-            return _collectors.TryRemove(collector.Name, out dummy);
+            return _collectors.TryRemove(collector.Name, out _);
         }
     }
 }

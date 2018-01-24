@@ -24,7 +24,7 @@ namespace Prometheus
         private readonly TimeSpan _pushInterval;
         private readonly Uri _targetUrl;
 
-        public MetricPusher(string endpoint, string job, string instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>> additionalLabels = null, IEnumerable<IOnDemandCollector> onDemandCollectors = null, ICollectorRegistry registry = null) : base(onDemandCollectors, registry)
+        public MetricPusher(string endpoint, string job, string instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>> additionalLabels = null, ICollectorRegistry registry = null) : base(registry)
         {
             if (string.IsNullOrEmpty(endpoint))
             {

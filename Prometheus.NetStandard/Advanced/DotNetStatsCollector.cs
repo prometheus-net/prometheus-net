@@ -27,9 +27,11 @@ namespace Prometheus.Advanced
             _process = Process.GetCurrentProcess();
         }
 
-        public void RegisterMetrics()
+        public void RegisterMetrics(ICollectorRegistry registry)
         {
-            var collectionCountsParent = Metrics.CreateCounter("dotnet_collection_count_total", "GC collection count", new[] { "generation" });
+            var metrics = Metrics.WithCustomRegistry(registry);
+
+            var collectionCountsParent = metrics.CreateCounter("dotnet_collection_count_total", "GC collection count", new[] { "generation" });
 
             for (var gen = 0; gen <= GC.MaxGeneration; gen++)
             {
@@ -37,20 +39,20 @@ namespace Prometheus.Advanced
             }
 
             // Metrics that make sense to compare between all operating systems
-            _startTime = Metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds");
-            _cpuTotal = Metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
+            _startTime = metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds");
+            _cpuTotal = metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
 
             // Windows specific metrics
-            _virtualMemorySize = Metrics.CreateGauge("process_windows_virtual_bytes", "Process virtual memory size");
-            _workingSet = Metrics.CreateGauge("process_windows_working_set", "Process working set");
-            _privateMemorySize = Metrics.CreateGauge("process_windows_private_bytes", "Process private memory size");
-            _openHandles = Metrics.CreateGauge("process_windows_open_handles", "Number of open handles");
-            _numThreads = Metrics.CreateGauge("process_windows_num_threads", "Total number of threads");
-            _pid = Metrics.CreateGauge("process_windows_processid", "Process ID");
+            _virtualMemorySize = metrics.CreateGauge("process_windows_virtual_bytes", "Process virtual memory size");
+            _workingSet = metrics.CreateGauge("process_windows_working_set", "Process working set");
+            _privateMemorySize = metrics.CreateGauge("process_windows_private_bytes", "Process private memory size");
+            _openHandles = metrics.CreateGauge("process_windows_open_handles", "Number of open handles");
+            _numThreads = metrics.CreateGauge("process_windows_num_threads", "Total number of threads");
+            _pid = metrics.CreateGauge("process_windows_processid", "Process ID");
 
             // .net specific metrics
-            _totalMemory = Metrics.CreateGauge("dotnet_totalmemory", "Total known allocated memory");
-            _perfErrors = Metrics.CreateCounter("dotnet_collection_errors_total", "Total number of errors that occured during collections");
+            _totalMemory = metrics.CreateGauge("dotnet_totalmemory", "Total known allocated memory");
+            _perfErrors = metrics.CreateCounter("dotnet_collection_errors_total", "Total number of errors that occured during collections");
 
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _startTime.Set((_process.StartTime.ToUniversalTime() - epoch).TotalSeconds);

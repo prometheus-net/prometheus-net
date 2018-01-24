@@ -1,6 +1,5 @@
 ﻿using Prometheus.Advanced;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
@@ -15,11 +14,11 @@ namespace Prometheus
     {
         private readonly HttpListener _httpListener = new HttpListener();
 
-        public MetricServer(int port, IEnumerable<IOnDemandCollector> onDemandCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : this("+", port, onDemandCollectors, url, registry, useHttps)
+        public MetricServer(int port, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : this("+", port, url, registry, useHttps)
         {
         }
 
-        public MetricServer(string hostname, int port, IEnumerable<IOnDemandCollector> onDemandCollectors = null, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : base(onDemandCollectors, registry)
+        public MetricServer(string hostname, int port, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : base(registry)
         {
             var s = useHttps ? "s" : "";
             _httpListener.Prefixes.Add($"http{s}://{hostname}:{port}/{url}");
