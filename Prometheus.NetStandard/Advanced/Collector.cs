@@ -75,7 +75,7 @@ namespace Prometheus.Advanced
             {
                 if (!LabelNameRegex.IsMatch(labelName))
                 {
-                    throw new ArgumentException("Invalid label name!");
+                    throw new ArgumentException("Invalid label name: " + labelName);
                 }
                 if (ReservedLabelRegex.IsMatch(labelName))
                 {
