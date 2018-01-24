@@ -3,7 +3,7 @@
   <metadata minClientVersion="2.8">
     <id>prometheus-net.AspNetCore</id>
     <authors>andrasm,qed-,lakario,sandersaares</authors>
-    <description>ASP.NET Core middleware for exporting metrics to Prometheus</description>
+    <description>ASP.NET Core middleware and stand-alone Kestrel server for exporting metrics to Prometheus</description>
     <projectUrl>https://github.com/andrasm/prometheus-net</projectUrl>
     <licenseUrl>https://raw.githubusercontent.com/andrasm/prometheus-net/master/LICENSE</licenseUrl>
     <tags>metrics prometheus aspnetcore</tags>
