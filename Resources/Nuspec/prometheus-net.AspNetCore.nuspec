@@ -11,7 +11,7 @@
 
     <!-- Automatically set by release automation. -->
     <version>__NUGETPACKAGEVERSION__</version>
-    <releaseNotes>__RELEASENOTES__</releaseNotes>
+    <releaseNotes></releaseNotes>
 
     <dependencies>
       <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
