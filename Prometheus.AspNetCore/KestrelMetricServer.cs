@@ -66,11 +66,7 @@ namespace Prometheus
 
                         services.Configure<KestrelServerOptions>(options =>
                         {
-                            // In truth, there are more loopback addresses but let's consider this acceptable for now.
-                            if (_hostname == "+" || _hostname == "127.0.0.1")
-                                options.Listen(IPAddress.Loopback, _port, configureEndpoint);
-                            else
-                                options.Listen(IPAddress.Any, _port, configureEndpoint);
+                            options.Listen(IPAddress.Any, _port, configureEndpoint);
                         });
                     });
             }
