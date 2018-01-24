@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Prometheus.Advanced;
@@ -46,7 +45,10 @@ namespace Prometheus
             var s = _certificate != null ? "s" : "";
             var hostAddress = $"http{s}://{_hostname}:{_port}";
 
-            var builder = WebHost.CreateDefaultBuilder()
+            // If the caller needs to customize any of this, they can just set up their own web host and inject the middleware.
+            var builder = new WebHostBuilder()
+                .UseKestrel()
+                .UseIISIntegration()
                 .Configure(app =>
                 {
                     // _registry will already be pre-configured by MetricHandler.
@@ -76,8 +78,11 @@ namespace Prometheus
             {
                 builder = builder.UseUrls(hostAddress);
             }
-                
-            return builder.Build().RunAsync(cancel);
+
+            var webHost = builder.Build();
+            webHost.Start();
+
+            return webHost.WaitForShutdownAsync(cancel);
         }
     }
 }
