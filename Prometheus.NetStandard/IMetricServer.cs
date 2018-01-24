@@ -8,8 +8,19 @@ namespace Prometheus
     /// </summary>
     public interface IMetricServer
     {
+        /// <summary>
+        /// Starts serving metrics.
+        /// </summary>
         void Start();
 
+        /// <summary>
+        /// Instructs the metric server to stop and returns a task you can await for it to stop.
+        /// </summary>
         Task StopAsync();
+
+        /// <summary>
+        /// Instructs the metric server to stop and waits for it to stop.
+        /// </summary>
+        void Stop();
     }
 }

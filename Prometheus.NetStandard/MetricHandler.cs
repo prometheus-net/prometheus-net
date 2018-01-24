@@ -70,6 +70,12 @@ namespace Prometheus
             }
         }
 
+        public void Stop()
+        {
+            // This method mainly exists for API compatiblity with prometheus-net v1. But it works, so that's fine.
+            StopAsync().GetAwaiter().GetResult();
+        }
+
         protected abstract Task StartServer(CancellationToken cancel);
     }
 }
