@@ -22,7 +22,7 @@ namespace tester
         {
             _webserverTask =
                 WebHost.CreateDefaultBuilder()
-                .UseUrls("http://localhost:1234")
+                .UseUrls($"http://localhost:{TesterConstants.TesterPort}")
                 .Configure(app => app.UsePrometheusServer())
                 .Build()
                 .RunAsync(_cts.Token);
@@ -30,7 +30,7 @@ namespace tester
 
         public override void OnTimeToObserveMetrics()
         {
-            var httpRequest = (HttpWebRequest)WebRequest.Create("http://localhost:1234/metrics");
+            var httpRequest = (HttpWebRequest)WebRequest.Create($"http://localhost:{TesterConstants.TesterPort}/metrics");
             httpRequest.Method = "GET";
 
             using (var httpResponse = (HttpWebResponse)httpRequest.GetResponse())

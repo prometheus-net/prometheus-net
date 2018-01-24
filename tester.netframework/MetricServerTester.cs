@@ -9,12 +9,12 @@ namespace tester
     {
         public override IMetricServer InitializeMetricServer()
         {
-            return new MetricServer(hostname: "localhost", port: 1234);
+            return new MetricServer(hostname: "localhost", port: TesterConstants.TesterPort);
         }
 
         public override void OnTimeToObserveMetrics()
         {
-            var httpRequest = (HttpWebRequest)WebRequest.Create("http://localhost:1234/metrics");
+            var httpRequest = (HttpWebRequest)WebRequest.Create($"http://localhost:{TesterConstants.TesterPort}/metrics");
             httpRequest.Method = "GET";
 
             using (var httpResponse = (HttpWebResponse)httpRequest.GetResponse())

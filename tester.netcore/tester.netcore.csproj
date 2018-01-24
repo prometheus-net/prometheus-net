@@ -27,6 +27,7 @@
     <Compile Include="..\Tester.NetFramework\MetricServerTester.cs" Link="MetricServerTester.cs" />
     <Compile Include="..\Tester.NetFramework\Program.cs" Link="Program.cs" />
     <Compile Include="..\Tester.NetFramework\Tester.cs" Link="Tester.cs" />
+    <Compile Include="..\Tester.NetFramework\TesterConstants.cs" Link="TesterConstants.cs" />
   </ItemGroup>
 
   <ItemGroup>

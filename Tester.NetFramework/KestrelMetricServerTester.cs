@@ -21,7 +21,7 @@ namespace tester
 
         public override void OnTimeToObserveMetrics()
         {
-            var url = $"http://{_hostname}:1234/metrics";
+            var url = $"http://{_hostname}:{TesterConstants.TesterPort}/metrics";
 
             if (_certificate != null)
                 url = url.Replace("http://", "https://");
@@ -38,7 +38,7 @@ namespace tester
 
         public override IMetricServer InitializeMetricServer()
         {
-            return new KestrelMetricServer(1234, certificate: _certificate);
+            return new KestrelMetricServer(TesterConstants.TesterPort, certificate: _certificate);
         }
     }
 }

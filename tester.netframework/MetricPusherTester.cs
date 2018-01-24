@@ -18,13 +18,13 @@ namespace tester
 
         public override IMetricServer InitializeMetricServer()
         {
-            return new MetricPusher(endpoint: "http://localhost:9091/metrics", job: "some_job");
+            return new MetricPusher(endpoint: $"http://localhost:{TesterConstants.TesterPort}/metrics", job: "some_job");
         }
 
         public override void OnStart()
         {
             _httpListener = new HttpListener();
-            _httpListener.Prefixes.Add("http://localhost:9091/");
+            _httpListener.Prefixes.Add($"http://localhost:{TesterConstants.TesterPort}/");
             _httpListener.Start();
 
             // Create a fake PushGateway on a background thread, to receive the data genertaed by MetricPusher.
