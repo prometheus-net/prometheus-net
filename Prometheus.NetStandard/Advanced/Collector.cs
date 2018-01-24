@@ -2,6 +2,7 @@ using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Prometheus.Advanced
@@ -26,12 +27,18 @@ namespace Prometheus.Advanced
 
         public T Labels(params string[] labelValues)
         {
+            if (labelValues.Any(lv => lv == null))
+                throw new ArgumentNullException("A label value cannot be null.");
+
             var key = new LabelValues(LabelNames, labelValues);
             return GetOrAddLabelled(key);
         }
 
         public void RemoveLabelled(params string[] labelValues)
         {
+            if (labelValues.Any(lv => lv == null))
+                throw new ArgumentNullException("A label value cannot be null.");
+
             var key = new LabelValues(LabelNames, labelValues);
 
             T temp;

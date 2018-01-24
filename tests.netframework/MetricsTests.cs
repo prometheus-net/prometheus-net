@@ -280,5 +280,15 @@ namespace Prometheus.Tests
                 Assert.AreEqual("Labels starting with double underscore are reserved!", e.Message);
             }
         }
+
+        [TestMethod]
+        public void label_values()
+        {
+            var metric = Metrics.CreateGauge("a", "help1", "mylabelname");
+
+            metric.Labels("");
+            metric.Labels("mylabelvalue");
+            Assert.ThrowsException<ArgumentNullException>(() => metric.Labels(null));
+        }
     }
 }

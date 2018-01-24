@@ -18,6 +18,7 @@ namespace Prometheus.Internal
             {
                 throw new InvalidOperationException("Label values must be of same length as label names");
             }
+
             _values = values;
             WireLabels.AddRange(names.Zip(values, (s, s1) => new LabelPair() { name = s, value = s1 }));
         }
