@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace Prometheus.Advanced
 {
     /// <summary>
-    /// Collects metrics on standard Performance Counters
+    /// Collects metrics on standard .NET Performance Counters
     /// </summary>
     public class PerfCounterCollector : IOnDemandCollector
     {
