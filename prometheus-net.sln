@@ -18,7 +18,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester.NetFramework", "Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tester.NetCore", "Tester.NetCore\Tester.NetCore.csproj", "{5CB67E67-72BD-4514-97D1-336F72F82BBF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.AspNetCore", "Prometheus.AspNetCore\Prometheus.AspNetCore.csproj", "{7D0A36BB-5606-4D8F-B048-621C76B22881}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.AspNetCore", "Prometheus.AspNetCore\Prometheus.AspNetCore.csproj", "{7D0A36BB-5606-4D8F-B048-621C76B22881}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{0C02F049-E0A1-4F63-977C-CCC9C7531CF2}"
+	ProjectSection(SolutionItems) = preProject
+		History = History
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,16 +1,12 @@
 # prometheus-net
 
-This is a .NET library for instrumenting your applications and exporting metrics to [Prometheus](http://prometheus.io/). The library targets .NET Standard 2.0 and compatible runtimes.
+This is a .NET library for instrumenting your applications and exporting metrics to [Prometheus](http://prometheus.io/).
 
-## Breaking changes in version 2.0
+The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard) which supports the following runtimes (and newer):
 
-To make the library easier to maintain and deliver, version 2.0 introduces some breaking changes:
-
-* Target .NET Standard 2.0 and runtimes that support it - .NET Core 2.0 and .NET Framework 4.6.1.
-* Some classes renamed. For example, MetricsServer used to be Kestrel-based on .NET Core and HttpListener based on .NET Framework but now it is HttpListener based everywhere, with KestrelHttpServer being the Kestrel-specific server.
-* Removed dependency on Reactive Extensions. Builtin async/await/Task mechanics are now used.
-
-If you are migrating from version 1.x, you may need to make minor changes to your code to adjust for these changes.
+* .NET Framework 4.6.1
+* .NET Core 2.0
+* Mono 5.4
 
 ## Installation
 
@@ -21,6 +17,17 @@ Nuget package for general use and metrics export via HttpListener: [prometheus-n
 Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server: [prometheus-net.AspNetCore](https://www.nuget.org/packages/prometheus-net.AspNetCore)
 
 >Install-Package prometheus-net.AspNetCore
+
+## Breaking changes in version 2.0
+
+To make the library easier to maintain and deliver, version 2.0 introduces some breaking changes:
+
+* Target .NET Standard 2.0 and runtimes that support it - .NET Core 2.0 and .NET Framework 4.6.1. Older runtimes are no longer supported.
+* Some classes have been renamed. For example, MetricServer used to be Kestrel-based on .NET Core and HttpListener-based on .NET Framework but in 2.0 it always uses HttpListener, with KestrelHttpServer being a Kestrel-specific server.
+* Removed dependency on Reactive Extensions. Builtin async/await/Task mechanics are now used.
+* Minor breaking API changes to tidy up confusing parts of the API surface and make it easier to integrate the library.
+
+If you are migrating from version 1.x, you may need to make minor changes to your code to adjust for these changes.
 
 ## Instrumenting
 
