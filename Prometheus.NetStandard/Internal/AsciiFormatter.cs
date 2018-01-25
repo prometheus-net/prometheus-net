@@ -16,13 +16,11 @@ namespace Prometheus.Internal
 
         public static void Format(Stream destination, IEnumerable<MetricFamily> metrics)
         {
-            var metricFamilys = metrics.ToArray();
-
             // Leave stream open as we are just using it, not the owner of the stream!
             using (var streamWriter = new StreamWriter(destination, Encoding, bufferSize: 1024, leaveOpen: true))
             {
                 streamWriter.NewLine = "\n";
-                foreach (var metricFamily in metricFamilys)
+                foreach (var metricFamily in metrics)
                 {
                     WriteFamily(streamWriter, metricFamily);
                 }
