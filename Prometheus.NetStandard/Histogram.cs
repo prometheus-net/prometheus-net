@@ -41,8 +41,6 @@ namespace Prometheus
                     throw new ArgumentException("Bucket values must be increasing");
                 }
             }
-
-            Unlabelled.Init(this, LabelValues.Empty);
         }
 
         public class Child : Advanced.Child, IHistogram
