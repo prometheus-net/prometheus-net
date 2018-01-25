@@ -17,57 +17,75 @@ namespace Prometheus.Internal
         public static void Format(Stream destination, IEnumerable<MetricFamily> metrics)
         {
             // Leave stream open as we are just using it, not the owner of the stream!
-            using (var streamWriter = new StreamWriter(destination, Encoding, bufferSize: 1024, leaveOpen: true))
+            using (var writer = new StreamWriter(destination, Encoding, bufferSize: 1024, leaveOpen: true))
             {
-                streamWriter.NewLine = "\n";
-                foreach (var metricFamily in metrics)
+                writer.NewLine = "\n";
+
+                foreach (var family in metrics)
                 {
-                    WriteFamily(streamWriter, metricFamily);
+                    WriteFamily(writer, family);
                 }
             }
         }
 
-        private static void WriteFamily(StreamWriter streamWriter, MetricFamily metricFamily)
+        private static void WriteFamily(StreamWriter writer, MetricFamily family)
         {
-            streamWriter.WriteLine("# HELP {0} {1}", metricFamily.name, metricFamily.help);
-            streamWriter.WriteLine("# TYPE {0} {1}", metricFamily.name, metricFamily.type);
-            foreach (var metric in metricFamily.metric)
+            // # HELP familyname helptext
+            writer.Write("# HELP ");
+            writer.Write(family.name);
+            writer.Write(" ");
+            writer.WriteLine(family.help);
+
+            // # TYPE familyname type
+            writer.Write("# TYPE ");
+            writer.Write(family.name);
+            writer.Write(" ");
+            writer.WriteLine(family.type);
+
+            foreach (var metric in family.metric)
             {
-                WriteMetric(streamWriter, metricFamily, metric);
+                WriteMetric(writer, family, metric);
             }
         }
 
-        private static void WriteMetric(StreamWriter streamWriter, MetricFamily family, Metric metric)
+        private static void WriteMetric(StreamWriter writer, MetricFamily family, Metric metric)
         {
             var familyName = family.name;
 
             if (metric.gauge != null)
             {
-                streamWriter.WriteLine(SimpleValue(familyName, metric.gauge.value, metric.label));
+                WriteMetricWithLabels(writer, familyName, null, metric.gauge.value, metric.label);
             }
             else if (metric.counter != null)
             {
-                streamWriter.WriteLine(SimpleValue(familyName, metric.counter.value, metric.label));
+                WriteMetricWithLabels(writer, familyName, null, metric.counter.value, metric.label);
             }
             else if (metric.summary != null)
             {
-                streamWriter.WriteLine(SimpleValue(familyName, metric.summary.sample_sum, metric.label, "_sum"));
-                streamWriter.WriteLine(SimpleValue(familyName, metric.summary.sample_count, metric.label, "_count"));
+                WriteMetricWithLabels(writer, familyName, "_sum", metric.summary.sample_sum, metric.label);
+                WriteMetricWithLabels(writer, familyName, "_count", metric.summary.sample_count, metric.label);
 
                 foreach (var quantileValuePair in metric.summary.quantile)
                 {
                     var quantile = double.IsPositiveInfinity(quantileValuePair.quantile) ? "+Inf" : quantileValuePair.quantile.ToString(CultureInfo.InvariantCulture);
-                    streamWriter.WriteLine(SimpleValue(familyName, quantileValuePair.value, metric.label.Concat(new[] { new LabelPair { name = "quantile", value = quantile } })));
+
+                    var quantileLabels = metric.label.Concat(new[] { new LabelPair { name = "quantile", value = quantile } });
+
+                    WriteMetricWithLabels(writer, familyName, null, quantileValuePair.value, quantileLabels);
                 }
             }
             else if (metric.histogram != null)
             {
-                streamWriter.WriteLine(SimpleValue(familyName, metric.histogram.sample_sum, metric.label, "_sum"));
-                streamWriter.WriteLine(SimpleValue(familyName, metric.histogram.sample_count, metric.label, "_count"));
+                WriteMetricWithLabels(writer, familyName, "_sum", metric.histogram.sample_sum, metric.label);
+                WriteMetricWithLabels(writer, familyName, "_count", metric.histogram.sample_count, metric.label);
+
                 foreach (var bucket in metric.histogram.bucket)
                 {
                     var value = double.IsPositiveInfinity(bucket.upper_bound) ? "+Inf" : bucket.upper_bound.ToString(CultureInfo.InvariantCulture);
-                    streamWriter.WriteLine(SimpleValue(familyName, bucket.cumulative_count, metric.label.Concat(new[] { new LabelPair { name = "le", value = value } }), "_bucket"));
+
+                    var bucketLabels = metric.label.Concat(new[] { new LabelPair { name = "le", value = value } });
+
+                    WriteMetricWithLabels(writer, familyName, "_bucket", bucket.cumulative_count, bucketLabels);
                 }
             }
             else
@@ -76,29 +94,48 @@ namespace Prometheus.Internal
             }
         }
 
-        private static string WithLabels(string familyName, IEnumerable<LabelPair> labels)
+        private static void WriteMetricWithLabels(StreamWriter writer, string familyName, string postfix, double value, IEnumerable<LabelPair> labels)
         {
-            var labelPairs = labels as LabelPair[] ?? labels.ToArray();
-            if (labelPairs.Length == 0)
+            // familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"} value
+            writer.Write(familyName);
+
+            if (postfix != null)
+                writer.Write(postfix);
+
+            if (labels?.Any() == true)
             {
-                return familyName;
+                writer.Write('{');
+
+                bool firstLabel = true;
+                foreach (var label in labels)
+                {
+                    if (!firstLabel)
+                        writer.Write(',');
+
+                    firstLabel = false;
+
+                    writer.Write(label.name);
+                    writer.Write("=\"");
+
+                    // Have to escape the label values!
+                    writer.Write(EscapeLabelValue(label.value));
+
+                    writer.Write('"');
+                }
+
+                writer.Write('}');
             }
-            return string.Format(
-                "{0}{{{1}}}", familyName,
-                string.Join(",", labelPairs.Select(l => string.Format("{0}=\"{1}\"", l.name, EscapeValue(l.value)))));
+
+            writer.Write(' ');
+            writer.WriteLine(value.ToString(CultureInfo.InvariantCulture));
         }
 
-        private static string EscapeValue(string val)
+        private static string EscapeLabelValue(string value)
         {
-            return val
+            return value
                     .Replace("\\", @"\\")
                     .Replace("\n", @"\n")
                     .Replace("\"", @"\""");
-        }
-
-        private static string SimpleValue(string family, double value, IEnumerable<LabelPair> labels, string namePostfix = null)
-        {
-            return string.Format("{0} {1}", WithLabels(family + (namePostfix ?? ""), labels), value.ToString(CultureInfo.InvariantCulture));
         }
     }
 }
