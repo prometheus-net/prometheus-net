@@ -39,10 +39,17 @@ namespace Prometheus.Internal
 
         public LabelValues(string[] names, string[] values)
         {
+            if (names == null)
+                throw new ArgumentNullException(nameof(names));
+
+            if (values == null)
+                throw new ArgumentNullException(nameof(values));
+
             if (names.Length != values.Length)
-            {
-                throw new InvalidOperationException("Label values must be of same length as label names");
-            }
+                throw new ArgumentException("Label values must be of same length as label names");
+
+            if (values.Any(lv => lv == null))
+                throw new ArgumentNullException("A label value cannot be null.");
 
             _values = values;
             _names = names;

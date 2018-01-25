@@ -1,4 +1,5 @@
 ﻿using Prometheus.Advanced.DataContracts;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -73,7 +74,7 @@ namespace Prometheus.Internal
             }
             else
             {
-                //not supported
+                throw new NotSupportedException($"Metric {familyName} cannot be exported because it does not carry data of any known type.");
             }
         }
 

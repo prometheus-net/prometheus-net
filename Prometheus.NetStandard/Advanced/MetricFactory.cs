@@ -13,34 +13,34 @@ namespace Prometheus.Advanced
             _registry = registry;
         }
 
-        public Prometheus.Counter CreateCounter(string name, string help, params string[] labelNames)
+        public Counter CreateCounter(string name, string help, params string[] labelNames)
         {
-            var metric = new Prometheus.Counter(name, help, labelNames);
-            return (Prometheus.Counter)_registry.GetOrAdd(metric);
+            var metric = new Counter(name, help, labelNames);
+            return (Counter)_registry.GetOrAdd(metric);
         }
 
-        public Prometheus.Gauge CreateGauge(string name, string help, params string[] labelNames)
+        public Gauge CreateGauge(string name, string help, params string[] labelNames)
         {
-            var metric = new Prometheus.Gauge(name, help, labelNames);
-            return (Prometheus.Gauge)_registry.GetOrAdd(metric);
+            var metric = new Gauge(name, help, labelNames);
+            return (Gauge)_registry.GetOrAdd(metric);
         }
 
-        public Prometheus.Summary CreateSummary(string name, string help, params string[] labelNames)
+        public Summary CreateSummary(string name, string help, params string[] labelNames)
         {
-            var metric = new Prometheus.Summary(name, help, labelNames);
-            return (Prometheus.Summary)_registry.GetOrAdd(metric);
+            var metric = new Summary(name, help, labelNames);
+            return (Summary)_registry.GetOrAdd(metric);
         }
 
-        public Prometheus.Summary CreateSummary(string name, string help, string[] labelNames, IList<QuantileEpsilonPair> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
+        public Summary CreateSummary(string name, string help, string[] labelNames, IList<QuantileEpsilonPair> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
         {
-            var metric = new Prometheus.Summary(name, help, labelNames, objectives, maxAge, ageBuckets, bufCap);
-            return (Prometheus.Summary)_registry.GetOrAdd(metric);
+            var metric = new Summary(name, help, labelNames, objectives, maxAge, ageBuckets, bufCap);
+            return (Summary)_registry.GetOrAdd(metric);
         }
 
-        public Prometheus.Histogram CreateHistogram(string name, string help, double[] buckets = null, params string[] labelNames)
+        public Histogram CreateHistogram(string name, string help, double[] buckets = null, params string[] labelNames)
         {
-            var metric = new Prometheus.Histogram(name, help, labelNames, buckets);
-            return (Prometheus.Histogram)_registry.GetOrAdd(metric);
+            var metric = new Histogram(name, help, labelNames, buckets);
+            return (Histogram)_registry.GetOrAdd(metric);
         }
     }
 }

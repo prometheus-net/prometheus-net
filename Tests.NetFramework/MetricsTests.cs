@@ -27,13 +27,13 @@ namespace Prometheus.Tests
             gauge.Dec(0.2);
             Assert.AreEqual(3.8, gauge.Value);
 
-            Assert.ThrowsException<InvalidOperationException>(() => gauge.Labels("1"));
+            Assert.ThrowsException<ArgumentException>(() => gauge.Labels("1"));
 
             var counter = Metrics.CreateCounter("name2", "help2", "label1");
             counter.Inc();
             counter.Inc(3.2);
             counter.Inc(0);
-            Assert.ThrowsException<InvalidOperationException>(() => counter.Inc(-1));
+            Assert.ThrowsException<ArgumentOutOfRangeException>(() => counter.Inc(-1));
             Assert.AreEqual(4.2, counter.Value);
 
             Assert.AreEqual(0, counter.Labels("a").Value);
@@ -271,14 +271,7 @@ namespace Prometheus.Tests
             Metrics.CreateGauge("a", "help1", "my:metric");
             Metrics.CreateGauge("b", "help1", "good_name");
 
-            try
-            {
-                Metrics.CreateGauge("c", "help1", "__reserved");
-            }
-            catch (ArgumentException e)
-            {
-                Assert.AreEqual("Labels starting with double underscore are reserved!", e.Message);
-            }
+            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("c", "help1", "__reserved"));
         }
 
         [TestMethod]
