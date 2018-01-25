@@ -12,8 +12,6 @@ namespace Prometheus.Internal
     {
         public static readonly LabelValues Empty = new LabelValues(new string[0], new string[0]);
 
-        // TODO: reuse empty list
-
         /// <summary>
         /// These are exported with metrics. Lazy-initialized in order to save allocations when using LabelValues as keys.
         /// </summary>
@@ -53,9 +51,12 @@ namespace Prometheus.Internal
             _wireLabels = null;
         }
 
-        private List<LabelPair> InitWireLabels() => _names
-            .Zip(_values, (n, v) => new LabelPair { name = n, value = v })
-            .ToList();
+        private List<LabelPair> InitWireLabels()
+        {
+            return _names
+                .Zip(_values, (n, v) => new LabelPair { name = n, value = v })
+                .ToList();
+        }
 
         public bool Equals(LabelValues other)
         {

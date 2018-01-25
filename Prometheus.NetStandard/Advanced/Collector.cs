@@ -20,7 +20,6 @@ namespace Prometheus.Advanced
         readonly static Regex MetricName = new Regex(METRIC_NAME_RE);
         readonly static Regex LabelNameRegex = new Regex("^[a-zA-Z_:][a-zA-Z0-9_:]*$");
         readonly static Regex ReservedLabelRegex = new Regex("^__.*$");
-        readonly static LabelValues EmptyLabelValues = LabelValues.Empty;
         // ReSharper restore StaticFieldInGenericType
 
         protected abstract MetricType Type { get; }
@@ -47,15 +46,20 @@ namespace Prometheus.Advanced
 
         private T GetOrAddLabelled(LabelValues key)
         {
+            tryagain:
             T val;
             if (_labelledMetrics.TryGetValue(key, out val))
                 return val;
 
             val = new T();
             val.Init(this, key);
-            _labelledMetrics.TryAdd(key, val);
 
-            return val;
+            if (_labelledMetrics.TryAdd(key, val))
+                return val;
+
+            // If we get here, a child with the same labels was concurrently added by another thread.
+            // We do not want to return a different child here, so throw it away and try again.
+            goto tryagain;
         }
 
         protected T Unlabelled
@@ -86,7 +90,7 @@ namespace Prometheus.Advanced
                 }
             }
 
-            _unlabelledLazy = new Lazy<T>(() => GetOrAddLabelled(EmptyLabelValues));
+            _unlabelledLazy = new Lazy<T>(() => GetOrAddLabelled(LabelValues.Empty));
         }
 
         public string Name

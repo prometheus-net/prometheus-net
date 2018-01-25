@@ -51,6 +51,25 @@ namespace Benchmark
         }
 
         /// <summary>
+        /// Increments an unlabelled Collector instance for a single metric.
+        /// </summary>
+        [Benchmark]
+        public void WithoutLabels_OneMetric_OneSeries()
+        {
+            _metrics[0].Inc();
+        }
+
+        /// <summary>
+        /// Increments unlabelled Collector instances for a multiple metrics.
+        /// </summary>
+        [Benchmark]
+        public void WithoutLabels_ManyMetrics_OneSeries()
+        {
+            for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
+                _metrics[metricIndex].Inc();
+        }
+
+        /// <summary>
         /// Increments a labelled Collector.Child instance for a single metric.
         /// </summary>
         [Benchmark]
