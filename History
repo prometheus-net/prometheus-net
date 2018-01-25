@@ -1,5 +1,13 @@
 * 2.0.0
-TODO write change history
+- Targeting .NET Standard 2.0 as minimum version (.NET Framework 4.6.1, .NET Core 2.0 and Mono 5.4)
+- Added ASP.NET Core middlware
+- Added possibility to signal a failed scrape from on-demand collectors
+- Removed dependency on Reactive Extensions
+- Minor breaking changes to API
+- Performance improvements for hot-path code
+- Removed mostly obsolete PerfCounterCollector class
+- Fixed NuGet package contents to remove assemblies from dependencies
+- Various minor fixes (see issues on GitHub for details)
 * 1.3.4
 - Added support for .NET 4.5 using System.Reactive 3.1.1.
 - .NET 4.0 support continues to target Rx 2.5
