@@ -8,6 +8,10 @@ namespace Prometheus.Internal
     /// <summary>
     /// The set of labels and label values associated with a metric. Used both for export and as keys.
     /// </summary>
+    /// <remarks>
+    /// Only the values are considered for equality purposes - the caller must ensure that
+    /// LabelValues objects with different sets of names are never compared to each other.
+    /// </remarks>
     internal struct LabelValues : IEquatable<LabelValues>
     {
         public static readonly LabelValues Empty = new LabelValues(new string[0], new string[0]);
@@ -60,6 +64,7 @@ namespace Prometheus.Internal
 
         public bool Equals(LabelValues other)
         {
+            if (_hashCode != other._hashCode) return false;
             if (other._values.Length != _values.Length) return false;
             for (int i = 0; i < _values.Length; i++)
             {
