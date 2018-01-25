@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Prometheus.Advanced;
@@ -52,6 +53,20 @@ namespace Prometheus
                 {
                     // _registry will already be pre-configured by MetricHandler.
                     app.UsePrometheusServer(_url, new IOnDemandCollector[0], _registry);
+
+                    // If there is any URL prefix, we just redirect people going to root URL to our prefix.
+                    if (!string.IsNullOrWhiteSpace(_url.Trim('/')))
+                    {
+                        app.MapWhen(context => context.Request.Path.Value.Trim('/') == "",
+                            configuration =>
+                            {
+                                configuration.Use((context, next) =>
+                                {
+                                    context.Response.Redirect(_url);
+                                    return Task.CompletedTask;
+                                });
+                            });
+                    }
                 });
 
             if (_certificate != null)

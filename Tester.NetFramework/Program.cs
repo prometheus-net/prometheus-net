@@ -13,7 +13,7 @@ namespace tester
         static void Main(string[] args)
         {
             // Replace the first line with an appropriate type of tester to run different manual tests.
-            var tester = new MetricServerTester();
+            var tester = new KestrelMetricServerTester();
 
             // For testing Kestrel metric server with HTTPS, you need at least a self-signed certificate (one included here)
             // and the matching domain pointed to 127.0.0.1 (e.g. hardcoded in the PCs hosts file) and you also need to
@@ -43,7 +43,7 @@ namespace tester
 
             // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
             // With MetricPusherTester you might get a 1st push already before it fails but after that it should stop pushing.
-            DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(new AlwaysFailingOnDemandCollector());
+            //DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(new AlwaysFailingOnDemandCollector());
 
             var cts = new CancellationTokenSource();
 
