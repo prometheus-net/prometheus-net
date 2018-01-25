@@ -251,10 +251,6 @@
       <Project>{7d0a36bb-5606-4d8f-b048-621c76b22881}</Project>
       <Name>Prometheus.AspNetCore</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Prometheus.NetFramework\Prometheus.NetFramework.csproj">
-      <Project>{4257b52b-fe9a-4a40-9f0d-134577164030}</Project>
-      <Name>Prometheus.NetFramework</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj">
       <Project>{ba482927-f0bc-462c-8ba0-c476d93621bc}</Project>
       <Name>Prometheus.NetStandard</Name>

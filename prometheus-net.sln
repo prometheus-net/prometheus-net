@@ -4,11 +4,7 @@ VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.NetStandard", "Prometheus.NetStandard\Prometheus.NetStandard.csproj", "{BA482927-F0BC-462C-8BA0-C476D93621BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.NetFramework", "Prometheus.NetFramework\Prometheus.NetFramework.csproj", "{4257B52B-FE9A-4A40-9F0D-134577164030}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Resources", "Resources\Resources.csproj", "{608F1849-C417-4077-B60F-1BBF26762670}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.NetCore", "Prometheus.NetCore\Prometheus.NetCore.csproj", "{558F2234-3CFF-4D06-8934-3DA3E223A3A4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests.NetCore", "Tests.NetCore\Tests.NetCore.csproj", "{09EED3ED-25BF-4942-8428-383B51DA0D86}"
 EndProject
@@ -39,16 +35,8 @@ Global
 		{BA482927-F0BC-462C-8BA0-C476D93621BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA482927-F0BC-462C-8BA0-C476D93621BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA482927-F0BC-462C-8BA0-C476D93621BC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4257B52B-FE9A-4A40-9F0D-134577164030}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4257B52B-FE9A-4A40-9F0D-134577164030}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4257B52B-FE9A-4A40-9F0D-134577164030}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4257B52B-FE9A-4A40-9F0D-134577164030}.Release|Any CPU.Build.0 = Release|Any CPU
 		{608F1849-C417-4077-B60F-1BBF26762670}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{608F1849-C417-4077-B60F-1BBF26762670}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{558F2234-3CFF-4D06-8934-3DA3E223A3A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{558F2234-3CFF-4D06-8934-3DA3E223A3A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{558F2234-3CFF-4D06-8934-3DA3E223A3A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{558F2234-3CFF-4D06-8934-3DA3E223A3A4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{09EED3ED-25BF-4942-8428-383B51DA0D86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{09EED3ED-25BF-4942-8428-383B51DA0D86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09EED3ED-25BF-4942-8428-383B51DA0D86}.Release|Any CPU.ActiveCfg = Release|Any CPU
