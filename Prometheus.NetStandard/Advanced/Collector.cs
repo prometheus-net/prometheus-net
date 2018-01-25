@@ -17,9 +17,9 @@ namespace Prometheus.Advanced
         private readonly Lazy<T> _unlabelledLazy;
 
         // ReSharper disable StaticFieldInGenericType
-        readonly static Regex MetricName = new Regex(METRIC_NAME_RE);
-        readonly static Regex LabelNameRegex = new Regex("^[a-zA-Z_:][a-zA-Z0-9_:]*$");
-        readonly static Regex ReservedLabelRegex = new Regex("^__.*$");
+        readonly static Regex MetricName = new Regex(METRIC_NAME_RE, RegexOptions.Compiled);
+        readonly static Regex LabelNameRegex = new Regex("^[a-zA-Z_:][a-zA-Z0-9_:]*$", RegexOptions.Compiled);
+        readonly static Regex ReservedLabelRegex = new Regex("^__.*$", RegexOptions.Compiled);
         // ReSharper restore StaticFieldInGenericType
 
         protected abstract MetricType Type { get; }
