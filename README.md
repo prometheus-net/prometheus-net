@@ -105,6 +105,12 @@ var metricServer = new MetricServer(port: 1234);
 metricServer.Start();
 ```
 
+The default configuration will publish metrics on the /metrics URL.
+
+`MetricServer.Start()` may throw an access denied exception on Windows if your user does not have the right to open a web server on the specified port. You can use the *netsh* command to grant yourself the required permissions:
+
+> netsh http add urlacl url=http://+:1234/metrics user=DOMAIN\user
+
 ## Pushgateway support
 
 Metrics can be posted to a Pushgateway server over HTTP.
@@ -125,6 +131,8 @@ WebHost.CreateDefaultBuilder()
 	.Run();
 ```
 
+The default configuration will publish metrics on the /metrics URL.
+
 This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
 ## Kestrel stand-alone server
@@ -135,6 +143,8 @@ In some situation, you may theoretically wish to start a stand-alone metric serv
 var metricServer = new KestrelMetricServer(port: 1234);
 metricServer.Start();
 ```
+
+The default configuration will publish metrics on the /metrics URL.
 
 This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
