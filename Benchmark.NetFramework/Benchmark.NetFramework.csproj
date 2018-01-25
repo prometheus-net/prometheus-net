@@ -162,6 +162,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsciiFormatterBenchmarks.cs" />
     <Compile Include="LabelBenchmarks.cs" />
     <Compile Include="MetricCreationBenchmarks.cs" />
     <Compile Include="Program.cs" />

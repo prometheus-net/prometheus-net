@@ -7,5 +7,6 @@ using System.Runtime.CompilerServices;
 // Only use major version here, with others kept at zero, for correct assembly binding logic.
 [assembly: AssemblyVersion("2.0.0")]
 
-[assembly: InternalsVisibleTo("tests.netframework")]
-[assembly: InternalsVisibleTo("tests.netcore")]
+[assembly: InternalsVisibleTo("Tests.NetFramework")]
+[assembly: InternalsVisibleTo("Tests.NetCore")]
+[assembly: InternalsVisibleTo("Benchmark.NetFramework")]

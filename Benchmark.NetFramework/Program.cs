@@ -6,7 +6,7 @@ namespace Benchmark
     {
         static void Main(string[] args)
         {
-            var summary = BenchmarkRunner.Run<MetricCreationBenchmarks>();
+            var summary = BenchmarkRunner.Run<AsciiFormatterBenchmarks>();
         }
     }
 }
