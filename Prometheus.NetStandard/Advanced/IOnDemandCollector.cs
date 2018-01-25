@@ -15,6 +15,9 @@
 
         /// <summary>
         /// Called before each collection. Any values in collectors managed by this instance should now be brought up to date.
+        /// 
+        /// If this throws <see cref="ScrapeFailedException"/> then the collection will fail (not only from this collector
+        /// but globally). This will result in an appropriate HTTP error code or a skipped push, depending on type of exporter.
         /// </summary>
         void UpdateMetrics();
     }

@@ -1,6 +1,9 @@
 ﻿using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,22 +48,47 @@ namespace Prometheus
 
                         try
                         {
-                            response.StatusCode = 200;
+                            IEnumerable<MetricFamily> metrics;
+
+                            try
+                            {
+                                metrics = _registry.CollectAll();
+                            }
+                            catch (ScrapeFailedException ex)
+                            {
+                                response.StatusCode = 503;
+
+                                if (!string.IsNullOrWhiteSpace(ex.Message))
+                                {
+                                    using (var writer = new StreamWriter(response.OutputStream))
+                                        writer.Write(ex.Message);
+                                }
+
+                                continue;
+                            }
 
                             var acceptHeader = request.Headers.Get("Accept");
                             var acceptHeaders = acceptHeader?.Split(',');
                             var contentType = ScrapeHandler.GetContentType(acceptHeaders);
                             response.ContentType = contentType;
 
+                            response.StatusCode = 200;
+
                             using (var outputStream = response.OutputStream)
-                            {
-                                var collected = _registry.CollectAll();
-                                ScrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
-                            }
+                                ScrapeHandler.ProcessScrapeRequest(metrics, contentType, outputStream);
                         }
                         catch (Exception ex) when (!(ex is OperationCanceledException))
                         {
                             Trace.WriteLine(string.Format("Error in MetricsServer: {0}", ex));
+
+                            try
+                            {
+                                response.StatusCode = 500;
+                            }
+                            catch
+                            {
+                                // Might be too late in request processing to set response code, so just ignore.
+                            }
                         }
                         finally
                         {

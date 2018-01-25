@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Prometheus
@@ -46,28 +48,45 @@ namespace Prometheus
 
         private readonly ICollectorRegistry _registry;
 
-        public Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext context)
         {
             // We just handle the root URL (/metrics or whatnot).
             if (!string.IsNullOrWhiteSpace(context.Request.Path.Value))
-                return _next(context);
+            {
+                await _next(context);
+                return;
+            }
 
             var request = context.Request;
             var response = context.Response;
-
-            response.StatusCode = 200;
 
             var acceptHeaders = request.Headers["Accept"];
             var contentType = ScrapeHandler.GetContentType(acceptHeaders);
             response.ContentType = contentType;
 
-            using (var outputStream = response.Body)
+            IEnumerable<MetricFamily> metrics;
+
+            try
             {
-                var collected = _registry.CollectAll();
-                ScrapeHandler.ProcessScrapeRequest(collected, contentType, outputStream);
+                metrics = _registry.CollectAll();
+            }
+            catch (ScrapeFailedException ex)
+            {
+                response.StatusCode = 503;
+
+                if (!string.IsNullOrWhiteSpace(ex.Message))
+                {
+                    using (var writer = new StreamWriter(response.Body))
+                        await writer.WriteAsync(ex.Message);
+                }
+
+                return;
             }
 
-            return Task.CompletedTask;
+            response.StatusCode = 200;
+
+            using (var outputStream = response.Body)
+                ScrapeHandler.ProcessScrapeRequest(metrics, contentType, outputStream);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Prometheus;
+using Prometheus.Advanced;
 using System;
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
@@ -12,7 +13,7 @@ namespace tester
         static void Main(string[] args)
         {
             // Replace the first line with an appropriate type of tester to run different manual tests.
-            var tester = new KestrelMetricServerTester();
+            var tester = new MetricServerTester();
 
             // For testing Kestrel metric server with HTTPS, you need at least a self-signed certificate (one included here)
             // and the matching domain pointed to 127.0.0.1 (e.g. hardcoded in the PCs hosts file) and you also need to
@@ -29,7 +30,6 @@ namespace tester
             counter.Labels("GET", "/").Inc();
             counter.Labels("POST", "/cancel").Inc();
 
-
             var gauge = Metrics.CreateGauge("gauge", "help text");
             gauge.Inc(3.4);
             gauge.Dec(2.1);
@@ -40,6 +40,10 @@ namespace tester
 
             var summary = Metrics.CreateSummary("mySummary", "help text");
             summary.Observe(5.3);
+
+            // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
+            // With MetricPusherTester you might get a 1st push already before it fails but after that it should stop pushing.
+            DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(new AlwaysFailingOnDemandCollector());
 
             var cts = new CancellationTokenSource();
 

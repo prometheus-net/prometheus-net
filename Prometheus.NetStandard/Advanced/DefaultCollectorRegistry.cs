@@ -25,6 +25,11 @@ namespace Prometheus.Advanced
         private readonly ConcurrentDictionary<string, ICollector> _collectors = new ConcurrentDictionary<string, ICollector>();
         private readonly ConcurrentBag<IOnDemandCollector> _onDemandCollectors = new ConcurrentBag<IOnDemandCollector>();
 
+        public void RegisterOnDemandCollectors(params IOnDemandCollector[] onDemandCollectors)
+        {
+            RegisterOnDemandCollectors((IEnumerable<IOnDemandCollector>)onDemandCollectors);
+        }
+
         public void RegisterOnDemandCollectors(IEnumerable<IOnDemandCollector> onDemandCollectors)
         {
             foreach (var collector in onDemandCollectors)
@@ -40,11 +45,18 @@ namespace Prometheus.Advanced
 
         public IEnumerable<MetricFamily> CollectAll()
         {
+            // We need to do all updates before constructing the iterator, so we do not
+            // perform a lazy update too late in the collection cycle to react to failures.
             foreach (var onDemandCollector in _onDemandCollectors)
             {
                 onDemandCollector.UpdateMetrics();
             }
 
+            return CollectAllIterator();
+        }
+
+        private IEnumerable<MetricFamily> CollectAllIterator()
+        {
             foreach (var value in _collectors.Values)
             {
                 var c = value.Collect();

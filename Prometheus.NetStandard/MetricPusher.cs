@@ -1,4 +1,5 @@
 ﻿using Prometheus.Advanced;
+using Prometheus.Advanced.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -83,8 +84,10 @@ namespace Prometheus
 
                     try
                     {
+                        var metrics = _registry.CollectAll();
+
                         var stream = new MemoryStream();
-                        ScrapeHandler.ProcessScrapeRequest(_registry.CollectAll(), ContentType, stream);
+                        ScrapeHandler.ProcessScrapeRequest(metrics, ContentType, stream);
 
                         stream.Position = 0;
                         // StreamContent takes ownership of the stream.
@@ -92,6 +95,10 @@ namespace Prometheus
 
                         // If anything goes wrong, we want to get at least an entry in the trace log.
                         response.EnsureSuccessStatusCode();
+                    }
+                    catch (ScrapeFailedException ex)
+                    {
+                        Trace.WriteLine($"Skipping metrics push due to failed scrape: {ex.Message}");
                     }
                     catch (Exception ex) when (!(ex is OperationCanceledException))
                     {
