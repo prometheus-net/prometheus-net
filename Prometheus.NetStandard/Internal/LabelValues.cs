@@ -5,12 +5,35 @@ using System.Linq;
 
 namespace Prometheus.Internal
 {
-    internal class LabelValues
+    /// <summary>
+    /// The set of labels and label values associated with a metric. Used both for export and as keys.
+    /// </summary>
+    internal struct LabelValues : IEquatable<LabelValues>
     {
-        private readonly string[] _values;
-        internal readonly List<LabelPair> WireLabels = new List<LabelPair>();
-        internal static readonly LabelValues Empty = new LabelValues(new string[0], new string[0]);
+        public static readonly LabelValues Empty = new LabelValues(new string[0], new string[0]);
 
+        // TODO: reuse empty list
+
+        /// <summary>
+        /// These are exported with metrics. Lazy-initialized in order to save allocations when using LabelValues as keys.
+        /// </summary>
+        public List<LabelPair> WireLabels
+        {
+            get
+            {
+                if (_wireLabels == null)
+                    _wireLabels = InitWireLabels();
+
+                return _wireLabels;
+            }
+        }
+
+        private readonly string[] _values;
+        private readonly string[] _names;
+
+        private readonly int _hashCode;
+
+        private List<LabelPair> _wireLabels;
 
         public LabelValues(string[] names, string[] values)
         {
@@ -20,44 +43,60 @@ namespace Prometheus.Internal
             }
 
             _values = values;
-            WireLabels.AddRange(names.Zip(values, (s, s1) => new LabelPair() { name = s, value = s1 }));
+            _names = names;
+
+            // Calculating the hash code is fast but we don't need to re-calculate it for each comparison this object is involved in.
+            // Label values are fixed- caluclate it once up-front and remember the value.
+            _hashCode = CalculateHashCode(_values);
+
+            // Lazy-initialized.
+            _wireLabels = null;
         }
 
+        private List<LabelPair> InitWireLabels() => _names
+            .Zip(_values, (n, v) => new LabelPair { name = n, value = v })
+            .ToList();
 
-        public override bool Equals(object obj)
+        public bool Equals(LabelValues other)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            var other = (LabelValues)obj;
-
             if (other._values.Length != _values.Length) return false;
             for (int i = 0; i < _values.Length; i++)
             {
-                if ((_values[i]) != other._values[i]) return false;
+                if (!string.Equals(_values[i], other._values[i], StringComparison.Ordinal))
+                    return false;
             }
 
             return true;
         }
 
+        public override bool Equals(object obj)
+        {
+            if (!(obj is LabelValues))
+            {
+                return false;
+            }
+
+            var other = (LabelValues)obj;
+            return Equals(other);
+        }
+
         public override int GetHashCode()
+        {
+            return _hashCode;
+        }
+
+        private static int CalculateHashCode(string[] values)
         {
             unchecked
             {
-                return _values.Aggregate(1, (current, val) => current ^ val.GetHashCode() * 397);
+                int hashCode = 0;
+                for (int i = 0; i < values.Length; i++)
+                {
+                    hashCode ^= (values[i].GetHashCode() * 397);
+                }
+
+                return hashCode;
             }
-        }
-
-        public override string ToString()
-        {
-            throw new NotSupportedException();
-            //var sb = new StringBuilder();
-            //foreach (var label in _labels)
-            //{
-            //    sb.AppendFormat("{0}={1}, ", label.Key, label.Value);
-            //}
-
-            //return sb.ToString();
         }
     }
 }
