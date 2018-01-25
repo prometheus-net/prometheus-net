@@ -27,6 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark.NetFramework", "Benchmark.NetFramework\Benchmark.NetFramework.csproj", "{CC15F858-BDFC-4995-97C4-D0C565BAB162}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,10 @@ Global
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
