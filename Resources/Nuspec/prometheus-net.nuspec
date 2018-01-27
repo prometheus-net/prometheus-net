@@ -4,8 +4,8 @@
     <id>prometheus-net</id>
     <authors>andrasm,qed-,lakario,sandersaares</authors>
     <description>.NET metrics exporter for the Prometheus monitoring and alerting system</description>
-    <projectUrl>https://github.com/andrasm/prometheus-net</projectUrl>
-    <licenseUrl>https://raw.githubusercontent.com/andrasm/prometheus-net/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/prometheus-net/prometheus-net</projectUrl>
+    <licenseUrl>https://raw.githubusercontent.com/prometheus-net/prometheus-net/master/LICENSE</licenseUrl>
     <tags>metrics prometheus</tags>
     <copyright>Copyright © 2015 andrasm</copyright>
 
