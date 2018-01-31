@@ -33,7 +33,7 @@ namespace Prometheus
         public async Task Invoke(HttpContext context)
         {
             // We just handle the root URL (/metrics or whatnot).
-            if (!string.IsNullOrWhiteSpace(context.Request.Path.Value))
+            if (!string.IsNullOrWhiteSpace(context.Request.Path.Value.Trim('/')))
             {
                 await _next(context);
                 return;
