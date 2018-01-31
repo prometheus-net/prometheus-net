@@ -126,7 +126,7 @@ For projects built with ASP.NET Core, a middleware plugin is provided.
 
 ```csharp
 WebHost.CreateDefaultBuilder()
-	.Configure(app => app.UsePrometheusServer())
+	.Configure(app => app.UseMetricServer())
 	.Build()
 	.Run();
 ```
