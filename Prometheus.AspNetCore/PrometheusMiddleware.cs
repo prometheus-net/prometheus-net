@@ -18,30 +18,12 @@ namespace Prometheus
         {
             _next = next;
 
-            _registry = settings.GetRegistryAndRegisterOnDemandCollectors();
+            _registry = settings.Registry ?? DefaultCollectorRegistry.Instance;
         }
 
         public sealed class Settings
         {
-            public IEnumerable<IOnDemandCollector> OnDemandCollectors { get; set; }
             public ICollectorRegistry Registry { get; set; }
-
-            internal ICollectorRegistry GetRegistryAndRegisterOnDemandCollectors()
-            {
-                // Copypaste from MetricHandler ctor - see there for rationale.
-
-                var registry = Registry ?? DefaultCollectorRegistry.Instance;
-
-                if (registry == DefaultCollectorRegistry.Instance)
-                {
-                    if (OnDemandCollectors != null)
-                        DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(OnDemandCollectors);
-                    else
-                        DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(new[] { new DotNetStatsCollector() });
-                }
-
-                return registry;
-            }
         }
 
         private readonly RequestDelegate _next;
