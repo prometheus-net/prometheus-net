@@ -52,7 +52,7 @@ namespace Prometheus
                 .Configure(app =>
                 {
                     // _registry will already be pre-configured by MetricHandler.
-                    app.UsePrometheusServer(_url, _registry);
+                    app.UseMetricServer(_url, _registry);
 
                     // If there is any URL prefix, we just redirect people going to root URL to our prefix.
                     if (!string.IsNullOrWhiteSpace(_url.Trim('/')))

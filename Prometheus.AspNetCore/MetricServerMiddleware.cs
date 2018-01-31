@@ -10,11 +10,11 @@ namespace Prometheus
     /// <summary>
     /// Prometheus metrics export middleware for ASP.NET Core.
     /// 
-    /// You should use IApplicationBuilder.UsePrometheus* extension methods instead of using this class directly.
+    /// You should use IApplicationBuilder.UseMetricServer extension method instead of using this class directly.
     /// </summary>
-    public sealed class PrometheusMiddleware
+    public sealed class MetricServerMiddleware
     {
-        public PrometheusMiddleware(RequestDelegate next, Settings settings)
+        public MetricServerMiddleware(RequestDelegate next, Settings settings)
         {
             _next = next;
 

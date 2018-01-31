@@ -23,7 +23,7 @@ namespace tester
             _webserverTask =
                 WebHost.CreateDefaultBuilder()
                 .UseUrls($"http://localhost:{TesterConstants.TesterPort}")
-                .Configure(app => app.UsePrometheusServer())
+                .Configure(app => app.UseMetricServer())
                 .Build()
                 .RunAsync(_cts.Token);
         }
