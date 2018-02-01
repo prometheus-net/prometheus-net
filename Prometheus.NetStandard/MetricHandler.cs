@@ -26,12 +26,13 @@ namespace Prometheus
             _registry = registry ?? DefaultCollectorRegistry.Instance;
         }
 
-        public void Start()
+        public IMetricServer Start()
         {
             if (_task != null)
                 throw new InvalidOperationException("The metric server has already been started.");
 
             _task = StartServer(_cts.Token);
+            return this;
         }
 
         public async Task StopAsync()

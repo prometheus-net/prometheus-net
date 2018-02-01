@@ -10,8 +10,10 @@ namespace Prometheus
     {
         /// <summary>
         /// Starts serving metrics.
+        /// 
+        /// Returns the same instance that was called (for fluent-API-style chaining).
         /// </summary>
-        void Start();
+        IMetricServer Start();
 
         /// <summary>
         /// Instructs the metric server to stop and returns a task you can await for it to stop.
