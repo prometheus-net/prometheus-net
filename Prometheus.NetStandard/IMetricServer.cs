@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -6,7 +7,7 @@ namespace Prometheus
     /// A metric server exposes a Prometheus metric exporter endpoint in the background,
     /// operating independently and serving metrics until it is instructed to stop.
     /// </summary>
-    public interface IMetricServer
+    public interface IMetricServer : IDisposable
     {
         /// <summary>
         /// Starts serving metrics.
