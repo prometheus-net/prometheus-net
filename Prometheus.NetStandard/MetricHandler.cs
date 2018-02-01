@@ -9,7 +9,7 @@ namespace Prometheus
     /// Base class for various metric server implementations that start an independent exporter in the background.
     /// The expoters may either be pull-based (exposing the Prometheus API) or push-based (actively pushing to PushGateway).
     /// </summary>
-    public abstract class MetricHandler : IMetricServer
+    public abstract class MetricHandler : IMetricServer, IDisposable
     {
         // The registry that contains the collectors to export metrics from.
         // Subclasses are expected to use this variable to obtain the correct registry.
@@ -61,6 +61,11 @@ namespace Prometheus
         {
             // This method mainly exists for API compatiblity with prometheus-net v1. But it works, so that's fine.
             StopAsync().GetAwaiter().GetResult();
+        }
+
+        void IDisposable.Dispose()
+        {
+            Stop();
         }
 
         protected abstract Task StartServer(CancellationToken cancel);
