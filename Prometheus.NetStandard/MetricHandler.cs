@@ -41,6 +41,9 @@ namespace Prometheus
             
             try
             {
+                if (_task == null)
+                    return; // Never started.
+
                 // This will re-throw any exception that was caught on the StartServerAsync thread.
                 // Perhaps not ideal behavior but hey, if the implementation does not want this to happen
                 // it should have caught it itself in the background processing thread.
