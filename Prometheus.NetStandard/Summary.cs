@@ -222,6 +222,9 @@ namespace Prometheus
             /// </summary>
             internal void Observe(double val, DateTime now)
             {
+                if (double.IsNaN(val))
+                    return;
+
                 lock (_bufLock)
                 {
                     if (now > _hotBufExpTime)
