@@ -72,40 +72,16 @@ namespace Prometheus
                 Inc(-decrement);
             }
 
-            public double Value
-            {
-                get
-                {
-                    return _value.Value;
-                }
-            }
+            public double Value => _value.Value;
         }
 
-        protected override MetricType Type
-        {
-            get { return MetricType.GAUGE; }
-        }
+        protected override MetricType Type => MetricType.GAUGE;
 
+        // Just forward some calls to the unlabelled child metric.
         public void SetToCurrentTime() => Unlabelled.SetToCurrentTime();
-
-        public void Inc(double increment = 1)
-        {
-            Unlabelled.Inc(increment);
-        }
-
-        public void Set(double val)
-        {
-            Unlabelled.Set(val);
-        }
-
-        public void Dec(double decrement = 1)
-        {
-            Unlabelled.Dec(decrement);
-        }
-
-        public double Value
-        {
-            get { return Unlabelled.Value; }
-        }
+        public void Inc(double increment = 1) => Unlabelled.Inc(increment);
+        public void Set(double val) => Unlabelled.Set(val);
+        public void Dec(double decrement = 1) => Unlabelled.Dec(decrement);
+        public double Value => Unlabelled.Value;
     }
 }
