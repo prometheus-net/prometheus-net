@@ -11,10 +11,6 @@ namespace tester
     /// </summary>
     sealed class ExternalDataCollector : ICollector
     {
-        public ExternalDataCollector()
-        {
-        }
-
         // Only used as a key in collector registry.
         public string Name { get; } = "example_external_data_collector";
 
