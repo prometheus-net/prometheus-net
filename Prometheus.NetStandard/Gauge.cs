@@ -86,6 +86,8 @@ namespace Prometheus
             get { return MetricType.GAUGE; }
         }
 
+        public void SetToCurrentTime() => Unlabelled.SetToCurrentTime();
+
         public void Inc(double increment = 1)
         {
             Unlabelled.Inc(increment);
