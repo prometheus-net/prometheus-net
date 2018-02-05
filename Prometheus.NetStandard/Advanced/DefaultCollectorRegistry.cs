@@ -57,10 +57,10 @@ namespace Prometheus.Advanced
 
         private IEnumerable<MetricFamily> CollectAllIterator()
         {
-            foreach (var value in _collectors.Values)
+            foreach (var collector in _collectors.Values)
             {
-                var c = value.Collect();
-                if (c != null) yield return c;
+                foreach (var family in collector.Collect())
+                    yield return family;
             }
         }
 

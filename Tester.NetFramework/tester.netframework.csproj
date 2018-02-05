@@ -231,6 +231,7 @@
   <ItemGroup>
     <Compile Include="AlwaysFailingOnDemandCollector.cs" />
     <Compile Include="AspNetCoreMiddlewareTester.cs" />
+    <Compile Include="ExternalDataCollector.cs" />
     <Compile Include="KestrelMetricServerTester.cs" />
     <Compile Include="MetricPusherTester.cs" />
     <Compile Include="MetricServerTester.cs" />

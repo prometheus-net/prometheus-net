@@ -58,7 +58,7 @@ namespace Prometheus.Tests
 
             Array.Sort(allVars);
 
-            var m = sum.Collect().metric.Single().summary;
+            var m = sum.Collect().Single().metric.Single().summary;
 
             Assert.AreEqual((ulong)(mutations * concLevel), m.sample_count);
 

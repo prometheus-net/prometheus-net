@@ -41,6 +41,9 @@ namespace tester
             var summary = Metrics.CreateSummary("mySummary", "help text");
             summary.Observe(5.3);
 
+            // Exmaple implementation of a custom collector.
+            DefaultCollectorRegistry.Instance.GetOrAdd(new ExternalDataCollector());
+
             // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
             // With MetricPusherTester you might get a 1st push already before it fails but after that it should stop pushing.
             //DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(new AlwaysFailingOnDemandCollector());

@@ -156,3 +156,9 @@ To address this you can add this line to your test setup:
 ```csharp
 DefaultCollectorRegistry.Instance.Clear();
 ```
+
+## Implementing custom collectors
+
+The built-in collectors created via the `Metrics` class helper methods provide a simple way to export basic metric types to Prometheus. To implement more advanced metric collection scenarios you can implement the `ICollector` interface yourself.
+
+For an example, see [ExternalDataCollector.cs](Tester.NetFramework/ExternalDataCollector.cs)

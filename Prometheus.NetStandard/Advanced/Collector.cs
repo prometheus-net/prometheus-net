@@ -2,6 +2,7 @@ using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Prometheus.Advanced
@@ -94,7 +95,7 @@ namespace Prometheus.Advanced
             get { return _unlabelledLazy.Value; }
         }
 
-        public MetricFamily Collect()
+        public IEnumerable<MetricFamily> Collect()
         {
             var result = new MetricFamily()
             {
@@ -108,7 +109,7 @@ namespace Prometheus.Advanced
                 result.metric.Add(child.Collect());
             }
 
-            return result;
+            yield return result;
         }
     }
 }

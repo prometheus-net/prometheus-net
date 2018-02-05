@@ -144,7 +144,7 @@ namespace Prometheus.Tests
             histogram.Observe(3.9);
             histogram.Observe(double.NaN);
 
-            var metric = histogram.Collect().metric[0];
+            var metric = histogram.Collect().Single().metric[0];
             Assert.IsNotNull(metric.histogram);
             Assert.AreEqual(9ul, metric.histogram.sample_count);
             Assert.AreEqual(16.7, metric.histogram.sample_sum);
@@ -161,7 +161,7 @@ namespace Prometheus.Tests
             var histogram = Metrics.CreateHistogram("hist", "help");
             histogram.Observe(0.03);
 
-            var metric = histogram.Collect().metric[0];
+            var metric = histogram.Collect().Single().metric[0];
             Assert.IsNotNull(metric.histogram);
             Assert.AreEqual(1ul, metric.histogram.sample_count);
             Assert.AreEqual(0.03, metric.histogram.sample_sum);
@@ -215,7 +215,7 @@ namespace Prometheus.Tests
             summary.Observe(2);
             summary.Observe(3);
 
-            var metric = summary.Collect().metric[0];
+            var metric = summary.Collect().Single().metric[0];
             Assert.IsNotNull(metric.summary);
             Assert.AreEqual(3ul, metric.summary.sample_count);
             Assert.AreEqual(6, metric.summary.sample_sum);
