@@ -16,7 +16,7 @@ namespace Prometheus.Advanced
         private Gauge _virtualMemorySize;
         private Gauge _workingSet;
         private Gauge _privateMemorySize;
-        private Gauge _cpuTotal;
+        private Counter _cpuTotal;
         private Gauge _openHandles;
         private Gauge _startTime;
         private Gauge _numThreads;
@@ -40,7 +40,7 @@ namespace Prometheus.Advanced
 
             // Metrics that make sense to compare between all operating systems
             _startTime = metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds");
-            _cpuTotal = metrics.CreateGauge("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
+            _cpuTotal = metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
 
             _virtualMemorySize = metrics.CreateGauge("process_windows_virtual_bytes", "Process virtual memory size");
             _workingSet = metrics.CreateGauge("process_windows_working_set", "Process working set");
@@ -74,7 +74,7 @@ namespace Prometheus.Advanced
                 _virtualMemorySize.Set(_process.VirtualMemorySize64);
                 _workingSet.Set(_process.WorkingSet64);
                 _privateMemorySize.Set(_process.PrivateMemorySize64);
-                _cpuTotal.Set(_process.TotalProcessorTime.TotalSeconds);
+                _cpuTotal.Inc(Math.Max(0, _process.TotalProcessorTime.TotalSeconds - _cpuTotal.Value));
                 _openHandles.Set(_process.HandleCount);
                 _numThreads.Set(_process.Threads.Count);
             }
