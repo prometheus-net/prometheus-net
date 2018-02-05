@@ -32,7 +32,7 @@ namespace Prometheus
 
             public void ApplyDuration()
             {
-                _child.Set(_stopwatch.Elapsed.Seconds);
+                _child.Set(_stopwatch.Elapsed.TotalSeconds);
             }
         }
 
