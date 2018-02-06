@@ -74,7 +74,7 @@ namespace Prometheus
         protected override Task StartServer(CancellationToken cancel)
         {
             // Kick off the actual processing to a new thread and return a Task for the processing thread.
-            return Task.Factory.StartNew(async delegate
+            return Task.Run(async delegate
             {
                 while (true)
                 {
@@ -114,7 +114,7 @@ namespace Prometheus
                     if (sleepTime > TimeSpan.Zero)
                         await Task.Delay(sleepTime, cancel);
                 }
-            }).Result;
+            });
         }
     }
 }
