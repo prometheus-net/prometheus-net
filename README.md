@@ -156,7 +156,9 @@ The library provides some sample metrics about the current process out of the bo
 
 In some scenarios you may want to only collect data when it is requested by Prometheus. To easily implement this scenario prometheus-net provides you the ability to perform on-demand collection by implementing the [IOnDemandCollector interface](Prometheus.NetStandard/Advanced/IOnDemandCollector.cs).
 
-Objects that implement this interface are informed before every collection, allowing you to perform any data updates that are relevant. For an example implementation, see [OnDemandCollection.cs](Tester.NetFramework/OnDemandCollection.cs).
+Objects that implement this interface are informed before every collection, allowing you to perform any data updates that are relevant. To register on-demand collectors, use `DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors()`.
+
+For an example implementation, see [OnDemandCollection.cs](Tester.NetFramework/OnDemandCollection.cs).
 
 For even more fine-grained control over exported data you should implement a custom collector (see below).
 
