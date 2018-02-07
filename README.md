@@ -162,3 +162,7 @@ To address this you can add this line to your test setup:
 ```csharp
 DefaultCollectorRegistry.Instance.Clear();
 ```
+
+## Default metrics
+
+The library provides some sample metrics about the current process out of the box. If these are not desirable you may suppress them by calling `DefaultCollectorRegistry.Instance.Clear()` before registering any of your own metrics.
