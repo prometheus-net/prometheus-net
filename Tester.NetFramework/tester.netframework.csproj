@@ -235,6 +235,7 @@
     <Compile Include="KestrelMetricServerTester.cs" />
     <Compile Include="MetricPusherTester.cs" />
     <Compile Include="MetricServerTester.cs" />
+    <Compile Include="OnDemandCollection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tester.cs" />

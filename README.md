@@ -148,12 +148,20 @@ The default configuration will publish metrics on the /metrics URL.
 
 This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
+## Default metrics
+
+The library provides some sample metrics about the current process out of the box. If these are not desirable you may suppress them by calling `DefaultCollectorRegistry.Instance.Clear()` before registering any of your own metrics.
+
+## On-demand collection
+
+In some scenarios you may want to only collect data when it is requested by Prometheus. To easily implement this scenario prometheus-net provides you the ability to perform on-demand collection by implementing the [IOnDemandCollector interface](Prometheus.NetStandard/Advanced/IOnDemandCollector.cs).
+
+Objects that implement this interface are informed before every collection, allowing you to perform any data updates that are relevant. For an example implementation, see [OnDemandCollection.cs](Tester.NetFramework/OnDemandCollection.cs).
+
+For even more fine-grained control over exported data you should implement a custom collector (see below).
+
 ## Implementing custom collectors
 
 The built-in collectors created via the `Metrics` class helper methods provide a simple way to export basic metric types to Prometheus. To implement more advanced metric collection scenarios you can implement the `ICollector` interface yourself.
 
-For an example, see [ExternalDataCollector.cs](Tester.NetFramework/ExternalDataCollector.cs)
-
-## Default metrics
-
-The library provides some sample metrics about the current process out of the box. If these are not desirable you may suppress them by calling `DefaultCollectorRegistry.Instance.Clear()` before registering any of your own metrics.
+For an example, see [ExternalDataCollector.cs](Tester.NetFramework/ExternalDataCollector.cs).
