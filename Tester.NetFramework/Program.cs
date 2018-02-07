@@ -30,6 +30,8 @@ namespace tester
             counter.Labels("GET", "/").Inc();
             counter.Labels("POST", "/cancel").Inc();
 
+            var zeroValue = Metrics.CreateCounter("always_zero", "This counter is always zero but still needs to be present in the output!");
+
             var gauge = Metrics.CreateGauge("gauge", "help text");
             gauge.Inc(3.4);
             gauge.Dec(2.1);

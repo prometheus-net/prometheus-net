@@ -3,6 +3,7 @@ using Prometheus.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Prometheus.Advanced
@@ -97,6 +98,8 @@ namespace Prometheus.Advanced
 
         public IEnumerable<MetricFamily> Collect()
         {
+            EnsureUnlabelledMetricCreatedIfNoLabels();
+
             var result = new MetricFamily()
             {
                 name = Name,
@@ -110,6 +113,18 @@ namespace Prometheus.Advanced
             }
 
             yield return result;
+        }
+
+        private void EnsureUnlabelledMetricCreatedIfNoLabels()
+        {
+            // We want metrics to exist even with 0 values if they are supposed to be used without labels.
+            // Labelled metrics are created when label values are assigned. However, as unlabelled metrics are lazy-created
+            // (they might are optional if labels are used) we might lose them for cases where they really are desired.
+
+            // If there are no label names then clearly this metric is supposed to be used unlabelled, so create it.
+            // Otherwise, we allow unlabelled metrics to be used if the user explicitly does it but omit them by default.
+            if (!_unlabelledLazy.IsValueCreated && !LabelNames.Any())
+                GetOrAddLabelled(LabelValues.Empty);
         }
     }
 }
