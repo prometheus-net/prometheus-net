@@ -124,6 +124,24 @@ metricServer.Start();
 
 For projects built with ASP.NET Core, a middleware plugin is provided.
 
+If you use the default Visual Studio project template, modify *Startup.cs* as follows:
+
+```
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    // ...
+
+    app.UseMetricServer();
+
+    app.Run(async (context) =>
+    {
+        // ...
+    });
+}
+```
+
+Alternatively, if you use a custom project startup cycle, you can add this directly to the WebHostBuilder instance:
+
 ```csharp
 WebHost.CreateDefaultBuilder()
 	.Configure(app => app.UseMetricServer())
