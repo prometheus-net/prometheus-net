@@ -18,21 +18,20 @@ namespace Prometheus
         {
         }
 
-
         public class Timer
         {
             private System.Diagnostics.Stopwatch _stopwatch;
-            private Gauge.Child _child;
+            private IGauge _gauge;
 
-            public Timer(Gauge.Child child)
+            public Timer(IGauge gauge)
             {
-                _child = child;
+                _gauge = gauge;
                 _stopwatch = System.Diagnostics.Stopwatch.StartNew();
             }
 
             public void ApplyDuration()
             {
-                _child.Set(_stopwatch.Elapsed.TotalSeconds);
+                _gauge.Set(_stopwatch.Elapsed.TotalSeconds);
             }
         }
 
@@ -55,13 +54,7 @@ namespace Prometheus
             {
                 _value.Value = val;
             }
-
-            public void SetToCurrentTime()
-            {
-                var unixTicks = System.DateTime.UtcNow.Ticks - new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc).Ticks;
-                Set(unixTicks / System.TimeSpan.TicksPerSecond);
-            }
-
+            
             public Gauge.Timer StartTimer()
             {
                 return new Gauge.Timer(this);
@@ -77,8 +70,6 @@ namespace Prometheus
 
         protected override MetricType Type => MetricType.GAUGE;
 
-        // Just forward some calls to the unlabelled child metric.
-        public void SetToCurrentTime() => Unlabelled.SetToCurrentTime();
         public void Inc(double increment = 1) => Unlabelled.Inc(increment);
         public void Set(double val) => Unlabelled.Set(val);
         public void Dec(double decrement = 1) => Unlabelled.Dec(decrement);
