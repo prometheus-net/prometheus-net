@@ -2,7 +2,6 @@
 using Prometheus.Advanced;
 using System;
 using System.Diagnostics;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,7 +9,7 @@ namespace tester
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             // Replace the first line with an appropriate type of tester to run different manual tests.
             var tester = new MetricPusherTester();
@@ -30,7 +29,7 @@ namespace tester
             counter.Labels("GET", "/").Inc();
             counter.Labels("POST", "/cancel").Inc();
 
-            var zeroValue = Metrics.CreateCounter("always_zero", "This counter is always zero but still needs to be present in the output!");
+            Metrics.CreateCounter("always_zero", "This counter is always zero but still needs to be present in the output!");
 
             var gauge = Metrics.CreateGauge("gauge", "help text");
             gauge.Inc(3.4);
@@ -47,7 +46,7 @@ namespace tester
             DefaultCollectorRegistry.Instance.GetOrAdd(new ExternalDataCollector());
 
             // Example implementation of on-demand collection.
-            DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(new OnDemandCollection());
+            DefaultCollectorRegistry.Instance.RegisterOnDemandCollector<OnDemandCollection>();
 
             // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
             // With MetricPusherTester you might get a 1st push already before it fails but after that it should stop pushing.

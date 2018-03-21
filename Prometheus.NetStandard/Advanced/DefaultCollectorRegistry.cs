@@ -11,7 +11,7 @@ namespace Prometheus.Advanced
         /// <summary>
         /// The singleton registry used by default when the caller does not specify a custom/specific registry.
         /// </summary>
-        public readonly static DefaultCollectorRegistry Instance;
+        public static readonly DefaultCollectorRegistry Instance;
 
         static DefaultCollectorRegistry()
         {
@@ -19,11 +19,16 @@ namespace Prometheus.Advanced
             // use a custom instance instead of the singleton or call Clear() before the first use.
             Instance = new DefaultCollectorRegistry();
 
-            Instance.RegisterOnDemandCollectors(new[] { new DotNetStatsCollector() });
+            Instance.RegisterOnDemandCollector<DotNetStatsCollector>();
         }
 
         private readonly ConcurrentDictionary<string, ICollector> _collectors = new ConcurrentDictionary<string, ICollector>();
         private readonly ConcurrentBag<IOnDemandCollector> _onDemandCollectors = new ConcurrentBag<IOnDemandCollector>();
+
+        public void RegisterOnDemandCollector<TCollector>() where TCollector : class, IOnDemandCollector, new()
+        {
+            RegisterOnDemandCollectors(new TCollector());
+        }
 
         public void RegisterOnDemandCollectors(params IOnDemandCollector[] onDemandCollectors)
         {
