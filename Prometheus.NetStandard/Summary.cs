@@ -27,13 +27,13 @@ namespace Prometheus
         };
 
         // Default duration for which observations stay relevant
-        static readonly TimeSpan DefMaxAge = TimeSpan.FromMinutes(10);
+        public static readonly TimeSpan DefMaxAge = TimeSpan.FromMinutes(10);
 
         // Default number of buckets used to calculate the age of observations
-        const int DefAgeBuckets = 5;
+        public static readonly int DefAgeBuckets = 5;
 
         // Standard buffer size for collecting Summary observations
-        const int DefBufCap = 500;
+        public static readonly int DefBufCap = 500;
 
         readonly IList<QuantileEpsilonPair> _objectives;
         readonly TimeSpan _maxAge;
