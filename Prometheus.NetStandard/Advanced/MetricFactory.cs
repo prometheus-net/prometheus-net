@@ -31,7 +31,14 @@ namespace Prometheus.Advanced
             return (Summary)_registry.GetOrAdd(metric);
         }
 
-        public Summary CreateSummary(string name, string help, string[] labelNames, IList<QuantileEpsilonPair> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
+        public Summary CreateSummary(
+            string name,
+            string help,
+            string[] labelNames,
+            IList<QuantileEpsilonPair> objectives = null,
+            TimeSpan? maxAge = null,
+            int? ageBuckets = null,
+            int? bufCap = null)
         {
             var metric = new Summary(name, help, labelNames, objectives, maxAge, ageBuckets, bufCap);
             return (Summary)_registry.GetOrAdd(metric);

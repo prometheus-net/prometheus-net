@@ -24,7 +24,14 @@ namespace Prometheus
             return DefaultFactory.CreateSummary(name, help, labelNames);
         }
 
-        public static Prometheus.Summary CreateSummary(string name, string help, string[] labelNames, IList<QuantileEpsilonPair> objectives, TimeSpan maxAge, int? ageBuckets, int? bufCap)
+        public static Summary CreateSummary(
+            string name,
+            string help,
+            string[] labelNames,
+            IList<QuantileEpsilonPair> objectives = null,
+            TimeSpan? maxAge = null,
+            int? ageBuckets = null,
+            int? bufCap = null)
         {
             return DefaultFactory.CreateSummary(name, help, labelNames, objectives, maxAge, ageBuckets, bufCap);
         }
