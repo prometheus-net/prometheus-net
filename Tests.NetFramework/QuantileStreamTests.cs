@@ -9,7 +9,7 @@ namespace Prometheus.Tests
     [TestClass]
     public class QuantileStreamTests
     {
-        readonly IList<QuantileEpsilonPair> _targets = new List<QuantileEpsilonPair>
+        readonly IReadOnlyList<QuantileEpsilonPair> _targets = new List<QuantileEpsilonPair>
         {
             new QuantileEpsilonPair(0.01, 0.001),
             new QuantileEpsilonPair(0.10, 0.01),

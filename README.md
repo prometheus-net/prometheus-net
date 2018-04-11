@@ -74,12 +74,14 @@ Histograms track the size and number of events in buckets.
 This allows for aggregatable calculation of quantiles.
 
 ```csharp
-var hist = Metrics.CreateHistogram("my_histogram", "help text", buckets: new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 });
+var hist = Metrics.CreateHistogram("my_histogram", "help text", new HistogramConfiguration
+{
+    Buckets = new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 }
+});
 hist.Observe(0.4);
 ```
 
-The default buckets are intended to cover a typical web/rpc request from milliseconds to seconds.
-They can be overridden passing in the `buckets` argument.
+The default buckets (used when you do not specify your own) are intended to cover a typical web/rpc request from milliseconds to seconds.
 
 ### Labels
 
@@ -91,10 +93,29 @@ and [labels](http://prometheus.io/docs/practices/instrumentation/#use-labels).
 Taking a counter as an example:
 
 ```csharp
-var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new []{ "method", "endpoint"});
+var counter = Metrics.CreateCounter("myCounter", "help text", new CounterConfiguration
+{
+    LabelNames = new[] { "method", "endpoint" }
+});
 counter.WithLabels("GET", "/").Inc();
 counter.WithLabels("POST", "/cancel").Inc();
 ```
+
+## When are metrics published?
+
+Sometimes you want to delay publishing a metric until you have loaded some data and have a meaningful value to supply for it. The API allows you to suppress publishing of the initial value until you decide the time is right.
+
+```csharp
+var gauge = Metrics.CreateGauge("logged_in_users ", "help text", new GaugeConfiguration
+{
+    SuppressInitialValue = true
+});
+
+// After setting the value, the metric becomes published.
+gauge.Set(LoadSessions().Count);
+```
+
+You can also use `.Publish()` on a metric to mark it as ready to be published without modifying the initial value.
 
 ## HTTP handler
 

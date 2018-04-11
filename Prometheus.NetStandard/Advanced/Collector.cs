@@ -47,7 +47,7 @@ namespace Prometheus.Advanced
                 return existing;
 
             var child = new TChild();
-            child.Init(this, key);
+            child.Init(this, key, publish: !_suppressInitialValue);
 
             if (_labelledMetrics.TryAdd(key, child))
                 return child;
@@ -57,8 +57,12 @@ namespace Prometheus.Advanced
             goto tryagain;
         }
 
-        protected Collector(string name, string help, string[] labelNames)
+        private static readonly string[] EmptyLabelNames = new string[0];
+
+        protected Collector(string name, string help, string[] labelNames, bool suppressInitialValue)
         {
+            labelNames = labelNames ?? EmptyLabelNames;
+
             if (!MetricNameRegex.IsMatch(name))
             {
                 throw new ArgumentException($"Metric name '{name}' does not match regex '{ValidMetricNameExpression}'.");
@@ -86,6 +90,8 @@ namespace Prometheus.Advanced
             Help = help;
             LabelNames = labelNames;
 
+            _suppressInitialValue = suppressInitialValue;
+
             _unlabelledLazy = new Lazy<TChild>(() => GetOrAddLabelled(LabelValues.Empty));
         }
 
@@ -95,6 +101,8 @@ namespace Prometheus.Advanced
         public string[] LabelNames { get; }
 
         protected abstract MetricType Type { get; }
+
+        private readonly bool _suppressInitialValue;
 
         protected TChild Unlabelled
         {
@@ -114,7 +122,12 @@ namespace Prometheus.Advanced
 
             foreach (var child in _labelledMetrics.Values)
             {
-                result.metric.Add(child.Collect());
+                var metric = child.Collect();
+
+                if (metric == null)
+                    continue; // This can occur due to initial value suppression.
+
+                result.metric.Add(metric);
             }
 
             yield return result;

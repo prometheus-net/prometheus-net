@@ -1,3 +1,5 @@
+- Add MetricOptions and subclasses for more extensible API.
+- Add SuppressInitialValue to metric configuration (ref https://www.robustperception.io/existential-issues-with-metrics/)
 - Add .WithLabels() as alternative to .Labels() for fewer annoying Intellisense conflicts.
 * 2.0.0
 - Targeting .NET Standard 2.0 as minimum version (.NET Framework 4.6.1, .NET Core 2.0 and Mono 5.4)

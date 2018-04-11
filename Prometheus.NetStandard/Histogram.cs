@@ -16,9 +16,9 @@ namespace Prometheus
         private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
         private readonly double[] _buckets;
 
-        internal Histogram(string name, string help, string[] labelNames, double[] buckets = null) : base(name, help, labelNames)
+        internal Histogram(string name, string help, string[] labelNames, bool suppressInitialValue, double[] buckets) : base(name, help, labelNames, suppressInitialValue)
         {
-            if (labelNames.Any(l => l == "le"))
+            if (labelNames?.Any(l => l == "le") == true)
             {
                 throw new ArgumentException("'le' is a reserved label name");
             }
@@ -49,9 +49,9 @@ namespace Prometheus
             private ThreadSafeLong[] _bucketCounts;
             private double[] _upperBounds;
 
-            internal override void Init(ICollector parent, LabelValues labelValues)
+            internal override void Init(ICollector parent, LabelValues labelValues, bool publish)
             {
-                base.Init(parent, labelValues);
+                base.Init(parent, labelValues, publish);
 
                 _upperBounds = ((Histogram)parent)._buckets;
                 _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
@@ -92,6 +92,7 @@ namespace Prometheus
                     }
                 }
                 _sum.Add(val);
+                _publish = true;
             }
         }
 
@@ -104,5 +105,7 @@ namespace Prometheus
         {
             Unlabelled.Observe(val);
         }
+
+        public void Publish() => Unlabelled.Publish();
     }
 }

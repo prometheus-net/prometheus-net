@@ -25,8 +25,11 @@ namespace tester
             var metricServer = tester.InitializeMetricServer();
             metricServer?.Start();
 
-            var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new[] { "method", "endpoint" });
-            counter.Labels("GET", "/").Inc();
+            var counter = Metrics.CreateCounter("myCounter", "help text", new CounterConfiguration
+            {
+                LabelNames = new[] { "method", "endpoint" }
+            });
+            counter.WithLabels("GET", "/").Inc();
             counter.WithLabels("POST", "/cancel").Inc();
 
             Metrics.CreateCounter("always_zero", "This counter is always zero but still needs to be present in the output!");
@@ -36,7 +39,16 @@ namespace tester
             gauge.Dec(2.1);
             gauge.Set(5.3);
 
-            var hist = Metrics.CreateHistogram("myHistogram", "help text", buckets: new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 });
+            // As the initial value is suppressed and a new one never assigned, this one never shows up in the export.
+            Metrics.CreateGauge("should_not_show_up", "", new GaugeConfiguration
+            {
+                SuppressInitialValue = true
+            });
+
+            var hist = Metrics.CreateHistogram("myHistogram", "help text", new HistogramConfiguration
+            {
+                Buckets = new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 }
+            });
             hist.Observe(0.4);
 
             var summary = Metrics.CreateSummary("mySummary", "help text");

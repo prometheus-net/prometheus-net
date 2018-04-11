@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <Compile Include="..\Tests.NetFramework\AsciiFormatterTests.cs" Link="AsciiFormatterTests.cs" />
-    <Compile Include="..\Tests.NetFramework\MetricLabelTests.cs" Link="MetricLabelTests.cs" />
+    <Compile Include="..\Tests.NetFramework\MetricInitializationTests.cs" Link="MetricInitializationTests.cs" />
     <Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
     <Compile Include="..\Tests.NetFramework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
     <Compile Include="..\Tests.NetFramework\RandomExtensions.cs" Link="RandomExtensions.cs" />

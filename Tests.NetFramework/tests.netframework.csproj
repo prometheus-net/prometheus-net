@@ -76,7 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsciiFormatterTests.cs" />
-    <Compile Include="MetricLabelTests.cs" />
+    <Compile Include="MetricInitializationTests.cs" />
     <Compile Include="MetricsTests.cs" />
     <Compile Include="QuantileStreamTests.cs" />
     <Compile Include="RandomExtensions.cs" />

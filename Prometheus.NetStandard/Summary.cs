@@ -18,13 +18,15 @@ namespace Prometheus
         // Label that defines the quantile in a summary.
         const string QuantileLabel = "quantile";
 
-        // Default Summary quantile values.
-        public static readonly IList<QuantileEpsilonPair> DefObjectives = new List<QuantileEpsilonPair>()
+        internal static readonly QuantileEpsilonPair[] DefObjectivesArray = new[]
         {
             new QuantileEpsilonPair(0.5, 0.05),
             new QuantileEpsilonPair(0.9, 0.01),
             new QuantileEpsilonPair(0.99, 0.001)
         };
+
+        // Default Summary quantile values.
+        public static readonly IList<QuantileEpsilonPair> DefObjectives = new List<QuantileEpsilonPair>(DefObjectivesArray);
 
         // Default duration for which observations stay relevant
         public static readonly TimeSpan DefMaxAge = TimeSpan.FromMinutes(10);
@@ -35,7 +37,7 @@ namespace Prometheus
         // Standard buffer size for collecting Summary observations
         public static readonly int DefBufCap = 500;
 
-        readonly IList<QuantileEpsilonPair> _objectives;
+        readonly IReadOnlyList<QuantileEpsilonPair> _objectives;
         readonly TimeSpan _maxAge;
         readonly int _ageBuckets;
         readonly int _bufCap;
@@ -44,19 +46,20 @@ namespace Prometheus
             string name,
             string help,
             string[] labelNames,
-            IList<QuantileEpsilonPair> objectives = null,
+            bool suppressInitialValue = false,
+            IReadOnlyList<QuantileEpsilonPair> objectives = null,
             TimeSpan? maxAge = null,
             int? ageBuckets = null,
             int? bufCap = null)
-            : base(name, help, labelNames)
+            : base(name, help, labelNames, suppressInitialValue)
         {
-            _objectives = objectives ?? DefObjectives;
+            _objectives = objectives ?? DefObjectivesArray;
             _maxAge = maxAge ?? DefMaxAge;
             _ageBuckets = ageBuckets ?? DefAgeBuckets;
             _bufCap = bufCap ?? DefBufCap;
 
             if (_objectives.Count == 0)
-                _objectives = DefObjectives;
+                _objectives = DefObjectivesArray;
 
             if (_maxAge < TimeSpan.Zero)
                 throw new ArgumentException($"Illegal max age {_maxAge}");
@@ -67,7 +70,7 @@ namespace Prometheus
             if (_bufCap == 0)
                 _bufCap = DefBufCap;
 
-            if (labelNames.Any(_ => _ == QuantileLabel))
+            if (labelNames?.Any(_ => _ == QuantileLabel) == true)
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
@@ -79,7 +82,7 @@ namespace Prometheus
             // absolute error. If Objectives[q] = e, then the value reported
             // for q will be the φ-quantile value for some φ between q-e and q+e.
             // The default value is DefObjectives.
-            IList<QuantileEpsilonPair> _objectives = new List<QuantileEpsilonPair>();
+            IReadOnlyList<QuantileEpsilonPair> _objectives = new List<QuantileEpsilonPair>();
             double[] _sortedObjectives;
             double _sum;
             uint _count;
@@ -120,14 +123,14 @@ namespace Prometheus
 
             Advanced.DataContracts.Summary _wireMetric;
 
-            internal override void Init(ICollector parent, LabelValues labelValues)
+            internal override void Init(ICollector parent, LabelValues labelValues, bool publish)
             {
-                Init(parent, labelValues, DateTime.UtcNow);
+                Init(parent, labelValues, DateTime.UtcNow, publish);
             }
 
-            internal void Init(ICollector parent, LabelValues labelValues, DateTime now)
+            internal void Init(ICollector parent, LabelValues labelValues, DateTime now, bool publish)
             {
-                base.Init(parent, labelValues);
+                base.Init(parent, labelValues, publish);
 
                 _objectives = ((Summary)parent)._objectives;
                 _maxAge = ((Summary)parent)._maxAge;
@@ -235,6 +238,8 @@ namespace Prometheus
                     if (_hotBuf.IsFull)
                         Flush(now);
                 }
+
+                _publish = true;
             }
 
             // Flush needs bufMtx locked.
@@ -308,5 +313,7 @@ namespace Prometheus
         {
             Unlabelled.Observe(val);
         }
+
+        public void Publish() => Unlabelled.Publish();
     }
 }

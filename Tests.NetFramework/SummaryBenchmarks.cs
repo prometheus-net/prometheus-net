@@ -51,7 +51,7 @@ namespace Prometheus.Tests
             var summary = new Summary("test_summary", "helpless", new string[0]);
             var child = new Summary.Child();
             var now = new DateTime(2016, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            child.Init(summary, LabelValues.Empty, now);
+            child.Init(summary, LabelValues.Empty, now, true);
 
             const int N = 1000;
 

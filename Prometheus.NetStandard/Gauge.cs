@@ -13,8 +13,8 @@ namespace Prometheus
 
     public class Gauge : Collector<Gauge.Child>, IGauge
     {
-        internal Gauge(string name, string help, string[] labelNames)
-            : base(name, help, labelNames)
+        internal Gauge(string name, string help, string[] labelNames, bool suppressInitialValue)
+            : base(name, help, labelNames, suppressInitialValue)
         {
         }
 
@@ -48,11 +48,13 @@ namespace Prometheus
             public void Inc(double increment = 1)
             {
                 _value.Add(increment);
+                _publish = true;
             }
 
             public void Set(double val)
             {
                 _value.Value = val;
+                _publish = true;
             }
             
             public Gauge.Timer StartTimer()
@@ -74,5 +76,7 @@ namespace Prometheus
         public void Set(double val) => Unlabelled.Set(val);
         public void Dec(double decrement = 1) => Unlabelled.Dec(decrement);
         public double Value => Unlabelled.Value;
+
+        public void Publish() => Unlabelled.Publish();
     }
 }

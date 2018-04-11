@@ -76,21 +76,21 @@ namespace Benchmark
         public void Gauge_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-            _factory.CreateGauge(_metricNames[i], _help).Inc();
+                _factory.CreateGauge(_metricNames[i], _help).Inc();
         }
 
         [Benchmark]
         public void Summary_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-            _factory.CreateSummary(_metricNames[i], _help).Observe(123);
+                _factory.CreateSummary(_metricNames[i], _help).Observe(123);
         }
 
         [Benchmark]
         public void Histogram_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-            _factory.CreateHistogram(_metricNames[i], _help).Observe(123);
+                _factory.CreateHistogram(_metricNames[i], _help).Observe(123);
         }
     }
 }
