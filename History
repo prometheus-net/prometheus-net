@@ -1,4 +1,5 @@
-- Add MetricOptions and subclasses for more extensible API.
+* 2.1.0
+- Add MetricOptions and subclasses for more extensible API (old API surface remains available)
 - Add SuppressInitialValue to metric configuration (ref https://www.robustperception.io/existential-issues-with-metrics/)
 - Add .WithLabels() as alternative to .Labels() for fewer annoying Intellisense conflicts.
 * 2.0.0
