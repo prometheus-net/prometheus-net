@@ -27,7 +27,7 @@ namespace tester
 
             var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new[] { "method", "endpoint" });
             counter.Labels("GET", "/").Inc();
-            counter.Labels("POST", "/cancel").Inc();
+            counter.WithLabels("POST", "/cancel").Inc();
 
             Metrics.CreateCounter("always_zero", "This counter is always zero but still needs to be present in the output!");
 

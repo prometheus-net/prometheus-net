@@ -23,6 +23,11 @@ namespace Prometheus.Advanced
         private readonly static Regex ReservedLabelRegex = new Regex(ReservedLabelNameExpression, RegexOptions.Compiled);
         // ReSharper restore StaticFieldInGenericType
 
+        // This servers a slightly silly but useful purpose: by default if you start typing .La... and trigger Intellisense
+        // it will often for whatever reason focus on LabelNames instead of Labels, leading to tiny but persistent frustration.
+        // Having WithLabels() instead eliminates the other candidate and allows for a frustration-free typing experience.
+        public TChild WithLabels(params string[] labelValues) => Labels(labelValues);
+
         public TChild Labels(params string[] labelValues)
         {
             var key = new LabelValues(LabelNames, labelValues);

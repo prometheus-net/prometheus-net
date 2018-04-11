@@ -92,8 +92,8 @@ Taking a counter as an example:
 
 ```csharp
 var counter = Metrics.CreateCounter("myCounter", "help text", labelNames: new []{ "method", "endpoint"});
-counter.Labels("GET", "/").Inc();
-counter.Labels("POST", "/cancel").Inc();
+counter.WithLabels("GET", "/").Inc();
+counter.WithLabels("POST", "/cancel").Inc();
 ```
 
 ## HTTP handler
