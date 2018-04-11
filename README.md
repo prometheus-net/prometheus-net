@@ -103,6 +103,8 @@ counter.WithLabels("POST", "/cancel").Inc();
 
 ## When are metrics published?
 
+Metrics without labels are published immediately. Metrics that use labels are published when you provide the label values.
+
 Sometimes you want to delay publishing a metric until you have loaded some data and have a meaningful value to supply for it. The API allows you to suppress publishing of the initial value until you decide the time is right.
 
 ```csharp
