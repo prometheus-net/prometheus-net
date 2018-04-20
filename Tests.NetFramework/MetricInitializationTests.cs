@@ -34,7 +34,7 @@ namespace Prometheus.Tests
             Assert.AreEqual(4, exported.Length);
 
             foreach (var family in exported)
-                Assert.AreEqual(1, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(0, family.metric.Count, $"Family {family.type} had unexpected metric count.");
         }
 
         [TestMethod]
