@@ -106,13 +106,25 @@ namespace Prometheus
                     }
 
                     // We always stop after pushing metrics, to ensure that the latest state is flushed when told to stop.
-                    cancel.ThrowIfCancellationRequested();
+                    if (cancel.IsCancellationRequested)
+                        break;
 
                     var sleepTime = _pushInterval - duration.Elapsed;
 
                     // Sleep until the interval elapses or the pusher is asked to shut down.
                     if (sleepTime > TimeSpan.Zero)
-                        await Task.Delay(sleepTime, cancel);
+                    {
+                        try
+                        {
+                            await Task.Delay(sleepTime, cancel);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // The task was cancelled.
+                            // We continue the loop here to ensure final state gets pushed.
+                            continue;
+                        }
+                    }
                 }
             });
         }
