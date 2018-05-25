@@ -30,7 +30,7 @@ namespace Prometheus.Tests
             // Without touching any metrics, there should be output for all because default config publishes immediately.
             var exported = registry.CollectAll().ToArray();
 
-            // There is a family for each of the above, in each family we expect to see 0 metrics.
+            // There is a family for each of the above, in each family we expect to see 1 metrics.
             Assert.AreEqual(4, exported.Length);
 
             foreach (var family in exported)
