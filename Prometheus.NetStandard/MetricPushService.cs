@@ -102,12 +102,6 @@ namespace Prometheus
                 streamsToDispose.Add(memoryStream);
                 ScrapeHandler.ProcessScrapeRequest(metrics, contentType, memoryStream);
                 memoryStream.Position = 0;
-
-                if (string.IsNullOrEmpty(endpoint))
-                {
-                    throw new ArgumentNullException(nameof(endpoint));
-                }
-
                 var streamContent = new StreamContent(memoryStream);
                 tasks.Add(_httpClient.PostAsync(targetUrl, streamContent));
             }
