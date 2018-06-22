@@ -16,6 +16,11 @@ namespace Prometheus
     /// </summary>
     public class MetricPusher : MetricHandler
     {
+        private readonly string _endpoint;
+        private readonly string _job;
+        private readonly string _instance;
+        private readonly IEnumerable<Tuple<string, string>> _additionalLabels;
+
         /// <summary>
         /// Used as input for the srape handler, so it generates the output in the expected format.
         /// Not used in PushGateway communications.
@@ -23,53 +28,22 @@ namespace Prometheus
         private const string ContentType = "text/plain; version=0.0.4";
 
         private readonly TimeSpan _pushInterval;
-        private readonly Uri _targetUrl;
+        private readonly MetricPushService _pushService;
 
         public MetricPusher(string endpoint, string job, string instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>> additionalLabels = null, ICollectorRegistry registry = null) : base(registry)
         {
-            if (string.IsNullOrEmpty(endpoint))
-            {
-                throw new ArgumentNullException("endpoint");
-            }
-            if (string.IsNullOrEmpty(job))
-            {
-                throw new ArgumentNullException("job");
-            }
+            _endpoint = endpoint;
+            _job = job;
+            _instance = instance;
+            _additionalLabels = additionalLabels;
+            _pushService = new MetricPushService();
             if (intervalMilliseconds <= 0)
             {
                 throw new ArgumentException("Interval must be greater than zero", "intervalMilliseconds");
             }
 
-            StringBuilder sb = new StringBuilder(string.Format("{0}/job/{1}", endpoint.TrimEnd('/'), job));
-            if (!string.IsNullOrEmpty(instance))
-            {
-                sb.AppendFormat("/instance/{0}", instance);
-            }
-
-            if (additionalLabels != null)
-            {
-                foreach (var pair in additionalLabels)
-                {
-                    if (pair == null || string.IsNullOrEmpty(pair.Item1) || string.IsNullOrEmpty(pair.Item2))
-                    {
-                        // TODO: Surely this should throw an exception?
-                        Trace.WriteLine("Ignoring invalid label set");
-                        continue;
-                    }
-
-                    sb.AppendFormat("/{0}/{1}", pair.Item1, pair.Item2);
-                }
-            }
-
-            if (!Uri.TryCreate(sb.ToString(), UriKind.Absolute, out _targetUrl))
-            {
-                throw new ArgumentException("Endpoint must be a valid url", "endpoint");
-            }
-
             _pushInterval = TimeSpan.FromMilliseconds(intervalMilliseconds);
         }
-
-        private static readonly HttpClient _httpClient = new HttpClient();
 
         protected override Task StartServer(CancellationToken cancel)
         {
@@ -85,16 +59,9 @@ namespace Prometheus
                     try
                     {
                         var metrics = _registry.CollectAll();
-
-                        var stream = new MemoryStream();
-                        ScrapeHandler.ProcessScrapeRequest(metrics, ContentType, stream);
-
-                        stream.Position = 0;
-                        // StreamContent takes ownership of the stream.
-                        var response = await _httpClient.PostAsync(_targetUrl, new StreamContent(stream));
-
-                        // If anything goes wrong, we want to get at least an entry in the trace log.
-                        response.EnsureSuccessStatusCode();
+                        await _pushService
+                            .PushAsync(metrics, _endpoint, _job, _instance, additionalLabels: _additionalLabels)
+                            .ConfigureAwait(false);
                     }
                     catch (ScrapeFailedException ex)
                     {
