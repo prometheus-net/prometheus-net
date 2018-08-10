@@ -52,7 +52,7 @@ namespace Prometheus
 
                             try
                             {
-                                metrics = _registry.CollectAll();
+                                metrics = _registry.CollectAll(request.QueryString);
                             }
                             catch (ScrapeFailedException ex)
                             {

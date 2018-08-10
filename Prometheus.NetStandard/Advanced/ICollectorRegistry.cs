@@ -1,5 +1,6 @@
 ﻿using Prometheus.Advanced.DataContracts;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 
 namespace Prometheus.Advanced
 {
@@ -8,6 +9,6 @@ namespace Prometheus.Advanced
         ICollector GetOrAdd(ICollector collector);
         bool Remove(ICollector collector);
 
-        IEnumerable<MetricFamily> CollectAll();
+        IEnumerable<MetricFamily> CollectAll(NameValueCollection queryParameters = null);
     }
 }

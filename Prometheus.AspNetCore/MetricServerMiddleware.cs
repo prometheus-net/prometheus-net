@@ -2,6 +2,7 @@
 using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -9,7 +10,7 @@ namespace Prometheus
 {
     /// <summary>
     /// Prometheus metrics export middleware for ASP.NET Core.
-    /// 
+    ///
     /// You should use IApplicationBuilder.UseMetricServer extension method instead of using this class directly.
     /// </summary>
     public sealed class MetricServerMiddleware
@@ -50,7 +51,12 @@ namespace Prometheus
 
             try
             {
-                metrics = _registry.CollectAll();
+                var queryParameters = new NameValueCollection();
+                foreach (var query in request.Query)
+                {
+                    queryParameters.Add(query.Key, query.Value);
+                }
+                metrics = _registry.CollectAll(queryParameters);
             }
             catch (ScrapeFailedException ex)
             {

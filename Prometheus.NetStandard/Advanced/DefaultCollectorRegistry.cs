@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 
 namespace Prometheus.Advanced
@@ -48,7 +49,7 @@ namespace Prometheus.Advanced
             }
         }
 
-        public IEnumerable<MetricFamily> CollectAll()
+        public IEnumerable<MetricFamily> CollectAll(NameValueCollection queryParameters = null)
         {
             // We need to do all updates before constructing the iterator, so we do not
             // perform a lazy update too late in the collection cycle to react to failures.
@@ -57,14 +58,14 @@ namespace Prometheus.Advanced
                 onDemandCollector.UpdateMetrics();
             }
 
-            return CollectAllIterator();
+            return CollectAllIterator(queryParameters);
         }
 
-        private IEnumerable<MetricFamily> CollectAllIterator()
+        private IEnumerable<MetricFamily> CollectAllIterator(NameValueCollection queryParameteres)
         {
             foreach (var collector in _collectors.Values)
             {
-                foreach (var family in collector.Collect())
+                foreach (var family in collector.Collect(queryParameteres))
                     yield return family;
             }
         }

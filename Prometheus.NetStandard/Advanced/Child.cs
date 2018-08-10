@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using Prometheus.Advanced.DataContracts;
 using Prometheus.Internal;
 

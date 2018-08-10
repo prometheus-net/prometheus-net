@@ -3,6 +3,7 @@ using Prometheus.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -109,7 +110,7 @@ namespace Prometheus.Advanced
             get { return _unlabelledLazy.Value; }
         }
 
-        public IEnumerable<MetricFamily> Collect()
+        public IEnumerable<MetricFamily> Collect(NameValueCollection queryParameters = null)
         {
             EnsureUnlabelledMetricCreatedIfNoLabels();
 
