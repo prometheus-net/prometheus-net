@@ -39,8 +39,11 @@ namespace Prometheus.Advanced
             }
 
             // Metrics that make sense to compare between all operating systems
-            _startTime = metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds");
-            _cpuTotal = metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds");
+            // Keep the help text synchronized with the Go implementation to avoid pushgateway conflicts.
+            // See https://github.com/prometheus/pushgateway/issues/194
+            // and https://github.com/prometheus-net/prometheus-net/issues/89
+            _startTime = metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds.");
+            _cpuTotal = metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds.");
 
             _virtualMemorySize = metrics.CreateGauge("process_windows_virtual_bytes", "Process virtual memory size");
             _workingSet = metrics.CreateGauge("process_windows_working_set", "Process working set");
