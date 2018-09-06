@@ -176,6 +176,22 @@ The default configuration will publish metrics on the /metrics URL.
 
 This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
+## ASP.NET Core with basic authentication
+
+You may wish to restrict access to the metrics export URL. This can be accomplished using any ASP.NET Core authentication mechanism, as prometheus-net integrates directly into the composable ASP.NET Core request processing pipeline.
+
+For a simple example we can take [BasicAuthMiddleware by Johan Boström](https://www.johanbostrom.se/blog/adding-basic-auth-to-your-mvc-application-in-dotnet-core) which can be integrated by replacing the `app.UseMetricServer()` line with the following code block:
+
+```csharp
+app.Map("/metrics", metricsApp =>
+{
+    metricsApp.UseMiddleware<BasicAuthMiddleware>("Contoso Corporation");
+
+    // We already specified URL prefix in .Map() above, no need to specify it again here.
+    metricsApp.UseMetricServer("");
+});
+```
+
 ## Kestrel stand-alone server
 
 In some situation, you may theoretically wish to start a stand-alone metric server using Kestrel instead of HttpListener.
