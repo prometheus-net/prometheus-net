@@ -54,7 +54,7 @@ namespace Prometheus
             }
             catch (ScrapeFailedException ex)
             {
-                response.StatusCode = 503;
+                response.StatusCode = StatusCodes.Status503ServiceUnavailable;
 
                 if (!string.IsNullOrWhiteSpace(ex.Message))
                 {
@@ -65,7 +65,7 @@ namespace Prometheus
                 return;
             }
 
-            response.StatusCode = 200;
+            response.StatusCode = StatusCodes.Status200OK;
 
             using (var outputStream = response.Body)
                 ScrapeHandler.ProcessScrapeRequest(metrics, contentType, outputStream);
