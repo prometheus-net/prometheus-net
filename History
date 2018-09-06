@@ -1,3 +1,5 @@
+* 2.1.2
+- Fixed potential conflict when using pushgateway and also other exporter libraries (see #89)
 * 2.1.1
 - Various minor fixes (see issues on GitHub for details).
 * 2.1.0
