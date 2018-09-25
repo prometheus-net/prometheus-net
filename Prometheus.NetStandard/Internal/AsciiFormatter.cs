@@ -40,7 +40,7 @@ namespace Prometheus.Internal
             writer.Write("# TYPE ");
             writer.Write(family.name);
             writer.Write(" ");
-            writer.WriteLine(family.type);
+            writer.WriteLine(family.type.ToString().ToLowerInvariant());
 
             foreach (var metric in family.metric)
             {
