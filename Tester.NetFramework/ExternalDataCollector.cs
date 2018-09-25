@@ -2,6 +2,7 @@
 using Prometheus.Advanced.DataContracts;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 
 namespace tester
 {
@@ -45,7 +46,7 @@ namespace tester
             }
         }
 
-        public IEnumerable<MetricFamily> Collect()
+        public IEnumerable<MetricFamily> Collect(NameValueCollection queryParameters = null)
         {
             // NB! Prometheus is not at all tolerant of slow metrics export - the collection should occur in milliseconds,
             // not seconds. If this data takes a long time to gather, collect it as a parallel activity, only reporting
@@ -82,7 +83,17 @@ namespace tester
                     SuccessRatio = 2.0 / 15,
 
                     Pi = 3
-                }
+                },
+
+                new ServiceMetrics
+                {
+                    Name = "test.with.queryParameter",
+
+                    HandledRequestCount = queryParameters?.Count > 0 ? int.Parse(queryParameters.Get(0)) : 0,
+                    SuccessRatio = 42.1337,
+
+                    Pi = 1337
+                },
             };
 
             // Now we need to transform the collected data into Prometheus data structures.
