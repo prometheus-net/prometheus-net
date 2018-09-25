@@ -1,3 +1,5 @@
+* 2.1.3
+- Fixed wrong case used for metric type in the export data format. Should always be lowercase. #96
 * 2.1.2
 - Fixed potential conflict when using pushgateway and also other exporter libraries (see #89)
 * 2.1.1
