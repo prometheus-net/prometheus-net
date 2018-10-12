@@ -42,19 +42,12 @@ namespace Prometheus.Advanced
 
         private TChild GetOrAddLabelled(LabelValues key)
         {
-            tryagain:
-            if (_labelledMetrics.TryGetValue(key, out var existing))
-                return existing;
-
-            var child = new TChild();
-            child.Init(this, key, publish: !_suppressInitialValue);
-
-            if (_labelledMetrics.TryAdd(key, child))
+            return _labelledMetrics.GetOrAdd(key, k =>
+            {
+                var child = new TChild();
+                child.Init(this, k, !_suppressInitialValue);
                 return child;
-
-            // If we get here, a child with the same labels was concurrently added by another thread.
-            // We do not want to return a different child here, so throw it away and try again.
-            goto tryagain;
+            });
         }
 
         private static readonly string[] EmptyLabelNames = new string[0];
