@@ -11,7 +11,7 @@ namespace Prometheus.Advanced
 
         public MetricFactory(ICollectorRegistry registry)
         {
-            _registry = registry;
+            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         }
 
         public Counter CreateCounter(string name, string help, CounterConfiguration configuration)
