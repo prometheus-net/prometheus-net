@@ -1,4 +1,5 @@
-﻿using Prometheus.Advanced;
+﻿using System;
+using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus
@@ -18,7 +19,7 @@ namespace Prometheus
         {
         }
 
-        public class Timer
+        public class Timer : IDisposable
         {
             private System.Diagnostics.Stopwatch _stopwatch;
             private IGauge _gauge;
@@ -32,6 +33,11 @@ namespace Prometheus
             public void ApplyDuration()
             {
                 _gauge.Set(_stopwatch.Elapsed.TotalSeconds);
+            }
+            
+            public void Dispose()
+            {
+                ApplyDuration();
             }
         }
 

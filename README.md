@@ -59,6 +59,19 @@ gauge.Dec(2.1);
 gauge.Set(5.3);
 ```
 
+### Timers (Gauge)
+
+Timers can be used to calculate the duration of an action.
+
+
+```csharp
+var gauge = Metrics.CreateGauge("gauge_duration", "help text");
+using(gauge.StartTimer())
+{
+    Console.WriteLine("This action is timed");
+}
+```
+
 ### Summary
 
 Summaries track the size and number of events.
@@ -180,7 +193,7 @@ This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package
 
 You may wish to restrict access to the metrics export URL. This can be accomplished using any ASP.NET Core authentication mechanism, as prometheus-net integrates directly into the composable ASP.NET Core request processing pipeline.
 
-For a simple example we can take [BasicAuthMiddleware by Johan Boström](https://www.johanbostrom.se/blog/adding-basic-auth-to-your-mvc-application-in-dotnet-core) which can be integrated by replacing the `app.UseMetricServer()` line with the following code block:
+For a simple example we can take [BasicAuthMiddleware by Johan Bostrï¿½m](https://www.johanbostrom.se/blog/adding-basic-auth-to-your-mvc-application-in-dotnet-core) which can be integrated by replacing the `app.UseMetricServer()` line with the following code block:
 
 ```csharp
 app.Map("/metrics", metricsApp =>
