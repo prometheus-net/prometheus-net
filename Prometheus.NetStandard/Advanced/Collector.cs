@@ -45,7 +45,7 @@ namespace Prometheus.Advanced
             return _labelledMetrics.GetOrAdd(key, k =>
             {
                 var child = new TChild();
-                child.Init(this, k, !_suppressInitialValue);
+                child.Init(this, k, publish: !_suppressInitialValue);
                 return child;
             });
         }
