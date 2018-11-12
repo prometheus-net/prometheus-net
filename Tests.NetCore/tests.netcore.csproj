@@ -6,6 +6,10 @@
     <IsPackable>false</IsPackable>
 
     <RootNamespace>Prometheus.Tests</RootNamespace>
+
+    <SignAssembly>true</SignAssembly>
+
+    <AssemblyOriginatorKeyFile>Tests.NetCore.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
