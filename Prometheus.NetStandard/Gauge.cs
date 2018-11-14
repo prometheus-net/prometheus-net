@@ -19,28 +19,6 @@ namespace Prometheus
         {
         }
 
-        public class Timer : IDisposable
-        {
-            private System.Diagnostics.Stopwatch _stopwatch;
-            private IGauge _gauge;
-
-            public Timer(IGauge gauge)
-            {
-                _gauge = gauge;
-                _stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            }
-
-            public void ApplyDuration()
-            {
-                _gauge.Set(_stopwatch.Elapsed.TotalSeconds);
-            }
-            
-            public void Dispose()
-            {
-                ApplyDuration();
-            }
-        }
-
         public class Child : Advanced.Child, IGauge
         {
             private ThreadSafeDouble _value;
@@ -63,9 +41,9 @@ namespace Prometheus
                 _publish = true;
             }
             
-            public Gauge.Timer StartTimer()
+            public Timer StartTimer()
             {
-                return new Gauge.Timer(this);
+                return new Timer(this);
             }
 
             public void Dec(double decrement = 1)

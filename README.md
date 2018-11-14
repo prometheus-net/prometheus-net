@@ -59,19 +59,6 @@ gauge.Dec(2.1);
 gauge.Set(5.3);
 ```
 
-### Timers (Gauge)
-
-Timers can be used to calculate the duration of an action.
-
-
-```csharp
-var gauge = Metrics.CreateGauge("gauge_duration", "help text");
-using(gauge.StartTimer())
-{
-    Console.WriteLine("This action is timed");
-}
-```
-
 ### Summary
 
 Summaries track the size and number of events.
@@ -95,6 +82,18 @@ hist.Observe(0.4);
 ```
 
 The default buckets (used when you do not specify your own) are intended to cover a typical web/rpc request from milliseconds to seconds.
+
+### Timers
+
+Timers can be used to report the duration of an action to a Summary, Histogram or Gauge.
+
+```csharp
+var summary = Metrics.CreateSummary("mySummary", "help text");
+using(summary.NewTimer())
+{
+    Console.WriteLine("This action is timed");
+}
+```
 
 ### Labels
 

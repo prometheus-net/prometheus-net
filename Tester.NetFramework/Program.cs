@@ -50,6 +50,13 @@ namespace tester
                 Buckets = new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 }
             });
             hist.Observe(0.4);
+            
+            var timedHistogram = Metrics.CreateHistogram("myTimedHistogram", "help text", new HistogramConfiguration
+            {
+                Buckets = new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 }
+            });
+            
+            var latestGauge = Metrics.CreateGauge("latestGauge", "Reports the latest cycle time");
 
             var summary = Metrics.CreateSummary("mySummary", "help text");
             summary.Observe(5.3);
@@ -74,27 +81,31 @@ namespace tester
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    var duration = Stopwatch.StartNew();
-
-                    counter.Inc();
-                    counter.Labels("GET", "/").Inc(2);
-                    gauge.Set(random.NextDouble() + 2);
-                    hist.Observe(random.NextDouble());
-                    summary.Observe(random.NextDouble());
-
-                    try
+                    using(latestGauge.NewTimer())
+                    using (timedHistogram.NewTimer())
                     {
-                        tester.OnTimeToObserveMetrics();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine(ex);
-                    }
+                        var duration = Stopwatch.StartNew();
 
-                    var sleepTime = updateInterval - duration.Elapsed;
+                        counter.Inc();
+                        counter.Labels("GET", "/").Inc(2);
+                        gauge.Set(random.NextDouble() + 2);
+                        hist.Observe(random.NextDouble());
+                        summary.Observe(random.NextDouble());
 
-                    if (sleepTime > TimeSpan.Zero)
-                        await Task.Delay(sleepTime, cts.Token);
+                        try
+                        {
+                            tester.OnTimeToObserveMetrics();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.Error.WriteLine(ex);
+                        }
+
+                        var sleepTime = updateInterval - duration.Elapsed;
+
+                        if (sleepTime > TimeSpan.Zero)
+                            await Task.Delay(sleepTime, cts.Token);
+                    }
                 }
             }).Result;
 
