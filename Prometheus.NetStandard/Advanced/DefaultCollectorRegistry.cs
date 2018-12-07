@@ -82,7 +82,8 @@ namespace Prometheus.Advanced
 
         public ICollector GetOrAdd(ICollector collector)
         {
-            var collectorToUse = _collectors.GetOrAdd(collector.Name, collector);
+            var key = $"{collector.Name}|{string.Join("|", collector.LabelNames ?? new string[] { })}";
+            var collectorToUse = _collectors.GetOrAdd(key, collector);
 
             if (!collector.LabelNames.SequenceEqual(collectorToUse.LabelNames))
                 throw new InvalidOperationException("Collector with same name must have same label names");
