@@ -1,4 +1,4 @@
-namespace Prometheus.HttpExporter.InFlight
+namespace Prometheus.HttpExporter.AspNetCore.InFlight
 {
     public class HttpInFlightOptions : HttpExporterOptionsBase
     {

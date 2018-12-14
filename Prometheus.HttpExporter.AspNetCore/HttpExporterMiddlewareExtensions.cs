@@ -1,9 +1,10 @@
 using System;
 using Microsoft.AspNetCore.Builder;
-using Prometheus.HttpExporter.InFlight;
-using Prometheus.HttpExporter.MvcRequestCount;
+using Prometheus.HttpExporter.AspNetCore.HttpRequestCount;
+using Prometheus.HttpExporter.AspNetCore.HttpRequestDuration;
+using Prometheus.HttpExporter.AspNetCore.InFlight;
 
-namespace Prometheus.HttpExporter
+namespace Prometheus.HttpExporter.AspNetCore
 {
     public static class HttpExporterMiddlewareExtensions
     {
@@ -24,7 +25,8 @@ namespace Prometheus.HttpExporter
             if (options == null) options = new HttpMiddlewareExporterOptions();
 
             if (options.InFlight.Enabled) app.UseMiddleware<HttpInFlightMiddleware>(options.InFlight);
-            if (options.RequestCount.Enabled) app.UseMiddleware<MvcRequestCountMiddleware>(options.RequestCount);
+            if (options.RequestCount.Enabled) app.UseMiddleware<HttpRequestCountMiddleware>(options.RequestCount);
+            if (options.RequestDuration.Enabled) app.UseMiddleware<HttpRequestDurationMiddleware>(options.RequestDuration);
            
             return app;
         } 

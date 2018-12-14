@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace Prometheus.HttpExporter.InFlight
+namespace Prometheus.HttpExporter.AspNetCore.InFlight
 {
     public class HttpInFlightMiddleware
     {

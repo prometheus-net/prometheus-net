@@ -1,4 +1,4 @@
-namespace Prometheus.HttpExporter
+namespace Prometheus.HttpExporter.AspNetCore
 {
     public class HttpExporterOptionsBase
     {

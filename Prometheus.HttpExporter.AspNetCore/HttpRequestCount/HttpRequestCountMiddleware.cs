@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace Prometheus.HttpExporter.MvcRequestCount
+namespace Prometheus.HttpExporter.AspNetCore.HttpRequestCount
 {
-    public class MvcRequestCountMiddleware
+    public class HttpRequestCountMiddleware
     {
-        public MvcRequestCountMiddleware(RequestDelegate next, MvcRequestCountOptions options)
+        public HttpRequestCountMiddleware(RequestDelegate next, HttpRequestCountOptions options)
         {
             this.next = next ?? throw new ArgumentNullException(nameof(next));
             this.requestCount = Metrics.CreateCounter(options.MetricName, options.MetricDescription, "method", "code",
