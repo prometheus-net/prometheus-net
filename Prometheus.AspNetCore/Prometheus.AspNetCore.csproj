@@ -42,8 +42,4 @@
     <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="HttpExporter" />
-  </ItemGroup>
-
 </Project>
