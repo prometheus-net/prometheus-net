@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark.NetFramework", "B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.HttpExporter.AspNetCore", "Prometheus.HttpExporter.AspNetCore\Prometheus.HttpExporter.AspNetCore.csproj", "{07E43301-AA80-44C1-9FA0-F5D95EEBEA63}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.HttpExporter.AspNetCore", "Tests.HttpExporter.AspNetCore\Tests.HttpExporter.AspNetCore.csproj", "{37E570A7-1170-4961-BA63-0D79FA40B964}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,10 @@ Global
 		{07E43301-AA80-44C1-9FA0-F5D95EEBEA63}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07E43301-AA80-44C1-9FA0-F5D95EEBEA63}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07E43301-AA80-44C1-9FA0-F5D95EEBEA63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37E570A7-1170-4961-BA63-0D79FA40B964}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37E570A7-1170-4961-BA63-0D79FA40B964}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37E570A7-1170-4961-BA63-0D79FA40B964}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37E570A7-1170-4961-BA63-0D79FA40B964}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

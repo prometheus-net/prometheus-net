@@ -24,7 +24,7 @@ namespace Prometheus.HttpExporter.AspNetCore
         {
             if (options == null) options = new HttpMiddlewareExporterOptions();
 
-            if (options.InFlight.Enabled) app.UseMiddleware<HttpInFlightMiddleware>(options.InFlight);
+            if (options.InFlight.Enabled) app.UseMiddleware<HttpInFlightMiddleware>();
             if (options.RequestCount.Enabled) app.UseMiddleware<HttpRequestCountMiddleware>(options.RequestCount);
             if (options.RequestDuration.Enabled) app.UseMiddleware<HttpRequestDurationMiddleware>(options.RequestDuration);
            
