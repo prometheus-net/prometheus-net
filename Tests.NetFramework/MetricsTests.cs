@@ -205,6 +205,79 @@ namespace Prometheus.Tests
                 Assert.AreEqual("Bucket values must be increasing", ex.Message);
             }
         }
+        
+        [TestMethod]
+        public void histogram_exponential_buckets_are_correct()
+        {
+            var bucketsStart = 1.1;
+            var bucketsFactor = 2.4;
+            var bucketsCount = 4;
+
+            var buckets = Histogram.ExponentialBuckets(bucketsStart, bucketsFactor, bucketsCount);
+            
+            Assert.AreEqual(bucketsCount, buckets.Length);
+            Assert.AreEqual(1.1, buckets[0]);
+            Assert.AreEqual(2.64, buckets[1]);
+            Assert.AreEqual(6.336, buckets[2]);
+            Assert.AreEqual(15.2064, buckets[3]);
+        }
+        
+        [TestMethod]
+        public void histogram_exponential_buckets_with_non_positive_count_throws()
+        {
+            var bucketsStart = 1;
+            var bucketsFactor = 2;
+
+            Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, bucketsFactor, -1));
+            Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, bucketsFactor, 0));
+        }
+        
+        [TestMethod]
+        public void histogram_exponential_buckets_with_non_positive_start_throws()
+        {
+            var bucketsFactor = 2;
+            var bucketsCount = 5;
+
+            Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(-1, bucketsFactor, bucketsCount));
+            Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(0, bucketsFactor, bucketsCount));
+        }
+        
+        [TestMethod]
+        public void histogram_exponential_buckets_with__factor_less_than_one_throws()
+        {
+            var bucketsStart = 1;
+            var bucketsCount = 5;
+
+            Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, 0.9, bucketsCount));
+            Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, 0, bucketsCount));
+            Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, -1, bucketsCount));
+        }
+        
+        [TestMethod]
+        public void histogram_linear_buckets_are_correct()
+        {
+            var bucketsStart = 1.1;
+            var bucketsWidth = 2.4;
+            var bucketsCount = 4;
+
+            var buckets = Histogram.LinearBuckets(bucketsStart, bucketsWidth, bucketsCount);
+            
+            Assert.AreEqual(bucketsCount, buckets.Length);
+            Assert.AreEqual(1.1, buckets[0]);
+            Assert.AreEqual(3.5, buckets[1]);
+            Assert.AreEqual(5.9, buckets[2]);
+            Assert.AreEqual(8.3, buckets[3]);
+        }
+        
+        [TestMethod]
+        public void histogram_linear_buckets_with_non_positive_count_throws()
+        {
+            var bucketsStart = 1;
+            var bucketsWidth = 2;
+
+            Assert.ThrowsException<ArgumentException>(() => Histogram.LinearBuckets(bucketsStart, bucketsWidth, -1));
+            Assert.ThrowsException<ArgumentException>(() => Histogram.LinearBuckets(bucketsStart, bucketsWidth, 0));
+        }
 
         [TestMethod]
         public void summary_tests()
