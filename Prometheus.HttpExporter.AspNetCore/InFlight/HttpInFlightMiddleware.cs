@@ -6,13 +6,12 @@ namespace Prometheus.HttpExporter.AspNetCore.InFlight
 {
     public class HttpInFlightMiddleware
     {
-        public HttpInFlightMiddleware(RequestDelegate next, IGauge inFlightGauge)
+        public HttpInFlightMiddleware(RequestDelegate next, IGauge gauge)
         {
             if (next == null) throw new ArgumentNullException(nameof(next));
-            if (inFlightGauge == null) throw new ArgumentNullException(nameof(inFlightGauge));
             
             _next = next;
-            _inFlightGauge = inFlightGauge;
+            _inFlightGauge = gauge;
         }
 
         public async Task Invoke(HttpContext context)

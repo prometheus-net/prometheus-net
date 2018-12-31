@@ -6,38 +6,28 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
 {
-    public class HttpRequestDurationMiddleware
+    public class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<Histogram>
     {
-        public HttpRequestDurationMiddleware(RequestDelegate next, HttpRequestDurationOptions options)
+        public HttpRequestDurationMiddleware(RequestDelegate next, Histogram histogram)
+         : base(histogram)
         {
             this.next = next ?? throw new ArgumentNullException(nameof(next));
-            
-            var histogramConfiguration = new HistogramConfiguration
-            {
-                Buckets = options.HistogramBuckets,
-                LabelNames = new[] {"method", "code", "controller", "action"}
-            };
-
-            this.requestDuration =
-                Metrics.CreateHistogram(options.MetricName, options.MetricDescription, histogramConfiguration);
+            this.requestDuration = histogram;
         }
 
         public async Task Invoke(HttpContext context)
         {
             var stopWatch = new Stopwatch();
+            
+            stopWatch.Start();
             await this.next(context);
             stopWatch.Stop();
 
-            var routeData = context.GetRouteData();
-
-            if (routeData != null)
-            {
-                var requestMethod = context.Request.Method;
-                var statusCode = context.Response.StatusCode;
-                var actionName = routeData.Values["Action"] as string;
-                var controllerName = routeData.Values["Controller"] as string;
-
-                this.requestDuration.WithLabels(requestMethod, statusCode.ToString(), controllerName, actionName)
+            var labelData = GetLabelData(context);
+            
+            if (labelData != null) {
+                this.requestDuration
+                    .WithLabels(labelData)
                     .Observe(stopWatch.ElapsedMilliseconds);
             }
         }

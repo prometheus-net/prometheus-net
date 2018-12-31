@@ -12,7 +12,7 @@ using Counter = Prometheus.Counter;
 namespace Tests.HttpExporter.AspNetCore
 {
     [TestClass]
-    public class TestHttpRequestCountMiddleware
+    public class HttpRequestCountMiddlewareTests
     {
         [TestMethod]
         public void Given_null_counter_then_throws()
@@ -28,6 +28,16 @@ namespace Tests.HttpExporter.AspNetCore
 
             Assert.ThrowsException<ArgumentException>(() =>
                 new HttpRequestCountMiddleware(this._requestDelegate, counter));
+        }
+        
+        [TestMethod]
+        public async Task Given_request_then_increments_counter()
+        {
+            Assert.AreEqual(0, this._counter.Value);
+
+            await this._sut.Invoke(new DefaultHttpContext());
+            
+            Assert.AreEqual(1, this._counter.Value);
         }
         
         [TestMethod]

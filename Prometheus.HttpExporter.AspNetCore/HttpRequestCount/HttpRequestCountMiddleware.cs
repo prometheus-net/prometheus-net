@@ -4,27 +4,26 @@ using Microsoft.AspNetCore.Http;
 
 namespace Prometheus.HttpExporter.AspNetCore.HttpRequestCount
 {
-    public class HttpRequestCountMiddleware : HttpRequestMiddlewareBase<Counter, Counter.Child>
+    public class HttpRequestCountMiddleware : HttpRequestMiddlewareBase<Counter>
     {
         public HttpRequestCountMiddleware(RequestDelegate next, Counter counter)
             : base(counter)            
         {
-            this.next = next ?? throw new ArgumentNullException(nameof(next));
-            if (counter == null) throw new ArgumentException(nameof(counter));
+            this._next = next ?? throw new ArgumentNullException(nameof(next));
 
-            requestCount = counter;
+            this._requestCount = counter;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            await this.next(context);
+            await this._next(context);
 
             var labels = GetLabelData(context);
 
-            if (labels != null) this.requestCount.WithLabels(labels).Inc();
+            if (labels != null) this._requestCount.WithLabels(labels).Inc();
         }
 
-        private readonly RequestDelegate next;
-        private readonly Counter requestCount;
+        private readonly RequestDelegate _next;
+        private readonly Counter _requestCount;
     }
 }
