@@ -8,6 +8,10 @@ The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/
 * .NET Core 2.0
 * Mono 5.4
 
+## Best practices and usage
+
+This documentation is only a minimal quick start. For detailed guidance on using Prometheus in your solutions, refer to the [prometheus-users discussion group](https://groups.google.com/forum/#!forum/prometheus-users). You are also expected to be familiar with the [Prometheus user guide](https://prometheus.io/docs/introduction/overview/).
+
 ## Installation
 
 Nuget package for general use and metrics export via HttpListener or to Pushgateway: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
