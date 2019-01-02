@@ -228,3 +228,7 @@ For even more fine-grained control over exported data you should implement a cus
 The built-in collectors created via the `Metrics` class helper methods provide a simple way to export basic metric types to Prometheus. To implement more advanced metric collection scenarios you can implement the `ICollector` interface yourself.
 
 For an example, see [ExternalDataCollector.cs](Tester.NetFramework/ExternalDataCollector.cs).
+
+## Thread safety
+
+This library is thread-safe.
