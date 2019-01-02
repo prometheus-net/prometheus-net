@@ -89,7 +89,7 @@ Timers can be used to report the duration of an action to a Summary, Histogram o
 
 ```csharp
 var summary = Metrics.CreateSummary("mySummary", "help text");
-using(summary.NewTimer())
+using (summary.NewTimer())
 {
     Console.WriteLine("This action is timed");
 }
@@ -192,7 +192,7 @@ This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package
 
 You may wish to restrict access to the metrics export URL. This can be accomplished using any ASP.NET Core authentication mechanism, as prometheus-net integrates directly into the composable ASP.NET Core request processing pipeline.
 
-For a simple example we can take [BasicAuthMiddleware by Johan Bostr�m](https://www.johanbostrom.se/blog/adding-basic-auth-to-your-mvc-application-in-dotnet-core) which can be integrated by replacing the `app.UseMetricServer()` line with the following code block:
+For a simple example we can take [BasicAuthMiddleware by Johan Boström](https://www.johanbostrom.se/blog/adding-basic-auth-to-your-mvc-application-in-dotnet-core) which can be integrated by replacing the `app.UseMetricServer()` line with the following code block:
 
 ```csharp
 app.Map("/metrics", metricsApp =>

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace tester
 {
-    class Program
+    internal class Program
     {
-        static void Main()
+        private static void Main()
         {
             // Replace the first line with an appropriate type of tester to run different manual tests.
             var tester = new MetricPusherTester();
@@ -50,12 +50,12 @@ namespace tester
                 Buckets = new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 }
             });
             hist.Observe(0.4);
-            
+
             var timedHistogram = Metrics.CreateHistogram("myTimedHistogram", "help text", new HistogramConfiguration
             {
                 Buckets = new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 }
             });
-            
+
             var latestGauge = Metrics.CreateGauge("latestGauge", "Reports the latest cycle time");
 
             var summary = Metrics.CreateSummary("mySummary", "help text");
@@ -81,7 +81,7 @@ namespace tester
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    using(latestGauge.NewTimer())
+                    using (latestGauge.NewTimer())
                     using (timedHistogram.NewTimer())
                     {
                         var duration = Stopwatch.StartNew();
