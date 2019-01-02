@@ -6,9 +6,8 @@ using System.Linq;
 
 namespace Prometheus
 {
-    public interface IHistogram
+    public interface IHistogram : IObserver
     {
-        void Observe(double val);
     }
 
     public class Histogram : Collector<Histogram.Child>, IHistogram

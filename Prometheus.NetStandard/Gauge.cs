@@ -1,4 +1,5 @@
-﻿using Prometheus.Advanced;
+﻿using System;
+using Prometheus.Advanced;
 using Prometheus.Advanced.DataContracts;
 
 namespace Prometheus
@@ -16,23 +17,6 @@ namespace Prometheus
         internal Gauge(string name, string help, string[] labelNames, bool suppressInitialValue)
             : base(name, help, labelNames, suppressInitialValue)
         {
-        }
-
-        public class Timer
-        {
-            private System.Diagnostics.Stopwatch _stopwatch;
-            private IGauge _gauge;
-
-            public Timer(IGauge gauge)
-            {
-                _gauge = gauge;
-                _stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            }
-
-            public void ApplyDuration()
-            {
-                _gauge.Set(_stopwatch.Elapsed.TotalSeconds);
-            }
         }
 
         public class Child : Advanced.Child, IGauge
@@ -57,9 +41,9 @@ namespace Prometheus
                 _publish = true;
             }
             
-            public Gauge.Timer StartTimer()
+            public Timer StartTimer()
             {
-                return new Gauge.Timer(this);
+                return new Timer(this);
             }
 
             public void Dec(double decrement = 1)

@@ -8,11 +8,10 @@ using System.Linq;
 
 namespace Prometheus
 {
-    public interface ISummary
+    public interface ISummary: IObserver
     {
-        void Observe(double val);
     }
-
+    
     public class Summary : Collector<Summary.Child>, ISummary
     {
         // Label that defines the quantile in a summary.
