@@ -22,18 +22,6 @@ Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server
 
 >Install-Package prometheus-net.AspNetCore
 
-## Breaking changes in version 2.0
-
-To make the library easier to maintain and deliver, version 2.0 introduces some breaking changes:
-
-* Target .NET Standard 2.0 and runtimes that support it - .NET Core 2.0 and .NET Framework 4.6.1. Older runtimes are no longer supported.
-* Some classes have been renamed. For example, MetricServer used to be Kestrel-based on .NET Core and HttpListener-based on .NET Framework but in 2.0 it always uses HttpListener, with KestrelHttpServer being a Kestrel-specific server.
-* Minor breaking API changes to tidy up confusing parts of the API surface and make it easier to integrate the library.
-* Removed dependency on Reactive Extensions. Builtin async/await/Task mechanics are now used.
-* Removed PerfCounterCollector as it was mostly obsolete and the removal simplifies maintenance work.
-
-If you are migrating from version 1.x, you may need to make minor changes to your code to adjust for these changes.
-
 ## Instrumenting
 
 Four types of metric are offered: Counter, Gauge, Summary and Histogram.
