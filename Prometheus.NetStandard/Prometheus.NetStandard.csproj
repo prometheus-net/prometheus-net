@@ -5,6 +5,10 @@
     <RootNamespace>Prometheus</RootNamespace>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+    <SignAssembly>true</SignAssembly>
+
+    <AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

@@ -1,5 +1,6 @@
 * 3.0.0
-- Major version bump because Gauge.Timer class public API changed (and it is no longer an inner class).
+- Breaking change: Gauge.Timer class public API changed (and it is no longer an inner class).
+- Breaking change: assemblies are now strong-named.
 - Gauge.Timer was made more general-purpose and also applies to Histogram and Summary.
 - metric.NewTimer() for easy one-line timer creation
 - IObserver abstraction to represent "either Summary or Histogram"
