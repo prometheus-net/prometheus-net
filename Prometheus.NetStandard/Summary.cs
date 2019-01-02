@@ -75,7 +75,7 @@ namespace Prometheus
 
         protected override MetricType Type => MetricType.SUMMARY;
 
-        public class Child : Advanced.Child, IObserver
+        public class Child : Advanced.Child, ISummary
         {
             // Objectives defines the quantile rank estimates with their respective
             // absolute error. If Objectives[q] = e, then the value reported
