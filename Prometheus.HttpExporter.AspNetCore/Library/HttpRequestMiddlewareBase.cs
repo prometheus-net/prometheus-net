@@ -8,7 +8,7 @@ using Prometheus.Advanced;
 namespace Prometheus.HttpExporter.AspNetCore.Library
 {
     /// <summary>
-    /// This class handles validating and keeping track of the labels that the metric provided to
+    /// This class handles getting the data about the current HTTP request to use as label data for the metric
     /// the http request middleware is using.
     ///
     /// The metric used may have up to four labels (or none), which must be from the following:
@@ -16,6 +16,11 @@ namespace Prometheus.HttpExporter.AspNetCore.Library
     /// 'method' (HTTP request method)
     /// 'controller' (The Controller used to fulfill the HTTP request)
     /// 'action' (The Action used to fulfill the HTTP request)
+    ///
+    /// The 'code' and 'method' data are taken from the current HTTP context.
+    /// 
+    /// Similarly, if either 'controller' or 'action' is provided, the data will be taken from the RouteData of
+    /// the current HTTP context. 
     ///
     /// </summary>
     /// <typeparam name="T">The metric being used.</typeparam>
