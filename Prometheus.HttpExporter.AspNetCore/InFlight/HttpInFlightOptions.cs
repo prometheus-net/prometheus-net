@@ -5,7 +5,7 @@ namespace Prometheus.HttpExporter.AspNetCore.InFlight
         public Gauge Gauge { get; set; } =
             Metrics.CreateGauge(DefaultName, DefaultHelp);
         
-        private const string DefaultName = "aspnet_http_inflight";
-        private const string DefaultHelp = "Total number of requests currently being processed.";
+        private const string DefaultName = "http_executing_requests";
+        private const string DefaultHelp = "The number of requests currently being processed.";
     }
 }
