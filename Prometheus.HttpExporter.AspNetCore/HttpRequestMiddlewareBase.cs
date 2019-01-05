@@ -11,68 +11,52 @@ namespace Prometheus.HttpExporter.AspNetCore
     {
         public HttpRequestMiddlewareBase(T collector)
         {
-            if (collector == null || !this.LabelsAreValid(collector)) throw new ArgumentException(nameof(collector)); 
-            this._labelNames = collector.LabelNames;
-            this._labelData = this._labelNames.ToDictionary(key => key);
-            this._requiresRouteData = this._labelData.ContainsKey(LabelNames.Action) ||
-                                      this._labelData.ContainsKey(LabelNames.Controller);
+            if (collector == null || !LabelsAreValid(collector)) throw new ArgumentException(nameof(collector)); 
+            _labelNames = collector.LabelNames;
+            _labelData = _labelNames.ToDictionary(key => key);
+            _requiresRouteData = _labelData.ContainsKey(HttpRequestLabelNames.Action) ||
+                                      _labelData.ContainsKey(HttpRequestLabelNames.Controller);
         }
 
         protected string[] GetLabelData(HttpContext context)
         {
-            if (this._labelNames.Length == 0)
-            {
-                return new string[0];
-            }
+            if (_labelNames.Length == 0) return new string[0];
 
-            if (this._requiresRouteData)
+            if (_requiresRouteData)
             {
                 var routeData = context.GetRouteData();
 
-                this.UpdateMetricValueIfExists(LabelNames.Method, context.Request.Method);
-                this.UpdateMetricValueIfExists(LabelNames.Code, context.Response.StatusCode.ToString());
-                this.UpdateMetricValueIfExists(LabelNames.Action, routeData?.Values["Action"] as string ?? string.Empty);
-                this.UpdateMetricValueIfExists(LabelNames.Controller, routeData?.Values["Controller"] as string ?? string.Empty);
+                UpdateMetricValueIfExists(HttpRequestLabelNames.Method, context.Request.Method);
+                UpdateMetricValueIfExists(HttpRequestLabelNames.Code, context.Response.StatusCode.ToString());
+                UpdateMetricValueIfExists(HttpRequestLabelNames.Action, routeData?.Values["Action"] as string ?? string.Empty);
+                UpdateMetricValueIfExists(HttpRequestLabelNames.Controller, routeData?.Values["Controller"] as string ?? string.Empty);
             }
             else
             {
-                this.UpdateMetricValueIfExists(LabelNames.Method, context.Request.Method);
-                this.UpdateMetricValueIfExists(LabelNames.Code, context.Response.StatusCode.ToString());
+                UpdateMetricValueIfExists(HttpRequestLabelNames.Method, context.Request.Method);
+                UpdateMetricValueIfExists(HttpRequestLabelNames.Code, context.Response.StatusCode.ToString());
             }
             
-            return this._labelNames.Where(this._labelData.ContainsKey).Select(x => this._labelData[x]).ToArray();
+            return _labelNames.Where(_labelData.ContainsKey).Select(x => _labelData[x]).ToArray();
         }
 
-        private bool LabelsAreValid(T counter)
-        {
-            if (!this._allowedLabelNames.IsSupersetOf(counter.LabelNames)) return false;
-
-            return true;
-        }
+        private bool LabelsAreValid(T counter) => _allowedLabelNames.IsSupersetOf(counter.LabelNames);
 
         private readonly HashSet<string> _allowedLabelNames = new HashSet<string>
         {
-            LabelNames.Code,
-            LabelNames.Method,
-            LabelNames.Controller,
-            LabelNames.Action
+            HttpRequestLabelNames.Code,
+            HttpRequestLabelNames.Method,
+            HttpRequestLabelNames.Controller,
+            HttpRequestLabelNames.Action
         };
 
         private void UpdateMetricValueIfExists(string key, string value)
         {
-            if (this._labelData.ContainsKey(key)) this._labelData[key] = value;
+            if (_labelData.ContainsKey(key)) _labelData[key] = value;
         }
 
         private readonly Dictionary<string, string> _labelData;
         private readonly string[] _labelNames;
-        private bool _requiresRouteData;
-
-        private static class LabelNames
-        {
-            public const string Code = "code";
-            public const string Method = "method";
-            public const string Controller = "controller";
-            public const string Action = "action";
-        }
+        private readonly bool _requiresRouteData;
     }
 }

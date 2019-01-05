@@ -16,18 +16,23 @@ namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
 
         public async Task Invoke(HttpContext context)
         {
-            var stopWatch = new Stopwatch();
+            var stopWatch = Stopwatch.StartNew();
             
-            stopWatch.Start();
-            await this._next(context);
-            stopWatch.Stop();
+            try
+            {
+                await _next(context);
+            }
+            finally
+            {
+                stopWatch.Stop();
 
-            var labelData = GetLabelData(context);
+                var labelData = GetLabelData(context);
             
-            if (labelData != null) {
-                _requestDuration
-                    .WithLabels(labelData)
-                    .Observe(stopWatch.ElapsedMilliseconds);
+                if (labelData != null) {
+                    _requestDuration
+                        .WithLabels(labelData)
+                        .Observe(stopWatch.ElapsedMilliseconds);
+                } 
             }
         }
 
