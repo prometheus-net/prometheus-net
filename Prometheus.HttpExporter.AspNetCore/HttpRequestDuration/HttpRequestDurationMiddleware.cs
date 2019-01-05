@@ -31,7 +31,7 @@ namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
                 if (labelData != null) {
                     _requestDuration
                         .WithLabels(labelData)
-                        .Observe(stopWatch.ElapsedMilliseconds);
+                        .Observe(stopWatch.Elapsed.TotalSeconds);
                 } 
             }
         }
