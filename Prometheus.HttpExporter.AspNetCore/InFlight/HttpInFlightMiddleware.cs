@@ -8,9 +8,8 @@ namespace Prometheus.HttpExporter.AspNetCore.InFlight
     {
         public HttpInFlightMiddleware(RequestDelegate next, IGauge gauge)
         {
-            if (next == null) throw new ArgumentNullException(nameof(next));
+            _next = next ?? throw new ArgumentNullException(nameof(next));
             
-            _next = next;
             _inFlightGauge = gauge;
         }
 

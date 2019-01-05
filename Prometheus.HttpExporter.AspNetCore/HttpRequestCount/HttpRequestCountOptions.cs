@@ -1,3 +1,5 @@
+using Prometheus.HttpExporter.AspNetCore.Library;
+
 namespace Prometheus.HttpExporter.AspNetCore.HttpRequestCount
 {
     public class HttpRequestCountOptions : HttpExporterOptionsBase

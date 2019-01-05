@@ -1,4 +1,5 @@
 using System;
+using Prometheus.HttpExporter.AspNetCore.Library;
 
 namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
 {

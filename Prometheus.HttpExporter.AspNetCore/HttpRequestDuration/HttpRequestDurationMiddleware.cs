@@ -2,13 +2,14 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Prometheus.HttpExporter.AspNetCore.Library;
 
 namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
 {
     public class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<Histogram>
     {
         public HttpRequestDurationMiddleware(RequestDelegate next, Histogram histogram)
-         : base(histogram)
+            : base(histogram)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
             _requestDuration = histogram;
@@ -17,7 +18,7 @@ namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
         public async Task Invoke(HttpContext context)
         {
             var stopWatch = Stopwatch.StartNew();
-            
+
             try
             {
                 await _next(context);
@@ -25,14 +26,10 @@ namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
             finally
             {
                 stopWatch.Stop();
-
-                var labelData = GetLabelData(context);
-            
-                if (labelData != null) {
-                    _requestDuration
-                        .WithLabels(labelData)
-                        .Observe(stopWatch.Elapsed.TotalSeconds);
-                } 
+                
+                _requestDuration
+                    .WithLabels(GetLabelData(context))
+                    .Observe(stopWatch.Elapsed.TotalSeconds);
             }
         }
 

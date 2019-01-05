@@ -2,7 +2,7 @@ using Prometheus.HttpExporter.AspNetCore.HttpRequestCount;
 using Prometheus.HttpExporter.AspNetCore.HttpRequestDuration;
 using Prometheus.HttpExporter.AspNetCore.InFlight;
 
-namespace Prometheus.HttpExporter.AspNetCore
+namespace Prometheus.HttpExporter.AspNetCore.Library
 {
     public class HttpMiddlewareExporterOptions
     {

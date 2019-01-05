@@ -1,4 +1,4 @@
-namespace Prometheus.HttpExporter.AspNetCore
+namespace Prometheus.HttpExporter.AspNetCore.Library
 {
     internal static class HttpRequestLabelNames
     {
