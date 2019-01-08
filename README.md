@@ -232,3 +232,7 @@ For an example, see [ExternalDataCollector.cs](Tester.NetFramework/ExternalDataC
 ## Thread safety
 
 This library is thread-safe.
+
+## Related projects
+
+* [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) instruments .NET Core 2.2 apps to export metrics on .NET Core performance.
