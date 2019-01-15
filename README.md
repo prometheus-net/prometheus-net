@@ -213,7 +213,7 @@ This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package
 
 The library provides some sample metrics about the current process out of the box. If these are not desirable you may suppress them by calling `DefaultCollectorRegistry.Instance.Clear()` before registering any of your own metrics.
 
-# Http metrics
+## Http metrics
 
 The library provides some metrics for ASP.NET applications in the Prometheus.HttpExporter.AspNetCore namespace.
 
