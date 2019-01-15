@@ -1,6 +1,6 @@
 namespace Prometheus.HttpExporter.AspNetCore.Library
 {
-    internal static class HttpRequestLabelNames
+    public static class HttpRequestLabelNames
     {
         public const string Code = "code";
         public const string Method = "method";

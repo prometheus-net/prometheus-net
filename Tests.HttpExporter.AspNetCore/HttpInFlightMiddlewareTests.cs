@@ -8,7 +8,7 @@ using Prometheus.HttpExporter.AspNetCore.InFlight;
 namespace Tests.HttpExporter.AspNetCore
 {
     [TestClass]
-    public class InFlightMiddlewareTests
+    public class HttpInFlightMiddlewareTests
     {
         [TestMethod]
         public void Given_no_requests_then_InFlightGauge_returns_zero()
