@@ -213,6 +213,47 @@ This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package
 
 The library provides some sample metrics about the current process out of the box. If these are not desirable you may suppress them by calling `DefaultCollectorRegistry.Instance.Clear()` before registering any of your own metrics.
 
+# Http metrics
+
+The library provides some metrics for ASP.NET applications in the Prometheus.HttpExporter.AspNetCore namespace.
+
+Specifically, these include:
+
+* Total number of 'in-flight' (i.e. currently being processed) requests.
+* Total number of HTTP requests.
+* Duration of HTTP requests.
+
+By default these include labels for status code, HTTP method, ASP.NET Controller and ASP.NET Action.
+
+You can register all of the metrics using the default labels and names as follows:
+
+```csharp
+    // ...
+    app.UseHttpExporter();
+    // ...
+
+```
+
+If you wish to provide a custom Metric for each of the metrics, or disable certain metrics, you can configure the Http Exporter like this:
+
+```csharp
+    // ...
+    app.UseHttpExporter(options => 
+    {
+            options.RequestCount.Enabled = false;
+            
+            options.RequestDuration.Histogram = Metrics.CreateHistogram("my_custom_name", "my_custom_help", Histogram.LinearBuckets(0.1, 1, 100), "code", "method");
+    });
+    // ...
+
+```
+
+The labels for the custom metric you provide *must* be a subset of the following:
+* "code" - Status Code
+* "method" - HTTP method
+* "controller" - ASP.NET Controller
+* "action" - ASP.NET Action
+
 ## On-demand collection
 
 In some scenarios you may want to only collect data when it is requested by Prometheus. To easily implement this scenario prometheus-net provides you the ability to perform on-demand collection by implementing the [IOnDemandCollector interface](Prometheus.NetStandard/Advanced/IOnDemandCollector.cs).

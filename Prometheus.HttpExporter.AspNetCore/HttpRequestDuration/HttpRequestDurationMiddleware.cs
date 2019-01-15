@@ -8,6 +8,9 @@ namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
 {
     public class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<Histogram>
     {
+        private readonly RequestDelegate _next;
+        private readonly Histogram _requestDuration;
+
         public HttpRequestDurationMiddleware(RequestDelegate next, Histogram histogram)
             : base(histogram)
         {
@@ -26,14 +29,11 @@ namespace Prometheus.HttpExporter.AspNetCore.HttpRequestDuration
             finally
             {
                 stopWatch.Stop();
-                
+
                 _requestDuration
                     .WithLabels(GetLabelData(context))
                     .Observe(stopWatch.Elapsed.TotalSeconds);
             }
         }
-
-        private readonly RequestDelegate _next;
-        private readonly Histogram _requestDuration;
     }
 }

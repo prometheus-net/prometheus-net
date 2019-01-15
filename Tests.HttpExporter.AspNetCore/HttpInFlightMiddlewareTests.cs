@@ -10,6 +10,11 @@ namespace Tests.HttpExporter.AspNetCore
     [TestClass]
     public class HttpInFlightMiddlewareTests
     {
+        private FakeGauge _gauge;
+        private RequestDelegate _requestDelegate;
+
+        private HttpInFlightMiddleware _sut;
+
         [TestMethod]
         public void Given_no_requests_then_InFlightGauge_returns_zero()
         {
@@ -29,17 +34,17 @@ namespace Tests.HttpExporter.AspNetCore
             Assert.AreEqual(3, _gauge.DecrementCount);
             Assert.AreEqual(0, _gauge.Value);
         }
-       
-        
+
+
         [TestMethod]
         public async Task Given_request_throws_then_InFlightGauge_is_decreased()
         {
-            this._requestDelegate = context => throw new InvalidOperationException();
+            _requestDelegate = context => throw new InvalidOperationException();
             _sut = new HttpInFlightMiddleware(_requestDelegate, _gauge);
 
-            
+
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(() => _sut.Invoke(new DefaultHttpContext()));
-            
+
             Assert.AreEqual(1, _gauge.IncrementCount);
             Assert.AreEqual(1, _gauge.DecrementCount);
             Assert.AreEqual(0, _gauge.Value);
@@ -48,38 +53,34 @@ namespace Tests.HttpExporter.AspNetCore
         [TestInitialize]
         public void Init()
         {
-            this._gauge = new FakeGauge(); 
-            this._requestDelegate = context => Task.CompletedTask;
-            
-            _sut = new HttpInFlightMiddleware(this._requestDelegate, this._gauge);
-        }
+            _gauge = new FakeGauge();
+            _requestDelegate = context => Task.CompletedTask;
 
-        private HttpInFlightMiddleware _sut;
-        private FakeGauge _gauge;
-        private RequestDelegate _requestDelegate;
+            _sut = new HttpInFlightMiddleware(_requestDelegate, _gauge);
+        }
     }
 
     internal class FakeGauge : IGauge
     {
-        public int IncrementCount { get; private set; } = 0;
-        public int DecrementCount { get; private set; } = 0;
-        
-        
+        public int IncrementCount { get; private set; }
+        public int DecrementCount { get; private set; }
+
+
         public void Inc(double increment = 1)
         {
             IncrementCount++;
-            this.Value += increment;
+            Value += increment;
         }
 
         public void Set(double val)
         {
-            this.Value = val;
+            Value = val;
         }
 
         public void Dec(double decrement = 1)
         {
             DecrementCount++;
-            this.Value -= decrement;
+            Value -= decrement;
         }
 
         public double Value { get; private set; }

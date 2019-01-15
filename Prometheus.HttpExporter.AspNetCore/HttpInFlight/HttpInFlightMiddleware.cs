@@ -6,10 +6,14 @@ namespace Prometheus.HttpExporter.AspNetCore.InFlight
 {
     public class HttpInFlightMiddleware
     {
+        private readonly IGauge _inFlightGauge;
+
+        private readonly RequestDelegate _next;
+
         public HttpInFlightMiddleware(RequestDelegate next, IGauge gauge)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
-            
+
             _inFlightGauge = gauge;
         }
 
@@ -26,8 +30,5 @@ namespace Prometheus.HttpExporter.AspNetCore.InFlight
                 _inFlightGauge.Dec();
             }
         }
-
-        private readonly RequestDelegate _next;
-        private readonly IGauge _inFlightGauge;
     }
 }
