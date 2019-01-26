@@ -179,6 +179,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Prometheus.HttpExporter.AspNetCore\Prometheus.HttpExporter.AspNetCore.csproj">
+      <Project>{07e43301-aa80-44c1-9fa0-f5d95eebea63}</Project>
+      <Name>Prometheus.HttpExporter.AspNetCore</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj">
       <Project>{ba482927-f0bc-462c-8ba0-c476d93621bc}</Project>
       <Name>Prometheus.NetStandard</Name>
