@@ -7,36 +7,38 @@ using Prometheus.HttpExporter.AspNetCore.HttpRequestCount;
 using Prometheus.HttpExporter.AspNetCore.HttpRequestDuration;
 using Prometheus.HttpExporter.AspNetCore.InFlight;
 
-namespace Benchmark
+namespace Benchmark.NetFramework
 {
     /// <summary>
     /// One pattern advocated by Prometheus documentation is to implement scraping of external systems by
     /// creating a brand new set of metrics for each scrape. So let's benchmark this scenario.
     /// </summary>
-    [CoreJob]
+    [Config(typeof(MultipleRuntimes))]
     [MemoryDiagnoser]
     public class HttpExporterBenchmarks
     {
         private ICollectorRegistry _registry;
         private MetricFactory _factory;
-        private ParallelOptions _parallelOptions;
         private HttpInFlightMiddleware _inFlightMiddleware;
         private HttpRequestCountMiddleware _countMiddleware;
         private HttpRequestDurationMiddleware _durationMiddleware;
+        
+        private ParallelOptions ParallelOptions  => new ParallelOptions
+        {
+            MaxDegreeOfParallelism = MaxDegreeOfParallelism
+        };
 
         [Params(100, 1000, 10000)]
         public int RequestCount { get; set; }
+        
+        [Params(1, 4)]
+        public int MaxDegreeOfParallelism { get; set; }
 
         [GlobalSetup]
         public void Setup()
         {
             _registry = new DefaultCollectorRegistry();
             _factory = Metrics.WithCustomRegistry(_registry);
-
-            _parallelOptions = new ParallelOptions
-            {
-                MaxDegreeOfParallelism = 4
-            };
 
             _inFlightMiddleware =
                 new HttpInFlightMiddleware(next => Task.CompletedTask, _factory.CreateGauge("in_flight", "help"));
@@ -49,21 +51,21 @@ namespace Benchmark
         [Benchmark]
         public void HttpInFlight()
         {
-            Parallel.For(0, RequestCount, _parallelOptions,
+            Parallel.For(0, RequestCount, ParallelOptions,
                 async _ => await _inFlightMiddleware.Invoke(new DefaultHttpContext()));
         }
         
         [Benchmark]
         public void HttpRequestCount()
         {
-            Parallel.For(0, RequestCount, _parallelOptions,
+            Parallel.For(0, RequestCount, ParallelOptions,
                 async _ => await _countMiddleware.Invoke(new DefaultHttpContext()));
         }
         
         [Benchmark]
         public void HttpRequestDuration()
         {
-            Parallel.For(0, RequestCount, _parallelOptions,
+            Parallel.For(0, RequestCount, ParallelOptions,
                 async _ => await _durationMiddleware.Invoke(new DefaultHttpContext()));
         }
     }

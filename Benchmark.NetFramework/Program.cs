@@ -1,14 +1,15 @@
 ﻿using BenchmarkDotNet.Running;
 
-namespace Benchmark
+namespace Benchmark.NetFramework
 {
     public sealed class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
+            BenchmarkRunner.Run<MetricCreationBenchmarks>();
             BenchmarkRunner.Run<AsciiFormatterBenchmarks>();
             BenchmarkRunner.Run<LabelBenchmarks>();
-            BenchmarkRunner.Run<MetricCreationBenchmarks>();
+            BenchmarkRunner.Run<HttpExporterBenchmarks>();
         }
     }
 }

@@ -23,15 +23,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark.NetFramework", "Benchmark.NetFramework\Benchmark.NetFramework.csproj", "{CC15F858-BDFC-4995-97C4-D0C565BAB162}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.HttpExporter.AspNetCore", "Prometheus.HttpExporter.AspNetCore\Prometheus.HttpExporter.AspNetCore.csproj", "{07E43301-AA80-44C1-9FA0-F5D95EEBEA63}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.HttpExporter.AspNetCore", "Tests.HttpExporter.AspNetCore\Tests.HttpExporter.AspNetCore.csproj", "{37E570A7-1170-4961-BA63-0D79FA40B964}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark.NetCore", "Benchmark.NetCore\Benchmark.NetCore.csproj", "{CA40A52E-3490-432D-8F1A-1DC5DB07ADA2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.HttpExporter.NetStandard", "Prometheus.HttpExporter.NetStandard\Prometheus.HttpExporter.NetStandard.csproj", "{82CC3DB0-F64E-4212-91AE-72C857D5085A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark.NetFramework", "Benchmark.NetFramework\Benchmark.NetFramework.csproj", "{CA40A52E-3490-432D-8F1A-1DC5DB07ADA2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,10 +61,6 @@ Global
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Release|Any CPU.Build.0 = Release|Any CPU
 		{07E43301-AA80-44C1-9FA0-F5D95EEBEA63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{07E43301-AA80-44C1-9FA0-F5D95EEBEA63}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07E43301-AA80-44C1-9FA0-F5D95EEBEA63}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -81,10 +73,6 @@ Global
 		{CA40A52E-3490-432D-8F1A-1DC5DB07ADA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CA40A52E-3490-432D-8F1A-1DC5DB07ADA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CA40A52E-3490-432D-8F1A-1DC5DB07ADA2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{82CC3DB0-F64E-4212-91AE-72C857D5085A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{82CC3DB0-F64E-4212-91AE-72C857D5085A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{82CC3DB0-F64E-4212-91AE-72C857D5085A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{82CC3DB0-F64E-4212-91AE-72C857D5085A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

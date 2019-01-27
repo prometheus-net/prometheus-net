@@ -1,11 +1,10 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Attributes.Jobs;
 using Prometheus;
 using Prometheus.Advanced;
 
-namespace Benchmark
+namespace Benchmark.NetFramework
 {
-    [ClrJob]
+    [Config(typeof(MultipleRuntimes))]
     [MemoryDiagnoser]
     public class LabelBenchmarks
     {
