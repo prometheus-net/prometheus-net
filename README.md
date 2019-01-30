@@ -41,8 +41,8 @@ The library provides some sample metrics about the current process out of the bo
 Counters only increase in value and reset to zero when the process restarts.
 
 ```csharp
-private static readonly ProcessedJobCount =
-	Metrics.CreateCounter("myapp_jobs_processed_total", "Number of processed jobs.");
+private static readonly ProcessedJobCount = Metrics
+	.CreateCounter("myapp_jobs_processed_total", "Number of processed jobs.");
 
 ...
 
@@ -55,8 +55,8 @@ ProcessedJobCount.Inc();
 Gauges can have any numeric value and change arbitrarily.
 
 ```csharp
-private static readonly JobsInQueue
-	= Metrics.CreateGauge("myapp_jobs_queued", "Number of jobs waiting for processing in the queue.");
+private static readonly JobsInQueue = Metrics
+	.CreateGauge("myapp_jobs_queued", "Number of jobs waiting for processing in the queue.");
 
 ...
 
@@ -74,8 +74,8 @@ JobsInQueue.Dec();
 Summaries track the trends in events over time (10 minutes by default).
 
 ```csharp
-private static readonly Summary RequestSizeSummary =
-	Metrics.CreateSummary("myapp_request_size_bytes", "Summary of request sizes (in bytes) over last 10 minutes.");
+private static readonly Summary RequestSizeSummary = Metrics
+	.CreateSummary("myapp_request_size_bytes", "Summary of request sizes (in bytes) over last 10 minutes.");
 
 ...
 
@@ -87,8 +87,8 @@ RequestSizeSummary.Observe(request.Length);
 Histograms track the size and number of events in buckets. This allows for aggregatable calculation of quantiles.
 
 ```csharp
-private static readonly Histogram OrderValueHistogram =
-	Metrics.CreateHistogram("myapp_order_value_usd", "Histogram of received order values (in USD).",
+private static readonly Histogram OrderValueHistogram = Metrics
+	.CreateHistogram("myapp_order_value_usd", "Histogram of received order values (in USD).",
 		new HistogramConfiguration
 		{
 			// We divide measurements in 10 buckets of $100 each, up to $1000.
@@ -105,8 +105,8 @@ OrderValueHistogram.Observe(order.TotalValueUsd);
 Timers can be used to report the duration of an action (in seconds) to a Summary, Histogram or Gauge. Wrap the action you want to measure in a using statement.
 
 ```csharp
-private static readonly Histogram LoginDuration =
-	Metrics.CreateHistogram("myapp_login_duration_seconds", "Histogram of login call processing durations.");
+private static readonly Histogram LoginDuration = Metrics
+	.CreateHistogram("myapp_login_duration_seconds", "Histogram of login call processing durations.");
 
 ...
 
@@ -126,12 +126,13 @@ and [labels](http://prometheus.io/docs/practices/instrumentation/#use-labels).
 Taking a counter as an example:
 
 ```csharp
-private static readonly RequestCountByMethod = Metrics.CreateCounter("myapp_requests_total", "Number of requests received, by HTTP method.",
-	new CounterConfiguration
-	{
-		// Here you specify only the names of the labels.
-		LabelNames = new[] { "method" }
-	});
+private static readonly RequestCountByMethod = Metrics
+	.CreateCounter("myapp_requests_total", "Number of requests received, by HTTP method.",
+		new CounterConfiguration
+		{
+			// Here you specify only the names of the labels.
+			LabelNames = new[] { "method" }
+		});
 
 ...
 
@@ -148,11 +149,12 @@ Metrics without labels are published immediately after the `Metrics.CreateX()` c
 Sometimes you want to delay publishing a metric until you have loaded some data and have a meaningful value to supply for it. The API allows you to suppress publishing of the initial value until you decide the time is right.
 
 ```csharp
-private static readonly UsersLoggedIn = Metrics.CreateGauge("myapp_users_logged_in", "Number of active user sessions",
-	new GaugeConfiguration
-	{
-		SuppressInitialValue = true
-	});
+private static readonly UsersLoggedIn = Metrics
+	.CreateGauge("myapp_users_logged_in", "Number of active user sessions",
+		new GaugeConfiguration
+		{
+			SuppressInitialValue = true
+		});
 
 ...
 
