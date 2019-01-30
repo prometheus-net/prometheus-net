@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Attributes.Jobs;
 using Prometheus;
 using Prometheus.Advanced;
 
@@ -9,7 +8,6 @@ namespace Benchmark
     /// One pattern advocated by Prometheus documentation is to implement scraping of external systems by
     /// creating a brand new set of metrics for each scrape. So let's benchmark this scenario.
     /// </summary>
-    [ClrJob]
     [MemoryDiagnoser]
     public class MetricCreationBenchmarks
     {

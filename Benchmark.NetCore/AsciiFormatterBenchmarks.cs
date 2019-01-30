@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Attributes.Jobs;
 using Prometheus;
 using Prometheus.Advanced;
 using Prometheus.Internal;
@@ -11,7 +10,6 @@ namespace Benchmark
     /// <summary>
     /// ASCII formatter is always used by Prometheus 2.0, so its performance is somewhat important.
     /// </summary>
-    [ClrJob]
     [MemoryDiagnoser]
     public class AsciiFormatterBenchmarks
     {

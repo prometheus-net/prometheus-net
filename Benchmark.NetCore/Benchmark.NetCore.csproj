@@ -1,11 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>Prometheus</RootNamespace>
-
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <SignAssembly>true</SignAssembly>
 
     <AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
@@ -14,31 +12,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <DocumentationFile>bin\Release\netstandard2.0\Prometheus.AspNetCore.xml</DocumentationFile>
-    <LangVersion>latest</LangVersion>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-    <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <DocumentationFile>bin\Debug\netstandard2.0\Prometheus.AspNetCore.xml</DocumentationFile>
-    <LangVersion>latest</LangVersion>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-    <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Resources\SolutionAssemblyInfo.cs" Link="SolutionAssemblyInfo.cs" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
-    <PackageReference Include="protobuf-net" Version="2.4.0" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
     <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
   </ItemGroup>
 

@@ -1,10 +1,10 @@
 ﻿using BenchmarkDotNet.Running;
 
-namespace Benchmark
+namespace Benchmark.NetCore
 {
-    public sealed class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             BenchmarkRunner.Run<AsciiFormatterBenchmarks>();
             BenchmarkRunner.Run<LabelBenchmarks>();

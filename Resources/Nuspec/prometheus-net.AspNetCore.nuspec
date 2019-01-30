@@ -16,7 +16,7 @@
     <dependencies>
       <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
 
-      <dependency id="Microsoft.AspNetCore" version="2.0.1" />
+      <dependency id="Microsoft.AspNetCore" version="2.2.0" />
     </dependencies>
   </metadata>
   <files>
