@@ -1,9 +1,12 @@
 * 3.0.0
-- Breaking change: Gauge.Timer class public API changed (and it is no longer an inner class).
+* Added HTTP request metrics for ASP.NET Core.
+- Breaking change: Gauge.Timer class public API changed.
 - Breaking change: assemblies are now strong-named.
+- Breaking change: removed "windows" from built-in metric names as they are not Windows-specific.
 - Gauge.Timer was made more general-purpose and also applies to Histogram and Summary.
 - metric.NewTimer() for easy one-line timer creation
 - IObserver abstraction to represent "either Summary or Histogram"
+- Somewhat more realistic examples in readme.
 * 2.1.3
 - Fixed wrong case used for metric type in the export data format. Should always be lowercase. #96
 * 2.1.2
