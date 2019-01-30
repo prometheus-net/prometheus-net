@@ -8,11 +8,21 @@ The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/
 * .NET Core 2.0
 * Mono 5.4
 
-## Best practices and usage
+# Best practices and usage
 
 This documentation is only a minimal quick start. For detailed guidance on using Prometheus in your solutions, refer to the [prometheus-users discussion group](https://groups.google.com/forum/#!forum/prometheus-users). You are also expected to be familiar with the [Prometheus user guide](https://prometheus.io/docs/introduction/overview/).
 
-## Installation
+Four types of metrics are offered: Counter, Gauge, Summary and Histogram.
+
+See the documentation on [metric types](http://prometheus.io/docs/concepts/metric_types/)
+and [instrumentation best practices](http://prometheus.io/docs/practices/instrumentation/#counter-vs.-gauge-vs.-summary)
+to learn what each is good for.
+
+The most common practice in C# code is to have a `static readonly` field for each metric that you wish to export from a given class.
+
+More complex patterns may also be used (e.g. combining with dependency injection). The library is quite tolerant of different usage models - if the API allows it, it will generally work fine and provide satisfactory performance. The library is thread-safe.
+
+# Installation
 
 Nuget package for general use and metrics export via HttpListener or to Pushgateway: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
 
@@ -22,72 +32,91 @@ Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server
 
 >Install-Package prometheus-net.AspNetCore
 
-## Instrumenting
+## Default metrics
 
-Four types of metric are offered: Counter, Gauge, Summary and Histogram.
-See the documentation on [metric types](http://prometheus.io/docs/concepts/metric_types/)
-and [instrumentation best practices](http://prometheus.io/docs/practices/instrumentation/#counter-vs.-gauge-vs.-summary)
-on how to use them.
+The library provides some sample metrics about the current process out of the box, simply to ensure that some output is produced in a default configuration. If these metrics are not desirable you may suppress them by calling `DefaultCollectorRegistry.Instance.Clear()` before registering any of your own metrics.
 
-### Counter
+# Counters
 
-Counters go up, and reset when the process restarts.
-
+Counters only increase in value and reset to zero when the process restarts.
 
 ```csharp
-var counter = Metrics.CreateCounter("myCounter", "some help about this");
-counter.Inc(5.5);
+private static readonly ProcessedJobCount =
+	Metrics.CreateCounter("myapp_jobs_processed_total", "Number of processed jobs.");
+
+...
+
+ProcessJob();
+ProcessedJobCount.Inc();
 ```
 
-### Gauge
+# Gauges
 
-Gauges can go up and down.
-
+Gauges can have any numeric value and change arbitrarily.
 
 ```csharp
-var gauge = Metrics.CreateGauge("gauge", "help text");
-gauge.Inc(3.4);
-gauge.Dec(2.1);
-gauge.Set(5.3);
+private static readonly JobsInQueue
+	= Metrics.CreateGauge("myapp_jobs_queued", "Number of jobs waiting for processing in the queue.");
+
+...
+
+jobQueue.Enqueue(job);
+JobsInQueue.Inc();
+
+...
+
+var job = jobQueue.Dequeue();
+JobsInQueue.Dec();
 ```
 
-### Summary
+# Summary
 
-Summaries track the size and number of events.
+Summaries track the trends in events over time (10 minutes by default).
 
 ```csharp
-var summary = Metrics.CreateSummary("mySummary", "help text");
-summary.Observe(5.3);
+private static readonly Summary RequestSizeSummary =
+	Metrics.CreateSummary("myapp_request_size_bytes", "Summary of request sizes (in bytes) over last 10 minutes.");
+
+...
+
+RequestSizeSummary.Observe(request.Length);
 ```
 
-### Histogram
+# Histogram
 
-Histograms track the size and number of events in buckets.
-This allows for aggregatable calculation of quantiles.
+Histograms track the size and number of events in buckets. This allows for aggregatable calculation of quantiles.
 
 ```csharp
-var hist = Metrics.CreateHistogram("my_histogram", "help text", new HistogramConfiguration
+private static readonly Histogram OrderValueHistogram =
+	Metrics.CreateHistogram("myapp_order_value_usd", "Histogram of received order values (in USD).",
+		new HistogramConfiguration
+		{
+			// We divide measurements in 10 buckets of $100 each, up to $1000.
+			Buckets = Histogram.LinearBuckets(start: 1, width: 100, count: 10)
+		});
+
+...
+
+OrderValueHistogram.Observe(order.TotalValueUsd);
+```
+
+# Timers
+
+Timers can be used to report the duration of an action (in seconds) to a Summary, Histogram or Gauge. Wrap the action you want to measure in a using statement.
+
+```csharp
+private static readonly Histogram LoginDuration =
+	Metrics.CreateHistogram("myapp_login_duration_seconds", "Histogram of login call processing durations.");
+
+...
+
+using (LoginDuration.NewTimer())
 {
-    Buckets = new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 }
-});
-hist.Observe(0.4);
-```
-
-The default buckets (used when you do not specify your own) are intended to cover a typical web/rpc request from milliseconds to seconds.
-
-### Timers
-
-Timers can be used to report the duration of an action to a Summary, Histogram or Gauge.
-
-```csharp
-var summary = Metrics.CreateSummary("mySummary", "help text");
-using (summary.NewTimer())
-{
-    Console.WriteLine("This action is timed");
+    IdentityManager.AuthenticateUser(Request.Credentials);
 }
 ```
 
-### Labels
+# Labels
 
 All metrics can have labels, allowing grouping of related time series.
 
@@ -97,55 +126,41 @@ and [labels](http://prometheus.io/docs/practices/instrumentation/#use-labels).
 Taking a counter as an example:
 
 ```csharp
-var counter = Metrics.CreateCounter("myCounter", "help text", new CounterConfiguration
-{
-    LabelNames = new[] { "method", "endpoint" }
-});
-counter.WithLabels("GET", "/").Inc();
-counter.WithLabels("POST", "/cancel").Inc();
+private static readonly RequestCountByMethod = Metrics.CreateCounter("myapp_requests_total", "Number of requests received, by HTTP method.",
+	new CounterConfiguration
+	{
+		// Here you specify only the names of the labels.
+		LabelNames = new[] { "method" }
+	});
+
+...
+
+// You can specify the values for the labels later, once you know the right values (e.g in your request handler code).
+counter.WithLabels("GET").Inc();
 ```
 
-## When are metrics published?
+NB! Best practices of metric design is to minimize the number of different label values. HTTP request method is good - there are not many values. However, URL would be a bad choice for labeling - it has too many possible values and would lead to significant data processing inefficiency. Try to minimize the possible number of label values in your metric model.
 
-Metrics without labels are published immediately. Metrics that use labels are published when you provide the label values.
+# When are metrics published?
+
+Metrics without labels are published immediately after the `Metrics.CreateX()` call. Metrics that use labels are published when you provide the label values for the first time.
 
 Sometimes you want to delay publishing a metric until you have loaded some data and have a meaningful value to supply for it. The API allows you to suppress publishing of the initial value until you decide the time is right.
 
 ```csharp
-var gauge = Metrics.CreateGauge("logged_in_users ", "help text", new GaugeConfiguration
-{
-    SuppressInitialValue = true
-});
+private static readonly UsersLoggedIn = Metrics.CreateGauge("myapp_users_logged_in", "Number of active user sessions",
+	new GaugeConfiguration
+	{
+		SuppressInitialValue = true
+	});
 
-// After setting the value, the metric becomes published.
-gauge.Set(LoadSessions().Count);
+...
+
+// After setting the value for the first time, the metric becomes published.
+UsersLoggedIn.Set(LoadSessions().Count);
 ```
 
-You can also use `.Publish()` on a metric to mark it as ready to be published without modifying the initial value.
-
-## HTTP handler
-
-Metrics are usually exposed over HTTP, to be read by the Prometheus server. The default metric server uses HttpListener to open up an HTTP API for metrics export.
-
-```csharp
-var metricServer = new MetricServer(port: 1234);
-metricServer.Start();
-```
-
-The default configuration will publish metrics on the /metrics URL.
-
-`MetricServer.Start()` may throw an access denied exception on Windows if your user does not have the right to open a web server on the specified port. You can use the *netsh* command to grant yourself the required permissions:
-
-> netsh http add urlacl url=http://+:1234/metrics user=DOMAIN\user
-
-## Pushgateway support
-
-Metrics can be posted to a Pushgateway server over HTTP.
-
-```csharp
-var metricServer = new MetricPusher(endpoint: "http://pushgateway.example.org:9091/metrics", job: "some_job");
-metricServer.Start();
-```
+You can also use `.Publish()` on a metric to mark it as ready to be published without modifying the initial value (e.g. to publish a zero).
 
 ## ASP.NET Core middleware
 
@@ -209,11 +224,31 @@ The default configuration will publish metrics on the /metrics URL.
 
 This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
-## Default metrics
+# Publishing to Pushgateway
 
-The library provides some sample metrics about the current process out of the box. If these are not desirable you may suppress them by calling `DefaultCollectorRegistry.Instance.Clear()` before registering any of your own metrics.
+Metrics can be posted to a [Pushgateway](https://prometheus.io/docs/practices/pushing/) server over HTTP.
 
-## On-demand collection
+```csharp
+var metricServer = new MetricPusher(endpoint: "http://pushgateway.example.org:9091/metrics", job: "some_job");
+metricServer.Start();
+```
+
+# Publishing via standalone HTTP handler
+
+Metrics are usually exposed over HTTP, to be read by the Prometheus server. The default metric server uses HttpListener to open up an HTTP API for metrics export.
+
+```csharp
+var metricServer = new MetricServer(port: 1234);
+metricServer.Start();
+```
+
+The default configuration will publish metrics on the /metrics URL.
+
+`MetricServer.Start()` may throw an access denied exception on Windows if your user does not have the right to open a web server on the specified port. You can use the *netsh* command to grant yourself the required permissions:
+
+> netsh http add urlacl url=http://+:1234/metrics user=DOMAIN\user
+
+# On-demand collection
 
 In some scenarios you may want to only collect data when it is requested by Prometheus. To easily implement this scenario prometheus-net provides you the ability to perform on-demand collection by implementing the [IOnDemandCollector interface](Prometheus.NetStandard/Advanced/IOnDemandCollector.cs).
 
@@ -223,16 +258,12 @@ For an example implementation, see [OnDemandCollection.cs](Tester.NetFramework/O
 
 For even more fine-grained control over exported data you should implement a custom collector (see below).
 
-## Implementing custom collectors
+# Implementing custom collectors
 
 The built-in collectors created via the `Metrics` class helper methods provide a simple way to export basic metric types to Prometheus. To implement more advanced metric collection scenarios you can implement the `ICollector` interface yourself.
 
 For an example, see [ExternalDataCollector.cs](Tester.NetFramework/ExternalDataCollector.cs).
 
-## Thread safety
-
-This library is thread-safe.
-
-## Related projects
+# Related projects
 
 * [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) instruments .NET Core 2.2 apps to export metrics on .NET Core performance.
