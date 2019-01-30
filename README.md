@@ -162,7 +162,7 @@ UsersLoggedIn.Set(LoadSessions().Count);
 
 You can also use `.Publish()` on a metric to mark it as ready to be published without modifying the initial value (e.g. to publish a zero).
 
-## ASP.NET Core middleware
+# ASP.NET Core exporter middleware
 
 For projects built with ASP.NET Core, a middleware plugin is provided.
 
@@ -195,7 +195,41 @@ The default configuration will publish metrics on the /metrics URL.
 
 This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
-## ASP.NET Core with basic authentication
+# ASP.NET Core HTTP request metrics
+
+The library provides some metrics for ASP.NET Core applications:
+
+* Total number of 'in-flight' (i.e. currently executing) requests.
+* Total number of HTTP requests.
+* Duration of HTTP requests.
+
+These metrics include labels for status code, HTTP method, ASP.NET Controller and ASP.NET Action.
+
+You can register all of the metrics using the default labels and names as follows:
+
+```csharp
+// In your Startup.cs Configure() method
+app.UseHttpExporter();
+```
+
+If you wish to provide a custom Metric for each of the metrics, or disable certain metrics, you can configure the Http Exporter like this:
+
+```csharp
+app.UseHttpExporter(options =>
+{
+	options.RequestCount.Enabled = false;
+
+	options.RequestDuration.Histogram = Metrics.CreateHistogram("my_custom_name", "my_custom_help", Histogram.LinearBuckets(0.1, 1, 100), "code", "method");
+});
+```
+
+The labels for the custom metric you provide *must* be a subset of the following:
+* "code" - Status Code
+* "method" - HTTP method
+* "controller" - ASP.NET Core Controller
+* "action" - ASP.NET Core Action
+
+# ASP.NET Core with basic authentication
 
 You may wish to restrict access to the metrics export URL. This can be accomplished using any ASP.NET Core authentication mechanism, as prometheus-net integrates directly into the composable ASP.NET Core request processing pipeline.
 
@@ -211,7 +245,7 @@ app.Map("/metrics", metricsApp =>
 });
 ```
 
-## Kestrel stand-alone server
+# Kestrel stand-alone server
 
 In some situation, you may theoretically wish to start a stand-alone metric server using Kestrel instead of HttpListener.
 

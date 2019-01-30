@@ -2,7 +2,7 @@
 using Prometheus;
 using Prometheus.Advanced;
 
-namespace Benchmark
+namespace Benchmark.NetCore
 {
     /// <summary>
     /// One pattern advocated by Prometheus documentation is to implement scraping of external systems by

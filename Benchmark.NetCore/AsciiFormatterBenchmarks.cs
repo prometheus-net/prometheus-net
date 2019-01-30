@@ -5,7 +5,7 @@ using Prometheus.Internal;
 using System.IO;
 using System.Linq;
 
-namespace Benchmark
+namespace Benchmark.NetCore
 {
     /// <summary>
     /// ASCII formatter is always used by Prometheus 2.0, so its performance is somewhat important.

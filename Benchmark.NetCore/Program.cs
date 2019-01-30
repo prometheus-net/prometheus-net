@@ -6,9 +6,10 @@ namespace Benchmark.NetCore
     {
         private static void Main(string[] args)
         {
+            BenchmarkRunner.Run<MetricCreationBenchmarks>();
             BenchmarkRunner.Run<AsciiFormatterBenchmarks>();
             BenchmarkRunner.Run<LabelBenchmarks>();
-            BenchmarkRunner.Run<MetricCreationBenchmarks>();
+            BenchmarkRunner.Run<HttpExporterBenchmarks>();
         }
     }
 }
