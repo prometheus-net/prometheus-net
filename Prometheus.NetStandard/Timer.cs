@@ -3,34 +3,34 @@ using System.Diagnostics;
 
 namespace Prometheus
 {
-    public class Timer : IDisposable
+    public sealed class Timer : IDisposable
     {
         private readonly Stopwatch _stopwatch;
-        private readonly Action _reportDurationAction;
+        private readonly Action _observeDurationAction;
 
         public Timer(IObserver observer)
         {
-            _reportDurationAction = () => observer.Observe(_stopwatch.Elapsed.TotalSeconds);
+            _observeDurationAction = () => observer.Observe(_stopwatch.Elapsed.TotalSeconds);
             _stopwatch = Stopwatch.StartNew();
         }
 
         public Timer(IGauge gauge)
         {
-            _reportDurationAction = () => gauge.Set(_stopwatch.Elapsed.TotalSeconds);
+            _observeDurationAction = () => gauge.Set(_stopwatch.Elapsed.TotalSeconds);
             _stopwatch = Stopwatch.StartNew();
         }
 
         /// <summary>
-        /// Records the duration since the timer was created.
+        /// Observes the duration since the timer was created.
         /// </summary>
-        public void ApplyDuration()
+        public void ObserveDuration()
         {
-            _reportDurationAction.Invoke();
+            _observeDurationAction.Invoke();
         }
 
         public void Dispose()
         {
-            ApplyDuration();
+            ObserveDuration();
         }
     }
 }
