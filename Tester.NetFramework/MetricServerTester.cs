@@ -5,7 +5,7 @@ using System.Net;
 
 namespace tester
 {
-    class MetricServerTester : Tester
+    internal class MetricServerTester : Tester
     {
         public override IMetricServer InitializeMetricServer()
         {

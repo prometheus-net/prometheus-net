@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.DataContracts;
 using System;
 using System.Linq;
 
@@ -10,7 +9,7 @@ namespace Prometheus.Tests
     {
         public MetricsTests()
         {
-            DefaultCollectorRegistry.Instance.Clear();
+            Metrics.SuppressDefaultMetrics();
         }
 
         [TestMethod]
@@ -50,42 +49,41 @@ namespace Prometheus.Tests
             counter.Inc(3.2);
             counter.Labels("abc").Inc(3.2);
 
-            MetricFamily[] exported = DefaultCollectorRegistry.Instance.CollectAll().ToArray();
+            var exported = Metrics.DefaultRegistry.Collect().Families;
 
-            Assert.AreEqual(1, exported.Length);
+            Assert.AreEqual(1, exported.Count);
             var familiy1 = exported[0];
-            Assert.AreEqual("name1", familiy1.name);
-            Assert.AreEqual("help1", familiy1.help);
-            var metrics = familiy1.metric;
+            Assert.AreEqual("name1", familiy1.Name);
+            Assert.AreEqual("help1", familiy1.Help);
+            var metrics = familiy1.Metrics;
             Assert.AreEqual(2, metrics.Count);
 
             // We need to sort the metrics as the order they are returned in is not fixed.
             // Let's just sort by counter value, descending (arbitrarily).
-            metrics.Sort((a, b) => -a.counter.value.CompareTo(b.counter.value));
+            metrics.Sort((a, b) => -a.Counter.Value.CompareTo(b.Counter.Value));
 
             foreach (var metric in metrics)
             {
-                Assert.IsNull(metric.gauge);
-                Assert.IsNull(metric.histogram);
-                Assert.IsNull(metric.summary);
-                Assert.IsNull(metric.untyped);
-                Assert.IsNotNull(metric.counter);
+                Assert.IsNull(metric.Gauge);
+                Assert.IsNull(metric.Histogram);
+                Assert.IsNull(metric.Summary);
+                Assert.IsNotNull(metric.Counter);
             }
 
-            Assert.AreEqual(4.2, metrics[0].counter.value);
-            Assert.AreEqual(0, metrics[0].label.Count);
+            Assert.AreEqual(4.2, metrics[0].Counter.Value);
+            Assert.AreEqual(0, metrics[0].Labels.Length);
 
-            Assert.AreEqual(3.2, metrics[1].counter.value);
-            var labelPairs = metrics[1].label;
-            Assert.AreEqual(1, labelPairs.Count);
-            Assert.AreEqual("label1", labelPairs[0].name);
-            Assert.AreEqual("abc", labelPairs[0].value);
+            Assert.AreEqual(3.2, metrics[1].Counter.Value);
+            var labelPairs = metrics[1].Labels;
+            Assert.AreEqual(1, labelPairs.Length);
+            Assert.AreEqual("label1", labelPairs[0].Name);
+            Assert.AreEqual("abc", labelPairs[0].Value);
         }
 
         [TestMethod]
         public void custom_registry()
         {
-            var myRegistry = new DefaultCollectorRegistry();
+            var myRegistry = Metrics.NewCustomRegistry();
             var counter1 = Metrics.WithCustomRegistry(myRegistry).CreateCounter("counter1", "help1"); //registered on a custom registry
 
             var counter2 = Metrics.CreateCounter("counter1", "help1"); //created on different registry - same name is hence permitted
@@ -93,8 +91,8 @@ namespace Prometheus.Tests
             counter1.Inc(3);
             counter2.Inc(4);
 
-            Assert.AreEqual(3, myRegistry.CollectAll().ToArray()[0].metric[0].counter.value); //counter1 == 3
-            Assert.AreEqual(4, DefaultCollectorRegistry.Instance.CollectAll().ToArray()[0].metric[0].counter.value); //counter2 == 4
+            Assert.AreEqual(3, myRegistry.Collect().Families[0].Metrics[0].Counter.Value); //counter1 == 3
+            Assert.AreEqual(4, Metrics.DefaultRegistry.Collect().Families[0].Metrics[0].Counter.Value); //counter2 == 4
         }
 
         [TestMethod]
@@ -107,31 +105,34 @@ namespace Prometheus.Tests
             gauge.Set(4);
             gauge.Dec(0.2);
 
-            var exported = DefaultCollectorRegistry.Instance.CollectAll().ToArray();
+            var exported = Metrics.DefaultRegistry.Collect().Families;
 
-            Assert.AreEqual(1, exported.Length);
+            Assert.AreEqual(1, exported.Count);
             var familiy1 = exported[0];
-            Assert.AreEqual("name1", familiy1.name);
-            Assert.AreEqual("help1", familiy1.help);
-            var metrics = familiy1.metric;
+            Assert.AreEqual("name1", familiy1.Name);
+            Assert.AreEqual("help1", familiy1.Help);
+            var metrics = familiy1.Metrics;
             Assert.AreEqual(1, metrics.Count);
 
             foreach (var metric in metrics)
             {
-                Assert.IsNull(metric.counter);
-                Assert.IsNull(metric.histogram);
-                Assert.IsNull(metric.summary);
-                Assert.IsNull(metric.untyped);
-                Assert.IsNotNull(metric.gauge);
+                Assert.IsNull(metric.Counter);
+                Assert.IsNull(metric.Histogram);
+                Assert.IsNull(metric.Summary);
+                Assert.IsNotNull(metric.Gauge);
             }
 
-            Assert.AreEqual(3.8, metrics[0].gauge.value);
+            Assert.AreEqual(3.8, metrics[0].Gauge.Value);
         }
 
         [TestMethod]
         public void histogram_tests()
         {
-            Histogram histogram = Metrics.CreateHistogram("hist1", "help", new[] { 1.0, 2.0, 3.0, double.PositiveInfinity });
+            Histogram histogram = Metrics.CreateHistogram("hist1", "help", new HistogramConfiguration
+            {
+                Buckets = new[] { 1.0, 2.0, 3.0, double.PositiveInfinity }
+            });
+
             histogram.Observe(1.5);
             histogram.Observe(2.5);
             histogram.Observe(1);
@@ -143,15 +144,15 @@ namespace Prometheus.Tests
             histogram.Observe(3.9);
             histogram.Observe(double.NaN);
 
-            var metric = histogram.Collect().Single().metric[0];
-            Assert.IsNotNull(metric.histogram);
-            Assert.AreEqual(9ul, metric.histogram.sample_count);
-            Assert.AreEqual(16.7, metric.histogram.sample_sum);
-            Assert.AreEqual(4, metric.histogram.bucket.Count);
-            Assert.AreEqual(2ul, metric.histogram.bucket[0].cumulative_count);
-            Assert.AreEqual(5ul, metric.histogram.bucket[1].cumulative_count);
-            Assert.AreEqual(8ul, metric.histogram.bucket[2].cumulative_count);
-            Assert.AreEqual(9ul, metric.histogram.bucket[3].cumulative_count);
+            var metric = histogram.Collect().Metrics[0];
+            Assert.IsNotNull(metric.Histogram);
+            Assert.AreEqual(9L, metric.Histogram.SampleCount);
+            Assert.AreEqual(16.7, metric.Histogram.SampleSum);
+            Assert.AreEqual(4, metric.Histogram.Buckets.Length);
+            Assert.AreEqual(2L, metric.Histogram.Buckets[0].CumulativeCount);
+            Assert.AreEqual(5L, metric.Histogram.Buckets[1].CumulativeCount);
+            Assert.AreEqual(8L, metric.Histogram.Buckets[2].CumulativeCount);
+            Assert.AreEqual(9L, metric.Histogram.Buckets[3].CumulativeCount);
         }
 
         [TestMethod]
@@ -160,21 +161,21 @@ namespace Prometheus.Tests
             var histogram = Metrics.CreateHistogram("hist", "help");
             histogram.Observe(0.03);
 
-            var metric = histogram.Collect().Single().metric[0];
-            Assert.IsNotNull(metric.histogram);
-            Assert.AreEqual(1ul, metric.histogram.sample_count);
-            Assert.AreEqual(0.03, metric.histogram.sample_sum);
-            Assert.AreEqual(15, metric.histogram.bucket.Count);
-            Assert.AreEqual(0.005, metric.histogram.bucket[0].upper_bound);
-            Assert.AreEqual(0ul, metric.histogram.bucket[0].cumulative_count);
-            Assert.AreEqual(0.01, metric.histogram.bucket[1].upper_bound);
-            Assert.AreEqual(0ul, metric.histogram.bucket[1].cumulative_count);
-            Assert.AreEqual(0.025, metric.histogram.bucket[2].upper_bound);
-            Assert.AreEqual(0ul, metric.histogram.bucket[2].cumulative_count);
-            Assert.AreEqual(0.05, metric.histogram.bucket[3].upper_bound);
-            Assert.AreEqual(1ul, metric.histogram.bucket[3].cumulative_count);
-            Assert.AreEqual(0.075, metric.histogram.bucket[4].upper_bound);
-            Assert.AreEqual(1ul, metric.histogram.bucket[4].cumulative_count);
+            var metric = histogram.Collect().Metrics[0];
+            Assert.IsNotNull(metric.Histogram);
+            Assert.AreEqual(1L, metric.Histogram.SampleCount);
+            Assert.AreEqual(0.03, metric.Histogram.SampleSum);
+            Assert.AreEqual(15, metric.Histogram.Buckets.Length);
+            Assert.AreEqual(0.005, metric.Histogram.Buckets[0].UpperBound);
+            Assert.AreEqual(0L, metric.Histogram.Buckets[0].CumulativeCount);
+            Assert.AreEqual(0.01, metric.Histogram.Buckets[1].UpperBound);
+            Assert.AreEqual(0L, metric.Histogram.Buckets[1].CumulativeCount);
+            Assert.AreEqual(0.025, metric.Histogram.Buckets[2].UpperBound);
+            Assert.AreEqual(0L, metric.Histogram.Buckets[2].CumulativeCount);
+            Assert.AreEqual(0.05, metric.Histogram.Buckets[3].UpperBound);
+            Assert.AreEqual(1L, metric.Histogram.Buckets[3].CumulativeCount);
+            Assert.AreEqual(0.075, metric.Histogram.Buckets[4].UpperBound);
+            Assert.AreEqual(1L, metric.Histogram.Buckets[4].CumulativeCount);
         }
 
         [TestMethod]
@@ -182,7 +183,11 @@ namespace Prometheus.Tests
         {
             try
             {
-                Metrics.CreateHistogram("hist", "help", new double[0]);
+                Metrics.CreateHistogram("hist", "help", new HistogramConfiguration
+                {
+                    Buckets = new double[0]
+                });
+
                 Assert.Fail("Expected an exception");
             }
             catch (ArgumentException ex)
@@ -196,7 +201,11 @@ namespace Prometheus.Tests
         {
             try
             {
-                Metrics.CreateHistogram("hist", "help", new double[] { 0.5, 0.1 });
+                Metrics.CreateHistogram("hist", "help", new HistogramConfiguration
+                {
+                    Buckets = new double[] { 0.5, 0.1 }
+                });
+
                 Assert.Fail("Expected an exception");
             }
             catch (ArgumentException ex)
@@ -204,7 +213,7 @@ namespace Prometheus.Tests
                 Assert.AreEqual("Bucket values must be increasing", ex.Message);
             }
         }
-        
+
         [TestMethod]
         public void histogram_exponential_buckets_are_correct()
         {
@@ -213,14 +222,14 @@ namespace Prometheus.Tests
             var bucketsCount = 4;
 
             var buckets = Histogram.ExponentialBuckets(bucketsStart, bucketsFactor, bucketsCount);
-            
+
             Assert.AreEqual(bucketsCount, buckets.Length);
             Assert.AreEqual(1.1, buckets[0]);
             Assert.AreEqual(2.64, buckets[1]);
             Assert.AreEqual(6.336, buckets[2]);
             Assert.AreEqual(15.2064, buckets[3]);
         }
-        
+
         [TestMethod]
         public void histogram_exponential_buckets_with_non_positive_count_throws()
         {
@@ -230,7 +239,7 @@ namespace Prometheus.Tests
             Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, bucketsFactor, -1));
             Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, bucketsFactor, 0));
         }
-        
+
         [TestMethod]
         public void histogram_exponential_buckets_with_non_positive_start_throws()
         {
@@ -240,7 +249,7 @@ namespace Prometheus.Tests
             Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(-1, bucketsFactor, bucketsCount));
             Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(0, bucketsFactor, bucketsCount));
         }
-        
+
         [TestMethod]
         public void histogram_exponential_buckets_with__factor_less_than_one_throws()
         {
@@ -251,7 +260,7 @@ namespace Prometheus.Tests
             Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, 0, bucketsCount));
             Assert.ThrowsException<ArgumentException>(() => Histogram.ExponentialBuckets(bucketsStart, -1, bucketsCount));
         }
-        
+
         [TestMethod]
         public void histogram_linear_buckets_are_correct()
         {
@@ -260,14 +269,14 @@ namespace Prometheus.Tests
             var bucketsCount = 4;
 
             var buckets = Histogram.LinearBuckets(bucketsStart, bucketsWidth, bucketsCount);
-            
+
             Assert.AreEqual(bucketsCount, buckets.Length);
             Assert.AreEqual(1.1, buckets[0]);
             Assert.AreEqual(3.5, buckets[1]);
             Assert.AreEqual(5.9, buckets[2]);
             Assert.AreEqual(8.3, buckets[3]);
         }
-        
+
         [TestMethod]
         public void histogram_linear_buckets_with_non_positive_count_throws()
         {
@@ -287,10 +296,10 @@ namespace Prometheus.Tests
             summary.Observe(2);
             summary.Observe(3);
 
-            var metric = summary.Collect().Single().metric[0];
-            Assert.IsNotNull(metric.summary);
-            Assert.AreEqual(3ul, metric.summary.sample_count);
-            Assert.AreEqual(6, metric.summary.sample_sum);
+            var metric = summary.Collect().Metrics[0];
+            Assert.IsNotNull(metric.Summary);
+            Assert.AreEqual(3L, metric.Summary.SampleCount);
+            Assert.AreEqual(6, metric.Summary.SampleSum);
         }
 
         [TestMethod]
@@ -339,7 +348,7 @@ namespace Prometheus.Tests
             Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my-metric"));
             Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my!metric"));
             Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my%metric"));
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateHistogram("a", "help1", null, "le"));
+            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateHistogram("a", "help1", "le"));
             Metrics.CreateGauge("a", "help1", "my:metric");
             Metrics.CreateGauge("b", "help1", "good_name");
 

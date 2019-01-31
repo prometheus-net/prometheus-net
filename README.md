@@ -14,11 +14,9 @@ This documentation is only a minimal quick start. For detailed guidance on using
 
 Four types of metrics are offered: Counter, Gauge, Summary and Histogram.
 
-See the documentation on [metric types](http://prometheus.io/docs/concepts/metric_types/)
-and [instrumentation best practices](http://prometheus.io/docs/practices/instrumentation/#counter-vs.-gauge-vs.-summary)
-to learn what each is good for.
+See the documentation on [metric types](http://prometheus.io/docs/concepts/metric_types/) and [instrumentation best practices](http://prometheus.io/docs/practices/instrumentation/#counter-vs.-gauge-vs.-summary) to learn what each is good for.
 
-The most common practice in C# code is to have a `static readonly` field for each metric that you wish to export from a given class.
+**The `Metrics` class is the main entry point to the API of this library.** The most common practice in C# code is to have a `static readonly` field for each metric that you wish to export from a given class. 
 
 More complex patterns may also be used (e.g. combining with dependency injection). The library is quite tolerant of different usage models - if the API allows it, it will generally work fine and provide satisfactory performance. The library is thread-safe.
 
@@ -34,14 +32,14 @@ Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server
 
 ## Default metrics
 
-The library provides some sample metrics about the current process out of the box, simply to ensure that some output is produced in a default configuration. If these metrics are not desirable you may suppress them by calling `DefaultCollectorRegistry.Instance.Clear()` before registering any of your own metrics.
+The library provides some sample metrics about the current process out of the box, simply to ensure that some output is produced in a default configuration. If these metrics are not desirable you may remove them by calling `Metrics.SuppressDefaultMetrics()` before registering any of your own metrics.
 
 # Counters
 
 Counters only increase in value and reset to zero when the process restarts.
 
 ```csharp
-private static readonly ProcessedJobCount = Metrics
+private static readonly Counter ProcessedJobCount = Metrics
 	.CreateCounter("myapp_jobs_processed_total", "Number of processed jobs.");
 
 ...
@@ -55,7 +53,7 @@ ProcessedJobCount.Inc();
 Gauges can have any numeric value and change arbitrarily.
 
 ```csharp
-private static readonly JobsInQueue = Metrics
+private static readonly Gauge JobsInQueue = Metrics
 	.CreateGauge("myapp_jobs_queued", "Number of jobs waiting for processing in the queue.");
 
 ...
@@ -126,7 +124,7 @@ and [labels](http://prometheus.io/docs/practices/instrumentation/#use-labels).
 Taking a counter as an example:
 
 ```csharp
-private static readonly RequestCountByMethod = Metrics
+private static readonly Counter RequestCountByMethod = Metrics
 	.CreateCounter("myapp_requests_total", "Number of requests received, by HTTP method.",
 		new CounterConfiguration
 		{
@@ -149,7 +147,7 @@ Metrics without labels are published immediately after the `Metrics.CreateX()` c
 Sometimes you want to delay publishing a metric until you have loaded some data and have a meaningful value to supply for it. The API allows you to suppress publishing of the initial value until you decide the time is right.
 
 ```csharp
-private static readonly UsersLoggedIn = Metrics
+private static readonly Gauge UsersLoggedIn = Metrics
 	.CreateGauge("myapp_users_logged_in", "Number of active user sessions",
 		new GaugeConfiguration
 		{
@@ -211,17 +209,22 @@ You can register all of the metrics using the default labels and names as follow
 
 ```csharp
 // In your Startup.cs Configure() method
-app.UseHttpExporter();
+app.UseHttpMetrics();
 ```
 
 If you wish to provide a custom Metric for each of the metrics, or disable certain metrics, you can configure the Http Exporter like this:
 
 ```csharp
-app.UseHttpExporter(options =>
+app.UseHttpMetrics(options =>
 {
 	options.RequestCount.Enabled = false;
 
-	options.RequestDuration.Histogram = Metrics.CreateHistogram("my_custom_name", "my_custom_help", Histogram.LinearBuckets(0.1, 1, 100), "code", "method");
+	options.RequestDuration.Histogram = Metrics.CreateHistogram("my_custom_name", "my_custom_help",
+		new HistogramConfiguration
+		{
+			Buckets = Histogram.LinearBuckets(0.1, 1, 100)
+			Labels = new[] { "code", "method" }
+		});
 });
 ```
 
@@ -284,21 +287,11 @@ The default configuration will publish metrics on the /metrics URL.
 
 > netsh http add urlacl url=http://+:1234/metrics user=DOMAIN\user
 
-# On-demand collection
+# Just-in-time updates
 
-In some scenarios you may want to only collect data when it is requested by Prometheus. To easily implement this scenario prometheus-net provides you the ability to perform on-demand collection by implementing the [IOnDemandCollector interface](Prometheus.NetStandard/Advanced/IOnDemandCollector.cs).
+In some scenarios you may want to only collect data when it is requested by Prometheus. To easily implement this scenario prometheus-net enables you to register a callback before every collection occurs. Register your callback using `Metrics.DefaultRegistry.AddBeforeCollectCallback()`.
 
-Objects that implement this interface are informed before every collection, allowing you to perform any data updates that are relevant. To register on-demand collectors, use `DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors()`.
-
-For an example implementation, see [OnDemandCollection.cs](Tester.NetFramework/OnDemandCollection.cs).
-
-For even more fine-grained control over exported data you should implement a custom collector (see below).
-
-# Implementing custom collectors
-
-The built-in collectors created via the `Metrics` class helper methods provide a simple way to export basic metric types to Prometheus. To implement more advanced metric collection scenarios you can implement the `ICollector` interface yourself.
-
-For an example, see [ExternalDataCollector.cs](Tester.NetFramework/ExternalDataCollector.cs).
+Note that all callbacks will be called synchronously before each collection. They should not take more than a few milliseconds in order to ensure that the scrape does not time out. Do not read data from remote systems in these callbacks.
 
 # Related projects
 

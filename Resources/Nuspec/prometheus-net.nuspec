@@ -14,7 +14,6 @@
     <releaseNotes></releaseNotes>
 
     <dependencies>
-      <dependency id="protobuf-net" version="2.4.0" />
     </dependencies>
   </metadata>
   <files>

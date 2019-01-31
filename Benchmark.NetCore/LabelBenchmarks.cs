@@ -33,7 +33,7 @@ namespace Benchmark.NetCore
             }
         }
 
-        private readonly DefaultCollectorRegistry _registry = new DefaultCollectorRegistry();
+        private readonly CollectorRegistry _registry = Metrics.NewCustomRegistry();
         private readonly Counter[] _metrics;
 
         public LabelBenchmarks()

@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Prometheus.DataContracts;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -17,17 +15,17 @@ namespace Prometheus
         {
             _next = next;
 
-            _registry = settings.Registry ?? DefaultCollectorRegistry.Instance;
+            _registry = settings.Registry ?? Metrics.DefaultRegistry;
         }
 
         public sealed class Settings
         {
-            public ICollectorRegistry Registry { get; set; }
+            public CollectorRegistry Registry { get; set; }
         }
 
         private readonly RequestDelegate _next;
 
-        private readonly ICollectorRegistry _registry;
+        private readonly CollectorRegistry _registry;
 
         public async Task Invoke(HttpContext context)
         {
@@ -41,15 +39,13 @@ namespace Prometheus
             var request = context.Request;
             var response = context.Response;
 
-            var acceptHeaders = request.Headers["Accept"];
-            var contentType = ScrapeHandler.GetContentType(acceptHeaders);
-            response.ContentType = contentType;
+            response.ContentType = PrometheusConstants.ExporterContentType;
 
-            IEnumerable<MetricFamily> metrics;
+            MetricsSnapshot snapshot;
 
             try
             {
-                metrics = _registry.CollectAll();
+                snapshot = _registry.Collect();
             }
             catch (ScrapeFailedException ex)
             {
@@ -67,7 +63,7 @@ namespace Prometheus
             response.StatusCode = StatusCodes.Status200OK;
 
             using (var outputStream = response.Body)
-                ScrapeHandler.ProcessScrapeRequest(metrics, contentType, outputStream);
+                snapshot.Serialize(outputStream);
         }
     }
 }

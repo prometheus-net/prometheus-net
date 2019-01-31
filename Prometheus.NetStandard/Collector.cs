@@ -1,4 +1,3 @@
-using Prometheus.DataContracts;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,23 +7,80 @@ using System.Text.RegularExpressions;
 namespace Prometheus
 {
     /// <summary>
-    /// Base class for metrics of different types.
+    /// Base class for metrics, defining the basic informative API and the internal API.
     /// </summary>
-    public abstract class Collector<TChild> : ICollector
-        where TChild : Child, new()
+    public abstract class Collector
     {
+        /// <summary>
+        /// The metric name, e.g. http_requests_total.
+        /// </summary>
+        public string Name { get; }
+
+        /// <summary>
+        /// The help text describing the metric for a human audience.
+        /// </summary>
+        public string Help { get; }
+
+        /// <summary>
+        /// Names of the labels (name-value pairs) that apply to this metric.
+        /// When the values are added to the names, you get a <see cref="ChildBase"/> instance.
+        /// </summary>
+        public string[] LabelNames { get; }
+
+        internal abstract MetricFamilyData Collect();
+
+        private static readonly string[] EmptyLabelNames = new string[0];
+
         private const string ValidMetricNameExpression = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
         private const string ValidLabelNameExpression = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
         private const string ReservedLabelNameExpression = "^__.*$";
 
-        private readonly ConcurrentDictionary<LabelValues, TChild> _labelledMetrics = new ConcurrentDictionary<LabelValues, TChild>();
-        private readonly Lazy<TChild> _unlabelledLazy;
-
-        // ReSharper disable StaticFieldInGenericType
         private static readonly Regex MetricNameRegex = new Regex(ValidMetricNameExpression, RegexOptions.Compiled);
         private static readonly Regex LabelNameRegex = new Regex(ValidLabelNameExpression, RegexOptions.Compiled);
         private static readonly Regex ReservedLabelRegex = new Regex(ReservedLabelNameExpression, RegexOptions.Compiled);
-        // ReSharper restore StaticFieldInGenericType
+
+        protected Collector(string name, string help, string[] labelNames)
+        {
+            labelNames = labelNames ?? EmptyLabelNames;
+
+            if (!MetricNameRegex.IsMatch(name))
+                throw new ArgumentException($"Metric name '{name}' does not match regex '{ValidMetricNameExpression}'.");
+
+            foreach (var labelName in labelNames)
+            {
+                if (labelName == null)
+                    throw new ArgumentNullException("Label name was null.");
+
+                if (!LabelNameRegex.IsMatch(labelName))
+                    throw new ArgumentException($"Label name '{labelName}' does not match regex '{ValidLabelNameExpression}'.");
+
+                if (ReservedLabelRegex.IsMatch(labelName))
+                    throw new ArgumentException($"Label name '{labelName}' is not valid - labels starting with double underscore are reserved!");
+            }
+
+            Name = name;
+            Help = help;
+            LabelNames = labelNames;
+        }
+    }
+
+    /// <summary>
+    /// Base class for metrics collectors, providing common labeled child management functionality.
+    /// </summary>
+    public abstract class Collector<TChild> : Collector
+        where TChild : ChildBase, new()
+    {
+        private readonly ConcurrentDictionary<LabelValues, TChild> _labelledMetrics = new ConcurrentDictionary<LabelValues, TChild>();
+
+        private readonly Lazy<TChild> _unlabelledLazy;
+
+        /// <summary>
+        /// Gets the child instance that has no labels.
+        /// </summary>
+        protected TChild Unlabelled
+        {
+            get { return _unlabelledLazy.Value; }
+        }
 
         // This servers a slightly silly but useful purpose: by default if you start typing .La... and trigger Intellisense
         // it will often for whatever reason focus on LabelNames instead of Labels, leading to tiny but persistent frustration.
@@ -53,67 +109,25 @@ namespace Prometheus
             });
         }
 
-        private static readonly string[] EmptyLabelNames = new string[0];
-
         protected Collector(string name, string help, string[] labelNames, bool suppressInitialValue)
+            : base(name, help, labelNames)
         {
-            labelNames = labelNames ?? EmptyLabelNames;
-
-            if (!MetricNameRegex.IsMatch(name))
-            {
-                throw new ArgumentException($"Metric name '{name}' does not match regex '{ValidMetricNameExpression}'.");
-            }
-
-            foreach (var labelName in labelNames)
-            {
-                if (labelName == null)
-                {
-                    throw new ArgumentNullException("Label name was null.");
-                }
-
-                if (!LabelNameRegex.IsMatch(labelName))
-                {
-                    throw new ArgumentException($"Label name '{labelName}' does not match regex '{ValidLabelNameExpression}'.");
-                }
-
-                if (ReservedLabelRegex.IsMatch(labelName))
-                {
-                    throw new ArgumentException($"Label name '{labelName}' is not valid - labels starting with double underscore are reserved!");
-                }
-            }
-
-            Name = name;
-            Help = help;
-            LabelNames = labelNames;
-
             _suppressInitialValue = suppressInitialValue;
-
             _unlabelledLazy = new Lazy<TChild>(() => GetOrAddLabelled(LabelValues.Empty));
         }
 
-        public string Name { get; }
-        public string Help { get; }
+        internal abstract MetricType Type { get; }
 
-        public string[] LabelNames { get; }
-
-        protected abstract MetricType Type { get; }
-
-        private readonly bool _suppressInitialValue;
-
-        protected TChild Unlabelled
-        {
-            get { return _unlabelledLazy.Value; }
-        }
-
-        public IEnumerable<MetricFamily> Collect()
+        internal override MetricFamilyData Collect()
         {
             EnsureUnlabelledMetricCreatedIfNoLabels();
 
-            var result = new MetricFamily()
+            var result = new MetricFamilyData()
             {
-                name = Name,
-                help = Help,
-                type = Type,
+                Name = Name,
+                Help = Help,
+                Type = Type,
+                Metrics = new List<MetricData>(_labelledMetrics.Count)
             };
 
             foreach (var child in _labelledMetrics.Values)
@@ -123,11 +137,13 @@ namespace Prometheus
                 if (metric == null)
                     continue; // This can occur due to initial value suppression.
 
-                result.metric.Add(metric);
+                result.Metrics.Add(metric);
             }
 
-            yield return result;
+            return result;
         }
+
+        private readonly bool _suppressInitialValue;
 
         private void EnsureUnlabelledMetricCreatedIfNoLabels()
         {

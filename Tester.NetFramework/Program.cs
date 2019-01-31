@@ -60,15 +60,14 @@ namespace tester
             var summary = Metrics.CreateSummary("mySummary", "help text");
             summary.Observe(5.3);
 
-            // Exmaple implementation of a custom collector.
-            DefaultCollectorRegistry.Instance.GetOrAdd(new ExternalDataCollector());
+            // Example implementation of updating values before every collection.
+            var collectionCount = Metrics.CreateCounter("beforecollect_example", "This counter is incremented before every data collection.");
 
-            // Example implementation of on-demand collection.
-            DefaultCollectorRegistry.Instance.RegisterOnDemandCollector<OnDemandCollection>();
+            Metrics.DefaultRegistry.AddBeforeCollectCallback(() => collectionCount.Inc());
 
             // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
             // With MetricPusherTester you might get a 1st push already before it fails but after that it should stop pushing.
-            //DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(new AlwaysFailingOnDemandCollector());
+            //Metrics.DefaultRegistry.AddBeforeCollectCallback(() => throw new ScrapeFailedException());
 
             var cts = new CancellationTokenSource();
 

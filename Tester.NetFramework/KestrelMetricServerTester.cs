@@ -8,7 +8,7 @@ namespace tester
 {
     // Works ONLY on Tester.NetCore because Kestrel is a pain to get set up on NetFramework, so let's not bother.
     // You will get some libuv related error if you try to use Tester.NetFramework.
-    class KestrelMetricServerTester : Tester
+    internal class KestrelMetricServerTester : Tester
     {
         public KestrelMetricServerTester(string hostname = "localhost", X509Certificate2 certificate = null)
         {

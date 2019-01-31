@@ -17,6 +17,9 @@ namespace Tests.HttpExporter
         private DefaultHttpContext _httpContext;
         private RequestDelegate _requestDelegate;
 
+        private CollectorRegistry _registry;
+        private MetricFactory _factory;
+
         private HttpRequestCountMiddleware _sut;
 
         [TestMethod]
@@ -29,7 +32,7 @@ namespace Tests.HttpExporter
         [TestMethod]
         public void Given_invalid_labels_then_throws()
         {
-            var counter = Metrics.CreateCounter("invalid_labels_counter", "", "invalid");
+            var counter = _factory.CreateCounter("invalid_labels_counter", "", "invalid");
 
             Assert.ThrowsException<ArgumentException>(() =>
                 new HttpRequestCountMiddleware(_requestDelegate, counter));
@@ -48,7 +51,7 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_request_populates_labels_correctly()
         {
-            var counter = Metrics.CreateCounter("all_labels_counter", "", HttpRequestLabelNames.All);
+            var counter = _factory.CreateCounter("all_labels_counter", "", HttpRequestLabelNames.All);
 
             var expectedStatusCode = 400;
             var expectedMethod = "METHOD";
@@ -69,7 +72,7 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_multiple_requests_populates_code_label_correctly()
         {
-            var counter = Metrics.CreateCounter("counter", "", HttpRequestLabelNames.Code);
+            var counter = _factory.CreateCounter("counter", "", HttpRequestLabelNames.Code);
             _sut = new HttpRequestCountMiddleware(_requestDelegate, counter);
 
             var expectedStatusCode1 = await SetStatusCodeAndInvoke(400);
@@ -86,7 +89,7 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_multiple_requests_populates_method_label_correctly()
         {
-            var counter = Metrics.CreateCounter("counter", "", HttpRequestLabelNames.Method);
+            var counter = _factory.CreateCounter("counter", "", HttpRequestLabelNames.Method);
             _sut = new HttpRequestCountMiddleware(_requestDelegate, counter);
 
             var expectedMethod1 = await SetMethodAndInvoke("POST");
@@ -103,7 +106,7 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_multiple_requests_populates_controller_label_correctly()
         {
-            var counter = Metrics.CreateCounter("counter", "", HttpRequestLabelNames.Controller);
+            var counter = _factory.CreateCounter("counter", "", HttpRequestLabelNames.Controller);
             _sut = new HttpRequestCountMiddleware(_requestDelegate, counter);
 
             var expectedController1 = await SetControllerAndInvoke("ValuesController");
@@ -120,7 +123,7 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_multiple_requests_populates_action_label_correctly()
         {
-            var counter = Metrics.CreateCounter("counter", "", HttpRequestLabelNames.Action);
+            var counter = _factory.CreateCounter("counter", "", HttpRequestLabelNames.Action);
             _sut = new HttpRequestCountMiddleware(_requestDelegate, counter);
 
             var expectedAction1 = await SetActionAndInvoke("Action1");
@@ -138,7 +141,7 @@ namespace Tests.HttpExporter
         public async Task Given_request_populates_labels_supplied_out_of_order_correctly()
         {
             var counter =
-                Metrics.CreateCounter("all_labels_counter", "", HttpRequestLabelNames.All.Reverse().ToArray());
+                _factory.CreateCounter("all_labels_counter", "", HttpRequestLabelNames.All.Reverse().ToArray());
 
             var expectedStatusCode = 400;
             var expectedMethod = "METHOD";
@@ -159,7 +162,7 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_request_populates_subset_of_labels_correctly()
         {
-            var counter = Metrics.CreateCounter("all_labels_counter", "", HttpRequestLabelNames.Action,
+            var counter = _factory.CreateCounter("all_labels_counter", "", HttpRequestLabelNames.Action,
                 HttpRequestLabelNames.Controller);
 
             var expectedAction = "ACTION";
@@ -179,8 +182,9 @@ namespace Tests.HttpExporter
         [TestInitialize]
         public void Init()
         {
-            DefaultCollectorRegistry.Instance.Clear();
-            _counter = Metrics.CreateCounter("default_counter", "");
+            _registry = Metrics.NewCustomRegistry();
+            _factory = Metrics.WithCustomRegistry(_registry);
+            _counter = _factory.CreateCounter("default_counter", "");
             _requestDelegate = context => Task.CompletedTask;
 
             _httpContext = new DefaultHttpContext();

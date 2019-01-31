@@ -1,18 +1,15 @@
-﻿using Prometheus.SummaryImpl;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 
 namespace Prometheus
 {
     /// <summary>
-    /// Registers metrics in a collector registry.
+    /// Adds metrics to a registry.
     /// </summary>
-    public class MetricFactory
+    public sealed class MetricFactory
     {
-        private readonly ICollectorRegistry _registry;
+        private readonly CollectorRegistry _registry;
 
-        public MetricFactory(ICollectorRegistry registry)
+        internal MetricFactory(CollectorRegistry registry)
         {
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         }
@@ -20,7 +17,7 @@ namespace Prometheus
         /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
-        public Counter CreateCounter(string name, string help, CounterConfiguration configuration)
+        public Counter CreateCounter(string name, string help, CounterConfiguration configuration = null)
         {
             configuration = configuration ?? CounterConfiguration.Default;
 
@@ -31,7 +28,7 @@ namespace Prometheus
         /// <summary>
         /// Gauges can have any numeric value and change arbitrarily.
         /// </summary>
-        public Gauge CreateGauge(string name, string help, GaugeConfiguration configuration)
+        public Gauge CreateGauge(string name, string help, GaugeConfiguration configuration = null)
         {
             configuration = configuration ?? GaugeConfiguration.Default;
 
@@ -42,7 +39,7 @@ namespace Prometheus
         /// <summary>
         /// Summaries track the trends in events over time (10 minutes by default).
         /// </summary>
-        public Summary CreateSummary(string name, string help, SummaryConfiguration configuration)
+        public Summary CreateSummary(string name, string help, SummaryConfiguration configuration = null)
         {
             configuration = configuration ?? SummaryConfiguration.Default;
 
@@ -53,7 +50,7 @@ namespace Prometheus
         /// <summary>
         /// Histograms track the size and number of events in buckets.
         /// </summary>
-        public Histogram CreateHistogram(string name, string help, HistogramConfiguration configuration)
+        public Histogram CreateHistogram(string name, string help, HistogramConfiguration configuration = null)
         {
             configuration = configuration ?? HistogramConfiguration.Default;
 
@@ -89,38 +86,12 @@ namespace Prometheus
             });
 
         /// <summary>
-        /// Summaries track the trends in events over time (10 minutes by default).
-        /// </summary>
-        public Summary CreateSummary(string name, string help, string[] labelNames, IList<QuantileEpsilonPair> objectives, TimeSpan? maxAge, int? ageBuckets, int? bufCap)
-        {
-            var config = new SummaryConfiguration
-            {
-                LabelNames = labelNames
-            };
-
-            if (objectives != null)
-                config.Objectives = objectives.ToArray();
-
-            if (maxAge != null)
-                config.MaxAge = maxAge.Value;
-
-            if (ageBuckets != null)
-                config.AgeBuckets = ageBuckets.Value;
-
-            if (bufCap != null)
-                config.BufferSize = bufCap.Value;
-
-            return CreateSummary(name, help, config);
-        }
-
-        /// <summary>
         /// Histograms track the size and number of events in buckets.
         /// </summary>
-        public Histogram CreateHistogram(string name, string help, double[] buckets = null, params string[] labelNames) =>
+        public Histogram CreateHistogram(string name, string help, params string[] labelNames) =>
             CreateHistogram(name, help, new HistogramConfiguration
             {
-                LabelNames = labelNames,
-                Buckets = buckets
+                LabelNames = labelNames
             });
     }
 }

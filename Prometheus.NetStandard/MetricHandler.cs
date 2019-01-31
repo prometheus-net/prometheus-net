@@ -12,7 +12,7 @@ namespace Prometheus
     {
         // The registry that contains the collectors to export metrics from.
         // Subclasses are expected to use this variable to obtain the correct registry.
-        protected readonly ICollectorRegistry _registry;
+        protected readonly CollectorRegistry _registry;
 
         // The token is cancelled when the handler is instructed to stop.
         private CancellationTokenSource _cts = new CancellationTokenSource();
@@ -20,9 +20,9 @@ namespace Prometheus
         // This is the task started for the purpose of exporting metrics.
         private Task _task;
 
-        protected MetricHandler(ICollectorRegistry registry = null)
+        protected MetricHandler(CollectorRegistry registry = null)
         {
-            _registry = registry ?? DefaultCollectorRegistry.Instance;
+            _registry = registry ?? Metrics.DefaultRegistry;
         }
 
         public IMetricServer Start()

@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.DataContracts;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -17,20 +15,20 @@ namespace Prometheus.Tests
         {
             using (var ms = new MemoryStream())
             {
-                var metricFamily = new MetricFamily
+                var metricFamily = new MetricFamilyData
                 {
-                    name = "family1",
-                    help = "help",
-                    type = MetricType.COUNTER,
+                    Name = "family1",
+                    Help = "help",
+                    Type = MetricType.Counter,
                 };
 
-                var metricCounter = new DataContracts.Counter { value = 100 };
-                metricFamily.metric.Add(new Metric
+                var metricCounter = new CounterData { Value = 100 };
+                metricFamily.Metrics.Add(new MetricData
                 {
-                    counter = metricCounter,
-                    label = new List<LabelPair>
+                    Counter = metricCounter,
+                    Labels = new[]
                     {
-                        new LabelPair {name = "label1", value = labelValue }
+                        new LabelPairData {Name = "label1", Value = labelValue }
                     }
                 });
 

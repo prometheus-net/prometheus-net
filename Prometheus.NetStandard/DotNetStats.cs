@@ -8,8 +8,19 @@ namespace Prometheus
     /// Collects basic .NET metrics about the current process. This is not meant to be an especially serious collector,
     /// more of a producer of sample data so users of the library see something when they install it.
     /// </summary>
-    public class DotNetStatsCollector : IOnDemandCollector
+    public sealed class DotNetStats
     {
+        /// <summary>
+        /// Registers the .NET metrics in the specified registry.
+        /// </summary>
+        public static void Register(CollectorRegistry registry)
+        {
+            var instance = new DotNetStats();
+
+            registry.AddBeforeCollectCallback(instance.UpdateMetrics);
+            instance.RegisterMetrics(registry);
+        }
+
         private readonly Process _process;
         private Counter _perfErrors;
         private readonly List<Counter.Child> _collectionCounts = new List<Counter.Child>();
@@ -23,12 +34,12 @@ namespace Prometheus
         private Gauge _numThreads;
         private Gauge _pid;
 
-        public DotNetStatsCollector()
+        private DotNetStats()
         {
             _process = Process.GetCurrentProcess();
         }
 
-        public void RegisterMetrics(ICollectorRegistry registry)
+        private void RegisterMetrics(CollectorRegistry registry)
         {
             var metrics = Metrics.WithCustomRegistry(registry);
 
@@ -63,7 +74,7 @@ namespace Prometheus
             _pid.Set(_process.Id);
         }
 
-        public void UpdateMetrics()
+        private void UpdateMetrics()
         {
             try
             {

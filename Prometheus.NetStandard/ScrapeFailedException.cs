@@ -3,7 +3,7 @@
 namespace Prometheus
 {
     /// <summary>
-    /// Signals to the metrics server that metrics from on-demand collectors are currently unavailable.
+    /// Signals to the metrics server that metrics are currently unavailable. Thrown from "before collect" callbacks.
     /// This causes the entire export operation to fail - even if some metrics are available, they will not be exported.
     /// 
     /// The exception message will be delivered as the HTTP response body by the exporter.

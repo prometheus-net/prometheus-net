@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace tester
 {
-    class MetricPusherTester : Tester
+    internal class MetricPusherTester : Tester
     {
         private HttpListener _httpListener;
 

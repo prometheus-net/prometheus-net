@@ -1,6 +1,4 @@
-using Prometheus.DataContracts;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Prometheus
@@ -19,7 +17,7 @@ namespace Prometheus
         /// <summary>
         /// These are exported with metrics. Lazy-initialized in order to save allocations when using LabelValues as keys.
         /// </summary>
-        public List<LabelPair> WireLabels
+        public LabelPairData[] WireLabels
         {
             get
             {
@@ -35,7 +33,7 @@ namespace Prometheus
 
         private readonly int _hashCode;
 
-        private List<LabelPair> _wireLabels;
+        private LabelPairData[] _wireLabels;
 
         public LabelValues(string[] names, string[] values)
         {
@@ -62,11 +60,11 @@ namespace Prometheus
             _wireLabels = null;
         }
 
-        private List<LabelPair> InitWireLabels()
+        private LabelPairData[] InitWireLabels()
         {
             return _names
-                .Zip(_values, (n, v) => new LabelPair { name = n, value = v })
-                .ToList();
+                .Zip(_values, (n, v) => new LabelPairData { Name = n, Value = v })
+                .ToArray();
         }
 
         public bool Equals(LabelValues other)

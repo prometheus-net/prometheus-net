@@ -10,7 +10,7 @@ namespace Prometheus.Tests
         [TestMethod]
         public void CreatingUnlabelledMetric_WithoutObservingAnyData_ExportsImmediately()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
@@ -27,19 +27,19 @@ namespace Prometheus.Tests
             });
 
             // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 1 metrics.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(1, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
 
         [TestMethod]
         public void CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsNothingByDefault()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
@@ -59,19 +59,19 @@ namespace Prometheus.Tests
                 SuppressInitialValue = true
             });
 
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 0 metrics.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(0, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(0, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
 
         [TestMethod]
         public void CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsAfterValueChange()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
@@ -97,19 +97,19 @@ namespace Prometheus.Tests
             histogram.Observe(31);
 
             // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 1 metric.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(1, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
 
         [TestMethod]
         public void CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsAfterPublish()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
@@ -135,13 +135,13 @@ namespace Prometheus.Tests
             histogram.Publish();
 
             // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 1 metrics.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(1, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
         #endregion
 
@@ -149,7 +149,7 @@ namespace Prometheus.Tests
         [TestMethod]
         public void CreatingLabelledMetric_WithoutObservingAnyData_ExportsImmediately()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
@@ -170,19 +170,19 @@ namespace Prometheus.Tests
             }).WithLabels("bar");
 
             // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 1 metrics.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(1, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
 
         [TestMethod]
         public void CreatingLabelledMetric_WithInitialValueSuppression_ExportsNothingByDefault()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
@@ -206,19 +206,19 @@ namespace Prometheus.Tests
                 LabelNames = new[] { "foo" }
             }).WithLabels("bar");
 
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 0 metrics.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(0, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(0, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
 
         [TestMethod]
         public void CreatingLabelledMetric_WithInitialValueSuppression_ExportsAfterValueChange()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
@@ -248,19 +248,19 @@ namespace Prometheus.Tests
             histogram.Observe(31);
 
             // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 1 metric.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(1, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
 
         [TestMethod]
         public void CreatingLabelledMetric_WithInitialValueSuppression_ExportsAfterPublish()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
@@ -290,13 +290,13 @@ namespace Prometheus.Tests
             histogram.Publish();
 
             // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 1 metrics.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(1, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
         #endregion
 
@@ -304,34 +304,34 @@ namespace Prometheus.Tests
         [TestMethod]
         public void CreatingLabelledMetric_WithoutObservingAnyData_DoesNotExportUnlabelled()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", "labelname");
             var counter = factory.CreateCounter("counter", "", "labelname");
             var summary = factory.CreateSummary("summary", "", "labelname");
-            var histogram = factory.CreateHistogram("histogram", "", null, "labelname");
+            var histogram = factory.CreateHistogram("histogram", "", "labelname");
 
             // Without touching any metrics, there should be no output.
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 0 metrics.
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(0, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(0, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
 
         [TestMethod]
         public void CreatingLabelledMetric_AfterObservingLabelledData_DoesNotExportUnlabelled()
         {
-            var registry = new DefaultCollectorRegistry();
+            var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
             var gauge = factory.CreateGauge("gauge", "", "labelname");
             var counter = factory.CreateCounter("counter", "", "labelname");
             var summary = factory.CreateSummary("summary", "", "labelname");
-            var histogram = factory.CreateHistogram("histogram", "", null, "labelname");
+            var histogram = factory.CreateHistogram("histogram", "", "labelname");
 
             // Touch some labelled metrics.
             gauge.Labels("labelvalue").Inc();
@@ -340,13 +340,13 @@ namespace Prometheus.Tests
             histogram.Labels("labelvalue").Observe(123);
 
             // Without touching any unlabelled metrics, there should be only labelled output.
-            var exported = registry.CollectAll().ToArray();
+            var exported = registry.Collect().Families;
 
             // There is a family for each of the above, in each family we expect to see 1 metric (for the labelled case).
-            Assert.AreEqual(4, exported.Length);
+            Assert.AreEqual(4, exported.Count);
 
             foreach (var family in exported)
-                Assert.AreEqual(1, family.metric.Count, $"Family {family.type} had unexpected metric count.");
+                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
         }
         #endregion
     }

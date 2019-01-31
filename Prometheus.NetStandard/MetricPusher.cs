@@ -1,5 +1,4 @@
-﻿using Prometheus.DataContracts;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -15,16 +14,10 @@ namespace Prometheus
     /// </summary>
     public class MetricPusher : MetricHandler
     {
-        /// <summary>
-        /// Used as input for the srape handler, so it generates the output in the expected format.
-        /// Not used in PushGateway communications.
-        /// </summary>
-        private const string ContentType = "text/plain; version=0.0.4";
-
         private readonly TimeSpan _pushInterval;
         private readonly Uri _targetUrl;
 
-        public MetricPusher(string endpoint, string job, string instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>> additionalLabels = null, ICollectorRegistry registry = null) : base(registry)
+        public MetricPusher(string endpoint, string job, string instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>> additionalLabels = null, CollectorRegistry registry = null) : base(registry)
         {
             if (string.IsNullOrEmpty(endpoint))
             {
@@ -50,11 +43,7 @@ namespace Prometheus
                 foreach (var pair in additionalLabels)
                 {
                     if (pair == null || string.IsNullOrEmpty(pair.Item1) || string.IsNullOrEmpty(pair.Item2))
-                    {
-                        // TODO: Surely this should throw an exception?
-                        Trace.WriteLine("Ignoring invalid label set");
-                        continue;
-                    }
+                        throw new NotSupportedException($"Invalid {nameof(MetricPusher)} additional label: ({pair?.Item1}):({pair?.Item2})");
 
                     sb.AppendFormat("/{0}/{1}", pair.Item1, pair.Item2);
                 }
@@ -83,10 +72,10 @@ namespace Prometheus
 
                     try
                     {
-                        var metrics = _registry.CollectAll();
+                        var snapshot = _registry.Collect();
 
                         var stream = new MemoryStream();
-                        ScrapeHandler.ProcessScrapeRequest(metrics, ContentType, stream);
+                        snapshot.Serialize(stream);
 
                         stream.Position = 0;
                         // StreamContent takes ownership of the stream.
@@ -104,7 +93,7 @@ namespace Prometheus
                         Trace.WriteLine(string.Format("Error in MetricPusher: {0}", ex));
                     }
 
-                    // We always stop after pushing metrics, to ensure that the latest state is flushed when told to stop.
+                    // We stop only after pushing metrics, to ensure that the latest state is flushed when told to stop.
                     if (cancel.IsCancellationRequested)
                         break;
 

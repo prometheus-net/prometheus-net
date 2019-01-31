@@ -1,7 +1,4 @@
-﻿using System;
-using Prometheus.DataContracts;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     public interface IGauge
     {
@@ -11,21 +8,18 @@ namespace Prometheus
         double Value { get; }
     }
 
-    public class Gauge : Collector<Gauge.Child>, IGauge
+    public sealed class Gauge : Collector<Gauge.Child>, IGauge
     {
-        internal Gauge(string name, string help, string[] labelNames, bool suppressInitialValue)
-            : base(name, help, labelNames, suppressInitialValue)
-        {
-        }
-
-        public class Child : Prometheus.Child, IGauge
+        public sealed class Child : ChildBase, IGauge
         {
             private ThreadSafeDouble _value;
 
-            protected override void Populate(Metric metric)
+            internal override void Populate(MetricData metric)
             {
-                metric.gauge = new DataContracts.Gauge();
-                metric.gauge.value = Value;
+                metric.Gauge = new GaugeData
+                {
+                    Value = Value
+                };
             }
 
             public void Inc(double increment = 1)
@@ -39,11 +33,6 @@ namespace Prometheus
                 _value.Value = val;
                 _publish = true;
             }
-            
-            public Timer StartTimer()
-            {
-                return new Timer(this);
-            }
 
             public void Dec(double decrement = 1)
             {
@@ -53,7 +42,10 @@ namespace Prometheus
             public double Value => _value.Value;
         }
 
-        protected override MetricType Type => MetricType.GAUGE;
+        internal Gauge(string name, string help, string[] labelNames, bool suppressInitialValue)
+    : base(name, help, labelNames, suppressInitialValue)
+        {
+        }
 
         public void Inc(double increment = 1) => Unlabelled.Inc(increment);
         public void Set(double val) => Unlabelled.Set(val);
@@ -61,5 +53,7 @@ namespace Prometheus
         public double Value => Unlabelled.Value;
 
         public void Publish() => Unlabelled.Publish();
+
+        internal override MetricType Type => MetricType.Gauge;
     }
 }

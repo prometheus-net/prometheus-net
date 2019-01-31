@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Prometheus;
-using Prometheus.DataContracts;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,28 +8,28 @@ namespace Tests.HttpExporter
 {
     public static class MetricTestHelpers
     {
-        public static string GetLabelData(List<Metric> collectedMetrics, string labelName)
+        internal static string GetLabelData(List<MetricData> collectedMetrics, string labelName)
         {
-            var labelValues = collectedMetrics.Single().label;
-            return labelValues.SingleOrDefault(x => x.name == labelName)?.value;
+            var labelValues = collectedMetrics.Single().Labels;
+            return labelValues.SingleOrDefault(x => x.Name == labelName)?.Value;
         }
 
-        public static double GetLabelCounterValue(List<Metric> collectedMetrics, string labelName, object labelValue)
+        internal static double GetLabelCounterValue(List<MetricData> collectedMetrics, string labelName, object labelValue)
         {
             return collectedMetrics
-                .Single(x => x.label.Any(l => l.name == labelName && l.value == labelValue.ToString())).counter
-                .value;
+                .Single(x => x.Labels.Any(l => l.Name == labelName && l.Value == labelValue.ToString())).Counter
+                .Value;
         }
 
-        public static Prometheus.DataContracts.Histogram GetLabelHistogram(List<Metric> collectedMetrics, string labelName, object labelValue)
+        internal static HistogramData GetLabelHistogram(List<MetricData> collectedMetrics, string labelName, object labelValue)
         {
             return collectedMetrics
-                .Single(x => x.label.Any(l => l.name == labelName && l.value == labelValue.ToString())).histogram;
+                .Single(x => x.Labels.Any(l => l.Name == labelName && l.Value == labelValue.ToString())).Histogram;
         }
 
-        public static List<Metric> GetCollectedMetrics<T>(Collector<T> counter) where T : Child, new()
+        internal static List<MetricData> GetCollectedMetrics<T>(Collector<T> counter) where T : ChildBase, new()
         {
-            return counter.Collect().Single().metric;
+            return counter.Collect().Metrics;
         }
 
         public static void SetupHttpContext(DefaultHttpContext hc, int expectedStatusCode, string expectedMethod,

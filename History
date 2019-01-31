@@ -1,13 +1,12 @@
 * 3.0.0
-* Added HTTP request metrics for ASP.NET Core.
-- Breaking change: Gauge.Timer class public API changed.
+- Added HTTP request metrics for ASP.NET Core.
+- Somewhat more realistic examples in readme.
 - Breaking change: assemblies are now strong-named.
 - Breaking change: removed "windows" from built-in metric names as they are not Windows-specific.
-- Gauge.Timer was made more general-purpose and also applies to Histogram and Summary.
-- metric.NewTimer() for easy one-line timer creation
-- IObserver abstraction to represent "either Summary or Histogram"
-- Somewhat more realistic examples in readme.
-- Breaking change: simplified API namespaces a bit to reduce the number of namespaces users need to use to find stuff.
+- Breaking change: removed support for protobuf export format (it is no longer used by Prometheus).
+- Breaking change: API surface cleaned up, removed some legacy methods, made many internal types actually internal.
+- Breaking change: "on demand collectors" concept replaced with simpler "before collect callbacks". Works the same, just less code needed to use it and fewer possible error conditions.
+- Breaking change: removed support for "custom collectors", as this was a very special use case that did not benefit at all from the main functionality of the library. Just generate a Prometheus exporter output document yourself if you need to export arbitrary data.
 * 2.1.3
 - Fixed wrong case used for metric type in the export data format. Should always be lowercase. #96
 * 2.1.2

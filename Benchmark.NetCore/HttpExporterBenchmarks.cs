@@ -9,7 +9,7 @@ namespace Benchmark.NetCore
     [MemoryDiagnoser]
     public class HttpExporterBenchmarks
     {
-        private ICollectorRegistry _registry;
+        private CollectorRegistry _registry;
         private MetricFactory _factory;
         private HttpInFlightMiddleware _inFlightMiddleware;
         private HttpRequestCountMiddleware _countMiddleware;
@@ -29,7 +29,7 @@ namespace Benchmark.NetCore
         [GlobalSetup]
         public void Setup()
         {
-            _registry = new DefaultCollectorRegistry();
+            _registry = Metrics.NewCustomRegistry();
             _factory = Metrics.WithCustomRegistry(_registry);
 
             _inFlightMiddleware =

@@ -1,12 +1,9 @@
-using Prometheus.DataContracts;
-using Prometheus;
-
 namespace Prometheus
 {
     /// <summary>
     /// Base class for labeled instances of metrics (with all label names and label values defined).
     /// </summary>
-    public abstract class Child
+    public abstract class ChildBase
     {
         /// <summary>
         /// Marks the metric as one to be published, even if it might otherwise be suppressed.
@@ -25,22 +22,22 @@ namespace Prometheus
         // that the metric should now be published if it was explicitly suppressed beforehand.
         protected volatile bool _publish;
 
-        internal virtual void Init(ICollector parent, LabelValues labelValues, bool publish)
+        internal virtual void Init(Collector parent, LabelValues labelValues, bool publish)
         {
             _labelValues = labelValues;
             _publish = publish;
         }
 
-        protected abstract void Populate(Metric metric);
+        internal abstract void Populate(MetricData metric);
 
-        internal Metric Collect()
+        internal MetricData Collect()
         {
             if (!_publish)
                 return null;
 
-            var metric = new Metric
+            var metric = new MetricData
             {
-                label = _labelValues.WireLabels
+                Labels = _labelValues.WireLabels
             };
 
             Populate(metric);

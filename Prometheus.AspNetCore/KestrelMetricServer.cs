@@ -20,11 +20,11 @@ namespace Prometheus
     /// </remarks>
     public sealed class KestrelMetricServer : MetricHandler
     {
-        public KestrelMetricServer(int port, string url = "/metrics", ICollectorRegistry registry = null, X509Certificate2 certificate = null) : this("+", port, url, registry, certificate)
+        public KestrelMetricServer(int port, string url = "/metrics", CollectorRegistry registry = null, X509Certificate2 certificate = null) : this("+", port, url, registry, certificate)
         {
         }
 
-        public KestrelMetricServer(string hostname, int port, string url = "/metrics", ICollectorRegistry registry = null, X509Certificate2 certificate = null) : base(registry)
+        public KestrelMetricServer(string hostname, int port, string url = "/metrics", CollectorRegistry registry = null, X509Certificate2 certificate = null) : base(registry)
         {
             _hostname = hostname;
             _port = port;

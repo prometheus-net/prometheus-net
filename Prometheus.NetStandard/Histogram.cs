@@ -1,4 +1,3 @@
-using Prometheus.DataContracts;
 using System;
 using System.Linq;
 
@@ -8,7 +7,7 @@ namespace Prometheus
     {
     }
 
-    public class Histogram : Collector<Histogram.Child>, IHistogram
+    public sealed class Histogram : Collector<Histogram.Child>, IHistogram
     {
         private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
         private readonly double[] _buckets;
@@ -40,13 +39,13 @@ namespace Prometheus
             }
         }
 
-        public class Child : Prometheus.Child, IHistogram
+        public sealed class Child : ChildBase, IHistogram
         {
             private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
             private ThreadSafeLong[] _bucketCounts;
             private double[] _upperBounds;
 
-            internal override void Init(ICollector parent, LabelValues labelValues, bool publish)
+            internal override void Init(Collector parent, LabelValues labelValues, bool publish)
             {
                 base.Init(parent, labelValues, publish);
 
@@ -54,23 +53,24 @@ namespace Prometheus
                 _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
             }
 
-            protected override void Populate(Metric metric)
+            internal override void Populate(MetricData metric)
             {
-                var wireMetric = new DataContracts.Histogram();
-                wireMetric.sample_count = 0L;
+                var wireMetric = new HistogramData();
+                wireMetric.SampleCount = 0L;
+                wireMetric.Buckets = new HistogramBucketData[_bucketCounts.Length];
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
-                    wireMetric.sample_count += (ulong)_bucketCounts[i].Value;
-                    wireMetric.bucket.Add(new Bucket
+                    wireMetric.SampleCount += _bucketCounts[i].Value;
+                    wireMetric.Buckets[i] = new HistogramBucketData
                     {
-                        upper_bound = _upperBounds[i],
-                        cumulative_count = wireMetric.sample_count
-                    });
+                        UpperBound = _upperBounds[i],
+                        CumulativeCount = wireMetric.SampleCount
+                    };
                 }
-                wireMetric.sample_sum = _sum.Value;
+                wireMetric.SampleSum = _sum.Value;
 
-                metric.histogram = wireMetric;
+                metric.Histogram = wireMetric;
             }
 
             public void Observe(double val)
@@ -93,18 +93,12 @@ namespace Prometheus
             }
         }
 
-        protected override MetricType Type
-        {
-            get { return MetricType.HISTOGRAM; }
-        }
+        internal override MetricType Type => MetricType.Histogram;
 
-        public void Observe(double val)
-        {
-            Unlabelled.Observe(val);
-        }
+        public void Observe(double val) => Unlabelled.Observe(val);
 
         public void Publish() => Unlabelled.Publish();
-        
+
         // From https://github.com/prometheus/client_golang/blob/master/prometheus/histogram.go
         /// <summary>  
         ///  Creates '<paramref name="count"/>' buckets, where the lowest bucket has an
@@ -133,7 +127,7 @@ namespace Prometheus
 
             return buckets;
         }
-        
+
         // From https://github.com/prometheus/client_golang/blob/master/prometheus/histogram.go
         /// <summary>  
         ///  Creates '<paramref name="count"/>' buckets, where the lowest bucket has an

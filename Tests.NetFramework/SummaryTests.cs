@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.DataContracts;
 using Prometheus.SummaryImpl;
 using System;
 using System.Collections.Generic;
@@ -57,11 +56,11 @@ namespace Prometheus.Tests
 
             Array.Sort(allVars);
 
-            var m = sum.Collect().Single().metric.Single().summary;
+            var m = sum.Collect().Metrics.Single().Summary;
 
-            Assert.AreEqual((ulong)(mutations * concLevel), m.sample_count);
+            Assert.AreEqual(mutations * concLevel, m.SampleCount);
 
-            var got = m.sample_sum;
+            var got = m.SampleSum;
             var want = sampleSum;
             Assert.IsTrue(Math.Abs(got - want) / want <= 0.001);
 
@@ -72,8 +71,8 @@ namespace Prometheus.Tests
             {
                 var wantQ = Summary.DefObjectives.ElementAt(i);
                 var epsilon = wantQ.Epsilon;
-                var gotQ = m.quantile[i].quantile;
-                var gotV = m.quantile[i].value;
+                var gotQ = m.Quantiles[i].Quantile;
+                var gotV = m.Quantiles[i].Value;
                 var minMax = GetBounds(allVars, wantQ.Quantile, epsilon);
 
                 Assert.IsFalse(double.IsNaN(gotQ));
@@ -96,8 +95,8 @@ namespace Prometheus.Tests
             var child = new Summary.Child();
             child.Init(sum, LabelValues.Empty, baseTime, true);
 
-            DataContracts.Summary m;
-            var metric = new Metric();
+            SummaryData m;
+            var metric = new MetricData();
 
             for (var i = 0; i < 1000; i++)
             {
@@ -107,8 +106,8 @@ namespace Prometheus.Tests
                 if (i % 10 == 0)
                 {
                     child.Populate(metric, now);
-                    m = metric.summary;
-                    var got = m.quantile[0].value;
+                    m = metric.Summary;
+                    var got = m.Quantiles[0].Value;
                     var want = Math.Max((double)i / 10, (double)i - 90);
 
                     Assert.IsTrue(Math.Abs(got - want) <= 1, $"{i}. got {got} want {want}");
@@ -117,9 +116,9 @@ namespace Prometheus.Tests
 
             // Wait for MaxAge without observations and make sure quantiles are NaN.
             child.Populate(metric, baseTime.AddSeconds(1000).AddSeconds(100));
-            m = metric.summary;
+            m = metric.Summary;
 
-            Assert.IsTrue(double.IsNaN(m.quantile[0].value));
+            Assert.IsTrue(double.IsNaN(m.Quantiles[0].Value));
         }
 
         [TestMethod]
@@ -141,16 +140,16 @@ namespace Prometheus.Tests
                     expectedSum += observation;
                 }
             }
-            var metric = new Metric();
+            var metric = new MetricData();
             summary.Populate(metric, DateTime.UtcNow);
-            var m = metric.summary;
+            var m = metric.Summary;
 
-            Assert.AreEqual((ulong)(numObservations * numIterations), m.sample_count);
-            Assert.AreEqual(expectedSum, m.sample_sum);
+            Assert.AreEqual(numObservations * numIterations, m.SampleCount);
+            Assert.AreEqual(expectedSum, m.SampleSum);
 
-            var q05 = m.quantile.Single(_ => _.quantile.Equals(0.5)).value;
-            var q09 = m.quantile.Single(_ => _.quantile.Equals(0.9)).value;
-            var q099 = m.quantile.Single(_ => _.quantile.Equals(0.99)).value;
+            var q05 = m.Quantiles.Single(_ => _.Quantile.Equals(0.5)).Value;
+            var q09 = m.Quantiles.Single(_ => _.Quantile.Equals(0.9)).Value;
+            var q099 = m.Quantiles.Single(_ => _.Quantile.Equals(0.99)).Value;
             Assert.IsTrue(Math.Abs(50 - q05) <= 2);
             Assert.IsTrue(Math.Abs(90 - q09) <= 2);
             Assert.IsTrue(Math.Abs(99 - q099) <= 2);

@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.DataContracts;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -63,7 +62,7 @@ namespace Prometheus.Tests
             var tasks = new Task[w];
             for (var taskNum = 0; taskNum < w; taskNum++)
             {
-                var metric = new Metric();
+                var metric = new MetricData();
 
                 tasks[taskNum] = Task.Factory.StartNew(() =>
                 {

@@ -18,6 +18,9 @@ namespace Tests.HttpExporter
         private DefaultHttpContext _httpContext;
         private RequestDelegate _requestDelegate;
 
+        private CollectorRegistry _registry;
+        private MetricFactory _factory;
+
         private HttpRequestDurationMiddleware _sut;
 
         [TestMethod]
@@ -30,7 +33,11 @@ namespace Tests.HttpExporter
         [TestMethod]
         public void Given_invalid_labels_then_throws()
         {
-            var histogram = Metrics.CreateHistogram("invalid_labels_histogram", "", new[] { 1d, 2d, 3d }, "invalid");
+            var histogram = _factory.CreateHistogram("invalid_labels_histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 1d, 2d, 3d },
+                LabelNames = new[] { "invalid" }
+            });
 
             Assert.ThrowsException<ArgumentException>(() =>
                 new HttpRequestDurationMiddleware(_requestDelegate, histogram));
@@ -39,8 +46,11 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_request_populates_labels_correctly()
         {
-            var histogram = Metrics.CreateHistogram("all_labels_histogram", "", new[] { 1d, 2d, 3d },
-                HttpRequestLabelNames.All);
+            var histogram = _factory.CreateHistogram("all_labels_histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 1d, 2d, 3d },
+                LabelNames = HttpRequestLabelNames.All
+            });
 
             var expectedStatusCode = 400;
             var expectedMethod = "METHOD";
@@ -61,8 +71,11 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_request_populates_labels_supplied_out_of_order_correctly()
         {
-            var histogram = Metrics.CreateHistogram("all_labels_histogram", "", new[] { 1d, 2d, 3d },
-                HttpRequestLabelNames.All.Reverse().ToArray());
+            var histogram = _factory.CreateHistogram("all_labels_histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 1d, 2d, 3d },
+                LabelNames = HttpRequestLabelNames.All.Reverse().ToArray()
+            });
 
             var expectedStatusCode = 400;
             var expectedMethod = "METHOD";
@@ -83,8 +96,11 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_request_populates_subset_of_labels_correctly()
         {
-            var histogram = Metrics.CreateHistogram("all_labels_histogram", "", new[] { 1d, 2d, 3d },
-                HttpRequestLabelNames.Action, HttpRequestLabelNames.Controller);
+            var histogram = _factory.CreateHistogram("all_labels_histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 1d, 2d, 3d },
+                LabelNames = new[] { HttpRequestLabelNames.Action, HttpRequestLabelNames.Controller }
+            });
 
             var expectedAction = "ACTION";
             var expectedController = "CONTROLLER";
@@ -103,7 +119,11 @@ namespace Tests.HttpExporter
         [TestMethod]
         public async Task Given_multiple_requests_populates_code_label_correctly()
         {
-            var histogram = Metrics.CreateHistogram("histogram", "", new[] { 0.1d, 1d, 10d }, HttpRequestLabelNames.Code);
+            var histogram = _factory.CreateHistogram("histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 0.1d, 1d, 10d },
+                LabelNames = new[] { HttpRequestLabelNames.Code }
+            });
             _sut = new HttpRequestDurationMiddleware(_requestDelegate, histogram);
 
             var expectedStatusCode1 = await SetStatusCodeAndInvoke(400);
@@ -111,17 +131,20 @@ namespace Tests.HttpExporter
 
             var collectedMetrics = GetCollectedMetrics(histogram);
             Assert.AreEqual(2, collectedMetrics.Count);
-            Assert.AreEqual(1UL,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Code, expectedStatusCode1).sample_count);
-            Assert.AreEqual(1UL,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Code, expectedStatusCode2).sample_count);
+            Assert.AreEqual(1L,
+                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Code, expectedStatusCode1).SampleCount);
+            Assert.AreEqual(1L,
+                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Code, expectedStatusCode2).SampleCount);
         }
 
         [TestMethod]
         public async Task Given_multiple_requests_populates_method_label_correctly()
         {
-            var histogram =
-                Metrics.CreateHistogram("histogram", "", new[] { 0.1d, 1d, 10d }, HttpRequestLabelNames.Method);
+            var histogram = _factory.CreateHistogram("histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 0.1d, 1d, 10d },
+                LabelNames = new[] { HttpRequestLabelNames.Method }
+            });
             _sut = new HttpRequestDurationMiddleware(_requestDelegate, histogram);
 
             var expectedMethod1 = await SetMethodAndInvoke("POST");
@@ -129,17 +152,20 @@ namespace Tests.HttpExporter
 
             var collectedMetrics = GetCollectedMetrics(histogram);
             Assert.AreEqual(2, collectedMetrics.Count);
-            Assert.AreEqual(1UL,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Method, expectedMethod1).sample_count);
-            Assert.AreEqual(1UL,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Method, expectedMethod2).sample_count);
+            Assert.AreEqual(1L,
+                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Method, expectedMethod1).SampleCount);
+            Assert.AreEqual(1L,
+                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Method, expectedMethod2).SampleCount);
         }
 
         [TestMethod]
         public async Task Given_multiple_requests_populates_controller_label_correctly()
         {
-            var histogram =
-                Metrics.CreateHistogram("histogram", "", new[] { 0.1d, 1d, 10d }, HttpRequestLabelNames.Controller);
+            var histogram = _factory.CreateHistogram("histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 0.1d, 1d, 10d },
+                LabelNames = new[] { HttpRequestLabelNames.Controller }
+            });
             _sut = new HttpRequestDurationMiddleware(_requestDelegate, histogram);
 
             var expectedController1 = await SetControllerAndInvoke("ValuesController");
@@ -147,19 +173,22 @@ namespace Tests.HttpExporter
 
             var collectedMetrics = GetCollectedMetrics(histogram);
             Assert.AreEqual(2, collectedMetrics.Count);
-            Assert.AreEqual(1UL,
+            Assert.AreEqual(1L,
                 GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Controller, expectedController1)
-                    .sample_count);
-            Assert.AreEqual(1UL,
+                    .SampleCount);
+            Assert.AreEqual(1L,
                 GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Controller, expectedController2)
-                    .sample_count);
+                    .SampleCount);
         }
 
         [TestMethod]
         public async Task Given_multiple_requests_populates_action_label_correctly()
         {
-            var histogram =
-                Metrics.CreateHistogram("histogram", "", new[] { 0.1d, 1d, 10d }, HttpRequestLabelNames.Action);
+            var histogram = _factory.CreateHistogram("histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 0.1d, 1d, 10d },
+                LabelNames = new[] { HttpRequestLabelNames.Action }
+            });
             _sut = new HttpRequestDurationMiddleware(_requestDelegate, histogram);
 
             var expectedAction1 = await SetActionAndInvoke("Action1");
@@ -167,35 +196,22 @@ namespace Tests.HttpExporter
 
             var collectedMetrics = GetCollectedMetrics(histogram);
             Assert.AreEqual(2, collectedMetrics.Count);
-            Assert.AreEqual(1UL,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Action, expectedAction1).sample_count);
-            Assert.AreEqual(1UL,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Action, expectedAction2).sample_count);
-        }
-
-        [TestMethod]
-        public async Task Given_request_duration_populates_appropriate_bin()
-        {
-            var histogram = Metrics.CreateHistogram("all_labels_histogram", "", new[] { 0.01d, 0.1d, 1d },
-                HttpRequestLabelNames.Code);
-
-            await SetRequestDurationAndInvoke(histogram, TimeSpan.Zero);
-            await SetRequestDurationAndInvoke(histogram, TimeSpan.FromSeconds(0.02));
-            await SetRequestDurationAndInvoke(histogram, TimeSpan.FromSeconds(0.2));
-
-            var collectedMetrics = GetCollectedMetrics(histogram);
-            var resultHistogram = GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Code, 200);
-            Assert.AreEqual(3UL, resultHistogram.sample_count);
-            Assert.AreEqual(1UL, resultHistogram.bucket[0].cumulative_count);
-            Assert.AreEqual(2UL, resultHistogram.bucket[1].cumulative_count);
-            Assert.AreEqual(3UL, resultHistogram.bucket[2].cumulative_count);
+            Assert.AreEqual(1L,
+                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Action, expectedAction1).SampleCount);
+            Assert.AreEqual(1L,
+                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Action, expectedAction2).SampleCount);
         }
 
         [TestInitialize]
         public void Init()
         {
-            DefaultCollectorRegistry.Instance.Clear();
-            _histogram = Metrics.CreateHistogram("default_histogram", "", new[] { 0.1d, 1d, 10d });
+            _registry = Metrics.NewCustomRegistry();
+            _factory = Metrics.WithCustomRegistry(_registry);
+
+            _histogram = _factory.CreateHistogram("default_histogram", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 0.1d, 1d, 10d }
+            });
             _requestDelegate = context => Task.CompletedTask;
             _httpContext = new DefaultHttpContext();
             _sut = new HttpRequestDurationMiddleware(_requestDelegate, _histogram);

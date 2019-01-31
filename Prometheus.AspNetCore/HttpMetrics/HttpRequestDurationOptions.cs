@@ -8,6 +8,10 @@ namespace Prometheus.HttpMetrics
             "Provides the duration in seconds of HTTP requests from an ASP.NET application.";
 
         public Histogram Histogram { get; set; } = Metrics.CreateHistogram(DefaultName, DefaultHelp,
-            Histogram.ExponentialBuckets(0.0001, 1.5, 36), HttpRequestLabelNames.All);
+            new HistogramConfiguration
+            {
+                Buckets = Histogram.ExponentialBuckets(0.0001, 1.5, 36),
+                LabelNames = HttpRequestLabelNames.All
+            });
     }
 }

@@ -11,7 +11,7 @@ namespace tester
 {
     // Works ONLY on Tester.NetCore because Kestrel is a pain to get set up on NetFramework, so let's not bother.
     // You will get some libuv related error if you try to use Tester.NetFramework.
-    class AspNetCoreMiddlewareTester : Tester
+    internal class AspNetCoreMiddlewareTester : Tester
     {
         // Sinaled when it is time for the web server to stop.
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();

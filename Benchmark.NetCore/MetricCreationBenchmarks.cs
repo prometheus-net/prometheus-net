@@ -28,13 +28,13 @@ namespace Benchmark.NetCore
                 _metricNames[i] = $"metric_{i:D4}";
         }
 
-        private ICollectorRegistry _registry;
+        private CollectorRegistry _registry;
         private MetricFactory _factory;
 
         [IterationSetup]
         public void Setup()
         {
-            _registry = new DefaultCollectorRegistry();
+            _registry = Metrics.NewCustomRegistry();
             _factory = Metrics.WithCustomRegistry(_registry);
         }
 

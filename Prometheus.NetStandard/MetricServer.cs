@@ -1,6 +1,4 @@
-﻿using Prometheus.DataContracts;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -17,11 +15,11 @@ namespace Prometheus
     {
         private readonly HttpListener _httpListener = new HttpListener();
 
-        public MetricServer(int port, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : this("+", port, url, registry, useHttps)
+        public MetricServer(int port, string url = "metrics/", CollectorRegistry registry = null, bool useHttps = false) : this("+", port, url, registry, useHttps)
         {
         }
 
-        public MetricServer(string hostname, int port, string url = "metrics/", ICollectorRegistry registry = null, bool useHttps = false) : base(registry)
+        public MetricServer(string hostname, int port, string url = "metrics/", CollectorRegistry registry = null, bool useHttps = false) : base(registry)
         {
             var s = useHttps ? "s" : "";
             _httpListener.Prefixes.Add($"http{s}://{hostname}:{port}/{url}");
@@ -48,11 +46,11 @@ namespace Prometheus
 
                         try
                         {
-                            IEnumerable<MetricFamily> metrics;
+                            MetricsSnapshot snapshot;
 
                             try
                             {
-                                metrics = _registry.CollectAll();
+                                snapshot = _registry.Collect();
                             }
                             catch (ScrapeFailedException ex)
                             {
@@ -67,15 +65,11 @@ namespace Prometheus
                                 continue;
                             }
 
-                            var acceptHeader = request.Headers.Get("Accept");
-                            var acceptHeaders = acceptHeader?.Split(',');
-                            var contentType = ScrapeHandler.GetContentType(acceptHeaders);
-                            response.ContentType = contentType;
-
+                            response.ContentType = PrometheusConstants.ExporterContentType;
                             response.StatusCode = 200;
 
                             using (var outputStream = response.OutputStream)
-                                ScrapeHandler.ProcessScrapeRequest(metrics, contentType, outputStream);
+                                snapshot.Serialize(outputStream);
                         }
                         catch (Exception ex) when (!(ex is OperationCanceledException))
                         {

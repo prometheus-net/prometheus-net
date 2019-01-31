@@ -19,7 +19,7 @@ namespace Prometheus.HttpMetrics
     /// the current HTTP context.
     /// </summary>
     /// <typeparam name="T">The metric being used.</typeparam>
-    public abstract class HttpRequestMiddlewareBase<T> where T : ICollector
+    public abstract class HttpRequestMiddlewareBase<T> where T : Collector
     {
         private readonly HashSet<string> _allowedLabelNames = new HashSet<string>(HttpRequestLabelNames.All);
 

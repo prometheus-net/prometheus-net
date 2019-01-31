@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Prometheus;
 using System.IO;
-using System.Linq;
 
 namespace Benchmark.NetCore
 {
@@ -40,7 +39,7 @@ namespace Benchmark.NetCore
             }
         }
 
-        private readonly DefaultCollectorRegistry _registry = new DefaultCollectorRegistry();
+        private readonly CollectorRegistry _registry = Metrics.NewCustomRegistry();
         private readonly Counter[] _counters;
         private readonly Gauge[] _gauges;
         private readonly Summary[] _summaries;
@@ -61,11 +60,11 @@ namespace Benchmark.NetCore
                 _counters[metricIndex] = factory.CreateCounter($"counter{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
                 _gauges[metricIndex] = factory.CreateGauge($"gauge{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
                 _summaries[metricIndex] = factory.CreateSummary($"summary{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
-                _histograms[metricIndex] = factory.CreateHistogram($"histogram{metricIndex:D2}", _help, null, _labelValueRows[metricIndex][0]);
+                _histograms[metricIndex] = factory.CreateHistogram($"histogram{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
             }
         }
 
-        private Prometheus.DataContracts.MetricFamily[] _data;
+        private MetricsSnapshot _data;
         private byte[] _outputBuffer;
 
         [GlobalSetup]
@@ -80,8 +79,7 @@ namespace Benchmark.NetCore
                     _histograms[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex);
                 }
 
-            // Have to transform to array in order to materialize the iterator's results.
-            _data = _registry.CollectAll().ToArray();
+            _data = _registry.Collect();
 
             // Use a preallocated fixed size buffer to prevent MemoryStream reallocations in benchmarks.
             _outputBuffer = new byte[32 * 1024 * 1024];
@@ -91,9 +89,7 @@ namespace Benchmark.NetCore
         public void Serialize()
         {
             using (var stream = new MemoryStream(_outputBuffer))
-            {
-                AsciiFormatter.Format(stream, _data);
-            }
+                AsciiFormatter.Format(stream, _data.Families);
         }
     }
 }
