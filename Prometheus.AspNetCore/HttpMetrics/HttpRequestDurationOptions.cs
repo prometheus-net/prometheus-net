@@ -10,7 +10,7 @@ namespace Prometheus.HttpMetrics
         public Histogram Histogram { get; set; } = Metrics.CreateHistogram(DefaultName, DefaultHelp,
             new HistogramConfiguration
             {
-                Buckets = Histogram.ExponentialBuckets(0.0001, 1.5, 36),
+                Buckets = Histogram.ExponentialBuckets(0.001, 2, 16),
                 LabelNames = HttpRequestLabelNames.All
             });
     }
