@@ -30,10 +30,6 @@ Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server
 
 >Install-Package prometheus-net.AspNetCore
 
-## Default metrics
-
-The library provides some sample metrics about the current process out of the box, simply to ensure that some output is produced in a default configuration. If these metrics are not desirable you may remove them by calling `Metrics.SuppressDefaultMetrics()` before registering any of your own metrics.
-
 # Counters
 
 Counters only increase in value and reset to zero when the process restarts.
@@ -292,6 +288,10 @@ The default configuration will publish metrics on the /metrics URL.
 In some scenarios you may want to only collect data when it is requested by Prometheus. To easily implement this scenario prometheus-net enables you to register a callback before every collection occurs. Register your callback using `Metrics.DefaultRegistry.AddBeforeCollectCallback()`.
 
 Note that all callbacks will be called synchronously before each collection. They should not take more than a few milliseconds in order to ensure that the scrape does not time out. Do not read data from remote systems in these callbacks.
+
+# Suppressing default metrics
+
+The library provides some sample metrics about the current process out of the box, simply to ensure that some output is produced in a default configuration. If these metrics are not desirable you may remove them by calling `Metrics.SuppressDefaultMetrics()` before registering any of your own metrics.
 
 # Related projects
 
