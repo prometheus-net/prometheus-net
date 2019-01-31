@@ -1,5 +1,5 @@
-﻿using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
+﻿using Prometheus;
+using Prometheus.DataContracts;
 using System;
 using System.Collections.Generic;
 
@@ -9,7 +9,7 @@ namespace tester
     /// This is an example of how to implement a collector that exposes data retrieved from an external source.
     /// For example, Windows performance counters or the monitoring API of another application.
     /// </summary>
-    sealed class ExternalDataCollector : ICollector
+    internal sealed class ExternalDataCollector : ICollector
     {
         // Only used as a key in collector registry.
         public string Name { get; } = "example_external_data_collector";
@@ -113,7 +113,7 @@ namespace tester
             {
                 piFamily.metric.Add(new Metric
                 {
-                    gauge = new Gauge
+                    gauge = new Prometheus.DataContracts.Gauge
                     {
                         value = service.Pi
                     },
@@ -122,7 +122,7 @@ namespace tester
 
                 requestCountFamily.metric.Add(new Metric
                 {
-                    counter = new Counter
+                    counter = new Prometheus.DataContracts.Counter
                     {
                         value = service.HandledRequestCount
                     },
@@ -131,7 +131,7 @@ namespace tester
 
                 successRatioFamily.metric.Add(new Metric
                 {
-                    gauge = new Gauge
+                    gauge = new Prometheus.DataContracts.Gauge
                     {
                         value = service.SuccessRatio
                     },

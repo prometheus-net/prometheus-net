@@ -2,9 +2,9 @@
 using System.Globalization;
 using System.Threading;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
-    public struct ThreadSafeDouble
+    internal struct ThreadSafeDouble
     {
         private long _value;
 

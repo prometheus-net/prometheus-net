@@ -1,6 +1,6 @@
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
-    public class HttpMiddlewareExporterOptions
+    public sealed class HttpMiddlewareExporterOptions
     {
         public HttpInFlightOptions InFlight { get; set; } = new HttpInFlightOptions();
         public HttpRequestCountOptions RequestCount { get; set; } = new HttpRequestCountOptions();

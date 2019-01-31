@@ -3,9 +3,9 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
-    public class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<Histogram>
+    public sealed class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<Histogram>
     {
         private readonly RequestDelegate _next;
         private readonly Histogram _requestDuration;

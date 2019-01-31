@@ -1,26 +1,25 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Prometheus.Advanced;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
     /// <summary>
-    ///     This class handles getting the data about the current HTTP request to use as label data for the metric
-    ///     the http request middleware is using.
-    ///     The metric used may have up to four labels (or none), which must be from the following:
-    ///     'code' (HTTP status code)
-    ///     'method' (HTTP request method)
-    ///     'controller' (The Controller used to fulfill the HTTP request)
-    ///     'action' (The Action used to fulfill the HTTP request)
-    ///     The 'code' and 'method' data are taken from the current HTTP context.
-    ///     Similarly, if either 'controller' or 'action' is provided, the data will be taken from the RouteData of
-    ///     the current HTTP context.
+    /// This class handles getting the data about the current HTTP request to use as label data for the metric
+    /// the http request middleware is using.
+    /// The metric used may have up to four labels (or none), which must be from the following:
+    /// 'code' (HTTP status code)
+    /// 'method' (HTTP request method)
+    /// 'controller' (The Controller used to fulfill the HTTP request)
+    /// 'action' (The Action used to fulfill the HTTP request)
+    /// The 'code' and 'method' data are taken from the current HTTP context.
+    /// Similarly, if either 'controller' or 'action' is provided, the data will be taken from the RouteData of
+    /// the current HTTP context.
     /// </summary>
     /// <typeparam name="T">The metric being used.</typeparam>
-    public class HttpRequestMiddlewareBase<T> where T : ICollector
+    public abstract class HttpRequestMiddlewareBase<T> where T : ICollector
     {
         private readonly HashSet<string> _allowedLabelNames = new HashSet<string>(HttpRequestLabelNames.All);
 

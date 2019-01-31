@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
+using Prometheus.DataContracts;
 using System;
 using System.Linq;
 

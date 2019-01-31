@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
+using Prometheus.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,7 +24,7 @@ namespace Prometheus.Tests
                     type = MetricType.COUNTER,
                 };
 
-                var metricCounter = new Advanced.DataContracts.Counter { value = 100 };
+                var metricCounter = new DataContracts.Counter { value = 100 };
                 metricFamily.metric.Add(new Metric
                 {
                     counter = metricCounter,

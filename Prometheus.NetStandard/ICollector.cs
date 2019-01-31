@@ -1,7 +1,7 @@
-using Prometheus.Advanced.DataContracts;
+using Prometheus.DataContracts;
 using System.Collections.Generic;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
     /// <summary>
     /// A collector mantains one or more metric families worth of data. Builtin collectors like Gaguge focus

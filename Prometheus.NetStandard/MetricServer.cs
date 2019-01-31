@@ -1,5 +1,4 @@
-﻿using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
+﻿using Prometheus.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,6 +11,7 @@ namespace Prometheus
 {
     /// <summary>
     /// Implementation of a Prometheus exporter that serves metrics using HttpListener.
+    /// This is a stand-alone exporter for apps that do not already have an HTTP server included.
     /// </summary>
     public class MetricServer : MetricHandler
     {

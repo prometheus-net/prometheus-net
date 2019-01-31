@@ -1,5 +1,4 @@
-﻿using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
+﻿using Prometheus.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

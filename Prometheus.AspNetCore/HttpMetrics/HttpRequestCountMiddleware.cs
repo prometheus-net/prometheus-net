@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading.Tasks;
 
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
-    public class HttpRequestCountMiddleware : HttpRequestMiddlewareBase<Counter>
+    public sealed class HttpRequestCountMiddleware : HttpRequestMiddlewareBase<Counter>
     {
         private readonly RequestDelegate _next;
         private readonly Counter _requestCount;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
     /// <summary>
     /// Signals to the metrics server that metrics from on-demand collectors are currently unavailable.

@@ -1,6 +1,6 @@
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
-    public class HttpInFlightOptions : HttpExporterOptionsBase
+    public sealed class HttpInFlightOptions : HttpMetricsOptionsBase
     {
         private const string DefaultName = "http_executing_requests";
         private const string DefaultHelp = "The number of requests currently being processed.";

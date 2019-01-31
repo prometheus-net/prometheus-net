@@ -1,5 +1,4 @@
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
+using Prometheus.DataContracts;
 using System;
 
 namespace Prometheus
@@ -22,13 +21,13 @@ namespace Prometheus
             Unlabelled.Inc(increment);
         }
 
-        public class Child : Advanced.Child, ICounter
+        public class Child : Prometheus.Child, ICounter
         {
             private ThreadSafeDouble _value;
 
             protected override void Populate(Metric metric)
             {
-                metric.counter = new Advanced.DataContracts.Counter();
+                metric.counter = new DataContracts.Counter();
                 metric.counter.value = Value;
             }
 

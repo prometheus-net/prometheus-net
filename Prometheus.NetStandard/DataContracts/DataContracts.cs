@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 
 // Generated from: prometheus.proto
-namespace Prometheus.Advanced.DataContracts
+namespace Prometheus.DataContracts
 {
   [global::ProtoBuf.ProtoContract(Name=@"LabelPair")]
   public partial class LabelPair : global::ProtoBuf.IExtensible

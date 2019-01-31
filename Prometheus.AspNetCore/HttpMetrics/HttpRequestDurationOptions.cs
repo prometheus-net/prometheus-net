@@ -1,6 +1,6 @@
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
-    public class HttpRequestDurationOptions : HttpExporterOptionsBase
+    public sealed class HttpRequestDurationOptions : HttpMetricsOptionsBase
     {
         private const string DefaultName = "http_request_duration_seconds";
 

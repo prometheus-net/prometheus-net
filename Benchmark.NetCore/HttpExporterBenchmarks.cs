@@ -1,8 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using Microsoft.AspNetCore.Http;
 using Prometheus;
-using Prometheus.Advanced;
-using Prometheus.AspNetCore.HttpExporter;
+using Prometheus.HttpMetrics;
 using System.Threading.Tasks;
 
 namespace Benchmark.NetCore

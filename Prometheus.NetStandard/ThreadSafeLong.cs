@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
 using System.Threading;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
-    public struct ThreadSafeLong
+    internal struct ThreadSafeLong
     {
         private long _value;
 

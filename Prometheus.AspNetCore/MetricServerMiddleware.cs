@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
+using Prometheus.DataContracts;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;

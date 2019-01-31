@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
+using Prometheus.DataContracts;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;

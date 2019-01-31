@@ -1,6 +1,5 @@
 ﻿using System;
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
+using Prometheus.DataContracts;
 
 namespace Prometheus
 {
@@ -19,13 +18,13 @@ namespace Prometheus
         {
         }
 
-        public class Child : Advanced.Child, IGauge
+        public class Child : Prometheus.Child, IGauge
         {
             private ThreadSafeDouble _value;
 
             protected override void Populate(Metric metric)
             {
-                metric.gauge = new Advanced.DataContracts.Gauge();
+                metric.gauge = new DataContracts.Gauge();
                 metric.gauge.value = Value;
             }
 

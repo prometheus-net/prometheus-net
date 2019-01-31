@@ -1,6 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Prometheus;
-using Prometheus.Advanced;
 
 namespace Benchmark.NetCore
 {

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus;
-using Prometheus.AspNetCore.HttpExporter;
+using Prometheus.HttpMetrics;
 using System;
 using System.Threading.Tasks;
 

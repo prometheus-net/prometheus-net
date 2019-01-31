@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace Prometheus.SummaryImpl
 {
-    class SampleStream
+    internal class SampleStream
     {
         public double N;
-        readonly List<Sample> _samples = new List<Sample>();
-        readonly Invariant _invariant;
+        private readonly List<Sample> _samples = new List<Sample>();
+        private readonly Invariant _invariant;
 
         public SampleStream(Invariant invariant)
         {
@@ -44,7 +44,7 @@ namespace Prometheus.SummaryImpl
                 _samples.Add(new Sample { Value = sample.Value, Width = sample.Width, Delta = 0 });
                 i++;
 
-                inserted:
+            inserted:
                 N += sample.Width;
                 r += sample.Width;
             }
@@ -52,7 +52,7 @@ namespace Prometheus.SummaryImpl
             Compress();
         }
 
-        void Compress()
+        private void Compress()
         {
             if (_samples.Count < 2)
                 return;

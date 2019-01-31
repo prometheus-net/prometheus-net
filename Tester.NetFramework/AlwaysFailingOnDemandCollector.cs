@@ -1,4 +1,4 @@
-﻿using Prometheus.Advanced;
+﻿using Prometheus;
 
 namespace tester
 {

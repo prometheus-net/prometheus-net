@@ -1,10 +1,10 @@
-﻿using Prometheus.Advanced.DataContracts;
+﻿using Prometheus.DataContracts;
 using ProtoBuf;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Prometheus.Internal
+namespace Prometheus
 {
     internal class ProtoFormatter
     {

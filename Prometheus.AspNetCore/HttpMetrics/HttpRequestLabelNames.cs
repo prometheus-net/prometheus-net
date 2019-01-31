@@ -1,4 +1,4 @@
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
     public static class HttpRequestLabelNames
     {

@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.Advanced;
 using System.Linq;
 
 namespace Prometheus.Tests

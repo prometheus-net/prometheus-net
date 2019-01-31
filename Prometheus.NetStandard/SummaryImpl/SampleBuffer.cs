@@ -2,9 +2,9 @@
 
 namespace Prometheus.SummaryImpl
 {
-    class SampleBuffer
+    internal class SampleBuffer
     {
-        readonly double[] _buffer;
+        private readonly double[] _buffer;
 
         public SampleBuffer(int capacity)
         {

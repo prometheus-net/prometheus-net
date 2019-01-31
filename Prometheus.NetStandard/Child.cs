@@ -1,14 +1,18 @@
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
+using Prometheus.DataContracts;
+using Prometheus;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
+    /// <summary>
+    /// Base class for labeled instances of metrics (with all label names and label values defined).
+    /// </summary>
     public abstract class Child
     {
         /// <summary>
         /// Marks the metric as one to be published, even if it might otherwise be suppressed.
-        /// This is useful for publishing zero-valued metrics once you have loaded data and determined
-        /// that there is no data to actually include in the metric.
+        /// 
+        /// This is useful for publishing zero-valued metrics once you have loaded data on startup and determined
+        /// that there is no need to increment the value of the metric.
         /// </summary>
         public void Publish()
         {

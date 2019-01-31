@@ -1,6 +1,6 @@
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
-    public class HttpRequestCountOptions : HttpExporterOptionsBase
+    public sealed class HttpRequestCountOptions : HttpMetricsOptionsBase
     {
         private const string DefaultName = "http_requests_total";
         private const string DefaultHelp = "Provides the count of HTTP requests from an ASP.NET application.";

@@ -1,7 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Prometheus;
-using Prometheus.Advanced;
-using Prometheus.Internal;
 using System.IO;
 using System.Linq;
 
@@ -67,7 +65,7 @@ namespace Benchmark.NetCore
             }
         }
 
-        private Prometheus.Advanced.DataContracts.MetricFamily[] _data;
+        private Prometheus.DataContracts.MetricFamily[] _data;
         private byte[] _outputBuffer;
 
         [GlobalSetup]

@@ -1,6 +1,5 @@
-﻿using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
+﻿using Prometheus;
+using Prometheus.DataContracts;
 using Prometheus.SummaryImpl;
 using System;
 using System.Collections.Generic;
@@ -75,7 +74,7 @@ namespace Prometheus
 
         protected override MetricType Type => MetricType.SUMMARY;
 
-        public class Child : Advanced.Child, ISummary
+        public class Child : Prometheus.Child, ISummary
         {
             // Objectives defines the quantile rank estimates with their respective
             // absolute error. If Objectives[q] = e, then the value reported
@@ -120,7 +119,7 @@ namespace Prometheus
             // "github.com/bmizerany/perks/quantile").      
             int _bufCap;
 
-            Advanced.DataContracts.Summary _wireMetric;
+            DataContracts.Summary _wireMetric;
 
             internal override void Init(ICollector parent, LabelValues labelValues, bool publish)
             {
@@ -158,7 +157,7 @@ namespace Prometheus
 
                 Array.Sort(_sortedObjectives);
 
-                _wireMetric = new Advanced.DataContracts.Summary();
+                _wireMetric = new DataContracts.Summary();
 
                 for (var i = 0; i < _objectives.Count; i++)
                 {
@@ -176,7 +175,7 @@ namespace Prometheus
 
             internal void Populate(Metric metric, DateTime now)
             {
-                var summary = new Advanced.DataContracts.Summary();
+                var summary = new DataContracts.Summary();
                 var quantiles = new Quantile[_objectives.Count];
 
                 lock (_bufLock)

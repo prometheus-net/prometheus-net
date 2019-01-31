@@ -1,11 +1,17 @@
-﻿using Prometheus.Advanced.DataContracts;
+﻿using Prometheus.DataContracts;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
+    /// <summary>
+    /// The default implementation of a collector registry. Most apps will only use the singleton <see cref="Instance"/>.
+    /// 
+    /// Some built-in metrics are registered by default, just to ensure that the library exports some metrics when installed.
+    /// If these metrics are not desired, call <see cref="Clear"/> to remove them before registering your own metrics.
+    /// </summary>
     public class DefaultCollectorRegistry : ICollectorRegistry
     {
         /// <summary>
@@ -15,7 +21,7 @@ namespace Prometheus.Advanced
 
         static DefaultCollectorRegistry()
         {
-            // We register the default on-demand collectors here. To avoid having the,
+            // We register the default on-demand collectors here. To avoid having them,
             // use a custom instance instead of the singleton or call Clear() before the first use.
             Instance = new DefaultCollectorRegistry();
 

@@ -3,8 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
+    /// <summary>
+    /// Registers metrics in a collector registry.
+    /// </summary>
     public class MetricFactory
     {
         private readonly ICollectorRegistry _registry;
@@ -14,6 +17,9 @@ namespace Prometheus.Advanced
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         }
 
+        /// <summary>
+        /// Counters only increase in value and reset to zero when the process restarts.
+        /// </summary>
         public Counter CreateCounter(string name, string help, CounterConfiguration configuration)
         {
             configuration = configuration ?? CounterConfiguration.Default;
@@ -22,6 +28,9 @@ namespace Prometheus.Advanced
             return (Counter)_registry.GetOrAdd(metric);
         }
 
+        /// <summary>
+        /// Gauges can have any numeric value and change arbitrarily.
+        /// </summary>
         public Gauge CreateGauge(string name, string help, GaugeConfiguration configuration)
         {
             configuration = configuration ?? GaugeConfiguration.Default;
@@ -30,6 +39,9 @@ namespace Prometheus.Advanced
             return (Gauge)_registry.GetOrAdd(metric);
         }
 
+        /// <summary>
+        /// Summaries track the trends in events over time (10 minutes by default).
+        /// </summary>
         public Summary CreateSummary(string name, string help, SummaryConfiguration configuration)
         {
             configuration = configuration ?? SummaryConfiguration.Default;
@@ -38,6 +50,9 @@ namespace Prometheus.Advanced
             return (Summary)_registry.GetOrAdd(metric);
         }
 
+        /// <summary>
+        /// Histograms track the size and number of events in buckets.
+        /// </summary>
         public Histogram CreateHistogram(string name, string help, HistogramConfiguration configuration)
         {
             configuration = configuration ?? HistogramConfiguration.Default;
@@ -46,24 +61,36 @@ namespace Prometheus.Advanced
             return (Histogram)_registry.GetOrAdd(metric);
         }
 
+        /// <summary>
+        /// Counters only increase in value and reset to zero when the process restarts.
+        /// </summary>
         public Counter CreateCounter(string name, string help, params string[] labelNames) =>
             CreateCounter(name, help, new CounterConfiguration
             {
                 LabelNames = labelNames
             });
 
+        /// <summary>
+        /// Gauges can have any numeric value and change arbitrarily.
+        /// </summary>
         public Gauge CreateGauge(string name, string help, params string[] labelNames) =>
             CreateGauge(name, help, new GaugeConfiguration
             {
                 LabelNames = labelNames
             });
 
+        /// <summary>
+        /// Summaries track the trends in events over time (10 minutes by default).
+        /// </summary>
         public Summary CreateSummary(string name, string help, params string[] labelNames) =>
             CreateSummary(name, help, new SummaryConfiguration
             {
                 LabelNames = labelNames
             });
 
+        /// <summary>
+        /// Summaries track the trends in events over time (10 minutes by default).
+        /// </summary>
         public Summary CreateSummary(string name, string help, string[] labelNames, IList<QuantileEpsilonPair> objectives, TimeSpan? maxAge, int? ageBuckets, int? bufCap)
         {
             var config = new SummaryConfiguration
@@ -86,6 +113,9 @@ namespace Prometheus.Advanced
             return CreateSummary(name, help, config);
         }
 
+        /// <summary>
+        /// Histograms track the size and number of events in buckets.
+        /// </summary>
         public Histogram CreateHistogram(string name, string help, double[] buckets = null, params string[] labelNames) =>
             CreateHistogram(name, help, new HistogramConfiguration
             {

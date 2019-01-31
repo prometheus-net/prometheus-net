@@ -1,9 +1,9 @@
-using Prometheus.Advanced.DataContracts;
+using Prometheus.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Prometheus.Internal
+namespace Prometheus
 {
     /// <summary>
     /// The set of labels and label values associated with a metric. Used both for export and as keys.

@@ -1,4 +1,4 @@
-﻿using Prometheus.Internal;
+﻿using Prometheus.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,14 +6,17 @@ using System.Linq;
 
 namespace Prometheus
 {
+    /// <summary>
+    /// Transforms collected metrics to a stream with the requested content type (text or protobuf).
+    /// </summary>
     public static class ScrapeHandler
     {
-        const string ProtoContentType = "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited";
-        const string TextContentType = "text/plain; version=0.0.4";
-        const string ProtoAcceptType = "application/vnd.google.protobuf";
+        private const string ProtoContentType = "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited";
+        private const string TextContentType = "text/plain; version=0.0.4";
+        private const string ProtoAcceptType = "application/vnd.google.protobuf";
 
         public static void ProcessScrapeRequest(
-            IEnumerable<Advanced.DataContracts.MetricFamily> collected,
+            IEnumerable<MetricFamily> collected,
             string contentType,
             Stream outputStream)
         {
@@ -32,7 +35,7 @@ namespace Prometheus
             return ProtobufAccepted(acceptHeaders) ? ProtoContentType : TextContentType;
         }
 
-        static bool ProtobufAccepted(IEnumerable<string> acceptTypesHeader)
+        private static bool ProtobufAccepted(IEnumerable<string> acceptTypesHeader)
         {
             if (acceptTypesHeader == null)
                 return false;

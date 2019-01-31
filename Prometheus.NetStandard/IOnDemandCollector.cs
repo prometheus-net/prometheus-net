@@ -1,4 +1,4 @@
-﻿namespace Prometheus.Advanced
+﻿namespace Prometheus
 {
     /// <summary>
     /// An on-demand collector is a mechanism that enables one or more metrics to be updated before each data collection.

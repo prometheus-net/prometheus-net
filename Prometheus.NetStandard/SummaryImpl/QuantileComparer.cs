@@ -1,9 +1,9 @@
-﻿using Prometheus.Advanced.DataContracts;
+﻿using Prometheus.DataContracts;
 using System.Collections.Generic;
 
 namespace Prometheus.SummaryImpl
 {
-    class QuantileComparer : IComparer<Quantile>
+    internal class QuantileComparer : IComparer<Quantile>
     {
         public int Compare(Quantile x, Quantile y)
         {

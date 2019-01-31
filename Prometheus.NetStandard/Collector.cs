@@ -1,14 +1,17 @@
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
+using Prometheus.DataContracts;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
-    public abstract class Collector<TChild> : ICollector where TChild : Child, new()
+    /// <summary>
+    /// Base class for metrics of different types.
+    /// </summary>
+    public abstract class Collector<TChild> : ICollector
+        where TChild : Child, new()
     {
         private const string ValidMetricNameExpression = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
         private const string ValidLabelNameExpression = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
@@ -18,9 +21,9 @@ namespace Prometheus.Advanced
         private readonly Lazy<TChild> _unlabelledLazy;
 
         // ReSharper disable StaticFieldInGenericType
-        private readonly static Regex MetricNameRegex = new Regex(ValidMetricNameExpression, RegexOptions.Compiled);
-        private readonly static Regex LabelNameRegex = new Regex(ValidLabelNameExpression, RegexOptions.Compiled);
-        private readonly static Regex ReservedLabelRegex = new Regex(ReservedLabelNameExpression, RegexOptions.Compiled);
+        private static readonly Regex MetricNameRegex = new Regex(ValidMetricNameExpression, RegexOptions.Compiled);
+        private static readonly Regex LabelNameRegex = new Regex(ValidLabelNameExpression, RegexOptions.Compiled);
+        private static readonly Regex ReservedLabelRegex = new Regex(ReservedLabelNameExpression, RegexOptions.Compiled);
         // ReSharper restore StaticFieldInGenericType
 
         // This servers a slightly silly but useful purpose: by default if you start typing .La... and trigger Intellisense

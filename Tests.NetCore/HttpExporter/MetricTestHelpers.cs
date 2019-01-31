@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
+using Prometheus;
+using Prometheus.DataContracts;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,7 +22,7 @@ namespace Tests.HttpExporter
                 .value;
         }
 
-        public static Histogram GetLabelHistogram(List<Metric> collectedMetrics, string labelName, object labelValue)
+        public static Prometheus.DataContracts.Histogram GetLabelHistogram(List<Metric> collectedMetrics, string labelName, object labelValue)
         {
             return collectedMetrics
                 .Single(x => x.label.Any(l => l.name == labelName && l.value == labelValue.ToString())).histogram;

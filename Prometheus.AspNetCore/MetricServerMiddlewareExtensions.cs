@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using Prometheus.Advanced;
 
 namespace Prometheus
 {
     public static class MetricServerMiddlewareExtensions
     {
+        /// <summary>
+        /// Starts a Prometheus metrics exporter. The default URL is /metrics, which is a Prometheus convention.
+        /// Use static methods on the <see cref="Metrics"/> class to create your metrics.
+        /// </summary>
         public static IApplicationBuilder UseMetricServer(this IApplicationBuilder builder, string url = "/metrics", ICollectorRegistry registry = null)
         {
             // If there is a URL to map, map it and re-enter without the URL.

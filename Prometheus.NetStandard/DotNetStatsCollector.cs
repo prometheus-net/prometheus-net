@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Prometheus.Advanced
+namespace Prometheus
 {
     /// <summary>
-    /// Collects basic .NET metrics about the current process.
+    /// Collects basic .NET metrics about the current process. This is not meant to be an especially serious collector,
+    /// more of a producer of sample data so users of the library see something when they install it.
     /// </summary>
     public class DotNetStatsCollector : IOnDemandCollector
     {

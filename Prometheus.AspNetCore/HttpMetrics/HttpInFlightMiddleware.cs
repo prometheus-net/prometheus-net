@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading.Tasks;
 
-namespace Prometheus.AspNetCore.HttpExporter
+namespace Prometheus.HttpMetrics
 {
-    public class HttpInFlightMiddleware
+    public sealed class HttpInFlightMiddleware
     {
         private readonly IGauge _inFlightGauge;
 

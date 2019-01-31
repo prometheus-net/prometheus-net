@@ -1,24 +1,30 @@
 using Microsoft.AspNetCore.Builder;
-using Prometheus.AspNetCore.HttpExporter;
+using Prometheus.HttpMetrics;
 using System;
 
-namespace Prometheus.AspNetCore
+namespace Prometheus
 {
-    public static class HttpExporterMiddlewareExtensions
+    public static class HttpMetricsMiddlewareExtensions
     {
-        public static IApplicationBuilder UseHttpExporter(this IApplicationBuilder app,
+        /// <summary>
+        /// Configures the ASP.NET Core request pipeline to collect Prometheus metrics on processed HTTP requests.
+        /// </summary>
+        public static IApplicationBuilder UseHttpMetrics(this IApplicationBuilder app,
             Action<HttpMiddlewareExporterOptions> configure)
         {
             var options = new HttpMiddlewareExporterOptions();
 
             configure?.Invoke(options);
 
-            app.UseHttpExporter(options);
+            app.UseHttpMetrics(options);
 
             return app;
         }
 
-        public static IApplicationBuilder UseHttpExporter(this IApplicationBuilder app,
+        /// <summary>
+        /// Configures the ASP.NET Core request pipeline to collect Prometheus metrics on processed HTTP requests.
+        /// </summary>
+        public static IApplicationBuilder UseHttpMetrics(this IApplicationBuilder app,
             HttpMiddlewareExporterOptions options = null)
         {
             if (options == null) options = new HttpMiddlewareExporterOptions();

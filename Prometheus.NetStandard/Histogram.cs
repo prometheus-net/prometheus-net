@@ -1,6 +1,4 @@
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
+using Prometheus.DataContracts;
 using System;
 using System.Linq;
 
@@ -42,7 +40,7 @@ namespace Prometheus
             }
         }
 
-        public class Child : Advanced.Child, IHistogram
+        public class Child : Prometheus.Child, IHistogram
         {
             private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
             private ThreadSafeLong[] _bucketCounts;
@@ -58,7 +56,7 @@ namespace Prometheus
 
             protected override void Populate(Metric metric)
             {
-                var wireMetric = new Advanced.DataContracts.Histogram();
+                var wireMetric = new DataContracts.Histogram();
                 wireMetric.sample_count = 0L;
 
                 for (var i = 0; i < _bucketCounts.Length; i++)

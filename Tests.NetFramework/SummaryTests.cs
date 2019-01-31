@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
+using Prometheus.DataContracts;
 using Prometheus.SummaryImpl;
 using System;
 using System.Collections.Generic;
@@ -97,7 +96,7 @@ namespace Prometheus.Tests
             var child = new Summary.Child();
             child.Init(sum, LabelValues.Empty, baseTime, true);
 
-            Advanced.DataContracts.Summary m;
+            DataContracts.Summary m;
             var metric = new Metric();
 
             for (var i = 0; i < 1000; i++)
