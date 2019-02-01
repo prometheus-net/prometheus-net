@@ -113,7 +113,7 @@ namespace Prometheus
                 _sumIdentifier = CreateIdentifier("sum");
                 _countIdentifier = CreateIdentifier("count");
 
-                _quantileIdentifiers = new string[_objectives.Count];
+                _quantileIdentifiers = new byte[_objectives.Count][];
                 for (var i = 0; i < _objectives.Count; i++)
                 {
                     var value = double.IsPositiveInfinity(_objectives[i].Quantile) ? "+Inf" : _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
@@ -122,9 +122,9 @@ namespace Prometheus
                 }
             }
 
-            private readonly string _sumIdentifier;
-            private readonly string _countIdentifier;
-            private readonly string[] _quantileIdentifiers;
+            private readonly byte[] _sumIdentifier;
+            private readonly byte[] _countIdentifier;
+            private readonly byte[][] _quantileIdentifiers;
 
             internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {

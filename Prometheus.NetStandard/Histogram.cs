@@ -58,7 +58,7 @@ namespace Prometheus
                 _sumIdentifier = CreateIdentifier("sum");
                 _countIdentifier = CreateIdentifier("count");
 
-                _bucketIdentifiers = new string[_upperBounds.Length];
+                _bucketIdentifiers = new byte[_upperBounds.Length][];
                 for (var i = 0; i < _upperBounds.Length; i++)
                 {
                     var value = double.IsPositiveInfinity(_upperBounds[i]) ? "+Inf" : _upperBounds[i].ToString(CultureInfo.InvariantCulture);
@@ -73,9 +73,9 @@ namespace Prometheus
             private readonly ThreadSafeLong[] _bucketCounts;
             private readonly double[] _upperBounds;
 
-            private readonly string _sumIdentifier;
-            private readonly string _countIdentifier;
-            private readonly string[] _bucketIdentifiers;
+            private readonly byte[] _sumIdentifier;
+            private readonly byte[] _countIdentifier;
+            private readonly byte[][] _bucketIdentifiers;
 
             internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {

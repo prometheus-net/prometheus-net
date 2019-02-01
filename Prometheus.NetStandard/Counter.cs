@@ -18,7 +18,7 @@ namespace Prometheus
                 _identifier = CreateIdentifier();
             }
 
-            private readonly string _identifier;
+            private readonly byte[] _identifier;
 
             private ThreadSafeDouble _value;
 

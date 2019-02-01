@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace Prometheus
 {
     /// <summary>
@@ -23,13 +25,13 @@ namespace Prometheus
         /// </remarks>
         public void Publish()
         {
-            _publish = true;
+            Volatile.Write(ref _publish, true);
         }
 
-        private Collector _parent;
-        private Labels _labels;
+        private readonly Collector _parent;
+        private readonly Labels _labels;
 
-        private volatile bool _publish;
+        private bool _publish;
 
         /// <summary>
         /// Collects all the metric data rows from this collector and serializes it using the given serializer.
@@ -39,7 +41,7 @@ namespace Prometheus
         /// </remarks>
         internal void CollectAndSerialize(IMetricsSerializer serializer)
         {
-            if (!_publish)
+            if (!Volatile.Read(ref _publish))
                 return;
 
             CollectAndSerializeImpl(serializer);
@@ -52,7 +54,7 @@ namespace Prometheus
         /// Creates a metric identifier, with an optional name postfix and optional extra labels.
         /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
         /// </summary>
-        protected string CreateIdentifier(string postfix = null, params (string, string)[] extraLabels)
+        protected byte[] CreateIdentifier(string postfix = null, params (string, string)[] extraLabels)
         {
             var fullName = postfix != null ? $"{_parent.Name}_{postfix}" : _parent.Name;
 
@@ -61,9 +63,9 @@ namespace Prometheus
                 labels = _labels.Concat(extraLabels);
 
             if (labels.Count != 0)
-                return $"{fullName}{{{labels.Serialize()}}}";
+                return PrometheusConstants.ExportEncoding.GetBytes($"{fullName}{{{labels.Serialize()}}}");
             else
-                return fullName;
+                return PrometheusConstants.ExportEncoding.GetBytes(fullName);
         }
     }
 }

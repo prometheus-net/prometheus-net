@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Prometheus
@@ -110,10 +111,10 @@ namespace Prometheus
             _suppressInitialValue = suppressInitialValue;
             _unlabelledLazy = new Lazy<TChild>(() => GetOrAddLabelled(Prometheus.Labels.Empty));
 
-            _familyHeaderLines = new string[]
+            _familyHeaderLines = new byte[][]
             {
-                $"# HELP {name} {help}",
-                $"# TYPE {name} {Type.ToString().ToLowerInvariant()}"
+                PrometheusConstants.ExportEncoding.GetBytes($"# HELP {name} {help}"),
+                PrometheusConstants.ExportEncoding.GetBytes($"# TYPE {name} {Type.ToString().ToLowerInvariant()}")
             };
         }
 
@@ -124,7 +125,7 @@ namespace Prometheus
 
         internal abstract MetricType Type { get; }
 
-        private readonly string[] _familyHeaderLines;
+        private readonly byte[][] _familyHeaderLines;
 
         internal override void CollectAndSerialize(IMetricsSerializer serializer)
         {

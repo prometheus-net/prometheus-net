@@ -8,7 +8,7 @@
             Epsilon = epsilon;
         }
 
-        public double Quantile { get; private set; }
-        public double Epsilon { get; private set; }
+        public double Quantile { get; }
+        public double Epsilon { get; }
     }
 }

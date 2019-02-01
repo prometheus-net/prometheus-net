@@ -38,8 +38,8 @@ namespace Prometheus
             _values = values;
             _names = names;
 
-            // Calculating the hash code is fast but we don't need to re-calculate it for each comparison this object is involved in.
-            // Label values are fixed- caluclate it once up-front and remember the value.
+            // Calculating the hash code is fast but we don't need to re-calculate it for each comparison.
+            // Labels are fixed - calculate it once up-front and remember the value.
             _hashCode = CalculateHashCode(_values);
         }
 
@@ -64,6 +64,8 @@ namespace Prometheus
         /// </summary>
         public string Serialize()
         {
+            // Result is cached in child collector - no need to worry about efficiency here.
+
             var labels = _names
                 .Zip(_values, (name, value) => $"{name}=\"{EscapeLabelValue(value)}\"");
 
@@ -74,6 +76,7 @@ namespace Prometheus
         {
             if (_hashCode != other._hashCode) return false;
             if (other._values.Length != _values.Length) return false;
+
             for (int i = 0; i < _values.Length; i++)
             {
                 if (!string.Equals(_values[i], other._values[i], StringComparison.Ordinal))

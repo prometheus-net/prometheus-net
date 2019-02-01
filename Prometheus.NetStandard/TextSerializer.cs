@@ -1,46 +1,61 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
-using System.Text;
 
 namespace Prometheus
 {
     internal sealed class TextSerializer : IMetricsSerializer, IDisposable
     {
-        // Use UTF-8 encoding, but provide the flag to ensure the Unicode Byte Order Mark is never
-        // pre-pended to the output stream.
-        private static readonly Encoding Encoding = new UTF8Encoding(false);
+        private const byte NewLine = (byte)'\n';
+        private const byte Space = (byte)' ';
 
         public TextSerializer(Stream stream)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            _writer = new StreamWriter(stream, Encoding, 16 * 1024, leaveOpen: true);
-            _writer.NewLine = "\n";
+            _stream = new BufferedStream(stream, 16 * 1024);
         }
 
         public void Dispose()
         {
-            _writer.Dispose();
+            // We do not take ownership of the stream and never want to dispose/finalize it.
+            _stream.Flush();
+            GC.SuppressFinalize(_stream);
         }
 
-        private readonly StreamWriter _writer;
+        private readonly BufferedStream _stream;
 
         // HELP name help
         // TYPE name type
-        public void WriteFamilyDeclaration(string[] headerLines)
+        public void WriteFamilyDeclaration(byte[][] headerLines)
         {
             foreach (var line in headerLines)
-                _writer.WriteLine(line);
+            {
+                _stream.Write(line, 0, line.Length);
+                _stream.WriteByte(NewLine);
+            }
         }
 
+        // Reuse a buffer to do the UTF-8 encoding.
+        // Maybe one day also ValueStringBuilder but that would be .NET Core only.
+        // https://github.com/dotnet/corefx/issues/28379
+        // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
+        private readonly byte[] _stringBytesBuffer = new byte[32];
+
         // name{labelkey1="labelvalue1",labelkey2="labelvalue2"} 123.456
-        public void WriteMetric(string identifier, double value)
+        public void WriteMetric(byte[] identifier, double value)
         {
-            _writer.Write(identifier);
-            _writer.Write(' ');
-            _writer.WriteLine(value.ToString(CultureInfo.InvariantCulture));
+            _stream.Write(identifier, 0, identifier.Length);
+            _stream.WriteByte(Space);
+
+            var valueAsString = value.ToString(CultureInfo.InvariantCulture);
+
+            var numBytes = PrometheusConstants.ExportEncoding
+                .GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
+
+            _stream.Write(_stringBytesBuffer, 0, numBytes);
+            _stream.WriteByte(NewLine);
         }
     }
 }

@@ -10,11 +10,11 @@
         /// <summary>
         /// Writes the lines that declare the metric family.
         /// </summary>
-        void WriteFamilyDeclaration(string[] headerLines);
+        void WriteFamilyDeclaration(byte[][] headerLines);
 
         /// <summary>
         /// Writes a single metric in a metric family.
         /// </summary>
-        void WriteMetric(string identifier, double value);
+        void WriteMetric(byte[] identifier, double value);
     }
 }
