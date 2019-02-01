@@ -15,16 +15,8 @@ namespace Benchmark.NetCore
         private HttpRequestCountMiddleware _countMiddleware;
         private HttpRequestDurationMiddleware _durationMiddleware;
 
-        private ParallelOptions ParallelOptions => new ParallelOptions
-        {
-            MaxDegreeOfParallelism = MaxDegreeOfParallelism
-        };
-
-        [Params(100, 1000, 10000)]
+        [Params(1000, 10000)]
         public int RequestCount { get; set; }
-
-        [Params(1, 4)]
-        public int MaxDegreeOfParallelism { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -41,24 +33,24 @@ namespace Benchmark.NetCore
         }
 
         [Benchmark]
-        public void HttpInFlight()
+        public async Task HttpInFlight()
         {
-            Parallel.For(0, RequestCount, ParallelOptions,
-                async _ => await _inFlightMiddleware.Invoke(new DefaultHttpContext()));
+            for (var i = 0; i < RequestCount; i++)
+                await _inFlightMiddleware.Invoke(new DefaultHttpContext());
         }
 
         [Benchmark]
-        public void HttpRequestCount()
+        public async Task HttpRequestCount()
         {
-            Parallel.For(0, RequestCount, ParallelOptions,
-                async _ => await _countMiddleware.Invoke(new DefaultHttpContext()));
+            for (var i = 0; i < RequestCount; i++)
+                await _countMiddleware.Invoke(new DefaultHttpContext());
         }
 
         [Benchmark]
-        public void HttpRequestDuration()
+        public async Task HttpRequestDuration()
         {
-            Parallel.For(0, RequestCount, ParallelOptions,
-                async _ => await _durationMiddleware.Invoke(new DefaultHttpContext()));
+            for (var i = 0; i < RequestCount; i++)
+                await _durationMiddleware.Invoke(new DefaultHttpContext());
         }
     }
 }
