@@ -27,13 +27,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Tests.NetFramework\AsciiFormatterTests.cs" Link="AsciiFormatterTests.cs" />
     <Compile Include="..\Tests.NetFramework\MetricInitializationTests.cs" Link="MetricInitializationTests.cs" />
     <Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
     <Compile Include="..\Tests.NetFramework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
     <Compile Include="..\Tests.NetFramework\RandomExtensions.cs" Link="RandomExtensions.cs" />
-    <Compile Include="..\Tests.NetFramework\SummaryBenchmarks.cs" Link="SummaryBenchmarks.cs" />
-    <Compile Include="..\Tests.NetFramework\SummaryTests.cs" Link="SummaryTests.cs" />
     <Compile Include="..\Tests.NetFramework\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
     <Compile Include="..\Tests.NetFramework\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
   </ItemGroup>
@@ -42,6 +39,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
+    <PackageReference Include="NSubstitute" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>

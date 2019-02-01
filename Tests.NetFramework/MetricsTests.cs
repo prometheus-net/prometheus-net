@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NSubstitute;
 using System;
-using System.Linq;
 
 namespace Prometheus.Tests
 {
@@ -41,141 +41,34 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
-        public void counter_collection()
+        public void CreateCounter_WithDifferentRegistry_CreatesIndependentCounters()
         {
-            var counter = Metrics.CreateCounter("name1", "help1", "label1");
+            var registry1 = Metrics.NewCustomRegistry();
+            var registry2 = Metrics.NewCustomRegistry();
+            var counter1 = Metrics.WithCustomRegistry(registry1)
+                .CreateCounter("counter", "");
+            var counter2 = Metrics.WithCustomRegistry(registry2)
+                .CreateCounter("counter", "");
 
-            counter.Inc();
-            counter.Inc(3.2);
-            counter.Labels("abc").Inc(3.2);
+            Assert.AreNotSame(counter1, counter2);
 
-            var exported = Metrics.DefaultRegistry.Collect().Families;
+            counter1.Inc();
+            counter2.Inc();
 
-            Assert.AreEqual(1, exported.Count);
-            var familiy1 = exported[0];
-            Assert.AreEqual("name1", familiy1.Name);
-            Assert.AreEqual("help1", familiy1.Help);
-            var metrics = familiy1.Metrics;
-            Assert.AreEqual(2, metrics.Count);
+            Assert.AreEqual(1, counter1.Value);
+            Assert.AreEqual(1, counter2.Value);
 
-            // We need to sort the metrics as the order they are returned in is not fixed.
-            // Let's just sort by counter value, descending (arbitrarily).
-            metrics.Sort((a, b) => -a.Counter.Value.CompareTo(b.Counter.Value));
+            var serializer1 = Substitute.For<IMetricsSerializer>();
+            registry1.CollectAndSerialize(serializer1);
 
-            foreach (var metric in metrics)
-            {
-                Assert.IsNull(metric.Gauge);
-                Assert.IsNull(metric.Histogram);
-                Assert.IsNull(metric.Summary);
-                Assert.IsNotNull(metric.Counter);
-            }
+            var serializer2 = Substitute.For<IMetricsSerializer>();
+            registry2.CollectAndSerialize(serializer2);
 
-            Assert.AreEqual(4.2, metrics[0].Counter.Value);
-            Assert.AreEqual(0, metrics[0].Labels.Length);
+            serializer1.ReceivedWithAnyArgs().WriteFamilyDeclaration(default);
+            serializer1.ReceivedWithAnyArgs().WriteMetric(default, default);
 
-            Assert.AreEqual(3.2, metrics[1].Counter.Value);
-            var labelPairs = metrics[1].Labels;
-            Assert.AreEqual(1, labelPairs.Length);
-            Assert.AreEqual("label1", labelPairs[0].Name);
-            Assert.AreEqual("abc", labelPairs[0].Value);
-        }
-
-        [TestMethod]
-        public void custom_registry()
-        {
-            var myRegistry = Metrics.NewCustomRegistry();
-            var counter1 = Metrics.WithCustomRegistry(myRegistry).CreateCounter("counter1", "help1"); //registered on a custom registry
-
-            var counter2 = Metrics.CreateCounter("counter1", "help1"); //created on different registry - same name is hence permitted
-
-            counter1.Inc(3);
-            counter2.Inc(4);
-
-            Assert.AreEqual(3, myRegistry.Collect().Families[0].Metrics[0].Counter.Value); //counter1 == 3
-            Assert.AreEqual(4, Metrics.DefaultRegistry.Collect().Families[0].Metrics[0].Counter.Value); //counter2 == 4
-        }
-
-        [TestMethod]
-        public void gauge_collection()
-        {
-            var gauge = Metrics.CreateGauge("name1", "help1");
-
-            gauge.Inc();
-            gauge.Inc(3.2);
-            gauge.Set(4);
-            gauge.Dec(0.2);
-
-            var exported = Metrics.DefaultRegistry.Collect().Families;
-
-            Assert.AreEqual(1, exported.Count);
-            var familiy1 = exported[0];
-            Assert.AreEqual("name1", familiy1.Name);
-            Assert.AreEqual("help1", familiy1.Help);
-            var metrics = familiy1.Metrics;
-            Assert.AreEqual(1, metrics.Count);
-
-            foreach (var metric in metrics)
-            {
-                Assert.IsNull(metric.Counter);
-                Assert.IsNull(metric.Histogram);
-                Assert.IsNull(metric.Summary);
-                Assert.IsNotNull(metric.Gauge);
-            }
-
-            Assert.AreEqual(3.8, metrics[0].Gauge.Value);
-        }
-
-        [TestMethod]
-        public void histogram_tests()
-        {
-            Histogram histogram = Metrics.CreateHistogram("hist1", "help", new HistogramConfiguration
-            {
-                Buckets = new[] { 1.0, 2.0, 3.0, double.PositiveInfinity }
-            });
-
-            histogram.Observe(1.5);
-            histogram.Observe(2.5);
-            histogram.Observe(1);
-            histogram.Observe(2.4);
-            histogram.Observe(2.1);
-            histogram.Observe(0.4);
-            histogram.Observe(1.4);
-            histogram.Observe(1.5);
-            histogram.Observe(3.9);
-            histogram.Observe(double.NaN);
-
-            var metric = histogram.Collect().Metrics[0];
-            Assert.IsNotNull(metric.Histogram);
-            Assert.AreEqual(9L, metric.Histogram.SampleCount);
-            Assert.AreEqual(16.7, metric.Histogram.SampleSum);
-            Assert.AreEqual(4, metric.Histogram.Buckets.Length);
-            Assert.AreEqual(2L, metric.Histogram.Buckets[0].CumulativeCount);
-            Assert.AreEqual(5L, metric.Histogram.Buckets[1].CumulativeCount);
-            Assert.AreEqual(8L, metric.Histogram.Buckets[2].CumulativeCount);
-            Assert.AreEqual(9L, metric.Histogram.Buckets[3].CumulativeCount);
-        }
-
-        [TestMethod]
-        public void histogram_default_buckets()
-        {
-            var histogram = Metrics.CreateHistogram("hist", "help");
-            histogram.Observe(0.03);
-
-            var metric = histogram.Collect().Metrics[0];
-            Assert.IsNotNull(metric.Histogram);
-            Assert.AreEqual(1L, metric.Histogram.SampleCount);
-            Assert.AreEqual(0.03, metric.Histogram.SampleSum);
-            Assert.AreEqual(15, metric.Histogram.Buckets.Length);
-            Assert.AreEqual(0.005, metric.Histogram.Buckets[0].UpperBound);
-            Assert.AreEqual(0L, metric.Histogram.Buckets[0].CumulativeCount);
-            Assert.AreEqual(0.01, metric.Histogram.Buckets[1].UpperBound);
-            Assert.AreEqual(0L, metric.Histogram.Buckets[1].CumulativeCount);
-            Assert.AreEqual(0.025, metric.Histogram.Buckets[2].UpperBound);
-            Assert.AreEqual(0L, metric.Histogram.Buckets[2].CumulativeCount);
-            Assert.AreEqual(0.05, metric.Histogram.Buckets[3].UpperBound);
-            Assert.AreEqual(1L, metric.Histogram.Buckets[3].CumulativeCount);
-            Assert.AreEqual(0.075, metric.Histogram.Buckets[4].UpperBound);
-            Assert.AreEqual(1L, metric.Histogram.Buckets[4].CumulativeCount);
+            serializer2.ReceivedWithAnyArgs().WriteFamilyDeclaration(default);
+            serializer2.ReceivedWithAnyArgs().WriteMetric(default, default);
         }
 
         [TestMethod]
@@ -285,21 +178,6 @@ namespace Prometheus.Tests
 
             Assert.ThrowsException<ArgumentException>(() => Histogram.LinearBuckets(bucketsStart, bucketsWidth, -1));
             Assert.ThrowsException<ArgumentException>(() => Histogram.LinearBuckets(bucketsStart, bucketsWidth, 0));
-        }
-
-        [TestMethod]
-        public void summary_tests()
-        {
-            var summary = Metrics.CreateSummary("summ1", "help");
-
-            summary.Observe(1);
-            summary.Observe(2);
-            summary.Observe(3);
-
-            var metric = summary.Collect().Metrics[0];
-            Assert.IsNotNull(metric.Summary);
-            Assert.AreEqual(3L, metric.Summary.SampleCount);
-            Assert.AreEqual(6, metric.Summary.SampleSum);
         }
 
         [TestMethod]

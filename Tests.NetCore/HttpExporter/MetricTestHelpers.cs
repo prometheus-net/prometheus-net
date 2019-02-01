@@ -8,30 +8,6 @@ namespace Tests.HttpExporter
 {
     public static class MetricTestHelpers
     {
-        internal static string GetLabelData(List<MetricData> collectedMetrics, string labelName)
-        {
-            var labelValues = collectedMetrics.Single().Labels;
-            return labelValues.SingleOrDefault(x => x.Name == labelName)?.Value;
-        }
-
-        internal static double GetLabelCounterValue(List<MetricData> collectedMetrics, string labelName, object labelValue)
-        {
-            return collectedMetrics
-                .Single(x => x.Labels.Any(l => l.Name == labelName && l.Value == labelValue.ToString())).Counter
-                .Value;
-        }
-
-        internal static HistogramData GetLabelHistogram(List<MetricData> collectedMetrics, string labelName, object labelValue)
-        {
-            return collectedMetrics
-                .Single(x => x.Labels.Any(l => l.Name == labelName && l.Value == labelValue.ToString())).Histogram;
-        }
-
-        internal static List<MetricData> GetCollectedMetrics<T>(Collector<T> counter) where T : ChildBase, new()
-        {
-            return counter.Collect().Metrics;
-        }
-
         public static void SetupHttpContext(DefaultHttpContext hc, int expectedStatusCode, string expectedMethod,
             string expectedAction, string expectedController)
         {
@@ -45,6 +21,22 @@ namespace Tests.HttpExporter
                     Values = { { "Action", expectedAction }, { "Controller", expectedController } }
                 }
             };
+        }
+
+        internal static string GetLabelValueOrDefault(Labels labels, string name)
+        {
+            return labels.Names
+                .Zip(labels.Values, (n, v) => (n, v))
+                .FirstOrDefault(pair => pair.n == name).v;
+        }
+
+        internal static string[] GetLabelValues(IEnumerable<Labels> labels, string name)
+        {
+            return labels.SelectMany(l => l.Names
+                    .Zip(l.Values, (n, v) => (n, v))
+                    .Where(pair => pair.n == name)
+                    .Select(pair => pair.v))
+                    .ToArray();
         }
     }
 }

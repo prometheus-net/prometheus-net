@@ -61,11 +61,11 @@ namespace Tests.HttpExporter
 
             await _sut.Invoke(_httpContext);
 
-            var collectedMetrics = GetCollectedMetrics(histogram);
-            Assert.AreEqual(expectedStatusCode.ToString(), GetLabelData(collectedMetrics, HttpRequestLabelNames.Code));
-            Assert.AreEqual(expectedMethod, GetLabelData(collectedMetrics, HttpRequestLabelNames.Method));
-            Assert.AreEqual(expectedAction, GetLabelData(collectedMetrics, HttpRequestLabelNames.Action));
-            Assert.AreEqual(expectedController, GetLabelData(collectedMetrics, HttpRequestLabelNames.Controller));
+            var labels = histogram.GetAllLabels().Single();
+            Assert.AreEqual(expectedStatusCode.ToString(), GetLabelValueOrDefault(labels, HttpRequestLabelNames.Code));
+            Assert.AreEqual(expectedMethod, GetLabelValueOrDefault(labels, HttpRequestLabelNames.Method));
+            Assert.AreEqual(expectedAction, GetLabelValueOrDefault(labels, HttpRequestLabelNames.Action));
+            Assert.AreEqual(expectedController, GetLabelValueOrDefault(labels, HttpRequestLabelNames.Controller));
         }
 
         [TestMethod]
@@ -86,11 +86,11 @@ namespace Tests.HttpExporter
 
             await _sut.Invoke(_httpContext);
 
-            var collectedMetrics = GetCollectedMetrics(histogram);
-            Assert.AreEqual(expectedStatusCode.ToString(), GetLabelData(collectedMetrics, HttpRequestLabelNames.Code));
-            Assert.AreEqual(expectedMethod, GetLabelData(collectedMetrics, HttpRequestLabelNames.Method));
-            Assert.AreEqual(expectedAction, GetLabelData(collectedMetrics, HttpRequestLabelNames.Action));
-            Assert.AreEqual(expectedController, GetLabelData(collectedMetrics, HttpRequestLabelNames.Controller));
+            var labels = histogram.GetAllLabels().Single();
+            Assert.AreEqual(expectedStatusCode.ToString(), GetLabelValueOrDefault(labels, HttpRequestLabelNames.Code));
+            Assert.AreEqual(expectedMethod, GetLabelValueOrDefault(labels, HttpRequestLabelNames.Method));
+            Assert.AreEqual(expectedAction, GetLabelValueOrDefault(labels, HttpRequestLabelNames.Action));
+            Assert.AreEqual(expectedController, GetLabelValueOrDefault(labels, HttpRequestLabelNames.Controller));
         }
 
         [TestMethod]
@@ -109,11 +109,11 @@ namespace Tests.HttpExporter
 
             await _sut.Invoke(_httpContext);
 
-            var collectedMetrics = GetCollectedMetrics(histogram);
-            Assert.IsNull(GetLabelData(collectedMetrics, HttpRequestLabelNames.Code));
-            Assert.IsNull(GetLabelData(collectedMetrics, HttpRequestLabelNames.Method));
-            Assert.AreEqual(expectedAction, GetLabelData(collectedMetrics, HttpRequestLabelNames.Action));
-            Assert.AreEqual(expectedController, GetLabelData(collectedMetrics, HttpRequestLabelNames.Controller));
+            var labels = histogram.GetAllLabels().Single();
+            Assert.IsNull(GetLabelValueOrDefault(labels, HttpRequestLabelNames.Code));
+            Assert.IsNull(GetLabelValueOrDefault(labels, HttpRequestLabelNames.Method));
+            Assert.AreEqual(expectedAction, GetLabelValueOrDefault(labels, HttpRequestLabelNames.Action));
+            Assert.AreEqual(expectedController, GetLabelValueOrDefault(labels, HttpRequestLabelNames.Controller));
         }
 
         [TestMethod]
@@ -129,12 +129,11 @@ namespace Tests.HttpExporter
             var expectedStatusCode1 = await SetStatusCodeAndInvoke(400);
             var expectedStatusCode2 = await SetStatusCodeAndInvoke(401);
 
-            var collectedMetrics = GetCollectedMetrics(histogram);
-            Assert.AreEqual(2, collectedMetrics.Count);
-            Assert.AreEqual(1L,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Code, expectedStatusCode1).SampleCount);
-            Assert.AreEqual(1L,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Code, expectedStatusCode2).SampleCount);
+            var labels = histogram.GetAllLabels();
+            var codes = GetLabelValues(labels, HttpRequestLabelNames.Code);
+
+            Assert.AreEqual(2, codes.Length);
+            CollectionAssert.AreEquivalent(new[] { expectedStatusCode1.ToString(), expectedStatusCode2.ToString() }, codes);
         }
 
         [TestMethod]
@@ -150,12 +149,11 @@ namespace Tests.HttpExporter
             var expectedMethod1 = await SetMethodAndInvoke("POST");
             var expectedMethod2 = await SetMethodAndInvoke("GET");
 
-            var collectedMetrics = GetCollectedMetrics(histogram);
-            Assert.AreEqual(2, collectedMetrics.Count);
-            Assert.AreEqual(1L,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Method, expectedMethod1).SampleCount);
-            Assert.AreEqual(1L,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Method, expectedMethod2).SampleCount);
+            var labels = histogram.GetAllLabels();
+            var methods = GetLabelValues(labels, HttpRequestLabelNames.Method);
+
+            Assert.AreEqual(2, methods.Length);
+            CollectionAssert.AreEquivalent(new[] { expectedMethod1, expectedMethod2 }, methods);
         }
 
         [TestMethod]
@@ -171,14 +169,11 @@ namespace Tests.HttpExporter
             var expectedController1 = await SetControllerAndInvoke("ValuesController");
             var expectedController2 = await SetControllerAndInvoke("AuthController");
 
-            var collectedMetrics = GetCollectedMetrics(histogram);
-            Assert.AreEqual(2, collectedMetrics.Count);
-            Assert.AreEqual(1L,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Controller, expectedController1)
-                    .SampleCount);
-            Assert.AreEqual(1L,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Controller, expectedController2)
-                    .SampleCount);
+            var labels = histogram.GetAllLabels();
+            var controllers = GetLabelValues(labels, HttpRequestLabelNames.Controller);
+
+            Assert.AreEqual(2, controllers.Length);
+            CollectionAssert.AreEquivalent(new[] { expectedController1, expectedController2 }, controllers);
         }
 
         [TestMethod]
@@ -194,12 +189,11 @@ namespace Tests.HttpExporter
             var expectedAction1 = await SetActionAndInvoke("Action1");
             var expectedAction2 = await SetActionAndInvoke("Action2");
 
-            var collectedMetrics = GetCollectedMetrics(histogram);
-            Assert.AreEqual(2, collectedMetrics.Count);
-            Assert.AreEqual(1L,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Action, expectedAction1).SampleCount);
-            Assert.AreEqual(1L,
-                GetLabelHistogram(collectedMetrics, HttpRequestLabelNames.Action, expectedAction2).SampleCount);
+            var labels = histogram.GetAllLabels();
+            var actions = GetLabelValues(labels, HttpRequestLabelNames.Action);
+
+            Assert.AreEqual(2, actions.Length);
+            CollectionAssert.AreEquivalent(new[] { expectedAction1, expectedAction2 }, actions);
         }
 
         [TestInitialize]

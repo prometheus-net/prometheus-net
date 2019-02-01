@@ -1,4 +1,4 @@
-﻿namespace Prometheus.SummaryImpl
+﻿namespace Prometheus
 {
     public struct QuantileEpsilonPair
     {

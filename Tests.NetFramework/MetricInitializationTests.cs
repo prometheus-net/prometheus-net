@@ -1,11 +1,26 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+using NSubstitute;
 
 namespace Prometheus.Tests
 {
     [TestClass]
     public sealed class MetricInitializationTests
     {
+        private static HistogramConfiguration NewHistogramConfiguration() => new HistogramConfiguration
+        {
+            // This results in 4 metrics - sum, count, 1.0, +Inf
+            Buckets = new[] { 1.0 }
+        };
+
+        private static SummaryConfiguration NewSummaryConfiguration() => new SummaryConfiguration
+        {
+            // This results in 3 metrics - sum, count, 0.1
+            Objectives = new[]
+            {
+                new QuantileEpsilonPair(0.1, 0.05)
+            }
+        };
+
         #region Unlabelled logic
         [TestMethod]
         public void CreatingUnlabelledMetric_WithoutObservingAnyData_ExportsImmediately()
@@ -13,27 +28,26 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
+            var summaryConfig = NewSummaryConfiguration();
+            var histogramConfig = NewHistogramConfiguration();
+
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
             {
             });
             var counter = factory.CreateCounter("counter", "", new CounterConfiguration
             {
             });
-            var summary = factory.CreateSummary("summary", "", new SummaryConfiguration
-            {
-            });
-            var histogram = factory.CreateHistogram("histogram", "", new HistogramConfiguration
-            {
-            });
+            var summary = factory.CreateSummary("summary", "", summaryConfig);
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig);
+            // 4 families with 9 metrics total.
+
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
             // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.Collect().Families;
 
-            // There is a family for each of the above, in each family we expect to see 1 metrics.
-            Assert.AreEqual(4, exported.Count);
-
-            foreach (var family in exported)
-                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
         }
 
         [TestMethod]
@@ -42,6 +56,12 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
+            var sumamryConfig = NewSummaryConfiguration();
+            sumamryConfig.SuppressInitialValue = true;
+
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.SuppressInitialValue = true;
+
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
             {
                 SuppressInitialValue = true
@@ -50,22 +70,16 @@ namespace Prometheus.Tests
             {
                 SuppressInitialValue = true
             });
-            var summary = factory.CreateSummary("summary", "", new SummaryConfiguration
-            {
-                SuppressInitialValue = true
-            });
-            var histogram = factory.CreateHistogram("histogram", "", new HistogramConfiguration
-            {
-                SuppressInitialValue = true
-            });
+            var summary = factory.CreateSummary("summary", "", sumamryConfig);
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig);
+            // 4 families with 9 metrics total.
 
-            var exported = registry.Collect().Families;
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
             // There is a family for each of the above, in each family we expect to see 0 metrics.
-            Assert.AreEqual(4, exported.Count);
-
-            foreach (var family in exported)
-                Assert.AreEqual(0, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.DidNotReceiveWithAnyArgs().WriteMetric(default, default);
         }
 
         [TestMethod]
@@ -74,6 +88,12 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
+            var sumamryConfig = NewSummaryConfiguration();
+            sumamryConfig.SuppressInitialValue = true;
+
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.SuppressInitialValue = true;
+
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
             {
                 SuppressInitialValue = true
@@ -82,28 +102,21 @@ namespace Prometheus.Tests
             {
                 SuppressInitialValue = true
             });
-            var summary = factory.CreateSummary("summary", "", new SummaryConfiguration
-            {
-                SuppressInitialValue = true
-            });
-            var histogram = factory.CreateHistogram("histogram", "", new HistogramConfiguration
-            {
-                SuppressInitialValue = true
-            });
+            var summary = factory.CreateSummary("summary", "", sumamryConfig);
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig);
+            // 4 families with 9 metrics total.
 
             gauge.Set(123);
             counter.Inc();
             summary.Observe(123);
             histogram.Observe(31);
 
-            // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.Collect().Families;
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
-            // There is a family for each of the above, in each family we expect to see 1 metric.
-            Assert.AreEqual(4, exported.Count);
-
-            foreach (var family in exported)
-                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            // Even though suppressed, they all now have values so should all be published.
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
         }
 
         [TestMethod]
@@ -112,6 +125,12 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
+            var sumamryConfig = NewSummaryConfiguration();
+            sumamryConfig.SuppressInitialValue = true;
+
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.SuppressInitialValue = true;
+
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
             {
                 SuppressInitialValue = true
@@ -120,28 +139,21 @@ namespace Prometheus.Tests
             {
                 SuppressInitialValue = true
             });
-            var summary = factory.CreateSummary("summary", "", new SummaryConfiguration
-            {
-                SuppressInitialValue = true
-            });
-            var histogram = factory.CreateHistogram("histogram", "", new HistogramConfiguration
-            {
-                SuppressInitialValue = true
-            });
+            var summary = factory.CreateSummary("summary", "", sumamryConfig);
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig);
+            // 4 families with 9 metrics total.
 
             gauge.Publish();
             counter.Publish();
             summary.Publish();
             histogram.Publish();
 
-            // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.Collect().Families;
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
-            // There is a family for each of the above, in each family we expect to see 1 metrics.
-            Assert.AreEqual(4, exported.Count);
-
-            foreach (var family in exported)
-                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            // Even though suppressed, they were all explicitly published.
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
         }
         #endregion
 
@@ -152,6 +164,12 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
+            var sumamryConfig = NewSummaryConfiguration();
+            sumamryConfig.LabelNames = new[] { "foo" };
+
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.LabelNames = new[] { "foo" };
+
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
             {
                 LabelNames = new[] { "foo" }
@@ -160,23 +178,16 @@ namespace Prometheus.Tests
             {
                 LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var summary = factory.CreateSummary("summary", "", new SummaryConfiguration
-            {
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
-            var histogram = factory.CreateHistogram("histogram", "", new HistogramConfiguration
-            {
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
+            var summary = factory.CreateSummary("summary", "", sumamryConfig).WithLabels("bar");
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig).WithLabels("bar");
+            // 4 families with 9 metrics total.
 
-            // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.Collect().Families;
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
-            // There is a family for each of the above, in each family we expect to see 1 metrics.
-            Assert.AreEqual(4, exported.Count);
-
-            foreach (var family in exported)
-                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            // Metrics are published as soon as label values are defined.
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
         }
 
         [TestMethod]
@@ -185,6 +196,14 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
+            var sumamryConfig = NewSummaryConfiguration();
+            sumamryConfig.SuppressInitialValue = true;
+            sumamryConfig.LabelNames = new[] { "foo" };
+
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.SuppressInitialValue = true;
+            histogramConfig.LabelNames = new[] { "foo" };
+
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
             {
                 SuppressInitialValue = true,
@@ -195,24 +214,16 @@ namespace Prometheus.Tests
                 SuppressInitialValue = true,
                 LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var summary = factory.CreateSummary("summary", "", new SummaryConfiguration
-            {
-                SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
-            var histogram = factory.CreateHistogram("histogram", "", new HistogramConfiguration
-            {
-                SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
+            var summary = factory.CreateSummary("summary", "", sumamryConfig).WithLabels("bar");
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig).WithLabels("bar");
+            // 4 families with 9 metrics total.
 
-            var exported = registry.Collect().Families;
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
-            // There is a family for each of the above, in each family we expect to see 0 metrics.
-            Assert.AreEqual(4, exported.Count);
-
-            foreach (var family in exported)
-                Assert.AreEqual(0, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            // Publishing was suppressed.
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.DidNotReceiveWithAnyArgs().WriteMetric(default, default);
         }
 
         [TestMethod]
@@ -221,6 +232,14 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
+            var sumamryConfig = NewSummaryConfiguration();
+            sumamryConfig.SuppressInitialValue = true;
+            sumamryConfig.LabelNames = new[] { "foo" };
+
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.SuppressInitialValue = true;
+            histogramConfig.LabelNames = new[] { "foo" };
+
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
             {
                 SuppressInitialValue = true,
@@ -231,30 +250,21 @@ namespace Prometheus.Tests
                 SuppressInitialValue = true,
                 LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var summary = factory.CreateSummary("summary", "", new SummaryConfiguration
-            {
-                SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
-            var histogram = factory.CreateHistogram("histogram", "", new HistogramConfiguration
-            {
-                SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
+            var summary = factory.CreateSummary("summary", "", sumamryConfig).WithLabels("bar");
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig).WithLabels("bar");
+            // 4 families with 9 metrics total.
 
             gauge.Set(123);
             counter.Inc();
             summary.Observe(123);
             histogram.Observe(31);
 
-            // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.Collect().Families;
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
-            // There is a family for each of the above, in each family we expect to see 1 metric.
-            Assert.AreEqual(4, exported.Count);
-
-            foreach (var family in exported)
-                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            // Metrics are published because value was set.
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
         }
 
         [TestMethod]
@@ -263,6 +273,14 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
+            var sumamryConfig = NewSummaryConfiguration();
+            sumamryConfig.SuppressInitialValue = true;
+            sumamryConfig.LabelNames = new[] { "foo" };
+
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.SuppressInitialValue = true;
+            histogramConfig.LabelNames = new[] { "foo" };
+
             var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
             {
                 SuppressInitialValue = true,
@@ -273,30 +291,21 @@ namespace Prometheus.Tests
                 SuppressInitialValue = true,
                 LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var summary = factory.CreateSummary("summary", "", new SummaryConfiguration
-            {
-                SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
-            var histogram = factory.CreateHistogram("histogram", "", new HistogramConfiguration
-            {
-                SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
+            var summary = factory.CreateSummary("summary", "", sumamryConfig).WithLabels("bar");
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig).WithLabels("bar");
+            // 4 families with 9 metrics total.
 
             gauge.Publish();
             counter.Publish();
             summary.Publish();
             histogram.Publish();
 
-            // Without touching any metrics, there should be output for all because default config publishes immediately.
-            var exported = registry.Collect().Families;
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
-            // There is a family for each of the above, in each family we expect to see 1 metrics.
-            Assert.AreEqual(4, exported.Count);
-
-            foreach (var family in exported)
-                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            // Metrics are published because of explicit publish.
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
         }
         #endregion
 
@@ -307,19 +316,29 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
-            var gauge = factory.CreateGauge("gauge", "", "labelname");
-            var counter = factory.CreateCounter("counter", "", "labelname");
-            var summary = factory.CreateSummary("summary", "", "labelname");
-            var histogram = factory.CreateHistogram("histogram", "", "labelname");
+            var summaryConfig = NewSummaryConfiguration();
+            summaryConfig.LabelNames = new[] { "labelname" };
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.LabelNames = new[] { "labelname" };
 
-            // Without touching any metrics, there should be no output.
-            var exported = registry.Collect().Families;
+            var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
+            {
+                LabelNames = new[] { "labelname" }
+            });
+            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
+            {
+                LabelNames = new[] { "labelname" }
+            });
+            var summary = factory.CreateSummary("summary", "", summaryConfig);
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig);
+            // 4 families with 9 metrics total.
 
-            // There is a family for each of the above, in each family we expect to see 0 metrics.
-            Assert.AreEqual(4, exported.Count);
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
-            foreach (var family in exported)
-                Assert.AreEqual(0, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            // Family for each of the above, in each is 0 metrics.
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.DidNotReceiveWithAnyArgs().WriteMetric(default, default);
         }
 
         [TestMethod]
@@ -328,25 +347,48 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
-            var gauge = factory.CreateGauge("gauge", "", "labelname");
-            var counter = factory.CreateCounter("counter", "", "labelname");
-            var summary = factory.CreateSummary("summary", "", "labelname");
-            var histogram = factory.CreateHistogram("histogram", "", "labelname");
+            var summaryConfig = NewSummaryConfiguration();
+            summaryConfig.LabelNames = new[] { "labelname" };
+            var histogramConfig = NewHistogramConfiguration();
+            histogramConfig.LabelNames = new[] { "labelname" };
+
+            var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
+            {
+                LabelNames = new[] { "labelname" }
+            });
+            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
+            {
+                LabelNames = new[] { "labelname" }
+            });
+            var summary = factory.CreateSummary("summary", "", summaryConfig);
+            var histogram = factory.CreateHistogram("histogram", "", histogramConfig);
+            // 4 families with 9 metrics total.
 
             // Touch some labelled metrics.
-            gauge.Labels("labelvalue").Inc();
-            counter.Labels("labelvalue").Inc();
-            summary.Labels("labelvalue").Observe(123);
-            histogram.Labels("labelvalue").Observe(123);
+            gauge.WithLabels("labelvalue").Inc();
+            counter.WithLabels("labelvalue").Inc();
+            summary.WithLabels("labelvalue").Observe(123);
+            histogram.WithLabels("labelvalue").Observe(123);
 
-            // Without touching any unlabelled metrics, there should be only labelled output.
-            var exported = registry.Collect().Families;
+            var serializer = Substitute.For<IMetricsSerializer>();
+            registry.CollectAndSerialize(serializer);
 
-            // There is a family for each of the above, in each family we expect to see 1 metric (for the labelled case).
-            Assert.AreEqual(4, exported.Count);
+            // Family for each of the above, in each is 4 metrics (labelled only).
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
 
-            foreach (var family in exported)
-                Assert.AreEqual(1, family.Metrics.Count, $"Family {family.Name} had unexpected metric count.");
+            // Only after touching unlabelled do they get published.
+            gauge.Inc();
+            counter.Inc();
+            summary.Observe(123);
+            histogram.Observe(123);
+
+            serializer.ClearReceivedCalls();
+            registry.CollectAndSerialize(serializer);
+
+            // Family for each of the above, in each is 8 metrics (unlabelled+labelled).
+            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
+            serializer.ReceivedWithAnyArgs(9 * 2).WriteMetric(default, default);
         }
         #endregion
     }

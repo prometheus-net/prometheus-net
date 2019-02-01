@@ -14,10 +14,11 @@ namespace Prometheus
     {
         public static readonly Labels Empty = new Labels(new string[0], new string[0]);
 
-        public int Count => _names.Length;
+        public int Count => Names.Length;
 
-        private readonly string[] _values;
-        private readonly string[] _names;
+        // Internal for testing only.
+        internal readonly string[] Values;
+        internal readonly string[] Names;
 
         private readonly int _hashCode;
 
@@ -35,18 +36,18 @@ namespace Prometheus
             if (values.Any(lv => lv == null))
                 throw new ArgumentNullException("A label value cannot be null.");
 
-            _values = values;
-            _names = names;
+            Values = values;
+            Names = names;
 
             // Calculating the hash code is fast but we don't need to re-calculate it for each comparison.
             // Labels are fixed - calculate it once up-front and remember the value.
-            _hashCode = CalculateHashCode(_values);
+            _hashCode = CalculateHashCode(Values);
         }
 
         public Labels Concat(params (string, string)[] more)
         {
-            var allNames = _names.Concat(more.Select(m => m.Item1)).ToArray();
-            var allValues = _values.Concat(more.Select(m => m.Item2)).ToArray();
+            var allNames = Names.Concat(more.Select(m => m.Item1)).ToArray();
+            var allValues = Values.Concat(more.Select(m => m.Item2)).ToArray();
 
             return new Labels(allNames, allValues);
         }
@@ -66,8 +67,8 @@ namespace Prometheus
         {
             // Result is cached in child collector - no need to worry about efficiency here.
 
-            var labels = _names
-                .Zip(_values, (name, value) => $"{name}=\"{EscapeLabelValue(value)}\"");
+            var labels = Names
+                .Zip(Values, (name, value) => $"{name}=\"{EscapeLabelValue(value)}\"");
 
             return string.Join(",", labels);
         }
@@ -75,11 +76,11 @@ namespace Prometheus
         public bool Equals(Labels other)
         {
             if (_hashCode != other._hashCode) return false;
-            if (other._values.Length != _values.Length) return false;
+            if (other.Values.Length != Values.Length) return false;
 
-            for (int i = 0; i < _values.Length; i++)
+            for (int i = 0; i < Values.Length; i++)
             {
-                if (!string.Equals(_values[i], other._values[i], StringComparison.Ordinal))
+                if (!string.Equals(Values[i], other.Values[i], StringComparison.Ordinal))
                     return false;
             }
 

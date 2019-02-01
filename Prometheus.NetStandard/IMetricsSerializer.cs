@@ -5,6 +5,9 @@
     /// new serialization-time relationships. The serialization code is very tied to the text format and
     /// not intended to be a generic serialization mechanism.
     /// </summary>
+    /// <remarks>
+    /// Public only for testing purposes.
+    /// </remarks>
     internal interface IMetricsSerializer
     {
         /// <summary>

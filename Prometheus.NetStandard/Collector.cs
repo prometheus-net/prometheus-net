@@ -105,6 +105,11 @@ namespace Prometheus
             return _labelledMetrics.GetOrAdd(key, k => NewChild(k, publish: !_suppressInitialValue));
         }
 
+        /// <summary>
+        /// For tests that want to see what label values were used when metrics were created.
+        /// </summary>
+        internal Labels[] GetAllLabels() => _labelledMetrics.Select(p => p.Key).ToArray();
+
         protected Collector(string name, string help, string[] labelNames, bool suppressInitialValue)
             : base(name, help, labelNames)
         {
