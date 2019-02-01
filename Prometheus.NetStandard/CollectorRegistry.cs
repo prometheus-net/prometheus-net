@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Prometheus
@@ -49,19 +48,15 @@ namespace Prometheus
         private readonly ConcurrentDictionary<string, Collector> _collectors = new ConcurrentDictionary<string, Collector>();
 
         /// <summary>
-        /// Collects metrics from all the registered collectors.
+        /// Collects metrics from all the registered collectors and sends them to the specified serializer.
         /// </summary>
-        internal MetricsSnapshot Collect()
+        internal void CollectAndSerialize(IMetricsSerializer serializer)
         {
             foreach (var callback in _beforeCollectCallbacks)
                 callback();
 
-            var families = new List<MetricFamilyData>();
-
             foreach (var collector in _collectors.Values)
-                families.Add(collector.Collect());
-
-            return new MetricsSnapshot(families);
+                collector.CollectAndSerialize(serializer);
         }
     }
 }

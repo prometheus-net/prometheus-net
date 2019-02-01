@@ -1,6 +1,7 @@
 ﻿using Prometheus.SummaryImpl;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Prometheus
@@ -70,10 +71,101 @@ namespace Prometheus
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
+        internal override Child NewChild(Labels labels, bool publish)
+        {
+            return new Child(this, labels, publish);
+        }
+
         internal override MetricType Type => MetricType.Summary;
 
         public sealed class Child : ChildBase, ISummary
         {
+            internal Child(Summary parent, Labels labels, bool publish)
+                : base(parent, labels, publish)
+            {
+                _objectives = parent._objectives;
+                _maxAge = parent._maxAge;
+                _ageBuckets = parent._ageBuckets;
+                _bufCap = parent._bufCap;
+
+                _sortedObjectives = new double[_objectives.Count];
+                _hotBuf = new SampleBuffer(_bufCap);
+                _coldBuf = new SampleBuffer(_bufCap);
+                _streamDuration = new TimeSpan(_maxAge.Ticks / _ageBuckets);
+                _headStreamExpTime = DateTime.Now.Add(_streamDuration);
+                _hotBufExpTime = _headStreamExpTime;
+
+                _streams = new QuantileStream[_ageBuckets];
+                for (var i = 0; i < _ageBuckets; i++)
+                {
+                    _streams[i] = QuantileStream.NewTargeted(_objectives);
+                }
+
+                _headStream = _streams[0];
+
+                for (var i = 0; i < _objectives.Count; i++)
+                {
+                    _sortedObjectives[i] = _objectives[i].Quantile;
+                }
+
+                Array.Sort(_sortedObjectives);
+
+                _sumIdentifier = CreateIdentifier("sum");
+                _countIdentifier = CreateIdentifier("count");
+
+                _quantileIdentifiers = new string[_objectives.Count];
+                for (var i = 0; i < _objectives.Count; i++)
+                {
+                    var value = double.IsPositiveInfinity(_objectives[i].Quantile) ? "+Inf" : _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
+
+                    _quantileIdentifiers[i] = CreateIdentifier(null, ("quantile", value));
+                }
+            }
+
+            private readonly string _sumIdentifier;
+            private readonly string _countIdentifier;
+            private readonly string[] _quantileIdentifiers;
+
+            internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
+            {
+                // We output sum.
+                // We output count.
+                // We output quantiles.
+
+                var now = DateTime.UtcNow;
+
+                double count;
+                double sum;
+                var values = new List<(double quantile, double value)>(_objectives.Count);
+
+                lock (_bufLock)
+                {
+                    lock (_lock)
+                    {
+                        // Swap bufs even if hotBuf is empty to set new hotBufExpTime.
+                        SwapBufs(now);
+                        FlushColdBuf();
+
+                        count = _count;
+                        sum = _sum;
+
+                        for (var i = 0; i < _sortedObjectives.Length; i++)
+                        {
+                            var quantile = _sortedObjectives[i];
+                            var value = _headStream.Count == 0 ? double.NaN : _headStream.Query(quantile);
+
+                            values.Add((quantile, value));
+                        }
+                    }
+                }
+
+                serializer.WriteMetric(_sumIdentifier, sum);
+                serializer.WriteMetric(_countIdentifier, count);
+
+                for (var i = 0; i < values.Count; i++)
+                    serializer.WriteMetric(_quantileIdentifiers[i], values[i].value);
+            }
+
             // Objectives defines the quantile rank estimates with their respective
             // absolute error. If Objectives[q] = e, then the value reported
             // for q will be the φ-quantile value for some φ between q-e and q+e.
@@ -97,7 +189,6 @@ namespace Prometheus
             // Protects every other moving part.
             // Lock bufMtx before mtx if both are needed.
             private readonly object _lock = new object();
-            private readonly QuantileComparer _quantileComparer = new QuantileComparer();
 
             // MaxAge defines the duration for which an observation stays relevant
             // for the summary. Must be positive. The default value is DefMaxAge.
@@ -118,95 +209,6 @@ namespace Prometheus
             // is the internal buffer size of the underlying package
             // "github.com/bmizerany/perks/quantile").      
             private int _bufCap;
-            private SummaryData _wireMetric;
-
-            internal override void Init(Collector parent, LabelValues labelValues, bool publish)
-            {
-                Init(parent, labelValues, DateTime.UtcNow, publish);
-            }
-
-            internal void Init(Collector parent, LabelValues labelValues, DateTime now, bool publish)
-            {
-                base.Init(parent, labelValues, publish);
-
-                _objectives = ((Summary)parent)._objectives;
-                _maxAge = ((Summary)parent)._maxAge;
-                _ageBuckets = ((Summary)parent)._ageBuckets;
-                _bufCap = ((Summary)parent)._bufCap;
-
-                _sortedObjectives = new double[_objectives.Count];
-                _hotBuf = new SampleBuffer(_bufCap);
-                _coldBuf = new SampleBuffer(_bufCap);
-                _streamDuration = new TimeSpan(_maxAge.Ticks / _ageBuckets);
-                _headStreamExpTime = now.Add(_streamDuration);
-                _hotBufExpTime = _headStreamExpTime;
-
-                _streams = new QuantileStream[_ageBuckets];
-                for (var i = 0; i < _ageBuckets; i++)
-                {
-                    _streams[i] = QuantileStream.NewTargeted(_objectives);
-                }
-
-                _headStream = _streams[0];
-
-                for (var i = 0; i < _objectives.Count; i++)
-                {
-                    _sortedObjectives[i] = _objectives[i].Quantile;
-                }
-
-                Array.Sort(_sortedObjectives);
-
-                _wireMetric = new SummaryData
-                {
-                    Quantiles = _objectives.Select(o =>
-                        new SummaryQuantileData
-                        {
-                            Quantile = o.Quantile
-                        }).ToArray()
-                };
-            }
-
-            internal override void Populate(MetricData metric)
-            {
-                Populate(metric, DateTime.UtcNow);
-            }
-
-            internal void Populate(MetricData metric, DateTime now)
-            {
-                var summary = new SummaryData();
-                var quantiles = new SummaryQuantileData[_objectives.Count];
-
-                lock (_bufLock)
-                {
-                    lock (_lock)
-                    {
-                        // Swap bufs even if hotBuf is empty to set new hotBufExpTime.
-                        SwapBufs(now);
-                        FlushColdBuf();
-                        summary.SampleCount = _count;
-                        summary.SampleSum = _sum;
-
-                        for (var idx = 0; idx < _sortedObjectives.Length; idx++)
-                        {
-                            var rank = _sortedObjectives[idx];
-                            var q = _headStream.Count == 0 ? double.NaN : _headStream.Query(rank);
-
-                            quantiles[idx] = new SummaryQuantileData
-                            {
-                                Quantile = rank,
-                                Value = q
-                            };
-                        }
-                    }
-                }
-
-                if (quantiles.Length > 0)
-                    Array.Sort(quantiles, _quantileComparer);
-
-                summary.Quantiles = quantiles;
-
-                metric.Summary = summary;
-            }
 
             public void Observe(double val)
             {
@@ -232,7 +234,7 @@ namespace Prometheus
                         Flush(now);
                 }
 
-                _publish = true;
+                Publish();
             }
 
             // Flush needs bufMtx locked.

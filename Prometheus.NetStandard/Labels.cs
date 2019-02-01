@@ -10,32 +10,18 @@ namespace Prometheus
     /// Only the values are considered for equality purposes - the caller must ensure that
     /// LabelValues objects with different sets of names are never compared to each other.
     /// </remarks>
-    internal struct LabelValues : IEquatable<LabelValues>
+    internal sealed class Labels : IEquatable<Labels>
     {
-        public static readonly LabelValues Empty = new LabelValues(new string[0], new string[0]);
+        public static readonly Labels Empty = new Labels(new string[0], new string[0]);
 
-        /// <summary>
-        /// These are exported with metrics. Lazy-initialized in order to save allocations when using LabelValues as keys.
-        /// </summary>
-        public LabelPairData[] WireLabels
-        {
-            get
-            {
-                if (_wireLabels == null)
-                    _wireLabels = InitWireLabels();
-
-                return _wireLabels;
-            }
-        }
+        public int Count => _names.Length;
 
         private readonly string[] _values;
         private readonly string[] _names;
 
         private readonly int _hashCode;
 
-        private LabelPairData[] _wireLabels;
-
-        public LabelValues(string[] names, string[] values)
+        public Labels(string[] names, string[] values)
         {
             if (names == null)
                 throw new ArgumentNullException(nameof(names));
@@ -55,19 +41,36 @@ namespace Prometheus
             // Calculating the hash code is fast but we don't need to re-calculate it for each comparison this object is involved in.
             // Label values are fixed- caluclate it once up-front and remember the value.
             _hashCode = CalculateHashCode(_values);
-
-            // Lazy-initialized.
-            _wireLabels = null;
         }
 
-        private LabelPairData[] InitWireLabels()
+        public Labels Concat(params (string, string)[] more)
         {
-            return _names
-                .Zip(_values, (n, v) => new LabelPairData { Name = n, Value = v })
-                .ToArray();
+            var allNames = _names.Concat(more.Select(m => m.Item1)).ToArray();
+            var allValues = _values.Concat(more.Select(m => m.Item2)).ToArray();
+
+            return new Labels(allNames, allValues);
         }
 
-        public bool Equals(LabelValues other)
+        private static string EscapeLabelValue(string value)
+        {
+            return value
+                    .Replace("\\", @"\\")
+                    .Replace("\n", @"\n")
+                    .Replace("\"", @"\""");
+        }
+
+        /// <summary>
+        /// Serializes to the labelkey1="labelvalue1",labelkey2="labelvalue2" label string.
+        /// </summary>
+        public string Serialize()
+        {
+            var labels = _names
+                .Zip(_values, (name, value) => $"{name}=\"{EscapeLabelValue(value)}\"");
+
+            return string.Join(",", labels);
+        }
+
+        public bool Equals(Labels other)
         {
             if (_hashCode != other._hashCode) return false;
             if (other._values.Length != _values.Length) return false;
@@ -82,12 +85,12 @@ namespace Prometheus
 
         public override bool Equals(object obj)
         {
-            if (!(obj is LabelValues))
+            if (!(obj is Labels))
             {
                 return false;
             }
 
-            var other = (LabelValues)obj;
+            var other = (Labels)obj;
             return Equals(other);
         }
 

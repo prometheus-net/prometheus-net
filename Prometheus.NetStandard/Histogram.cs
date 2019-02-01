@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 
 namespace Prometheus
@@ -39,38 +40,60 @@ namespace Prometheus
             }
         }
 
+        internal override Child NewChild(Labels labels, bool publish)
+        {
+            return new Child(this, labels, publish);
+        }
+
         public sealed class Child : ChildBase, IHistogram
         {
-            private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
-            private ThreadSafeLong[] _bucketCounts;
-            private double[] _upperBounds;
-
-            internal override void Init(Collector parent, LabelValues labelValues, bool publish)
+            internal Child(Histogram parent, Labels labels, bool publish)
+                : base(parent, labels, publish)
             {
-                base.Init(parent, labelValues, publish);
+                _parent = parent;
 
-                _upperBounds = ((Histogram)parent)._buckets;
+                _upperBounds = _parent._buckets;
                 _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
+
+                _sumIdentifier = CreateIdentifier("sum");
+                _countIdentifier = CreateIdentifier("count");
+
+                _bucketIdentifiers = new string[_upperBounds.Length];
+                for (var i = 0; i < _upperBounds.Length; i++)
+                {
+                    var value = double.IsPositiveInfinity(_upperBounds[i]) ? "+Inf" : _upperBounds[i].ToString(CultureInfo.InvariantCulture);
+
+                    _bucketIdentifiers[i] = CreateIdentifier("bucket", ("le", value));
+                }
             }
 
-            internal override void Populate(MetricData metric)
+            private readonly Histogram _parent;
+
+            private readonly ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
+            private readonly ThreadSafeLong[] _bucketCounts;
+            private readonly double[] _upperBounds;
+
+            private readonly string _sumIdentifier;
+            private readonly string _countIdentifier;
+            private readonly string[] _bucketIdentifiers;
+
+            internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {
-                var wireMetric = new HistogramData();
-                wireMetric.SampleCount = 0L;
-                wireMetric.Buckets = new HistogramBucketData[_bucketCounts.Length];
+                // We output sum.
+                // We output count.
+                // We output each bucket in order of increasing upper bound.
+
+                serializer.WriteMetric(_sumIdentifier, _sum.Value);
+                serializer.WriteMetric(_countIdentifier, _bucketCounts.Sum(b => b.Value));
+
+                var cumulativeCount = 0L;
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
-                    wireMetric.SampleCount += _bucketCounts[i].Value;
-                    wireMetric.Buckets[i] = new HistogramBucketData
-                    {
-                        UpperBound = _upperBounds[i],
-                        CumulativeCount = wireMetric.SampleCount
-                    };
-                }
-                wireMetric.SampleSum = _sum.Value;
+                    cumulativeCount += _bucketCounts[i].Value;
 
-                metric.Histogram = wireMetric;
+                    serializer.WriteMetric(_bucketIdentifiers[i], cumulativeCount);
+                }
             }
 
             public void Observe(double val)
@@ -89,7 +112,7 @@ namespace Prometheus
                     }
                 }
                 _sum.Add(val);
-                _publish = true;
+                Publish();
             }
         }
 

@@ -12,26 +12,31 @@
     {
         public sealed class Child : ChildBase, IGauge
         {
+            internal Child(Collector parent, Labels labels, bool publish)
+                : base(parent, labels, publish)
+            {
+                _identifier = CreateIdentifier();
+            }
+
+            private readonly string _identifier;
+
             private ThreadSafeDouble _value;
 
-            internal override void Populate(MetricData metric)
+            internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {
-                metric.Gauge = new GaugeData
-                {
-                    Value = Value
-                };
+                serializer.WriteMetric(_identifier, Value);
             }
 
             public void Inc(double increment = 1)
             {
                 _value.Add(increment);
-                _publish = true;
+                Publish();
             }
 
             public void Set(double val)
             {
                 _value.Value = val;
-                _publish = true;
+                Publish();
             }
 
             public void Dec(double decrement = 1)
@@ -42,8 +47,13 @@
             public double Value => _value.Value;
         }
 
+        internal override Child NewChild(Labels labels, bool publish)
+        {
+            return new Child(this, labels, publish);
+        }
+
         internal Gauge(string name, string help, string[] labelNames, bool suppressInitialValue)
-    : base(name, help, labelNames, suppressInitialValue)
+            : base(name, help, labelNames, suppressInitialValue)
         {
         }
 

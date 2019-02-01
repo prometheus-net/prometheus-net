@@ -72,10 +72,10 @@ namespace Prometheus
 
                     try
                     {
-                        var snapshot = _registry.Collect();
-
                         var stream = new MemoryStream();
-                        snapshot.Serialize(stream);
+
+                        using (var serializer = new TextSerializer(stream))
+                            _registry.CollectAndSerialize(serializer);
 
                         stream.Position = 0;
                         // StreamContent takes ownership of the stream.

@@ -5,44 +5,65 @@ namespace Prometheus
     /// </summary>
     public abstract class ChildBase
     {
+        internal ChildBase(Collector parent, Labels labels, bool publish)
+        {
+            _parent = parent;
+            _labels = labels;
+            _publish = publish;
+        }
+
         /// <summary>
         /// Marks the metric as one to be published, even if it might otherwise be suppressed.
         /// 
         /// This is useful for publishing zero-valued metrics once you have loaded data on startup and determined
         /// that there is no need to increment the value of the metric.
         /// </summary>
+        /// <remarks>
+        /// Subclasses must call this when their value is first set, to mark the metric as published.
+        /// </remarks>
         public void Publish()
         {
             _publish = true;
         }
 
-        private LabelValues _labelValues;
+        private Collector _parent;
+        private Labels _labels;
 
-        // Subclasses must set this to true when the value of the metric is modified, to signal
-        // that the metric should now be published if it was explicitly suppressed beforehand.
-        protected volatile bool _publish;
+        private volatile bool _publish;
 
-        internal virtual void Init(Collector parent, LabelValues labelValues, bool publish)
-        {
-            _labelValues = labelValues;
-            _publish = publish;
-        }
-
-        internal abstract void Populate(MetricData metric);
-
-        internal MetricData Collect()
+        /// <summary>
+        /// Collects all the metric data rows from this collector and serializes it using the given serializer.
+        /// </summary>
+        /// <remarks>
+        /// Subclass must check _publish and suppress output if it is false.
+        /// </remarks>
+        internal void CollectAndSerialize(IMetricsSerializer serializer)
         {
             if (!_publish)
-                return null;
+                return;
 
-            var metric = new MetricData
-            {
-                Labels = _labelValues.WireLabels
-            };
+            CollectAndSerializeImpl(serializer);
+        }
 
-            Populate(metric);
+        // Same as above, just only called if we really need to serialize this metric (if publish is true).
+        internal abstract void CollectAndSerializeImpl(IMetricsSerializer serializer);
 
-            return metric;
+        /// <summary>
+        /// Creates a metric identifier, with an optional name postfix and optional extra labels.
+        /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
+        /// </summary>
+        protected string CreateIdentifier(string postfix = null, params (string, string)[] extraLabels)
+        {
+            var fullName = postfix != null ? $"{_parent.Name}_{postfix}" : _parent.Name;
+
+            var labels = _labels;
+            if (extraLabels?.Length > 0)
+                labels = _labels.Concat(extraLabels);
+
+            if (labels.Count != 0)
+                return $"{fullName}{{{labels.Serialize()}}}";
+            else
+                return fullName;
         }
     }
 }

@@ -1,14 +1,10 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Prometheus;
-using System.IO;
 
 namespace Benchmark.NetCore
 {
-    /// <summary>
-    /// ASCII formatter is always used by Prometheus 2.0, so its performance is somewhat important.
-    /// </summary>
     [MemoryDiagnoser]
-    public class AsciiFormatterBenchmarks
+    public class SerializationBenchmarks
     {
         // Metric -> Variant -> Label values
         private static readonly string[][][] _labelValueRows;
@@ -19,7 +15,7 @@ namespace Benchmark.NetCore
 
         private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
 
-        static AsciiFormatterBenchmarks()
+        static SerializationBenchmarks()
         {
             _labelValueRows = new string[_metricCount][][];
 
@@ -45,7 +41,7 @@ namespace Benchmark.NetCore
         private readonly Summary[] _summaries;
         private readonly Histogram[] _histograms;
 
-        public AsciiFormatterBenchmarks()
+        public SerializationBenchmarks()
         {
             _counters = new Counter[_metricCount];
             _gauges = new Gauge[_metricCount];
@@ -64,9 +60,6 @@ namespace Benchmark.NetCore
             }
         }
 
-        private MetricsSnapshot _data;
-        private byte[] _outputBuffer;
-
         [GlobalSetup]
         public void GenerateData()
         {
@@ -78,18 +71,14 @@ namespace Benchmark.NetCore
                     _summaries[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex);
                     _histograms[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex);
                 }
-
-            _data = _registry.Collect();
-
-            // Use a preallocated fixed size buffer to prevent MemoryStream reallocations in benchmarks.
-            _outputBuffer = new byte[32 * 1024 * 1024];
         }
 
         [Benchmark]
-        public void Serialize()
+        public void CollectAndSerialize()
         {
-            using (var stream = new MemoryStream(_outputBuffer))
-                AsciiFormatter.Format(stream, _data.Families);
+            using (var stream = new NullStream())
+            using (var serializer = new TextSerializer(stream))
+                _registry.CollectAndSerialize(serializer);
         }
     }
 }

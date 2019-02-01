@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -27,7 +27,7 @@ namespace Prometheus
         /// </summary>
         public string[] LabelNames { get; }
 
-        internal abstract MetricFamilyData Collect();
+        internal abstract void CollectAndSerialize(IMetricsSerializer serializer);
 
         private static readonly string[] EmptyLabelNames = new string[0];
 
@@ -68,79 +68,72 @@ namespace Prometheus
     /// Base class for metrics collectors, providing common labeled child management functionality.
     /// </summary>
     public abstract class Collector<TChild> : Collector
-        where TChild : ChildBase, new()
+        where TChild : ChildBase
     {
-        private readonly ConcurrentDictionary<LabelValues, TChild> _labelledMetrics = new ConcurrentDictionary<LabelValues, TChild>();
+        private readonly ConcurrentDictionary<Labels, TChild> _labelledMetrics = new ConcurrentDictionary<Labels, TChild>();
 
+        // Lazy-initialized since not every collector will use a child with no labels.
         private readonly Lazy<TChild> _unlabelledLazy;
 
         /// <summary>
         /// Gets the child instance that has no labels.
         /// </summary>
-        protected TChild Unlabelled
-        {
-            get { return _unlabelledLazy.Value; }
-        }
+        protected TChild Unlabelled => _unlabelledLazy.Value;
 
         // This servers a slightly silly but useful purpose: by default if you start typing .La... and trigger Intellisense
         // it will often for whatever reason focus on LabelNames instead of Labels, leading to tiny but persistent frustration.
         // Having WithLabels() instead eliminates the other candidate and allows for a frustration-free typing experience.
         public TChild WithLabels(params string[] labelValues) => Labels(labelValues);
 
+        // Discourage it as it can create confusion. But it works fine, so no reason to mark it obsolete, really.
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public TChild Labels(params string[] labelValues)
         {
-            var key = new LabelValues(LabelNames, labelValues);
+            var key = new Labels(LabelNames, labelValues);
             return GetOrAddLabelled(key);
         }
 
         public void RemoveLabelled(params string[] labelValues)
         {
-            var key = new LabelValues(LabelNames, labelValues);
+            var key = new Labels(LabelNames, labelValues);
             _labelledMetrics.TryRemove(key, out _);
         }
 
-        private TChild GetOrAddLabelled(LabelValues key)
+        private TChild GetOrAddLabelled(Labels key)
         {
-            return _labelledMetrics.GetOrAdd(key, k =>
-            {
-                var child = new TChild();
-                child.Init(this, k, publish: !_suppressInitialValue);
-                return child;
-            });
+            return _labelledMetrics.GetOrAdd(key, k => NewChild(k, publish: !_suppressInitialValue));
         }
 
         protected Collector(string name, string help, string[] labelNames, bool suppressInitialValue)
             : base(name, help, labelNames)
         {
             _suppressInitialValue = suppressInitialValue;
-            _unlabelledLazy = new Lazy<TChild>(() => GetOrAddLabelled(LabelValues.Empty));
+            _unlabelledLazy = new Lazy<TChild>(() => GetOrAddLabelled(Prometheus.Labels.Empty));
+
+            _familyHeaderLines = new string[]
+            {
+                $"# HELP {name} {help}",
+                $"# TYPE {name} {Type.ToString().ToLowerInvariant()}"
+            };
         }
+
+        /// <summary>
+        /// Creates a new instance of the child collector type.
+        /// </summary>
+        internal abstract TChild NewChild(Labels labels, bool publish);
 
         internal abstract MetricType Type { get; }
 
-        internal override MetricFamilyData Collect()
+        private readonly string[] _familyHeaderLines;
+
+        internal override void CollectAndSerialize(IMetricsSerializer serializer)
         {
             EnsureUnlabelledMetricCreatedIfNoLabels();
 
-            var result = new MetricFamilyData()
-            {
-                Name = Name,
-                Help = Help,
-                Type = Type,
-                Metrics = new List<MetricData>(_labelledMetrics.Count)
-            };
+            serializer.WriteFamilyDeclaration(_familyHeaderLines);
 
             foreach (var child in _labelledMetrics.Values)
-            {
-                var metric = child.Collect();
-
-                if (metric == null)
-                    continue; // This can occur due to initial value suppression.
-
-                result.Metrics.Add(metric);
-            }
-
-            return result;
+                child.CollectAndSerialize(serializer);
         }
 
         private readonly bool _suppressInitialValue;
@@ -154,7 +147,7 @@ namespace Prometheus
             // If there are no label names then clearly this metric is supposed to be used unlabelled, so create it.
             // Otherwise, we allow unlabelled metrics to be used if the user explicitly does it but omit them by default.
             if (!_unlabelledLazy.IsValueCreated && !LabelNames.Any())
-                GetOrAddLabelled(LabelValues.Empty);
+                GetOrAddLabelled(Prometheus.Labels.Empty);
         }
     }
 }

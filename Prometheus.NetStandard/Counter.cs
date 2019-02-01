@@ -12,14 +12,19 @@ namespace Prometheus
     {
         public sealed class Child : ChildBase, ICounter
         {
+            internal Child(Collector parent, Labels labels, bool publish)
+                : base(parent, labels, publish)
+            {
+                _identifier = CreateIdentifier();
+            }
+
+            private readonly string _identifier;
+
             private ThreadSafeDouble _value;
 
-            internal override void Populate(MetricData metric)
+            internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {
-                metric.Counter = new CounterData
-                {
-                    Value = Value
-                };
+                serializer.WriteMetric(_identifier, Value);
             }
 
             public void Inc(double increment = 1.0)
@@ -30,10 +35,15 @@ namespace Prometheus
                     throw new ArgumentOutOfRangeException("increment", "Counter cannot go down");
 
                 _value.Add(increment);
-                _publish = true;
+                Publish();
             }
 
             public double Value => _value.Value;
+        }
+
+        internal override Child NewChild(Labels labels, bool publish)
+        {
+            return new Child(this, labels, publish);
         }
 
         internal Counter(string name, string help, string[] labelNames, bool suppressInitialValue)
