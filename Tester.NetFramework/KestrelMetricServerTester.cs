@@ -31,6 +31,12 @@ namespace tester
 
             using (var httpResponse = (HttpWebResponse)httpRequest.GetResponse())
             {
+                if (httpResponse.StatusCode != HttpStatusCode.OK)
+                {
+                    Console.WriteLine($"Response status code: {(int)httpResponse.StatusCode} {httpResponse.StatusCode} {httpResponse.StatusDescription}");
+                    return;
+                }
+
                 var text = new StreamReader(httpResponse.GetResponseStream()).ReadToEnd();
                 Console.WriteLine(text);
             }

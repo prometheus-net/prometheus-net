@@ -14,17 +14,23 @@ namespace Prometheus
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            _stream = new BufferedStream(stream, 16 * 1024);
+            _stream = new Lazy<BufferedStream>(() => new BufferedStream(stream, 16 * 1024));
+        }
+
+        // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
+        public TextSerializer(Func<Stream> streamFactory)
+        {
+            _stream = new Lazy<BufferedStream>(() => new BufferedStream(streamFactory(), 16 * 1024));
         }
 
         public void Dispose()
         {
-            // We do not take ownership of the stream and never want to dispose/finalize it.
-            _stream.Flush();
-            GC.SuppressFinalize(_stream);
+            // If we never opened the stream, we don't touch it on close.
+            if (_stream.IsValueCreated)
+                _stream.Value.Dispose();
         }
 
-        private readonly BufferedStream _stream;
+        private readonly Lazy<BufferedStream> _stream;
 
         // HELP name help
         // TYPE name type
@@ -32,8 +38,8 @@ namespace Prometheus
         {
             foreach (var line in headerLines)
             {
-                _stream.Write(line, 0, line.Length);
-                _stream.WriteByte(NewLine);
+                _stream.Value.Write(line, 0, line.Length);
+                _stream.Value.WriteByte(NewLine);
             }
         }
 
@@ -46,16 +52,16 @@ namespace Prometheus
         // name{labelkey1="labelvalue1",labelkey2="labelvalue2"} 123.456
         public void WriteMetric(byte[] identifier, double value)
         {
-            _stream.Write(identifier, 0, identifier.Length);
-            _stream.WriteByte(Space);
+            _stream.Value.Write(identifier, 0, identifier.Length);
+            _stream.Value.WriteByte(Space);
 
             var valueAsString = value.ToString(CultureInfo.InvariantCulture);
 
             var numBytes = PrometheusConstants.ExportEncoding
                 .GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
 
-            _stream.Write(_stringBytesBuffer, 0, numBytes);
-            _stream.WriteByte(NewLine);
+            _stream.Value.Write(_stringBytesBuffer, 0, numBytes);
+            _stream.Value.WriteByte(NewLine);
         }
     }
 }

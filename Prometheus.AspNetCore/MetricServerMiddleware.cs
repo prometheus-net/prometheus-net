@@ -39,27 +39,28 @@ namespace Prometheus
             var request = context.Request;
             var response = context.Response;
 
-            response.ContentType = PrometheusConstants.ExporterContentType;
-            response.StatusCode = StatusCodes.Status200OK;
-
-            using (var outputStream = response.Body)
+            try
             {
-                try
-                {
-                    using (var serializer = new TextSerializer(outputStream))
-                        _registry.CollectAndSerialize(serializer);
-                }
-                catch (ScrapeFailedException ex)
-                {
-                    // This can only happen before any serialization occurs, in the pre-collect callbacks.
-                    // So it should still be safe to update the status code and write an error message.
-                    response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-
-                    if (!string.IsNullOrWhiteSpace(ex.Message))
+                using (var serializer = new TextSerializer(delegate
                     {
-                        using (var writer = new StreamWriter(outputStream))
-                            await writer.WriteAsync(ex.Message);
-                    }
+                        response.ContentType = PrometheusConstants.ExporterContentType;
+                        response.StatusCode = StatusCodes.Status200OK;
+                        return response.Body;
+                    }))
+                {
+                    _registry.CollectAndSerialize(serializer);
+                }
+            }
+            catch (ScrapeFailedException ex)
+            {
+                // This can only happen before any serialization occurs, in the pre-collect callbacks.
+                // So it should still be safe to update the status code and write an error message.
+                response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+
+                if (!string.IsNullOrWhiteSpace(ex.Message))
+                {
+                    using (var writer = new StreamWriter(response.Body))
+                        await writer.WriteAsync(ex.Message);
                 }
             }
         }

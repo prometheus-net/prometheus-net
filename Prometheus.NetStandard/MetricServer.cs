@@ -46,27 +46,28 @@ namespace Prometheus
 
                         try
                         {
-                            response.ContentType = PrometheusConstants.ExporterContentType;
-                            response.StatusCode = 200;
-
-                            using (var outputStream = response.OutputStream)
+                            try
                             {
-                                try
-                                {
-                                    using (var serializer = new TextSerializer(outputStream))
-                                        _registry.CollectAndSerialize(serializer);
-                                }
-                                catch (ScrapeFailedException ex)
-                                {
-                                    // This can only happen before anything is written to the stream, so it
-                                    // should still be safe to update the status code and report an error.
-                                    response.StatusCode = 503;
-
-                                    if (!string.IsNullOrWhiteSpace(ex.Message))
+                                using (var serializer = new TextSerializer(delegate
                                     {
-                                        using (var writer = new StreamWriter(outputStream))
-                                            writer.Write(ex.Message);
-                                    }
+                                        response.ContentType = PrometheusConstants.ExporterContentType;
+                                        response.StatusCode = 200;
+                                        return response.OutputStream;
+                                    }))
+                                {
+                                    _registry.CollectAndSerialize(serializer);
+                                }
+                            }
+                            catch (ScrapeFailedException ex)
+                            {
+                                // This can only happen before anything is written to the stream, so it
+                                // should still be safe to update the status code and report an error.
+                                response.StatusCode = 503;
+
+                                if (!string.IsNullOrWhiteSpace(ex.Message))
+                                {
+                                    using (var writer = new StreamWriter(response.OutputStream))
+                                        writer.Write(ex.Message);
                                 }
                             }
                         }

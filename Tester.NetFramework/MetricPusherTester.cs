@@ -1,6 +1,5 @@
 ﻿using Prometheus;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -50,12 +49,17 @@ namespace tester
                             {
                                 body = reader.ReadToEnd();
                             }
-                            Console.WriteLine(body);
+
+                            if (string.IsNullOrEmpty(body))
+                                Console.WriteLine("Got empty document from pusher. This can be normal if nothing is pushed yet.");
+                            else
+                                Console.WriteLine(body);
+
                             response.StatusCode = 204;
                         }
                         catch (Exception ex) when (!(ex is OperationCanceledException))
                         {
-                            Trace.WriteLine(string.Format("Error in fake PushGateway: {0}", ex));
+                            Console.WriteLine(string.Format("Error in fake PushGateway: {0}", ex));
                         }
                         finally
                         {
