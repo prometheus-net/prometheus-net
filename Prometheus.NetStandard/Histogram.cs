@@ -7,10 +7,12 @@ namespace Prometheus
     public interface IHistogram : IObserver
     {
         /// <summary>
-        /// observe event supporting high frequency or batch processing use cases utilizing pre-aggregation
+        /// Observe multiple events with a given value.
+        /// 
+        /// Intended to support high frequency or batch processing use cases utilizing pre-aggregation.
         /// </summary>
-        /// <param name="val">average sample value</param>
-        /// <param name="count">number of observations in a sample</param>
+        /// <param name="val">Measured value.</param>
+        /// <param name="count">Number of observations with this value.</param>
         void Observe(double val, long count);
     }
 

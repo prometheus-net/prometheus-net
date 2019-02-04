@@ -6,7 +6,7 @@
     public interface IObserver
     {
         /// <summary>
-        /// Observes an event with the given value.
+        /// Observes a single event with the given value.
         /// </summary>
         void Observe(double val);
     }
