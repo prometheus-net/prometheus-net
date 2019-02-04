@@ -6,6 +6,12 @@ namespace Prometheus
 {
     public interface IHistogram : IObserver
     {
+        /// <summary>
+        /// observe event supporting high frequency or batch processing use cases utilizing pre-aggregation
+        /// </summary>
+        /// <param name="val">average sample value</param>
+        /// <param name="count">number of observations in a sample</param>
+        void Observe(double val, long count);
     }
 
     public sealed class Histogram : Collector<Histogram.Child>, IHistogram
@@ -96,7 +102,9 @@ namespace Prometheus
                 }
             }
 
-            public void Observe(double val)
+            public void Observe(double val) => Observe(val, 1);
+
+            public void Observe(double val, long count)
             {
                 if (double.IsNaN(val))
                 {
@@ -107,7 +115,7 @@ namespace Prometheus
                 {
                     if (val <= _upperBounds[i])
                     {
-                        _bucketCounts[i].Add(1);
+                        _bucketCounts[i].Add(count);
                         break;
                     }
                 }
@@ -118,7 +126,9 @@ namespace Prometheus
 
         internal override MetricType Type => MetricType.Histogram;
 
-        public void Observe(double val) => Unlabelled.Observe(val);
+        public void Observe(double val) => Unlabelled.Observe(val, 1);
+        
+        public void Observe(double val, long count) => Unlabelled.Observe(val, count);
 
         public void Publish() => Unlabelled.Publish();
 
