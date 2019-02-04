@@ -11,7 +11,7 @@ namespace Benchmark.NetCore
     {
         private CollectorRegistry _registry;
         private MetricFactory _factory;
-        private HttpInFlightMiddleware _inFlightMiddleware;
+        private HttpInProgressMiddleware _inProgressMiddleware;
         private HttpRequestCountMiddleware _countMiddleware;
         private HttpRequestDurationMiddleware _durationMiddleware;
 
@@ -24,8 +24,8 @@ namespace Benchmark.NetCore
             _registry = Metrics.NewCustomRegistry();
             _factory = Metrics.WithCustomRegistry(_registry);
 
-            _inFlightMiddleware =
-                new HttpInFlightMiddleware(next => Task.CompletedTask, _factory.CreateGauge("in_flight", "help"));
+            _inProgressMiddleware =
+                new HttpInProgressMiddleware(next => Task.CompletedTask, _factory.CreateGauge("in_progress", "help"));
             _countMiddleware =
                 new HttpRequestCountMiddleware(next => Task.CompletedTask, _factory.CreateCounter("count", "help"));
             _durationMiddleware =
@@ -33,10 +33,10 @@ namespace Benchmark.NetCore
         }
 
         [Benchmark]
-        public async Task HttpInFlight()
+        public async Task HttpInProgress()
         {
             for (var i = 0; i < RequestCount; i++)
-                await _inFlightMiddleware.Invoke(new DefaultHttpContext());
+                await _inProgressMiddleware.Invoke(new DefaultHttpContext());
         }
 
         [Benchmark]

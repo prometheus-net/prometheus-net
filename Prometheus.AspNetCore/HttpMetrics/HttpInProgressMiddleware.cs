@@ -4,22 +4,22 @@ using System.Threading.Tasks;
 
 namespace Prometheus.HttpMetrics
 {
-    public sealed class HttpInFlightMiddleware
+    public sealed class HttpInProgressMiddleware
     {
-        private readonly IGauge _inFlightGauge;
+        private readonly IGauge inProgressGauge;
 
         private readonly RequestDelegate _next;
 
-        public HttpInFlightMiddleware(RequestDelegate next, IGauge gauge)
+        public HttpInProgressMiddleware(RequestDelegate next, IGauge gauge)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
 
-            _inFlightGauge = gauge;
+            inProgressGauge = gauge;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            _inFlightGauge.Inc();
+            inProgressGauge.Inc();
 
             try
             {
@@ -27,7 +27,7 @@ namespace Prometheus.HttpMetrics
             }
             finally
             {
-                _inFlightGauge.Dec();
+                inProgressGauge.Dec();
             }
         }
     }

@@ -29,8 +29,8 @@ namespace Prometheus
         {
             if (options == null) options = new HttpMiddlewareExporterOptions();
 
-            if (options.InFlight.Enabled)
-                app.UseMiddleware<HttpInFlightMiddleware>(options.InFlight.Gauge);
+            if (options.InProgress.Enabled)
+                app.UseMiddleware<HttpInProgressMiddleware>(options.InProgress.Gauge);
             if (options.RequestCount.Enabled)
                 app.UseMiddleware<HttpRequestCountMiddleware>(options.RequestCount.Counter);
             if (options.RequestDuration.Enabled)

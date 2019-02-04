@@ -76,6 +76,23 @@ private static readonly Summary RequestSizeSummary = Metrics
 RequestSizeSummary.Observe(request.Length);
 ```
 
+By default, only the sum and total count are reported. You may also specify quantiles to measure:
+
+```csharp
+private static readonly Summary RequestSizeSummary = Metrics
+	.CreateSummary("myapp_request_size_bytes", "Summary of request sizes (in bytes) over last 10 minutes.",
+		new SummaryConfiguration
+		{
+			Objectives = new[]
+			{
+				new QuantileEpsilonPair(0.5, 0.05),
+				new QuantileEpsilonPair(0.9, 0.05),
+				new QuantileEpsilonPair(0.95, 0.01),
+				new QuantileEpsilonPair(0.99, 0.01),
+			}
+		});
+```
+
 # Histogram
 
 Histograms track the size and number of events in buckets. This allows for aggregatable calculation of quantiles.
@@ -94,9 +111,9 @@ private static readonly Histogram OrderValueHistogram = Metrics
 OrderValueHistogram.Observe(order.TotalValueUsd);
 ```
 
-# Timers
+# Measuring operation duration
 
-Timers can be used to report the duration of an action (in seconds) to a Summary, Histogram or Gauge. Wrap the action you want to measure in a using statement.
+Timers can be used to report the duration of an operation (in seconds) to a Summary, Histogram or Gauge. Wrap the operation you want to measure in a using statement.
 
 ```csharp
 private static readonly Histogram LoginDuration = Metrics
@@ -108,6 +125,48 @@ using (LoginDuration.NewTimer())
 {
     IdentityManager.AuthenticateUser(Request.Credentials);
 }
+```
+
+# Counting exceptions
+
+You can use `Counter.CountExceptions()` to count the number of exceptions that occur while executing some code.
+
+
+```csharp
+private static readonly Counter FailedDocumentImports = Metrics
+	.CreateCounter("myapp_document_imports_failed_total", "Number of import operations that failed.");
+
+...
+
+FailedDocumentImports.CountExceptions(() => DocumentRepository.ImportDocument(path));
+```
+
+You can also filter the exception types to observe:
+
+```csharp
+FailedDocumentImports.CountExceptions(() => DocumentRepository.ImportDocument(path), IsImportRelatedException);
+
+bool IsImportRelatedException(Exception ex)
+{
+	// Do not count "access denied" exceptions - those are user error for pointing us to a forbidden file.
+	if (ex is UnauthorizedAccessException)
+		return false;
+
+	return true;
+}
+```
+
+# Tracking in-progress operations
+
+You can use `Gauge.TrackInProgress()` to track how many concurrent operations are taking place.
+
+```csharp
+private static readonly Gauge DocumentImportsInProgress = Metrics
+	.CreateGauge("myapp_document_imports_in_progress", "Number of import operations ongoing.");
+
+...
+
+DocumentImportsInProgress.TrackInProgress(() => DocumentRepository.ImportDocument(path));
 ```
 
 # Labels
@@ -195,8 +254,8 @@ This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package
 
 The library provides some metrics for ASP.NET Core applications:
 
-* Total number of 'in-flight' (currently executing) requests.
-* Total number of HTTP requests.
+* Number of HTTP requests in progress.
+* Total number of received HTTP requests.
 * Duration of HTTP requests.
 
 These metrics include labels for status code, HTTP method, ASP.NET Core Controller and ASP.NET Core Action.

@@ -2,7 +2,7 @@ namespace Prometheus.HttpMetrics
 {
     public sealed class HttpMiddlewareExporterOptions
     {
-        public HttpInFlightOptions InFlight { get; set; } = new HttpInFlightOptions();
+        public HttpInProgressOptions InProgress { get; set; } = new HttpInProgressOptions();
         public HttpRequestCountOptions RequestCount { get; set; } = new HttpRequestCountOptions();
         public HttpRequestDurationOptions RequestDuration { get; set; } = new HttpRequestDurationOptions();
     }

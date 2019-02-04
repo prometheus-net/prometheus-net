@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 namespace Tests.HttpExporter
 {
     [TestClass]
-    public class HttpInFlightMiddlewareTests
+    public class HttpInProgressMiddlewareTests
     {
         private FakeGauge _gauge;
         private RequestDelegate _requestDelegate;
 
-        private HttpInFlightMiddleware _sut;
+        private HttpInProgressMiddleware _sut;
 
         [TestMethod]
-        public void Given_no_requests_then_InFlightGauge_returns_zero()
+        public void Given_no_requests_then_InProgressGauge_returns_zero()
         {
             Assert.AreEqual(0, _gauge.IncrementCount);
             Assert.AreEqual(0, _gauge.DecrementCount);
@@ -37,10 +37,10 @@ namespace Tests.HttpExporter
 
 
         [TestMethod]
-        public async Task Given_request_throws_then_InFlightGauge_is_decreased()
+        public async Task Given_request_throws_then_InProgressGauge_is_decreased()
         {
             _requestDelegate = context => throw new InvalidOperationException();
-            _sut = new HttpInFlightMiddleware(_requestDelegate, _gauge);
+            _sut = new HttpInProgressMiddleware(_requestDelegate, _gauge);
 
 
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(() => _sut.Invoke(new DefaultHttpContext()));
@@ -56,7 +56,7 @@ namespace Tests.HttpExporter
             _gauge = new FakeGauge();
             _requestDelegate = context => Task.CompletedTask;
 
-            _sut = new HttpInFlightMiddleware(_requestDelegate, _gauge);
+            _sut = new HttpInProgressMiddleware(_requestDelegate, _gauge);
         }
     }
 
