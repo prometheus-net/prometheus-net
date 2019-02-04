@@ -113,7 +113,7 @@ OrderValueHistogram.Observe(order.TotalValueUsd);
 
 # Measuring operation duration
 
-Timers can be used to report the duration of an operation (in seconds) to a Summary, Histogram or Gauge. Wrap the operation you want to measure in a using statement.
+Timers can be used to report the duration of an operation (in seconds) to a Summary, Histogram or Gauge. Wrap the operation you want to measure in a using block.
 
 ```csharp
 private static readonly Histogram LoginDuration = Metrics
@@ -124,6 +124,22 @@ private static readonly Histogram LoginDuration = Metrics
 using (LoginDuration.NewTimer())
 {
     IdentityManager.AuthenticateUser(Request.Credentials);
+}
+```
+
+# Tracking in-progress operations
+
+You can use `Gauge.TrackInProgress()` to track how many concurrent operations are taking place. Wrap the operation you want to track in a using block.
+
+```csharp
+private static readonly Gauge DocumentImportsInProgress = Metrics
+	.CreateGauge("myapp_document_imports_in_progress", "Number of import operations ongoing.");
+
+...
+
+using (DocumentImportsInProgress.TrackInProgress())
+{
+	DocumentRepository.ImportDocument(path);
 }
 ```
 
@@ -154,19 +170,6 @@ bool IsImportRelatedException(Exception ex)
 
 	return true;
 }
-```
-
-# Tracking in-progress operations
-
-You can use `Gauge.TrackInProgress()` to track how many concurrent operations are taking place.
-
-```csharp
-private static readonly Gauge DocumentImportsInProgress = Metrics
-	.CreateGauge("myapp_document_imports_in_progress", "Number of import operations ongoing.");
-
-...
-
-DocumentImportsInProgress.TrackInProgress(() => DocumentRepository.ImportDocument(path));
 ```
 
 # Labels

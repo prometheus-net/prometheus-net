@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -31,104 +30,37 @@ namespace Prometheus
             gauge.Set(secondsSinceUnixEpoch);
         }
 
-        /// <summary>
-        /// Tracks the number of in-progress operations taking place.
-        /// </summary>
-        /// <remarks>
-        /// It is safe to track the sum of multiple concurrent in-progress operations with the same gauge.
-        /// </remarks>
-        public static void TrackInProgress(this IGauge gauge, Action wrapped)
+        private sealed class InProgressTracker : IDisposable
         {
-            if (gauge == null)
-                throw new ArgumentNullException(nameof(gauge));
-
-            if (wrapped == null)
-                throw new ArgumentNullException(nameof(wrapped));
-
-            try
+            public InProgressTracker(IGauge gauge)
             {
-                gauge.Inc();
-                wrapped();
+                _gauge = gauge;
             }
-            finally
+
+            public void Dispose()
             {
-                gauge.Dec();
+                _gauge.Dec();
             }
+
+            private readonly IGauge _gauge;
         }
 
         /// <summary>
         /// Tracks the number of in-progress operations taking place.
+        /// 
+        /// Calling this increments the gauge. Disposing of the returned instance decrements it again.
         /// </summary>
         /// <remarks>
         /// It is safe to track the sum of multiple concurrent in-progress operations with the same gauge.
         /// </remarks>
-        public static TResult TrackInProgress<TResult>(this IGauge gauge, Func<TResult> wrapped)
+        public static IDisposable TrackInProgress(this IGauge gauge)
         {
             if (gauge == null)
                 throw new ArgumentNullException(nameof(gauge));
 
-            if (wrapped == null)
-                throw new ArgumentNullException(nameof(wrapped));
+            gauge.Inc();
 
-            try
-            {
-                gauge.Inc();
-                return wrapped();
-            }
-            finally
-            {
-                gauge.Dec();
-            }
-        }
-
-        /// <summary>
-        /// Tracks the number of async in-progress operations taking place.
-        /// </summary>
-        /// <remarks>
-        /// It is safe to track the sum of multiple concurrent in-progress operations with the same gauge.
-        /// </remarks>
-        public static async Task TrackInProgressAsync(this IGauge gauge, Func<Task> wrapped)
-        {
-            if (gauge == null)
-                throw new ArgumentNullException(nameof(gauge));
-
-            if (wrapped == null)
-                throw new ArgumentNullException(nameof(wrapped));
-
-            try
-            {
-                gauge.Inc();
-                await wrapped().ConfigureAwait(false);
-            }
-            finally
-            {
-                gauge.Dec();
-            }
-        }
-
-        /// <summary>
-        /// Tracks the number of async in-progress operations taking place.
-        /// </summary>
-        /// <remarks>
-        /// It is safe to track the sum of multiple concurrent in-progress operations with the same gauge.
-        /// </remarks>
-        public static async Task<TResult> TrackInProgressAsync<TResult>(this IGauge gauge, Func<Task<TResult>> wrapped)
-        {
-            if (gauge == null)
-                throw new ArgumentNullException(nameof(gauge));
-
-            if (wrapped == null)
-                throw new ArgumentNullException(nameof(wrapped));
-
-            try
-            {
-                gauge.Inc();
-                return await wrapped().ConfigureAwait(false);
-            }
-            finally
-            {
-                gauge.Dec();
-            }
+            return new InProgressTracker(gauge);
         }
     }
 }
