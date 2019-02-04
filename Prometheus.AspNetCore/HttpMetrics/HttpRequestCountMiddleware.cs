@@ -19,11 +19,18 @@ namespace Prometheus.HttpMetrics
 
         public async Task Invoke(HttpContext context)
         {
-            _requestCount
-                .WithLabels(GetLabelData(context))
-                .Inc();
+            try
+            {
+                await _next(context);
+            }
+            finally
+            {
+                // GetLabelData() route data is only available *after* invoking the next request delegate.
+                _requestCount
+                    .WithLabels(GetLabelData(context))
+                    .Inc();
+            }
 
-            await _next(context);
         }
     }
 }

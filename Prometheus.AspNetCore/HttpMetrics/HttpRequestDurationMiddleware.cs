@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Prometheus.HttpMetrics
@@ -18,9 +19,22 @@ namespace Prometheus.HttpMetrics
 
         public async Task Invoke(HttpContext context)
         {
-            using (_requestDuration.WithLabels(GetLabelData(context)).NewTimer())
+            var stopWatch = Stopwatch.StartNew();
+
+            // We need to write this out in long form instead of using a timer because
+            // GetLabelData() can only return values *after* executing the next request delegate.
+            try
             {
                 await _next(context);
+            }
+            finally
+            {
+                stopWatch.Stop();
+
+                // GetLabelData() route data is only available *after* invoking the next request delegate.
+                _requestDuration
+                    .WithLabels(GetLabelData(context))
+                    .Observe(stopWatch.Elapsed.TotalSeconds);
             }
         }
     }
