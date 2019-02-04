@@ -1,15 +1,5 @@
-﻿using System;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
-    public interface IGauge
-    {
-        void Inc(double increment = 1);
-        void Set(double val);
-        void Dec(double decrement = 1);
-        double Value { get; }
-    }
-
     public sealed class Gauge : Collector<Gauge.Child>, IGauge
     {
         public sealed class Child : ChildBase, IGauge
@@ -24,7 +14,7 @@ namespace Prometheus
 
             private ThreadSafeDouble _value;
 
-            internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
+            private protected override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {
                 serializer.WriteMetric(_identifier, Value);
             }
@@ -49,7 +39,7 @@ namespace Prometheus
             public double Value => _value.Value;
         }
 
-        internal override Child NewChild(Labels labels, bool publish)
+        private protected override Child NewChild(Labels labels, bool publish)
         {
             return new Child(this, labels, publish);
         }
@@ -66,6 +56,6 @@ namespace Prometheus
 
         public void Publish() => Unlabelled.Publish();
 
-        internal override MetricType Type => MetricType.Gauge;
+        private protected override MetricType Type => MetricType.Gauge;
     }
 }

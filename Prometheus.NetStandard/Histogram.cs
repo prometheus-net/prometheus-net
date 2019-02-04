@@ -4,18 +4,6 @@ using System.Linq;
 
 namespace Prometheus
 {
-    public interface IHistogram : IObserver
-    {
-        /// <summary>
-        /// Observe multiple events with a given value.
-        /// 
-        /// Intended to support high frequency or batch processing use cases utilizing pre-aggregation.
-        /// </summary>
-        /// <param name="val">Measured value.</param>
-        /// <param name="count">Number of observations with this value.</param>
-        void Observe(double val, long count);
-    }
-
     public sealed class Histogram : Collector<Histogram.Child>, IHistogram
     {
         private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
@@ -48,7 +36,7 @@ namespace Prometheus
             }
         }
 
-        internal override Child NewChild(Labels labels, bool publish)
+        private protected override Child NewChild(Labels labels, bool publish)
         {
             return new Child(this, labels, publish);
         }
@@ -85,7 +73,7 @@ namespace Prometheus
             private readonly byte[] _countIdentifier;
             private readonly byte[][] _bucketIdentifiers;
 
-            internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
+            private protected override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {
                 // We output sum.
                 // We output count.
@@ -126,7 +114,7 @@ namespace Prometheus
             }
         }
 
-        internal override MetricType Type => MetricType.Histogram;
+        private protected override MetricType Type => MetricType.Histogram;
 
         public void Observe(double val) => Unlabelled.Observe(val, 1);
         

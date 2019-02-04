@@ -1,5 +1,4 @@
-﻿using Prometheus.SummaryImpl;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Prometheus

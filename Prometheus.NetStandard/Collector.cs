@@ -126,9 +126,9 @@ namespace Prometheus
         /// <summary>
         /// Creates a new instance of the child collector type.
         /// </summary>
-        internal abstract TChild NewChild(Labels labels, bool publish);
+        private protected abstract TChild NewChild(Labels labels, bool publish);
 
-        internal abstract MetricType Type { get; }
+        private protected abstract MetricType Type { get; }
 
         private readonly byte[][] _familyHeaderLines;
 

@@ -48,7 +48,7 @@ namespace Prometheus
         }
 
         // Same as above, just only called if we really need to serialize this metric (if publish is true).
-        internal abstract void CollectAndSerializeImpl(IMetricsSerializer serializer);
+        private protected abstract void CollectAndSerializeImpl(IMetricsSerializer serializer);
 
         /// <summary>
         /// Creates a metric identifier, with an optional name postfix and optional extra labels.

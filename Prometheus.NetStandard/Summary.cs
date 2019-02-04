@@ -6,10 +6,6 @@ using System.Linq;
 
 namespace Prometheus
 {
-    public interface ISummary : IObserver
-    {
-    }
-
     public sealed class Summary : Collector<Summary.Child>, ISummary
     {
         // Label that defines the quantile in a summary.
@@ -70,12 +66,12 @@ namespace Prometheus
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
-        internal override Child NewChild(Labels labels, bool publish)
+        private protected override Child NewChild(Labels labels, bool publish)
         {
             return new Child(this, labels, publish);
         }
 
-        internal override MetricType Type => MetricType.Summary;
+        private protected override MetricType Type => MetricType.Summary;
 
         public sealed class Child : ChildBase, ISummary
         {
@@ -125,7 +121,7 @@ namespace Prometheus
             private readonly byte[] _countIdentifier;
             private readonly byte[][] _quantileIdentifiers;
 
-            internal override void CollectAndSerializeImpl(IMetricsSerializer serializer)
+            private protected override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {
                 // We output sum.
                 // We output count.
