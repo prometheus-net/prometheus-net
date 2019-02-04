@@ -86,7 +86,7 @@ private static readonly Histogram OrderValueHistogram = Metrics
 		new HistogramConfiguration
 		{
 			// We divide measurements in 10 buckets of $100 each, up to $1000.
-			Buckets = Histogram.LinearBuckets(start: 1, width: 100, count: 10)
+			Buckets = Histogram.LinearBuckets(start: 100, width: 100, count: 10)
 		});
 
 ...
@@ -164,7 +164,7 @@ For projects built with ASP.NET Core, a middleware plugin is provided.
 
 If you use the default Visual Studio project template, modify *Startup.cs* as follows:
 
-```
+```csharp
 public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 {
     // ...
@@ -195,11 +195,11 @@ This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package
 
 The library provides some metrics for ASP.NET Core applications:
 
-* Total number of 'in-flight' (i.e. currently executing) requests.
+* Total number of 'in-flight' (currently executing) requests.
 * Total number of HTTP requests.
 * Duration of HTTP requests.
 
-These metrics include labels for status code, HTTP method, ASP.NET Controller and ASP.NET Action.
+These metrics include labels for status code, HTTP method, ASP.NET Core Controller and ASP.NET Core Action.
 
 You can register all of the metrics using the default labels and names as follows:
 
@@ -208,23 +208,24 @@ You can register all of the metrics using the default labels and names as follow
 app.UseHttpMetrics();
 ```
 
-If you wish to provide a custom Metric for each of the metrics, or disable certain metrics, you can configure the Http Exporter like this:
+If you wish to provide a custom metric instance or disable certain metrics you can configure the HTTP metrics like this:
 
 ```csharp
 app.UseHttpMetrics(options =>
 {
 	options.RequestCount.Enabled = false;
 
-	options.RequestDuration.Histogram = Metrics.CreateHistogram("my_custom_name", "my_custom_help",
+	options.RequestDuration.Histogram = Metrics.CreateHistogram("myapp_http_request_duration_seconds", "Some help text",
 		new HistogramConfiguration
 		{
-			Buckets = Histogram.LinearBuckets(0.1, 1, 100)
+			Buckets = Histogram.LinearBuckets(start: 1, width: 1, count: 64)
 			Labels = new[] { "code", "method" }
 		});
 });
 ```
 
 The labels for the custom metric you provide *must* be a subset of the following:
+
 * "code" - Status Code
 * "method" - HTTP method
 * "controller" - ASP.NET Core Controller
@@ -248,36 +249,34 @@ app.Map("/metrics", metricsApp =>
 
 # Kestrel stand-alone server
 
-In some situation, you may theoretically wish to start a stand-alone metric server using Kestrel instead of HttpListener.
+In some situation, you may wish to start a stand-alone metric server using Kestrel (e.g. if your app has no other HTTP-accessible functionality).
 
 ```csharp
 var metricServer = new KestrelMetricServer(port: 1234);
 metricServer.Start();
 ```
 
-The default configuration will publish metrics on the /metrics URL.
-
-This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
+The default configuration will publish metrics on the `/metrics` URL.
 
 # Publishing to Pushgateway
 
-Metrics can be posted to a [Pushgateway](https://prometheus.io/docs/practices/pushing/) server over HTTP.
+Metrics can be posted to a [Pushgateway](https://prometheus.io/docs/practices/pushing/) server.
 
 ```csharp
-var metricServer = new MetricPusher(endpoint: "http://pushgateway.example.org:9091/metrics", job: "some_job");
+var metricServer = new MetricPusher(endpoint: "https://pushgateway.example.org:9091/metrics", job: "some_job");
 metricServer.Start();
 ```
 
 # Publishing via standalone HTTP handler
 
-Metrics are usually exposed over HTTP, to be read by the Prometheus server. The default metric server uses HttpListener to open up an HTTP API for metrics export.
+As a fallback option for scenarios where Kestrel or ASP.NET Core hosting is unsuitable, an `HttpListener` based metrics server implementation is also available.
 
 ```csharp
 var metricServer = new MetricServer(port: 1234);
 metricServer.Start();
 ```
 
-The default configuration will publish metrics on the /metrics URL.
+The default configuration will publish metrics on the `/metrics` URL.
 
 `MetricServer.Start()` may throw an access denied exception on Windows if your user does not have the right to open a web server on the specified port. You can use the *netsh* command to grant yourself the required permissions:
 
