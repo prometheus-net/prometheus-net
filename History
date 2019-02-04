@@ -1,14 +1,16 @@
 * 3.0.0
 - Added HTTP request metrics for ASP.NET Core.
 - Somewhat more realistic examples in readme.
+- Metrics exporter is now significantly more CPU and memory-efficient.
+- Added Observe(value, count) to histogram metric, enabling multiple observations with the same value to be counted.
+- Added CountExceptions() and MeasureInProgress() helper extensions.
+- Adjusted API to better conform to Prometheus client library guidelines in terms of default values.
 - Breaking change: assemblies are now strong-named.
 - Breaking change: removed "windows" from built-in metric names as they are not Windows-specific.
 - Breaking change: removed support for protobuf export format (it is no longer used by Prometheus).
 - Breaking change: API surface cleaned up, removed some legacy methods, made many internal types actually internal.
 - Breaking change: "on demand collectors" concept replaced with simpler "before collect callbacks". Works the same, just less code needed to use it and fewer possible error conditions.
 - Breaking change: removed support for "custom collectors", as this was a very special use case that did not benefit at all from the main functionality of the library. Just generate a Prometheus exporter output document yourself if you need to export arbitrary data.
-- Metrics exporter is now significantly more CPU and memory-efficient.
-- Added Observe(value, count) to histogram metric, enabling multiple observations with the same value to be counted.
 * 2.1.3
 - Fixed wrong case used for metric type in the export data format. Should always be lowercase. #96
 * 2.1.2

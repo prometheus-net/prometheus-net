@@ -5,26 +5,32 @@ namespace Prometheus
 {
     public static class TimerExtensions
     {
-        private sealed class Timer : IDisposable
+        private sealed class Timer : ITimer
         {
-            private readonly Stopwatch _stopwatch;
-            private readonly Action _observeDurationAction;
+            private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
+            private readonly Action<double> _observeDurationAction;
 
             public Timer(IObserver observer)
             {
-                _observeDurationAction = () => observer.Observe(_stopwatch.Elapsed.TotalSeconds);
-                _stopwatch = Stopwatch.StartNew();
+                _observeDurationAction = duration => observer.Observe(duration);
             }
 
             public Timer(IGauge gauge)
             {
-                _observeDurationAction = () => gauge.Set(_stopwatch.Elapsed.TotalSeconds);
-                _stopwatch = Stopwatch.StartNew();
+                _observeDurationAction = duration => gauge.Set(duration);
+            }
+
+            public TimeSpan ObserveDuration()
+            {
+                var duration = _stopwatch.Elapsed;
+                _observeDurationAction.Invoke(duration.TotalSeconds);
+
+                return duration;
             }
 
             public void Dispose()
             {
-                _observeDurationAction.Invoke();
+                ObserveDuration();
             }
         }
 
@@ -32,7 +38,7 @@ namespace Prometheus
         /// Enables you to easily report elapsed seconds in the value of an observer.
         /// Dispose of the returned instance to report the elapsed duration.
         /// </summary>
-        public static IDisposable NewTimer(this IObserver observer)
+        public static ITimer NewTimer(this IObserver observer)
         {
             return new Timer(observer);
         }
@@ -41,7 +47,7 @@ namespace Prometheus
         /// Enables you to easily report elapsed seconds in the value of a gauge.
         /// Dispose of the returned instance to report the elapsed duration.
         /// </summary>
-        public static IDisposable NewTimer(this IGauge gauge)
+        public static ITimer NewTimer(this IGauge gauge)
         {
             return new Timer(gauge);
         }

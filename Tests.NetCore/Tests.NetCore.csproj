@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+
+    <RootNamespace>Prometheus.Tests</RootNamespace>
+
+    <SignAssembly>true</SignAssembly>
+
+    <AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <LangVersion>latest</LangVersion>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <LangVersion>latest</LangVersion>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Tests.NetFramework\CounterExtensionTests.cs" Link="CounterExtensionTests.cs" />
+    <Compile Include="..\Tests.NetFramework\GaugeExtensionTests.cs" Link="GaugeExtensionTests.cs" />
+    <Compile Include="..\Tests.NetFramework\MetricInitializationTests.cs" Link="MetricInitializationTests.cs" />
+    <Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
+    <Compile Include="..\Tests.NetFramework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
+    <Compile Include="..\Tests.NetFramework\RandomExtensions.cs" Link="RandomExtensions.cs" />
+    <Compile Include="..\Tests.NetFramework\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
+    <Compile Include="..\Tests.NetFramework\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
+    <PackageReference Include="NSubstitute" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
+    <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
+  </ItemGroup>
+
+</Project>

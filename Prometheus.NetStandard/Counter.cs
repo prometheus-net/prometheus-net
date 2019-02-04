@@ -29,10 +29,8 @@ namespace Prometheus
 
             public void Inc(double increment = 1.0)
             {
-                // Note: Prometheus recommendations are that this assert > 0. However, there are times your
-                // measurement results in a zero and it's easier to have the counter handle this elegantly.
                 if (increment < 0.0)
-                    throw new ArgumentOutOfRangeException("increment", "Counter cannot go down");
+                    throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
 
                 _value.Add(increment);
                 Publish();

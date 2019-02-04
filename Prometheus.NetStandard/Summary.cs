@@ -15,12 +15,11 @@ namespace Prometheus
         // Label that defines the quantile in a summary.
         private const string QuantileLabel = "quantile";
 
-        internal static readonly QuantileEpsilonPair[] DefObjectivesArray = new[]
-        {
-            new QuantileEpsilonPair(0.5, 0.05),
-            new QuantileEpsilonPair(0.9, 0.01),
-            new QuantileEpsilonPair(0.99, 0.001)
-        };
+        /// <summary>
+        /// Client library guidelines say that the summary should default to not measuring quantiles.
+        /// https://prometheus.io/docs/instrumenting/writing_clientlibs/#summary
+        /// </summary>
+        internal static readonly QuantileEpsilonPair[] DefObjectivesArray = new QuantileEpsilonPair[0];
 
         // Default Summary quantile values.
         public static readonly IList<QuantileEpsilonPair> DefObjectives = new List<QuantileEpsilonPair>(DefObjectivesArray);

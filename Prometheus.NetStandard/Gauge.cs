@@ -1,4 +1,6 @@
-﻿namespace Prometheus
+﻿using System;
+
+namespace Prometheus
 {
     public interface IGauge
     {

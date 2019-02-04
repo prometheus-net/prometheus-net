@@ -22,7 +22,6 @@ namespace Prometheus
         }
 
         private readonly Process _process;
-        private Counter _perfErrors;
         private readonly List<Counter.Child> _collectionCounts = new List<Counter.Child>();
         private Gauge _totalMemory;
         private Gauge _virtualMemorySize;
@@ -32,7 +31,6 @@ namespace Prometheus
         private Gauge _openHandles;
         private Gauge _startTime;
         private Gauge _numThreads;
-        private Gauge _pid;
 
         private DotNetStats()
         {
@@ -58,20 +56,17 @@ namespace Prometheus
             _startTime = metrics.CreateGauge("process_start_time_seconds", "Start time of the process since unix epoch in seconds.");
             _cpuTotal = metrics.CreateCounter("process_cpu_seconds_total", "Total user and system CPU time spent in seconds.");
 
-            _virtualMemorySize = metrics.CreateGauge("process_virtual_bytes", "Process virtual memory size");
-            _workingSet = metrics.CreateGauge("process_working_set", "Process working set");
-            _privateMemorySize = metrics.CreateGauge("process_private_bytes", "Process private memory size");
+            _virtualMemorySize = metrics.CreateGauge("process_virtual_memory_bytes", "Virtual memory size in bytes.");
+            _workingSet = metrics.CreateGauge("process_working_set_bytes", "Process working set");
+            _privateMemorySize = metrics.CreateGauge("process_private_memory_bytes", "Process private memory size");
             _openHandles = metrics.CreateGauge("process_open_handles", "Number of open handles");
             _numThreads = metrics.CreateGauge("process_num_threads", "Total number of threads");
-            _pid = metrics.CreateGauge("process_processid", "Process ID");
 
             // .net specific metrics
-            _totalMemory = metrics.CreateGauge("dotnet_totalmemory", "Total known allocated memory");
-            _perfErrors = metrics.CreateCounter("dotnet_collection_errors_total", "Total number of errors that occured during collections");
+            _totalMemory = metrics.CreateGauge("dotnet_total_memory_bytes", "Total known allocated memory");
 
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _startTime.Set((_process.StartTime.ToUniversalTime() - epoch).TotalSeconds);
-            _pid.Set(_process.Id);
         }
 
         private void UpdateMetrics()
@@ -96,7 +91,6 @@ namespace Prometheus
             }
             catch (Exception)
             {
-                _perfErrors.Inc();
             }
         }
     }
