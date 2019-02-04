@@ -4,6 +4,9 @@ using System.IO;
 
 namespace Prometheus
 {
+    // The use of BufferedStream here is a bit theoretical from a benefit perspective.
+    // Profiling provided contradictory results (more memory use with less buffering??).
+    // Revisit if you can come up with more accurate test cases.
     internal sealed class TextSerializer : IMetricsSerializer, IDisposable
     {
         private const byte NewLine = (byte)'\n';
