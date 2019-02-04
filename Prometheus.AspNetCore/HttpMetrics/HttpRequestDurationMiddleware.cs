@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Prometheus.HttpMetrics
@@ -19,19 +18,9 @@ namespace Prometheus.HttpMetrics
 
         public async Task Invoke(HttpContext context)
         {
-            var stopWatch = Stopwatch.StartNew();
-
-            try
+            using (_requestDuration.WithLabels(GetLabelData(context)).NewTimer())
             {
                 await _next(context);
-            }
-            finally
-            {
-                stopWatch.Stop();
-
-                _requestDuration
-                    .WithLabels(GetLabelData(context))
-                    .Observe(stopWatch.Elapsed.TotalSeconds);
             }
         }
     }
