@@ -12,28 +12,33 @@ namespace Prometheus
         private const byte NewLine = (byte)'\n';
         private const byte Space = (byte)' ';
 
-        public TextSerializer(Stream stream)
+        public TextSerializer(Stream stream, bool leaveOpen)
         {
-            if (stream == null)
-                throw new ArgumentNullException(nameof(stream));
-
             _stream = new Lazy<BufferedStream>(() => new BufferedStream(stream, 16 * 1024));
+            _leaveOpen = leaveOpen;
         }
 
         // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
-        public TextSerializer(Func<Stream> streamFactory)
+        public TextSerializer(Func<Stream> streamFactory, bool leaveOpen)
         {
             _stream = new Lazy<BufferedStream>(() => new BufferedStream(streamFactory(), 16 * 1024));
+            _leaveOpen = leaveOpen;
         }
 
         public void Dispose()
         {
             // If we never opened the stream, we don't touch it on close.
             if (_stream.IsValueCreated)
-                _stream.Value.Dispose();
+            {
+                if (_leaveOpen)
+                    _stream.Value.Flush();
+                else
+                    _stream.Value.Close();
+            }
         }
 
         private readonly Lazy<BufferedStream> _stream;
+        private readonly bool _leaveOpen;
 
         // HELP name help
         // TYPE name type

@@ -74,7 +74,7 @@ namespace Prometheus
                     {
                         var stream = new MemoryStream();
 
-                        using (var serializer = new TextSerializer(stream))
+                        using (var serializer = new TextSerializer(stream, leaveOpen: true))
                             _registry.CollectAndSerialize(serializer);
 
                         stream.Position = 0;

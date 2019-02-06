@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Prometheus;
 using System;
@@ -24,6 +25,7 @@ namespace tester
                 WebHost.CreateDefaultBuilder()
                 .UseUrls($"http://localhost:{TesterConstants.TesterPort}")
                 .Configure(app => app.UseMetricServer())
+                .ConfigureLogging(logging => logging.ClearProviders())
                 .Build()
                 .RunAsync(_cts.Token);
         }

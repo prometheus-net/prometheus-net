@@ -46,7 +46,7 @@ namespace Prometheus
                         response.ContentType = PrometheusConstants.ExporterContentType;
                         response.StatusCode = StatusCodes.Status200OK;
                         return response.Body;
-                    }))
+                    }, leaveOpen: false))
                 {
                     _registry.CollectAndSerialize(serializer);
                 }

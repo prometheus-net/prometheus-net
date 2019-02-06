@@ -1,3 +1,5 @@
+* 3.0.1
+- Fix ObjectDisposedException in MetricPusher.
 * 3.0.0
 - Added HTTP request metrics for ASP.NET Core.
 - Somewhat more realistic examples in readme.

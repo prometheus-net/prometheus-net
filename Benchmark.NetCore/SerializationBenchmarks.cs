@@ -77,7 +77,7 @@ namespace Benchmark.NetCore
         public void CollectAndSerialize()
         {
             using (var stream = new NullStream())
-            using (var serializer = new TextSerializer(stream))
+            using (var serializer = new TextSerializer(stream, leaveOpen: false))
                 _registry.CollectAndSerialize(serializer);
         }
     }
