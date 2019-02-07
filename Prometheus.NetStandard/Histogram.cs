@@ -65,7 +65,7 @@ namespace Prometheus
 
             private readonly Histogram _parent;
 
-            private readonly ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
+            private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
             private readonly ThreadSafeLong[] _bucketCounts;
             private readonly double[] _upperBounds;
 
