@@ -90,6 +90,7 @@
   <ItemGroup>
     <Compile Include="CounterExtensionTests.cs" />
     <Compile Include="GaugeExtensionTests.cs" />
+    <Compile Include="HistogramTests.cs" />
     <Compile Include="MetricInitializationTests.cs" />
     <Compile Include="MetricsTests.cs" />
     <Compile Include="QuantileStreamTests.cs" />

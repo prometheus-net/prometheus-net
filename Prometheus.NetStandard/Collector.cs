@@ -79,7 +79,7 @@ namespace Prometheus
         /// <summary>
         /// Gets the child instance that has no labels.
         /// </summary>
-        protected TChild Unlabelled => _unlabelledLazy.Value;
+        protected internal TChild Unlabelled => _unlabelledLazy.Value;
 
         // This servers a slightly silly but useful purpose: by default if you start typing .La... and trigger Intellisense
         // it will often for whatever reason focus on LabelNames instead of Labels, leading to tiny but persistent frustration.

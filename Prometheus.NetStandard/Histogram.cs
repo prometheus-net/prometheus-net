@@ -69,9 +69,9 @@ namespace Prometheus
             private readonly ThreadSafeLong[] _bucketCounts;
             private readonly double[] _upperBounds;
 
-            private readonly byte[] _sumIdentifier;
-            private readonly byte[] _countIdentifier;
-            private readonly byte[][] _bucketIdentifiers;
+            internal readonly byte[] _sumIdentifier;
+            internal readonly byte[] _countIdentifier;
+            internal readonly byte[][] _bucketIdentifiers;
 
             private protected override void CollectAndSerializeImpl(IMetricsSerializer serializer)
             {
