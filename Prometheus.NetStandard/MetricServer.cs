@@ -13,16 +13,42 @@ namespace Prometheus
     /// </summary>
     public class MetricServer : MetricHandler
     {
+        public sealed class Configuration
+        {
+            public string HostName { get; set; } = "+";
+
+            public int Port { get; set; }
+
+            public string Path { get; set; } = "metrics/";
+
+            public bool UseHttps { get; set; } = false;
+        }
+
         private readonly HttpListener _httpListener = new HttpListener();
 
         public MetricServer(int port, string url = "metrics/", CollectorRegistry registry = null, bool useHttps = false) : this("+", port, url, registry, useHttps)
         {
         }
 
-        public MetricServer(string hostname, int port, string url = "metrics/", CollectorRegistry registry = null, bool useHttps = false) : base(registry)
+        public MetricServer(string hostname, int port, string url = "metrics/", CollectorRegistry registry = null, bool useHttps = false) :
+            this(new Configuration { HostName=hostname, Port = port, Path = url, UseHttps = useHttps}, registry)
         {
-            var s = useHttps ? "s" : "";
-            _httpListener.Prefixes.Add($"http{s}://{hostname}:{port}/{url}");
+        }
+
+        public MetricServer(Configuration config, CollectorRegistry registry = null) : base(registry)
+        {
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+
+            if (config.Port == default)
+            {
+                throw new InvalidOperationException("MetricServer port should be provided");
+            }
+
+            var s = config.UseHttps ? "s" : "";
+            _httpListener.Prefixes.Add($"http{s}://{config.HostName}:{config.Port}/{config.Path}");
         }
 
         protected override Task StartServer(CancellationToken cancel)

@@ -9,7 +9,7 @@ namespace Prometheus
     {
         private readonly CollectorRegistry _registry;
 
-        internal MetricFactory(CollectorRegistry registry)
+        public MetricFactory(CollectorRegistry registry)
         {
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         }
