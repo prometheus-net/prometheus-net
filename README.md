@@ -8,6 +8,8 @@ The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/
 * .NET Core 2.0
 * Mono 5.4
 
+The ASP.NET Core specific functionality requires ASP.NET Core 2.1 or newer.
+
 # Best practices and usage
 
 This library allows you to instrument your code with custom metrics and provides some built-in metric collection integrations for ASP.NET Core.
