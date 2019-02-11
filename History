@@ -1,3 +1,5 @@
+* 3.0.3
+- Now backward compatible with ASP.NET Core 2.1 (was 2.2+)
 * 3.0.2
 - Fix defect where histogram sum failed to increment.
 * 3.0.1
