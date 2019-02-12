@@ -40,8 +40,8 @@ namespace Prometheus
         private readonly Lazy<BufferedStream> _stream;
         private readonly bool _leaveOpen;
 
-        // HELP name help
-        // TYPE name type
+        // # HELP name help
+        // # TYPE name type
         public void WriteFamilyDeclaration(byte[][] headerLines)
         {
             foreach (var line in headerLines)
