@@ -17,81 +17,49 @@ namespace Prometheus
         /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
-        public Counter CreateCounter(string name, string help, CounterConfiguration configuration = null)
-        {
-            configuration = configuration ?? CounterConfiguration.Default;
-
-            var metric = new Counter(name, help, configuration.LabelNames, configuration.SuppressInitialValue);
-            return (Counter)_registry.GetOrAdd(metric);
-        }
+        public Counter CreateCounter(string name, string help, CounterConfiguration configuration = null) =>
+            _registry.CreateCounter(name, help, configuration);
 
         /// <summary>
         /// Gauges can have any numeric value and change arbitrarily.
         /// </summary>
-        public Gauge CreateGauge(string name, string help, GaugeConfiguration configuration = null)
-        {
-            configuration = configuration ?? GaugeConfiguration.Default;
-
-            var metric = new Gauge(name, help, configuration.LabelNames, configuration.SuppressInitialValue);
-            return (Gauge)_registry.GetOrAdd(metric);
-        }
+        public Gauge CreateGauge(string name, string help, GaugeConfiguration configuration = null) =>
+            _registry.CreateGauge(name, help, configuration);
 
         /// <summary>
         /// Summaries track the trends in events over time (10 minutes by default).
         /// </summary>
-        public Summary CreateSummary(string name, string help, SummaryConfiguration configuration = null)
-        {
-            configuration = configuration ?? SummaryConfiguration.Default;
-
-            var metric = new Summary(name, help, configuration.LabelNames, configuration.SuppressInitialValue, configuration.Objectives, configuration.MaxAge, configuration.AgeBuckets, configuration.BufferSize);
-            return (Summary)_registry.GetOrAdd(metric);
-        }
+        public Summary CreateSummary(string name, string help, SummaryConfiguration configuration = null) =>
+            _registry.CreateSummary(name, help, configuration);
 
         /// <summary>
         /// Histograms track the size and number of events in buckets.
         /// </summary>
-        public Histogram CreateHistogram(string name, string help, HistogramConfiguration configuration = null)
-        {
-            configuration = configuration ?? HistogramConfiguration.Default;
-
-            var metric = new Histogram(name, help, configuration.LabelNames, configuration.SuppressInitialValue, configuration.Buckets);
-            return (Histogram)_registry.GetOrAdd(metric);
-        }
+        public Histogram CreateHistogram(string name, string help, HistogramConfiguration configuration = null) =>
+            _registry.CreateHistogram(name, help, configuration);
 
         /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
         public Counter CreateCounter(string name, string help, params string[] labelNames) =>
-            CreateCounter(name, help, new CounterConfiguration
-            {
-                LabelNames = labelNames
-            });
+            _registry.CreateCounter(name, help, null, labelNames);
 
         /// <summary>
         /// Gauges can have any numeric value and change arbitrarily.
         /// </summary>
         public Gauge CreateGauge(string name, string help, params string[] labelNames) =>
-            CreateGauge(name, help, new GaugeConfiguration
-            {
-                LabelNames = labelNames
-            });
+            _registry.CreateGauge(name, help, null, labelNames);
 
         /// <summary>
         /// Summaries track the trends in events over time (10 minutes by default).
         /// </summary>
         public Summary CreateSummary(string name, string help, params string[] labelNames) =>
-            CreateSummary(name, help, new SummaryConfiguration
-            {
-                LabelNames = labelNames
-            });
+            _registry.CreateSummary(name, help, null, labelNames);
 
         /// <summary>
         /// Histograms track the size and number of events in buckets.
         /// </summary>
         public Histogram CreateHistogram(string name, string help, params string[] labelNames) =>
-            CreateHistogram(name, help, new HistogramConfiguration
-            {
-                LabelNames = labelNames
-            });
+            _registry.CreateHistogram(name, help, null, labelNames);
     }
 }
