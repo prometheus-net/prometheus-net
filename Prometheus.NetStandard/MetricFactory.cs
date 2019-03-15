@@ -19,10 +19,9 @@ namespace Prometheus
         /// </summary>
         public Counter CreateCounter(string name, string help, CounterConfiguration configuration = null)
         {
-            configuration = configuration ?? CounterConfiguration.Default;
-
-            var metric = new Counter(name, help, configuration.LabelNames, configuration.SuppressInitialValue);
-            return (Counter)_registry.GetOrAdd(metric);
+            return _registry.GetOrAdd(new CollectorRegistry.CollectorInitializer<Counter, CounterConfiguration>(
+                (n, h, config) => new Counter(n, h, config.LabelNames, config.SuppressInitialValue),
+                name, help, configuration ?? CounterConfiguration.Default));
         }
 
         /// <summary>
@@ -30,10 +29,9 @@ namespace Prometheus
         /// </summary>
         public Gauge CreateGauge(string name, string help, GaugeConfiguration configuration = null)
         {
-            configuration = configuration ?? GaugeConfiguration.Default;
-
-            var metric = new Gauge(name, help, configuration.LabelNames, configuration.SuppressInitialValue);
-            return (Gauge)_registry.GetOrAdd(metric);
+            return _registry.GetOrAdd(new CollectorRegistry.CollectorInitializer<Gauge, GaugeConfiguration>(
+                (n, h, config) => new Gauge(n, h, config.LabelNames, config.SuppressInitialValue),
+                name, help, configuration ?? GaugeConfiguration.Default));
         }
 
         /// <summary>
@@ -41,10 +39,9 @@ namespace Prometheus
         /// </summary>
         public Summary CreateSummary(string name, string help, SummaryConfiguration configuration = null)
         {
-            configuration = configuration ?? SummaryConfiguration.Default;
-
-            var metric = new Summary(name, help, configuration.LabelNames, configuration.SuppressInitialValue, configuration.Objectives, configuration.MaxAge, configuration.AgeBuckets, configuration.BufferSize);
-            return (Summary)_registry.GetOrAdd(metric);
+            return _registry.GetOrAdd(new CollectorRegistry.CollectorInitializer<Summary, SummaryConfiguration>(
+                (n, h, config) => new Summary(n, h, config.LabelNames, config.SuppressInitialValue, config.Objectives, config.MaxAge, config.AgeBuckets, config.BufferSize),
+                name, help, configuration ?? SummaryConfiguration.Default));
         }
 
         /// <summary>
@@ -52,10 +49,9 @@ namespace Prometheus
         /// </summary>
         public Histogram CreateHistogram(string name, string help, HistogramConfiguration configuration = null)
         {
-            configuration = configuration ?? HistogramConfiguration.Default;
-
-            var metric = new Histogram(name, help, configuration.LabelNames, configuration.SuppressInitialValue, configuration.Buckets);
-            return (Histogram)_registry.GetOrAdd(metric);
+            return _registry.GetOrAdd(new CollectorRegistry.CollectorInitializer<Histogram, HistogramConfiguration>(
+                (n, h, config) => new Histogram(n, h, config.LabelNames, config.SuppressInitialValue, config.Buckets),
+                name, help, configuration ?? HistogramConfiguration.Default));
         }
 
         /// <summary>
