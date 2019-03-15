@@ -198,12 +198,27 @@ namespace Prometheus.Tests
             Metrics.CreateGauge("name1", "h");
             try
             {
-                Metrics.CreateCounter("name1", "h", "label1");
+                Metrics.CreateGauge("name1", "h", "label1");
                 Assert.Fail("should have thrown");
             }
             catch (InvalidOperationException e)
             {
                 Assert.AreEqual("Collector with same name must have same label names", e.Message);
+            }
+        }
+
+        [TestMethod]
+        public void cannot_create_metrics_with_the_same_name_and_labels_but_different_type()
+        {
+            Metrics.CreateGauge("name1", "h", "label1");
+            try
+            {
+                Metrics.CreateCounter("name1", "h", "label1");
+                Assert.Fail("should have thrown");
+            }
+            catch (InvalidOperationException e)
+            {
+                Assert.AreEqual("Collector of a different type with the same name is already registered.", e.Message);
             }
         }
 
