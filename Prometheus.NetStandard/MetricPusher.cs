@@ -72,17 +72,18 @@ namespace Prometheus
 
                     try
                     {
-                        var stream = new MemoryStream();
+                        using (var stream = new MemoryStream())
+                        {
+                            using (var serializer = new TextSerializer(stream, leaveOpen: true))
+                                _registry.CollectAndSerialize(serializer);
 
-                        using (var serializer = new TextSerializer(stream, leaveOpen: true))
-                            _registry.CollectAndSerialize(serializer);
+                            stream.Position = 0;
+                            // StreamContent takes ownership of the stream.
+                            var response = await _httpClient.PostAsync(_targetUrl, new StreamContent(stream));
 
-                        stream.Position = 0;
-                        // StreamContent takes ownership of the stream.
-                        var response = await _httpClient.PostAsync(_targetUrl, new StreamContent(stream));
-
-                        // If anything goes wrong, we want to get at least an entry in the trace log.
-                        response.EnsureSuccessStatusCode();
+                            // If anything goes wrong, we want to get at least an entry in the trace log.
+                            response.EnsureSuccessStatusCode();
+                        }
                     }
                     catch (ScrapeFailedException ex)
                     {
