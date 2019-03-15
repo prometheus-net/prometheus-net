@@ -11,10 +11,9 @@ namespace Benchmark.NetCore
     public class MetricCreationBenchmarks
     {
         /// <summary>
-        /// Creating metrics involves placing them in a registry, which brings data size into the picture.
-        /// For benchmarking this case, we create a number of them at once in the same registry.
+        /// Just to ensure that a benchmark iteration has enough to do for stable and meaningful results.
         /// </summary>
-        private const int _metricCount = 100;
+        private const int _metricCount = 10000;
 
         private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
 
@@ -38,56 +37,46 @@ namespace Benchmark.NetCore
             _factory = Metrics.WithCustomRegistry(_registry);
         }
 
-        [Benchmark]
-        public void Counter()
-        {
-            _factory.CreateCounter(_metricNames[0], _help).Inc();
-        }
-
-        [Benchmark]
-        public void Gauge()
-        {
-            _factory.CreateGauge(_metricNames[0], _help).Inc();
-        }
-
-        [Benchmark]
-        public void Summary()
-        {
-            _factory.CreateSummary(_metricNames[0], _help).Observe(123);
-        }
-
-        [Benchmark]
-        public void Histogram()
-        {
-            _factory.CreateHistogram(_metricNames[0], _help).Observe(123);
-        }
+        private static readonly string[] _labelNames = new[] { "foo", "bar", "baz" };
 
         [Benchmark]
         public void Counter_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-                _factory.CreateCounter(_metricNames[i], _help).Inc();
+                _factory.CreateCounter(_metricNames[i], _help, new CounterConfiguration
+                {
+                    LabelNames = _labelNames
+                }).Inc();
         }
 
         [Benchmark]
         public void Gauge_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-                _factory.CreateGauge(_metricNames[i], _help).Inc();
+                _factory.CreateGauge(_metricNames[i], _help, new GaugeConfiguration
+                {
+                    LabelNames = _labelNames
+                }).Inc();
         }
 
         [Benchmark]
         public void Summary_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-                _factory.CreateSummary(_metricNames[i], _help).Observe(123);
+                _factory.CreateSummary(_metricNames[i], _help, new SummaryConfiguration
+                {
+                    LabelNames = _labelNames
+                }).Observe(123);
         }
 
         [Benchmark]
         public void Histogram_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-                _factory.CreateHistogram(_metricNames[i], _help).Observe(123);
+                _factory.CreateHistogram(_metricNames[i], _help, new HistogramConfiguration
+                {
+                    LabelNames = _labelNames
+                }).Observe(123);
         }
     }
 }
