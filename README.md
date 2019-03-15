@@ -115,7 +115,7 @@ OrderValueHistogram.Observe(order.TotalValueUsd);
 
 # Measuring operation duration
 
-Timers can be used to report the duration of an operation (in seconds) to a Summary, Histogram or Gauge. Wrap the operation you want to measure in a using block.
+Timers can be used to report the duration of an operation (in seconds) to a Summary, Histogram, Gauge or Counter. Wrap the operation you want to measure in a using block.
 
 ```csharp
 private static readonly Histogram LoginDuration = Metrics
