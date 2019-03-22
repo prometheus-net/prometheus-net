@@ -1,6 +1,7 @@
 * 3.1.0
 - Added ICounter.NewTimer() (adds the value to the counter)
 - Eliminated some needless allocations when trying to register a metric that is already registered. #134
+- Added CollectorRegistry.CollectAndExportAsText() to support metric data export via arbitrary custom endpoints.
 * 3.0.3
 - Now backward compatible with ASP.NET Core 2.1 (was 2.2+)
 * 3.0.2

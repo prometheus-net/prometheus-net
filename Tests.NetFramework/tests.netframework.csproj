@@ -91,6 +91,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CollectorRegistryTests.cs" />
     <Compile Include="CounterExtensionTests.cs" />
     <Compile Include="GaugeExtensionTests.cs" />
     <Compile Include="HistogramTests.cs" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Linq;
 
 namespace Prometheus
@@ -21,6 +22,8 @@ namespace Prometheus
         /// 
         /// If the callback throws <see cref="ScrapeFailedException"/> then the entire metric collection will fail.
         /// This will result in an appropriate HTTP error code or a skipped push, depending on type of exporter.
+        /// 
+        /// If multiple concurrent collections occur, the callback may be called multiple times concurrently.
         /// </summary>
         public void AddBeforeCollectCallback(Action callback)
         {
@@ -28,6 +31,20 @@ namespace Prometheus
                 throw new ArgumentNullException(nameof(callback));
 
             _beforeCollectCallbacks.Add(callback);
+        }
+
+        /// <summary>
+        /// Collects all metrics and exports them in text document format to the provided stream.
+        /// 
+        /// This method is designed to be used with custom output mechanisms that do not use an IMetricServer.
+        /// </summary>
+        public void CollectAndExportAsText(Stream to)
+        {
+            if (to == null)
+                throw new ArgumentNullException(nameof(to));
+
+            using (var serializer = new TextSerializer(to, leaveOpen: true))
+                CollectAndSerialize(serializer);
         }
 
         private readonly ConcurrentBag<Action> _beforeCollectCallbacks = new ConcurrentBag<Action>();
