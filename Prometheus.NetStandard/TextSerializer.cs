@@ -6,7 +6,11 @@ namespace Prometheus
 {
     // The use of BufferedStream here is a bit theoretical from a benefit perspective.
     // Profiling provided contradictory results (more memory use with less buffering??).
-    // Revisit if you can come up with more accurate test cases.
+    // Revisit if you can come up with more accurate test cases. So far the results are in favor of BufferedStream:
+    // With BufferedStream:
+    // | CollectAndSerialize | 63.85 ms | 2.528 ms | 7.131 ms | 61.67 ms |   4833.3333 |           - |           - |             7.48 MB |
+    // Without BufferedStream:
+    // | CollectAndSerialize | 50.44 ms | 3.041 ms | 4.263 ms |  13454.5455 |           - |           - |            20.31 MB |
     internal sealed class TextSerializer : IMetricsSerializer, IDisposable
     {
         private const byte NewLine = (byte)'\n';
