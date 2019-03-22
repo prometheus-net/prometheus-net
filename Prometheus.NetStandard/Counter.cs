@@ -2,12 +2,6 @@ using System;
 
 namespace Prometheus
 {
-    public interface ICounter
-    {
-        void Inc(double increment = 1);
-        double Value { get; }
-    }
-
     public sealed class Counter : Collector<Counter.Child>, ICounter
     {
         public sealed class Child : ChildBase, ICounter
