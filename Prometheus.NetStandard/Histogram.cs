@@ -4,6 +4,10 @@ using System.Linq;
 
 namespace Prometheus
 {
+    /// <remarks>
+    /// The histogram is thread-safe but not atomic - the sum of values and total count of events
+    /// may not add up perfectly with bucket contents if new observations are made during a collection.
+    /// </remarks>
     public sealed class Histogram : Collector<Histogram.Child>, IHistogram
     {
         private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
@@ -92,6 +96,9 @@ namespace Prometheus
                 }
             }
 
+            public double Sum => _sum.Value;
+            public long Count => _bucketCounts.Sum(b => b.Value);
+
             public void Observe(double val) => Observe(val, 1);
 
             public void Observe(double val, long count)
@@ -116,10 +123,10 @@ namespace Prometheus
 
         private protected override MetricType Type => MetricType.Histogram;
 
+        public double Sum => Unlabelled.Sum;
+        public long Count => Unlabelled.Count;
         public void Observe(double val) => Unlabelled.Observe(val, 1);
-        
         public void Observe(double val, long count) => Unlabelled.Observe(val, count);
-
         public void Publish() => Unlabelled.Publish();
 
         // From https://github.com/prometheus/client_golang/blob/master/prometheus/histogram.go
