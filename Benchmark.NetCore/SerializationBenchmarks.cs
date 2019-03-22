@@ -9,8 +9,8 @@ namespace Benchmark.NetCore
         // Metric -> Variant -> Label values
         private static readonly string[][][] _labelValueRows;
 
-        private const int _metricCount = 10;
-        private const int _variantCount = 10;
+        private const int _metricCount = 100;
+        private const int _variantCount = 100;
         private const int _labelCount = 5;
 
         private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
