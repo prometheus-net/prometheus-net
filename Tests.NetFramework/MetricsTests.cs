@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using System;
+using System.Linq;
 
 namespace Prometheus.Tests
 {
@@ -256,6 +257,39 @@ namespace Prometheus.Tests
             metric.Labels("");
             metric.Labels("mylabelvalue");
             Assert.ThrowsException<ArgumentNullException>(() => metric.Labels(null));
+        }
+
+        [TestMethod]
+        public void GetAllLabelValues_GetsThemAll()
+        {
+            var metric = Metrics.CreateGauge("ahdgfln", "ahegrtijpm", "a", "b", "c");
+            metric.Labels("1", "2", "3");
+            metric.Labels("4", "5", "6");
+
+            var values = metric.GetAllLabelValues().OrderBy(v => v[0]).ToArray();
+
+            Assert.AreEqual(2, values.Length);
+
+            Assert.AreEqual(3, values[0].Length);
+            Assert.AreEqual("1", values[0][0]);
+            Assert.AreEqual("2", values[0][1]);
+            Assert.AreEqual("3", values[0][2]);
+
+            Assert.AreEqual(3, values[1].Length);
+            Assert.AreEqual("4", values[1][0]);
+            Assert.AreEqual("5", values[1][1]);
+            Assert.AreEqual("6", values[1][2]);
+        }
+
+        [TestMethod]
+        public void GetAllLabelValues_DoesNotGetUnlabelled()
+        {
+            var metric = Metrics.CreateGauge("ahdggfagfln", "ahegrgftijpm");
+            metric.Inc();
+
+            var values = metric.GetAllLabelValues().ToArray();
+
+            Assert.AreEqual(0, values.Length);
         }
     }
 }

@@ -16,9 +16,8 @@ namespace Prometheus
 
         public int Count => Names.Length;
 
-        // Internal for testing only.
-        internal readonly string[] Values;
-        internal readonly string[] Names;
+        public string[] Values { get; }
+        public string[] Names { get; }
 
         private readonly int _hashCode;
 

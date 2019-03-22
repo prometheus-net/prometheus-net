@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Prometheus
@@ -98,6 +98,24 @@ namespace Prometheus
         {
             var key = new Labels(LabelNames, labelValues);
             _labelledMetrics.TryRemove(key, out _);
+        }
+
+        /// <summary>
+        /// Gets the label values of all labelled instances of the collector.
+        /// 
+        /// Note that during concurrent operation, the set of values returned here
+        /// may diverge from the latest set of values used by the collector.
+        /// </summary>
+        public IEnumerable<string[]> GetAllLabelValues()
+        {
+            foreach (var labels in _labelledMetrics.Keys)
+            {
+                if (labels.Count == 0)
+                    continue; // We do not return the "unlabelled" label set.
+
+                // Defensive copy.
+                yield return labels.Values.ToArray();
+            }
         }
 
         private TChild GetOrAddLabelled(Labels key)
