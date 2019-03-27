@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -16,9 +18,9 @@ namespace Prometheus
 
             private ThreadSafeDouble _value;
 
-            private protected override void CollectAndSerializeImpl(IMetricsSerializer serializer)
+            private protected override Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                serializer.WriteMetric(_identifier, Value);
+                return serializer.WriteMetricAsync(_identifier, Value, cancel);
             }
 
             public void Inc(double increment = 1.0)

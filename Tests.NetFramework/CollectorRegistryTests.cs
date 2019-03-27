@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Globalization;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Prometheus.Tests
 {
@@ -8,7 +9,7 @@ namespace Prometheus.Tests
     public sealed class CollectorRegistryTests
     {
         [TestMethod]
-        public void ExportAsText_ExportsExpectedData()
+        public async Task ExportAsText_ExportsExpectedData()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -20,7 +21,7 @@ namespace Prometheus.Tests
             gauge.Set(canaryValue);
 
             var stream = new MemoryStream();
-            registry.CollectAndExportAsText(stream);
+            await registry.CollectAndExportAsTextAsync(stream);
 
             stream.Position = 0;
             var text = new StreamReader(stream).ReadToEnd();

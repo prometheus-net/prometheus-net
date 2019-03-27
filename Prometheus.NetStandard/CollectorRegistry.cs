@@ -2,6 +2,8 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -38,13 +40,12 @@ namespace Prometheus
         /// 
         /// This method is designed to be used with custom output mechanisms that do not use an IMetricServer.
         /// </summary>
-        public void CollectAndExportAsText(Stream to)
+        public Task CollectAndExportAsTextAsync(Stream to, CancellationToken cancel = default)
         {
             if (to == null)
                 throw new ArgumentNullException(nameof(to));
 
-            using (var serializer = new TextSerializer(to, leaveOpen: true))
-                CollectAndSerialize(serializer);
+            return CollectAndSerializeAsync(new TextSerializer(to), cancel);
         }
 
         private readonly ConcurrentBag<Action> _beforeCollectCallbacks = new ConcurrentBag<Action>();
@@ -99,13 +100,15 @@ namespace Prometheus
         /// <summary>
         /// Collects metrics from all the registered collectors and sends them to the specified serializer.
         /// </summary>
-        internal void CollectAndSerialize(IMetricsSerializer serializer)
+        internal async Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
             foreach (var callback in _beforeCollectCallbacks)
                 callback();
 
             foreach (var collector in _collectors.Values)
-                collector.CollectAndSerialize(serializer);
+                await collector.CollectAndSerializeAsync(serializer, cancel);
+
+            await serializer.FlushAsync(cancel);
         }
     }
 }

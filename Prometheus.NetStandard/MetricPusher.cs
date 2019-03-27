@@ -74,8 +74,8 @@ namespace Prometheus
                     {
                         using (var stream = new MemoryStream())
                         {
-                            using (var serializer = new TextSerializer(stream, leaveOpen: true))
-                                _registry.CollectAndSerialize(serializer);
+                            var serializer = new TextSerializer(stream);
+                            await _registry.CollectAndSerializeAsync(serializer, cancel);
 
                             stream.Position = 0;
                             // StreamContent takes ownership of the stream.

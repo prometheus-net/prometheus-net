@@ -1,6 +1,8 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -77,14 +79,14 @@ namespace Prometheus
             internal readonly byte[] _countIdentifier;
             internal readonly byte[][] _bucketIdentifiers;
 
-            private protected override void CollectAndSerializeImpl(IMetricsSerializer serializer)
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
                 // We output sum.
                 // We output count.
                 // We output each bucket in order of increasing upper bound.
 
-                serializer.WriteMetric(_sumIdentifier, _sum.Value);
-                serializer.WriteMetric(_countIdentifier, _bucketCounts.Sum(b => b.Value));
+                await serializer.WriteMetricAsync(_sumIdentifier, _sum.Value, cancel);
+                await serializer.WriteMetricAsync(_countIdentifier, _bucketCounts.Sum(b => b.Value), cancel);
 
                 var cumulativeCount = 0L;
 
@@ -92,7 +94,7 @@ namespace Prometheus
                 {
                     cumulativeCount += _bucketCounts[i].Value;
 
-                    serializer.WriteMetric(_bucketIdentifiers[i], cumulativeCount);
+                    await serializer.WriteMetricAsync(_bucketIdentifiers[i], cumulativeCount, cancel);
                 }
             }
 

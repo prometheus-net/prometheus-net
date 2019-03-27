@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
+using System.Threading.Tasks;
 
 namespace Prometheus.Tests
 {
@@ -7,7 +8,7 @@ namespace Prometheus.Tests
     public sealed class HistogramTests
     {
         [TestMethod]
-        public void Observe_IncrementsCorrectBucketsAndCountAndSum()
+        public async Task Observe_IncrementsCorrectBucketsAndCountAndSum()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -21,7 +22,7 @@ namespace Prometheus.Tests
             histogram.Observe(3.0);
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            histogram.CollectAndSerialize(serializer);
+            await histogram.CollectAndSerializeAsync(serializer, default);
 
             // Sum
             // Count
@@ -29,12 +30,12 @@ namespace Prometheus.Tests
             // 2.0
             // 3.0
             // +inf
-            serializer.Received().WriteMetric(histogram.Unlabelled._sumIdentifier, 5.0);
-            serializer.Received().WriteMetric(histogram.Unlabelled._countIdentifier, 2.0);
-            serializer.Received().WriteMetric(histogram.Unlabelled._bucketIdentifiers[0], 0);
-            serializer.Received().WriteMetric(histogram.Unlabelled._bucketIdentifiers[1], 1);
-            serializer.Received().WriteMetric(histogram.Unlabelled._bucketIdentifiers[2], 2);
-            serializer.Received().WriteMetric(histogram.Unlabelled._bucketIdentifiers[3], 2);
+            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._sumIdentifier, 5.0, default);
+            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._countIdentifier, 2.0, default);
+            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[0], 0, default);
+            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[1], 1, default);
+            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[2], 2, default);
+            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[3], 2, default);
         }
     }
 }

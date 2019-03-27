@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
+using System.Threading.Tasks;
 
 namespace Prometheus.Tests
 {
@@ -23,7 +24,7 @@ namespace Prometheus.Tests
 
         #region Unlabelled logic
         [TestMethod]
-        public void CreatingUnlabelledMetric_WithoutObservingAnyData_ExportsImmediately()
+        public async Task CreatingUnlabelledMetric_WithoutObservingAnyData_ExportsImmediately()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -42,16 +43,16 @@ namespace Prometheus.Tests
             // 4 families with 9 metrics total.
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Without touching any metrics, there should be output for all because default config publishes immediately.
 
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteMetricAsync(default, default, default);
         }
 
         [TestMethod]
-        public void CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsNothingByDefault()
+        public async Task CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsNothingByDefault()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -75,15 +76,15 @@ namespace Prometheus.Tests
             // 4 families with 9 metrics total.
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // There is a family for each of the above, in each family we expect to see 0 metrics.
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.DidNotReceiveWithAnyArgs().WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
         }
 
         [TestMethod]
-        public void CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsAfterValueChange()
+        public async Task CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsAfterValueChange()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -112,15 +113,15 @@ namespace Prometheus.Tests
             histogram.Observe(31);
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Even though suppressed, they all now have values so should all be published.
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteMetricAsync(default, default, default);
         }
 
         [TestMethod]
-        public void CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsAfterPublish()
+        public async Task CreatingUnlabelledMetric_WithInitialValueSuppression_ExportsAfterPublish()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -149,17 +150,17 @@ namespace Prometheus.Tests
             histogram.Publish();
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Even though suppressed, they were all explicitly published.
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteMetricAsync(default, default, default);
         }
         #endregion
 
         #region Labelled logic
         [TestMethod]
-        public void CreatingLabelledMetric_WithoutObservingAnyData_ExportsImmediately()
+        public async Task CreatingLabelledMetric_WithoutObservingAnyData_ExportsImmediately()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -183,15 +184,15 @@ namespace Prometheus.Tests
             // 4 families with 9 metrics total.
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Metrics are published as soon as label values are defined.
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteMetricAsync(default, default, default);
         }
 
         [TestMethod]
-        public void CreatingLabelledMetric_WithInitialValueSuppression_ExportsNothingByDefault()
+        public async Task CreatingLabelledMetric_WithInitialValueSuppression_ExportsNothingByDefault()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -219,15 +220,15 @@ namespace Prometheus.Tests
             // 4 families with 9 metrics total.
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Publishing was suppressed.
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.DidNotReceiveWithAnyArgs().WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
         }
 
         [TestMethod]
-        public void CreatingLabelledMetric_WithInitialValueSuppression_ExportsAfterValueChange()
+        public async Task CreatingLabelledMetric_WithInitialValueSuppression_ExportsAfterValueChange()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -260,15 +261,15 @@ namespace Prometheus.Tests
             histogram.Observe(31);
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Metrics are published because value was set.
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteMetricAsync(default, default, default);
         }
 
         [TestMethod]
-        public void CreatingLabelledMetric_WithInitialValueSuppression_ExportsAfterPublish()
+        public async Task CreatingLabelledMetric_WithInitialValueSuppression_ExportsAfterPublish()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -301,17 +302,17 @@ namespace Prometheus.Tests
             histogram.Publish();
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Metrics are published because of explicit publish.
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteMetricAsync(default, default, default);
         }
         #endregion
 
         #region Relation between labelled and unlabelled
         [TestMethod]
-        public void CreatingLabelledMetric_WithoutObservingAnyData_DoesNotExportUnlabelled()
+        public async Task CreatingLabelledMetric_WithoutObservingAnyData_DoesNotExportUnlabelled()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -334,15 +335,15 @@ namespace Prometheus.Tests
             // 4 families with 9 metrics total.
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Family for each of the above, in each is 0 metrics.
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.DidNotReceiveWithAnyArgs().WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
         }
 
         [TestMethod]
-        public void CreatingLabelledMetric_AfterObservingLabelledData_DoesNotExportUnlabelled()
+        public async Task CreatingLabelledMetric_AfterObservingLabelledData_DoesNotExportUnlabelled()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -371,11 +372,11 @@ namespace Prometheus.Tests
             histogram.WithLabels("labelvalue").Observe(123);
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Family for each of the above, in each is 4 metrics (labelled only).
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.ReceivedWithAnyArgs(9).WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteMetricAsync(default, default, default);
 
             // Only after touching unlabelled do they get published.
             gauge.Inc();
@@ -384,11 +385,11 @@ namespace Prometheus.Tests
             histogram.Observe(123);
 
             serializer.ClearReceivedCalls();
-            registry.CollectAndSerialize(serializer);
+            await registry.CollectAndSerializeAsync(serializer, default);
 
             // Family for each of the above, in each is 8 metrics (unlabelled+labelled).
-            serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclaration(default);
-            serializer.ReceivedWithAnyArgs(9 * 2).WriteMetric(default, default);
+            await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9 * 2).WriteMetricAsync(default, default, default);
         }
         #endregion
     }

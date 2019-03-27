@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -39,16 +40,16 @@ namespace Prometheus
         /// <remarks>
         /// Subclass must check _publish and suppress output if it is false.
         /// </remarks>
-        internal void CollectAndSerialize(IMetricsSerializer serializer)
+        internal Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
             if (!Volatile.Read(ref _publish))
-                return;
+                return Task.CompletedTask;
 
-            CollectAndSerializeImpl(serializer);
+            return CollectAndSerializeImplAsync(serializer, cancel);
         }
 
         // Same as above, just only called if we really need to serialize this metric (if publish is true).
-        private protected abstract void CollectAndSerializeImpl(IMetricsSerializer serializer);
+        private protected abstract Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel);
 
         /// <summary>
         /// Creates a metric identifier, with an optional name postfix and optional extra labels.

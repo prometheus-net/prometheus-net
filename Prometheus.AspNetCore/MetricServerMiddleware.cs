@@ -41,15 +41,17 @@ namespace Prometheus
 
             try
             {
-                using (var serializer = new TextSerializer(delegate
-                    {
-                        response.ContentType = PrometheusConstants.ExporterContentType;
-                        response.StatusCode = StatusCodes.Status200OK;
-                        return response.Body;
-                    }, leaveOpen: false))
+                // We first touch the response.Body only in the callback because touching
+                // it means we can no longer send headers (the status code).
+                var serializer = new TextSerializer(delegate
                 {
-                    _registry.CollectAndSerialize(serializer);
-                }
+                    response.ContentType = PrometheusConstants.ExporterContentType;
+                    response.StatusCode = StatusCodes.Status200OK;
+                    return response.Body;
+                });
+
+                await _registry.CollectAndSerializeAsync(serializer, default);
+                response.Body.Dispose();
             }
             catch (ScrapeFailedException ex)
             {

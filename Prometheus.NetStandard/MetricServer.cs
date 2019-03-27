@@ -31,7 +31,7 @@ namespace Prometheus
             _httpListener.Start();
 
             // Kick off the actual processing to a new thread and return a Task for the processing thread.
-            return Task.Factory.StartNew(delegate
+            return Task.Factory.StartNew(async delegate
             {
                 try
                 {
@@ -48,15 +48,17 @@ namespace Prometheus
                         {
                             try
                             {
-                                using (var serializer = new TextSerializer(delegate
-                                    {
-                                        response.ContentType = PrometheusConstants.ExporterContentType;
-                                        response.StatusCode = 200;
-                                        return response.OutputStream;
-                                    }, leaveOpen: false))
+                                // We first touch the response.OutputStream only in the callback because touching
+                                // it means we can no longer send headers (the status code).
+                                var serializer = new TextSerializer(delegate
                                 {
-                                    _registry.CollectAndSerialize(serializer);
-                                }
+                                    response.ContentType = PrometheusConstants.ExporterContentType;
+                                    response.StatusCode = 200;
+                                    return response.OutputStream;
+                                });
+
+                                await _registry.CollectAndSerializeAsync(serializer, cancel);
+                                response.OutputStream.Dispose();
                             }
                             catch (ScrapeFailedException ex)
                             {

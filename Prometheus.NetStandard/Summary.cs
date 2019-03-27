@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -121,7 +123,7 @@ namespace Prometheus
             private readonly byte[] _countIdentifier;
             private readonly byte[][] _quantileIdentifiers;
 
-            private protected override void CollectAndSerializeImpl(IMetricsSerializer serializer)
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
                 // We output sum.
                 // We output count.
@@ -154,11 +156,11 @@ namespace Prometheus
                     }
                 }
 
-                serializer.WriteMetric(_sumIdentifier, sum);
-                serializer.WriteMetric(_countIdentifier, count);
+                await serializer.WriteMetricAsync(_sumIdentifier, sum, cancel);
+                await serializer.WriteMetricAsync(_countIdentifier, count, cancel);
 
                 for (var i = 0; i < values.Count; i++)
-                    serializer.WriteMetric(_quantileIdentifiers[i], values[i].value);
+                    await serializer.WriteMetricAsync(_quantileIdentifiers[i], values[i].value, cancel);
             }
 
             // Objectives defines the quantile rank estimates with their respective

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -28,7 +30,7 @@ namespace Prometheus
         /// </summary>
         public string[] LabelNames { get; }
 
-        internal abstract void CollectAndSerialize(IMetricsSerializer serializer);
+        internal abstract Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel);
 
         private static readonly string[] EmptyLabelNames = new string[0];
 
@@ -150,14 +152,14 @@ namespace Prometheus
 
         private readonly byte[][] _familyHeaderLines;
 
-        internal override void CollectAndSerialize(IMetricsSerializer serializer)
+        internal override async Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
             EnsureUnlabelledMetricCreatedIfNoLabels();
 
-            serializer.WriteFamilyDeclaration(_familyHeaderLines);
+            await serializer.WriteFamilyDeclarationAsync(_familyHeaderLines, cancel);
 
             foreach (var child in _labelledMetrics.Values)
-                child.CollectAndSerialize(serializer);
+                await child.CollectAndSerializeAsync(serializer, cancel);
         }
 
         private readonly bool _suppressInitialValue;

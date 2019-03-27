@@ -2,6 +2,7 @@
 using NSubstitute;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Prometheus.Tests
 {
@@ -42,7 +43,7 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
-        public void CreateCounter_WithDifferentRegistry_CreatesIndependentCounters()
+        public async Task CreateCounter_WithDifferentRegistry_CreatesIndependentCounters()
         {
             var registry1 = Metrics.NewCustomRegistry();
             var registry2 = Metrics.NewCustomRegistry();
@@ -60,16 +61,16 @@ namespace Prometheus.Tests
             Assert.AreEqual(1, counter2.Value);
 
             var serializer1 = Substitute.For<IMetricsSerializer>();
-            registry1.CollectAndSerialize(serializer1);
+            await registry1.CollectAndSerializeAsync(serializer1, default);
 
             var serializer2 = Substitute.For<IMetricsSerializer>();
-            registry2.CollectAndSerialize(serializer2);
+            await registry2.CollectAndSerializeAsync(serializer2, default);
 
-            serializer1.ReceivedWithAnyArgs().WriteFamilyDeclaration(default);
-            serializer1.ReceivedWithAnyArgs().WriteMetric(default, default);
+            await serializer1.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default);
+            await serializer1.ReceivedWithAnyArgs().WriteMetricAsync(default, default, default);
 
-            serializer2.ReceivedWithAnyArgs().WriteFamilyDeclaration(default);
-            serializer2.ReceivedWithAnyArgs().WriteMetric(default, default);
+            await serializer2.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default);
+            await serializer2.ReceivedWithAnyArgs().WriteMetricAsync(default, default, default);
         }
 
         [TestMethod]

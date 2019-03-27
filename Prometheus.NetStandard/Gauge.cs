@@ -1,4 +1,7 @@
-﻿namespace Prometheus
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace Prometheus
 {
     public sealed class Gauge : Collector<Gauge.Child>, IGauge
     {
@@ -14,9 +17,9 @@
 
             private ThreadSafeDouble _value;
 
-            private protected override void CollectAndSerializeImpl(IMetricsSerializer serializer)
+            private protected override Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                serializer.WriteMetric(_identifier, Value);
+                return serializer.WriteMetricAsync(_identifier, Value, cancel);
             }
 
             public void Inc(double increment = 1)

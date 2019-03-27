@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Prometheus;
+using System.Threading.Tasks;
 
 namespace Benchmark.NetCore
 {
@@ -74,11 +75,10 @@ namespace Benchmark.NetCore
         }
 
         [Benchmark]
-        public void CollectAndSerialize()
+        public async Task CollectAndSerialize()
         {
             using (var stream = new NullStream())
-            using (var serializer = new TextSerializer(stream, leaveOpen: false))
-                _registry.CollectAndSerialize(serializer);
+                await _registry.CollectAndSerializeAsync(new TextSerializer(stream), default);
         }
     }
 }
