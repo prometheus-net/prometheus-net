@@ -1,9 +1,10 @@
 * 3.1.0
 - Added ICounter.NewTimer() (adds the value to the counter)
 - Eliminated some needless allocations when trying to register a metric that is already registered. #134
-- Added CollectorRegistry.CollectAndExportAsText() to support metric data export via arbitrary custom endpoints.
 - Added IHistogram.Count and IHistogram.Sum to expose aspects of collected data for inspection.
 - Added Collector.GetAllLabelValues() to expose the list of child metrics by all their known label values.
+- Metric export is now asynchronous internally to be compatible with ASP.NET Core 3.0 default configuration.
+- Added CollectorRegistry.CollectAndExportAsTextAsync() to support metric data export via arbitrary custom endpoints.
 * 3.0.3
 - Now backward compatible with ASP.NET Core 2.1 (was 2.2+)
 * 3.0.2
