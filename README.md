@@ -348,6 +348,14 @@ The default configuration will publish metrics on the `/metrics` URL.
 
 > netsh http add urlacl url=http://+:1234/metrics user=DOMAIN\user
 
+# Publishing raw metrics document
+
+In scenarios where you handle publishing via a custom endpoint, you can export the entire metrics data set as a Prometheus text document.
+
+```csharp
+await Metrics.DefaultRegistry.CollectAndExportAsTextAsync(outputStream);
+```
+
 # Just-in-time updates
 
 In some scenarios you may want to only collect data when it is requested by Prometheus. To easily implement this scenario prometheus-net enables you to register a callback before every collection occurs. Register your callback using `Metrics.DefaultRegistry.AddBeforeCollectCallback()`.
