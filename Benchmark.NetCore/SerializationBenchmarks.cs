@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Prometheus;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Benchmark.NetCore
@@ -77,8 +78,7 @@ namespace Benchmark.NetCore
         [Benchmark]
         public async Task CollectAndSerialize()
         {
-            using (var stream = new NullStream())
-                await _registry.CollectAndSerializeAsync(new TextSerializer(stream), default);
+            await _registry.CollectAndSerializeAsync(new TextSerializer(Stream.Null), default);
         }
     }
 }

@@ -7,13 +7,7 @@ using System.Threading.Tasks;
 namespace Prometheus
 {
     /// <remarks>
-    /// The use of BufferedStream here is a bit theoretical from a benefit perspective.
-    /// Profiling provided contradictory results (more memory use with less buffering??).
-    /// Revisit if you can come up with more accurate test cases. So far the results are in favor of BufferedStream:
-    /// With BufferedStream:
-    /// | CollectAndSerialize | 63.85 ms | 2.528 ms | 7.131 ms | 61.67 ms |   4833.3333 |           - |           - |             7.48 MB |
-    /// Without BufferedStream:
-    /// | CollectAndSerialize | 50.44 ms | 3.041 ms | 4.263 ms |  13454.5455 |           - |           - |            20.31 MB |
+    /// Does NOT take ownership of the stream - caller remains the boss.
     /// </remarks>
     internal sealed class TextSerializer : IMetricsSerializer
     {
@@ -22,13 +16,13 @@ namespace Prometheus
 
         public TextSerializer(Stream stream)
         {
-            _stream = new Lazy<BufferedStream>(() => new BufferedStream(stream, 16 * 1024));
+            _stream = new Lazy<Stream>(() => stream);
         }
 
         // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
         public TextSerializer(Func<Stream> streamFactory)
         {
-            _stream = new Lazy<BufferedStream>(() => new BufferedStream(streamFactory(), 16 * 1024));
+            _stream = new Lazy<Stream>(streamFactory);
         }
 
         public async Task FlushAsync(CancellationToken cancel)
@@ -40,7 +34,7 @@ namespace Prometheus
             await _stream.Value.FlushAsync(cancel);
         }
 
-        private readonly Lazy<BufferedStream> _stream;
+        private readonly Lazy<Stream> _stream;
 
         // # HELP name help
         // # TYPE name type
