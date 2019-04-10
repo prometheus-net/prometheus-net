@@ -1,3 +1,5 @@
+* 3.1.1
+- Added missing UTF-8 charset to Content-Type header, so non-ASCII characters are interpreted correctly by browsers.
 * 3.1.0
 - Added ICounter.NewTimer() (adds the value to the counter)
 - Eliminated some needless allocations when trying to register a metric that is already registered. #134
