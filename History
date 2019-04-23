@@ -1,3 +1,5 @@
+* 3.1.2
+- Fix defect where Histogram batch observations only incremented sum by one value, instead of entire batch. #147
 * 3.1.1
 - Added missing UTF-8 charset to Content-Type header, so non-ASCII characters are interpreted correctly by browsers.
 * 3.1.0
