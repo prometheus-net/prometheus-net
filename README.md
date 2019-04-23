@@ -265,14 +265,15 @@ The library provides some metrics for ASP.NET Core applications:
 * Total number of received HTTP requests.
 * Duration of HTTP requests.
 
-These metrics include labels for status code, HTTP method, ASP.NET Core Controller and ASP.NET Core Action.
+These metrics include labels for status code, HTTP method, ASP.NET Core MVC Controller and ASP.NET Core MVC Action.
 
-You can register all of the metrics using the default labels and names as follows:
+You can capture HTTP metrics by adjusting your app's `Configure()` method as follows:
 
 ```csharp
-// In your Startup.cs Configure() method
 app.UseHttpMetrics();
 ```
+
+**NB! If you are using ASP.NET Core MVC, call `UseHttpMetrics()` before `UseMvc()`!** Otherwise, the label values for controller/action will be unavailable.
 
 If you wish to provide a custom metric instance or disable certain metrics you can configure the HTTP metrics like this:
 
@@ -294,8 +295,10 @@ The labels for the custom metric you provide *must* be a subset of the following
 
 * "code" - Status Code
 * "method" - HTTP method
-* "controller" - ASP.NET Core Controller
-* "action" - ASP.NET Core Action
+* "controller" - ASP.NET Core MVC Controller
+* "action" - ASP.NET Core MVC Action
+
+Any requests that do not match an ASP.NET Core MVC controller or action will have an empty string as the label value.
 
 # ASP.NET Core with basic authentication
 
