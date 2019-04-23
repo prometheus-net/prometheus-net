@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <Compile Include="..\Tester.NetFramework\AspNetCoreMiddlewareTester.cs" Link="AspNetCoreMiddlewareTester.cs" />
+    <Compile Include="..\Tester.NetFramework\Controllers\DummyController.cs" Link="Controllers\DummyController.cs" />
     <Compile Include="..\Tester.NetFramework\KestrelMetricServerTester.cs" Link="KestrelMetricServerTester.cs" />
     <Compile Include="..\Tester.NetFramework\MetricPusherTester.cs" Link="MetricPusherTester.cs" />
     <Compile Include="..\Tester.NetFramework\MetricServerTester.cs" Link="MetricServerTester.cs" />
@@ -34,6 +35,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore" Version="2.1.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +47,10 @@
     <None Update="prometheus-net.test.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Prometheus;
@@ -7,11 +8,10 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 
 namespace tester
 {
-    // Works ONLY on Tester.NetCore because Kestrel is a pain to get set up on NetFramework, so let's not bother.
-    // You will get some libuv related error if you try to use Tester.NetFramework.
     internal class AspNetCoreMiddlewareTester : Tester
     {
         // Sinaled when it is time for the web server to stop.
@@ -24,7 +24,17 @@ namespace tester
             _webserverTask =
                 WebHost.CreateDefaultBuilder()
                 .UseUrls($"http://localhost:{TesterConstants.TesterPort}")
-                .Configure(app => app.UseMetricServer())
+                .ConfigureServices(services =>
+                {
+                    services.AddMvc();
+                })
+                .Configure(app =>
+                {
+                    app.UseMetricServer();
+
+                    app.UseHttpMetrics();
+                    app.UseMvc();
+                })
                 .ConfigureLogging(logging => logging.ClearProviders())
                 .Build()
                 .RunAsync(_cts.Token);
@@ -32,6 +42,9 @@ namespace tester
 
         public override void OnTimeToObserveMetrics()
         {
+            // Every time we observe metrics, we also asynchronously perform a dummy request for test data.
+            StartDummyRequest();
+
             var httpRequest = (HttpWebRequest)WebRequest.Create($"http://localhost:{TesterConstants.TesterPort}/metrics");
             httpRequest.Method = "GET";
 
@@ -40,6 +53,17 @@ namespace tester
                 var text = new StreamReader(httpResponse.GetResponseStream()).ReadToEnd();
                 Console.WriteLine(text);
             }
+        }
+
+        private void StartDummyRequest()
+        {
+            Task.Run(delegate
+            {
+                var httpRequest = (HttpWebRequest)WebRequest.Create($"http://localhost:{TesterConstants.TesterPort}/api/Dummy");
+                httpRequest.Method = "GET";
+
+                httpRequest.GetResponse().Dispose();
+            });
         }
 
         public override void OnEnd()
