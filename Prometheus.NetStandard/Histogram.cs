@@ -118,7 +118,7 @@ namespace Prometheus
                         break;
                     }
                 }
-                _sum.Add(val);
+                _sum.Add(val * count);
                 Publish();
             }
         }
