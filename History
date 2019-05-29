@@ -1,3 +1,5 @@
+* 3.1.3
+- Fix regression introduced in 3.1.0 where MetricPusher does not always flush metrics before stopping.
 * 3.1.2
 - Fix defect where Histogram batch observations only incremented sum by one value, instead of entire batch. #147
 * 3.1.1
