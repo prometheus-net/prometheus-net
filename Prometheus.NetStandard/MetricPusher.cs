@@ -75,7 +75,9 @@ namespace Prometheus
                         using (var stream = new MemoryStream())
                         {
                             var serializer = new TextSerializer(stream);
-                            await _registry.CollectAndSerializeAsync(serializer, cancel);
+
+                            // Do not pass CT because we only want to cancel after pushing, so a flush is always performed.
+                            await _registry.CollectAndSerializeAsync(serializer, default);
 
                             stream.Position = 0;
                             // StreamContent takes ownership of the stream.
