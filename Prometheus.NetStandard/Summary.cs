@@ -89,7 +89,7 @@ namespace Prometheus
                 _hotBuf = new SampleBuffer(_bufCap);
                 _coldBuf = new SampleBuffer(_bufCap);
                 _streamDuration = new TimeSpan(_maxAge.Ticks / _ageBuckets);
-                _headStreamExpTime = DateTime.Now.Add(_streamDuration);
+                _headStreamExpTime = DateTime.UtcNow.Add(_streamDuration);
                 _hotBufExpTime = _headStreamExpTime;
 
                 _streams = new QuantileStream[_ageBuckets];
