@@ -273,9 +273,17 @@ You can capture HTTP metrics by adjusting your app's `Configure()` method as fol
 app.UseHttpMetrics();
 ```
 
-**NB! If you are using ASP.NET Core MVC, call `UseHttpMetrics()` before `UseMvc()`!** Otherwise, the label values for controller/action will be unavailable.
+**NB! ASP.NET Core executes middleware in a strictly defined order, based on the `app.UseXYZ()` calls you make
+when setting up the pipeline. You must carefully consider the order in which you configure middleware.**
 
-If you wish to provide a custom metric instance or disable certain metrics you can configure the HTTP metrics like this:
+Keep the following in mind when composing the pipeline:
+
+* Any call to `UseMvc()` should be **after** `UseHttpMetrics()`. Otherwise, the `controller` and `action` labels will always have empty values.
+* Any call to `UseExceptionHandler()` or `UseDeveloperExceptionPage()` should be **after** `UseHttpMetrics()`. Otherwise, the wrong HTTP status code may be reported in metrics when exceptions occur (the middleware will not see that the exception handler changed the status code from 200 to 500).
+* You should use either `UseExceptionHandler()` or a custom exception handler middleware. prometheus-net cannot see what the web host's default exception handler does and may report the wrong HTTP status code for exceptions (e.g. 200 instead of 500).
+
+The metrics reported by the middleware are configurable. If you wish to provide a custom metric instance
+or disable certain metrics you can configure the it like this:
 
 ```csharp
 app.UseHttpMetrics(options =>
