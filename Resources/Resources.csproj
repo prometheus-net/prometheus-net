@@ -48,6 +48,7 @@
   <ItemGroup>
     <None Include="Nuspec\Merge-ReleaseNotes.ps1" />
     <None Include="Nuspec\prometheus-net.AspNetCore.nuspec" />
+    <None Include="Nuspec\prometheus-net.AspNetCore.Kestrel.nuspec" />
     <None Include="Nuspec\prometheus-net.nuspec" />
     <None Include="prometheus-net.snk" />
   </ItemGroup>

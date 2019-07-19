@@ -509,6 +509,10 @@
       <Project>{7d0a36bb-5606-4d8f-b048-621c76b22881}</Project>
       <Name>Prometheus.AspNetCore</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Prometheus.AspNetCore.Kestrel\Prometheus.AspNetCore.Kestrel.csproj">
+      <Project>{ABE4F81F-BD66-43D4-8F6B-6431F44E4A68}</Project>
+      <Name>Prometheus.AspNetCore.Kestrel</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj">
       <Project>{ba482927-f0bc-462c-8ba0-c476d93621bc}</Project>
       <Name>Prometheus.NetStandard</Name>

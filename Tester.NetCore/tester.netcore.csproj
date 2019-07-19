@@ -40,6 +40,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
+    <ProjectReference Include="..\Prometheus.AspNetCore.Kestrel\Prometheus.AspNetCore.Kestrel.csproj" />
     <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
   </ItemGroup>
 
