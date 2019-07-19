@@ -16,7 +16,8 @@
     <dependencies>
       <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
 
-      <dependency id="Microsoft.AspNetCore" version="2.1.7" />
+      <dependency id="Microsoft.AspNetCore.Hosting.Abstractions" version="2.1.1" />
+      <dependency id="Microsoft.AspNetCore.Routing.Abstractions" version="2.1.1" />
     </dependencies>
   </metadata>
   <files>
