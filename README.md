@@ -34,6 +34,41 @@ Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server
 
 >Install-Package prometheus-net.AspNetCore
 
+# Quick start
+
+After installing the library, you should:
+
+1. Initialize some metrics and start updating their values.
+1. Publish the collected metrics over HTTP.
+1. Configure the Prometheus server to poll your app for metrics on regular intervals.
+
+The chapters below describe the various ways you can initialize or update metrics and the ways in which they can be published.
+
+The following is a minimal implementation that simply increments a counter once a second, publishing the metrics on http://localhost:1234/metrics
+
+```csharp
+using Prometheus;
+using System;
+using System.Threading;
+
+class Program
+{
+    static void Main()
+    {
+        var server = new MetricServer(hostname: "localhost", port: 1234);
+        server.Start();
+
+        var tickTock = Metrics.CreateCounter("sampleapp_ticks_total", "Just keeps on ticking");
+
+        while (true)
+        {
+            tickTock.Inc();
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+        }
+    }
+}
+```
+
 # Counters
 
 Counters only increase in value and reset to zero when the process restarts.
