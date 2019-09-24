@@ -3,11 +3,12 @@
   <metadata minClientVersion="2.8">
     <id>prometheus-net</id>
     <authors>andrasm,qed-,lakario,sandersaares</authors>
-    <description>.NET metrics exporter for the Prometheus monitoring and alerting system</description>
+    <description>.NET client library for the Prometheus monitoring and alerting system</description>
     <projectUrl>https://github.com/prometheus-net/prometheus-net</projectUrl>
-    <licenseUrl>https://raw.githubusercontent.com/prometheus-net/prometheus-net/master/LICENSE</licenseUrl>
+    <license type="expression">MIT</license>
     <tags>metrics prometheus</tags>
-    <copyright>Copyright © 2015 andrasm</copyright>
+    <copyright>Copyright © 2015-2019 andrasm, sandersaares</copyright>
+    <icon>images/prometheus-net-logo.png</icon>
 
     <!-- Automatically set by release automation. -->
     <version>__NUGETPACKAGEVERSION__</version>
@@ -19,5 +20,7 @@
   <files>
     <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
     <file src="..\Prometheus.NetStandard\**" target="lib\netstandard2.0" />
+
+    <file src="prometheus-net-logo.png" target="images\" />
   </files>
 </package>

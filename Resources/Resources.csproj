@@ -51,5 +51,8 @@
     <None Include="Nuspec\prometheus-net.nuspec" />
     <None Include="prometheus-net.snk" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Nuspec\prometheus-net-logo.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
