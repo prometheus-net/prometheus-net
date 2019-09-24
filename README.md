@@ -53,16 +53,17 @@ using System.Threading;
 
 class Program
 {
+    private static readonly Counter TickTock =
+        Metrics.CreateCounter("sampleapp_ticks_total", "Just keeps on ticking");
+
     static void Main()
     {
         var server = new MetricServer(hostname: "localhost", port: 1234);
         server.Start();
 
-        var tickTock = Metrics.CreateCounter("sampleapp_ticks_total", "Just keeps on ticking");
-
         while (true)
         {
-            tickTock.Inc();
+            TickTock.Inc();
             Thread.Sleep(TimeSpan.FromSeconds(1));
         }
     }
