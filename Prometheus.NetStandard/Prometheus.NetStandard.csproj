@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <RootNamespace>Prometheus</RootNamespace>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -22,6 +22,11 @@
 
   <ItemGroup>
     <Compile Include="..\Resources\SolutionAssemblyInfo.cs" Link="SolutionAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
 
 </Project>
