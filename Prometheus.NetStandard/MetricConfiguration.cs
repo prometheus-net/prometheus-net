@@ -8,11 +8,11 @@
     {
         /// <summary>
         /// Names of all the label fields that are defined for the metric.
-        /// If not set, the metric will be created without any labels.
+        /// If null, the metric will be created without any labels.
         /// 
         /// Before using a metric that uses labels, .WithLabels() must be called to provide values for the labels.
         /// </summary>
-        public string[] LabelNames { get; set; }
+        public string[]? LabelNames { get; set; }
 
         /// <summary>
         /// If true, the metric will not be published until its value is first modified (regardless of the specific value).

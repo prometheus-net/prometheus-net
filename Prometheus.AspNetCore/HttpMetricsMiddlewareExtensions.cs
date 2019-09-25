@@ -25,7 +25,7 @@ namespace Prometheus
         /// Configures the ASP.NET Core request pipeline to collect Prometheus metrics on processed HTTP requests.
         /// </summary>
         public static IApplicationBuilder UseHttpMetrics(this IApplicationBuilder app,
-            HttpMiddlewareExporterOptions options = null)
+            HttpMiddlewareExporterOptions? options = null)
         {
             if (options == null) options = new HttpMiddlewareExporterOptions();
 

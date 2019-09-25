@@ -40,7 +40,7 @@ namespace Prometheus
             return new Child(this, labels, publish);
         }
 
-        internal Counter(string name, string help, string[] labelNames, bool suppressInitialValue)
+        internal Counter(string name, string help, string[]? labelNames, bool suppressInitialValue)
             : base(name, help, labelNames, suppressInitialValue)
         {
         }

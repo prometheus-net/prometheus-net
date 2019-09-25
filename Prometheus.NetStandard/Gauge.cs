@@ -47,7 +47,7 @@ namespace Prometheus
             return new Child(this, labels, publish);
         }
 
-        internal Gauge(string name, string help, string[] labelNames, bool suppressInitialValue)
+        internal Gauge(string name, string help, string[]? labelNames, bool suppressInitialValue)
             : base(name, help, labelNames, suppressInitialValue)
         {
         }

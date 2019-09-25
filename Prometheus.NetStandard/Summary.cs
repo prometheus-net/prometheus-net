@@ -39,9 +39,9 @@ namespace Prometheus
         internal Summary(
             string name,
             string help,
-            string[] labelNames,
+            string[]? labelNames,
             bool suppressInitialValue = false,
-            IReadOnlyList<QuantileEpsilonPair> objectives = null,
+            IReadOnlyList<QuantileEpsilonPair>? objectives = null,
             TimeSpan? maxAge = null,
             int? ageBuckets = null,
             int? bufCap = null)

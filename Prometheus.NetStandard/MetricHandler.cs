@@ -15,12 +15,12 @@ namespace Prometheus
         protected readonly CollectorRegistry _registry;
 
         // The token is cancelled when the handler is instructed to stop.
-        private CancellationTokenSource _cts = new CancellationTokenSource();
+        private CancellationTokenSource? _cts = new CancellationTokenSource();
 
         // This is the task started for the purpose of exporting metrics.
-        private Task _task;
+        private Task? _task;
 
-        protected MetricHandler(CollectorRegistry registry = null)
+        protected MetricHandler(CollectorRegistry? registry = null)
         {
             _registry = registry ?? Metrics.DefaultRegistry;
         }
@@ -29,6 +29,9 @@ namespace Prometheus
         {
             if (_task != null)
                 throw new InvalidOperationException("The metric server has already been started.");
+
+            if (_cts == null)
+                throw new InvalidOperationException("The metric server has already been started and stopped. Create a new server if you want to start it again.");
 
             _task = StartServer(_cts.Token);
             return this;

@@ -20,7 +20,7 @@ namespace Prometheus
 
         public sealed class Settings
         {
-            public CollectorRegistry Registry { get; set; }
+            public CollectorRegistry? Registry { get; set; }
         }
 
         private readonly RequestDelegate _next;

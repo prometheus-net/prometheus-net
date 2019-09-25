@@ -31,25 +31,25 @@
         /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
-        public static Counter CreateCounter(string name, string help, CounterConfiguration configuration = null) =>
+        public static Counter CreateCounter(string name, string help, CounterConfiguration? configuration = null) =>
             _defaultFactory.CreateCounter(name, help, configuration);
 
         /// <summary>
         /// Gauges can have any numeric value and change arbitrarily.
         /// </summary>
-        public static Gauge CreateGauge(string name, string help, GaugeConfiguration configuration = null) =>
+        public static Gauge CreateGauge(string name, string help, GaugeConfiguration? configuration = null) =>
             _defaultFactory.CreateGauge(name, help, configuration);
 
         /// <summary>
         /// Summaries track the trends in events over time (10 minutes by default).
         /// </summary>
-        public static Summary CreateSummary(string name, string help, SummaryConfiguration configuration = null) =>
+        public static Summary CreateSummary(string name, string help, SummaryConfiguration? configuration = null) =>
             _defaultFactory.CreateSummary(name, help, configuration);
 
         /// <summary>
         /// Histograms track the size and number of events in buckets.
         /// </summary>
-        public static Histogram CreateHistogram(string name, string help, HistogramConfiguration configuration = null) =>
+        public static Histogram CreateHistogram(string name, string help, HistogramConfiguration? configuration = null) =>
             _defaultFactory.CreateHistogram(name, help, configuration);
 
         /// <summary>
@@ -78,8 +78,11 @@
 
         static Metrics()
         {
-            NewDefaultRegistry();
+            DefaultRegistry = new CollectorRegistry();
+            _defaultFactory = new MetricFactory(DefaultRegistry);
 
+            // We include some metrics by default, just to give some output when a user first uses the library.
+            // These are not designed to be super meaningful/useful metrics.
             DotNetStats.Register(DefaultRegistry);
         }
 
@@ -91,11 +94,6 @@
         {
             // This should only be called before ever using any of the CreateXYZ() methods.
 
-            NewDefaultRegistry();
-        }
-
-        private static void NewDefaultRegistry()
-        {
             DefaultRegistry = new CollectorRegistry();
             _defaultFactory = new MetricFactory(DefaultRegistry);
         }

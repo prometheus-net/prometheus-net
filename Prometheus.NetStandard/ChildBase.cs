@@ -55,7 +55,7 @@ namespace Prometheus
         /// Creates a metric identifier, with an optional name postfix and optional extra labels.
         /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
         /// </summary>
-        protected byte[] CreateIdentifier(string postfix = null, params (string, string)[] extraLabels)
+        protected byte[] CreateIdentifier(string? postfix = null, params (string, string)[] extraLabels)
         {
             var fullName = postfix != null ? $"{_parent.Name}_{postfix}" : _parent.Name;
 

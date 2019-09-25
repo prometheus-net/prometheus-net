@@ -15,11 +15,11 @@ namespace Prometheus
     {
         private readonly HttpListener _httpListener = new HttpListener();
 
-        public MetricServer(int port, string url = "metrics/", CollectorRegistry registry = null, bool useHttps = false) : this("+", port, url, registry, useHttps)
+        public MetricServer(int port, string url = "metrics/", CollectorRegistry? registry = null, bool useHttps = false) : this("+", port, url, registry, useHttps)
         {
         }
 
-        public MetricServer(string hostname, int port, string url = "metrics/", CollectorRegistry registry = null, bool useHttps = false) : base(registry)
+        public MetricServer(string hostname, int port, string url = "metrics/", CollectorRegistry? registry = null, bool useHttps = false) : base(registry)
         {
             var s = useHttps ? "s" : "";
             _httpListener.Prefixes.Add($"http{s}://{hostname}:{port}/{url}");

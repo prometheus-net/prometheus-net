@@ -42,9 +42,9 @@ namespace Prometheus
         private static readonly Regex LabelNameRegex = new Regex(ValidLabelNameExpression, RegexOptions.Compiled);
         private static readonly Regex ReservedLabelRegex = new Regex(ReservedLabelNameExpression, RegexOptions.Compiled);
 
-        protected Collector(string name, string help, string[] labelNames)
+        protected Collector(string name, string help, string[]? labelNames)
         {
-            labelNames = labelNames ?? EmptyLabelNames;
+            labelNames ??= EmptyLabelNames;
 
             if (!MetricNameRegex.IsMatch(name))
                 throw new ArgumentException($"Metric name '{name}' does not match regex '{ValidMetricNameExpression}'.");
@@ -130,7 +130,7 @@ namespace Prometheus
         /// </summary>
         internal Labels[] GetAllLabels() => _labelledMetrics.Select(p => p.Key).ToArray();
 
-        protected Collector(string name, string help, string[] labelNames, bool suppressInitialValue)
+        protected Collector(string name, string help, string[]? labelNames, bool suppressInitialValue)
             : base(name, help, labelNames)
         {
             _suppressInitialValue = suppressInitialValue;

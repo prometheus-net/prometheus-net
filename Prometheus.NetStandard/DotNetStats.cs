@@ -15,10 +15,8 @@ namespace Prometheus
         /// </summary>
         public static void Register(CollectorRegistry registry)
         {
-            var instance = new DotNetStats();
-
+            var instance = new DotNetStats(registry);
             registry.AddBeforeCollectCallback(instance.UpdateMetrics);
-            instance.RegisterMetrics(registry);
         }
 
         private readonly Process _process;
@@ -32,13 +30,9 @@ namespace Prometheus
         private Gauge _startTime;
         private Gauge _numThreads;
 
-        private DotNetStats()
+        private DotNetStats(CollectorRegistry registry)
         {
             _process = Process.GetCurrentProcess();
-        }
-
-        private void RegisterMetrics(CollectorRegistry registry)
-        {
             var metrics = Metrics.WithCustomRegistry(registry);
 
             var collectionCountsParent = metrics.CreateCounter("dotnet_collection_count_total", "GC collection count", new[] { "generation" });
