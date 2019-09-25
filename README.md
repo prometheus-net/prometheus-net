@@ -10,7 +10,7 @@ The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/
 * .NET Core 2.0
 * Mono 5.4
 
-The ASP.NET Core specific functionality requires ASP.NET Core 2.1 or newer.
+The ASP.NET Core specific functionality requires ASP.NET Core 2.1 or newer. The .NET Core specific functionality requires .NET Core 2.1 or newer.
 
 # Best practices and usage
 
@@ -440,6 +440,27 @@ Note that all callbacks will be called synchronously before each collection. The
 # Suppressing default metrics
 
 The library provides some sample metrics about the current process out of the box, simply to ensure that some output is produced in a default configuration. If these metrics are not desirable you may remove them by calling `Metrics.SuppressDefaultMetrics()` before registering any of your own metrics.
+
+# DiagnosticSource integration
+
+[.NET Core provides the DiagnosticSource mechanism for reporting diagnostic events](https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md), used widely by .NET and ASP.NET Core classes. To expose basic data on these events via Prometheus, you can use the `DiagnosticSourceAdapter` class:
+
+```csharp
+var adapter = new DiagnosticSourceAdapter(); // Constructor options available to customize behavior.
+
+...
+
+adapter.Dispose();
+```
+
+Any events that occur during the adapter's lifetime are exported as Prometheus metrics, indicating the name of the event source and the name of the event:
+
+```
+diagnostic_events_total{source="Microsoft.AspNetCore",event="Microsoft.AspNetCore.Mvc.AfterAction"} 4
+diagnostic_events_total{source="HttpHandlerDiagnosticListener",event="System.Net.Http.Request"} 8
+```
+
+The level of detail obtained from this is rather low - only the total count for each event is exported. For more fine-grained analytics, you need to listen to DiagnosticSource events on your own and create custom metrics that can understand the meaning of each particular type of event that is of interest to you.
 
 # Related projects
 
