@@ -1,3 +1,5 @@
+* 3.2.0
+- Enable custom HTTP client to be used in MetricPusher, allowing for Basic auth and more flexibility. #125
 * 3.1.4
 - Fix timezone mismatch in Summary that led to unintended delays in buffer flushing. #149
 * 3.1.3

@@ -378,8 +378,34 @@ The default configuration will publish metrics on the `/metrics` URL.
 Metrics can be posted to a [Pushgateway](https://prometheus.io/docs/practices/pushing/) server.
 
 ```csharp
-var metricServer = new MetricPusher(endpoint: "https://pushgateway.example.org:9091/metrics", job: "some_job");
-metricServer.Start();
+var pusher = new MetricPusher(new MetricPusherOptions
+{
+	Endpoint = "https://pushgateway.example.org:9091/metrics",
+	Job = "some_job"
+});
+
+pusher.Start();
+```
+
+# Publishing to Pushgateway with basic authentication
+
+You can use a custom HttpClient to supply credentials for the Pushgateway.
+
+```csharp
+// Placeholder username and password here - replace with your own data.
+var headerValue = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("username:password"));
+var authorizationHeader = new AuthenticationHeaderValue("Basic", headerValue);
+var httpClient = new HttpClient();
+httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", headerValue);
+
+var pusher = new MetricPusher(new MetricPusherOptions
+{
+    Endpoint = $"http://localhost:{TesterConstants.TesterPort}/metrics",
+    Job = "some_job",
+    HttpClientProvider = () => httpClient
+});
+
+pusher.Start();
 ```
 
 # Publishing via standalone HTTP handler

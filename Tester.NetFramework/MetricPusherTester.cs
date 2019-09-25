@@ -2,6 +2,8 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +19,20 @@ namespace tester
 
         public override IMetricServer InitializeMetricServer()
         {
-            return new MetricPusher(endpoint: $"http://localhost:{TesterConstants.TesterPort}/metrics", job: "some_job");
+            // We add the username/password (even though it is not used) just to verify the extensibility logic works.
+            var headerValue = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("username:password"));
+            var authorizationHeader = new AuthenticationHeaderValue("Basic", headerValue);
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", headerValue);
+
+            var pusher = new MetricPusher(new MetricPusherOptions
+            {
+                Endpoint = $"http://localhost:{TesterConstants.TesterPort}/metrics",
+                Job = "some_job",
+                HttpClientProvider = () => httpClient
+            });
+
+            return pusher;
         }
 
         public override void OnStart()
