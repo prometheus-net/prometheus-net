@@ -11,9 +11,9 @@ namespace tester
         private static void Main()
         {
             // Replace the first line with an appropriate type of tester to run different manual tests.
-            var tester = new MetricPusherTester();
+            //var tester = new MetricPusherTester();
             //var tester = new KestrelMetricServerTester();
-            //var tester = new AspNetCoreMiddlewareTester();
+            var tester = new AspNetCoreMiddlewareTester();
             //var tester = new MetricServerTester();
 
             // For testing Kestrel metric server with HTTPS, you need at least a self-signed certificate (one included here)
@@ -71,6 +71,10 @@ namespace tester
             // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
             // With MetricPusherTester you might get a 1st push already before it fails but after that it should stop pushing.
             //Metrics.DefaultRegistry.AddBeforeCollectCallback(() => throw new ScrapeFailedException());
+
+#if NETCOREAPP
+            var diagnosticSourceAdapter = new DiagnosticSourceAdapter();
+#endif
 
             var cts = new CancellationTokenSource();
 

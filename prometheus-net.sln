@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2024
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29318.209
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.NetStandard", "Prometheus.NetStandard\Prometheus.NetStandard.csproj", "{BA482927-F0BC-462C-8BA0-C476D93621BC}"
 EndProject
@@ -24,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark.NetCore", "Benchmark.NetCore\Benchmark.NetCore.csproj", "{074E91E7-37BE-459E-B42F-96F315586418}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.NetCore", "Prometheus.NetCore\Prometheus.NetCore.csproj", "{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +63,10 @@ Global
 		{074E91E7-37BE-459E-B42F-96F315586418}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{074E91E7-37BE-459E-B42F-96F315586418}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{074E91E7-37BE-459E-B42F-96F315586418}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

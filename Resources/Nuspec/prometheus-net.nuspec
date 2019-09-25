@@ -20,6 +20,7 @@
   <files>
     <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
     <file src="..\Prometheus.NetStandard\**" target="lib\netstandard2.0" />
+    <file src="..\Prometheus.NetCore\**" target="lib\netcoreapp2.1" />
 
     <file src="prometheus-net-logo.png" target="images\" />
   </files>
