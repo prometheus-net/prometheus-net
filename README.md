@@ -128,10 +128,12 @@ private static readonly Summary RequestSizeSummary = Metrics
 				new QuantileEpsilonPair(0.5, 0.05),
 				new QuantileEpsilonPair(0.9, 0.05),
 				new QuantileEpsilonPair(0.95, 0.01),
-				new QuantileEpsilonPair(0.99, 0.01),
+				new QuantileEpsilonPair(0.99, 0.005),
 			}
 		});
 ```
+
+The epsilon indicates the absolute error allowed in measurements. For more information, refer to the [Prometheus documentation on summaries and histograms](https://prometheus.io/docs/practices/histograms/).
 
 # Histogram
 
