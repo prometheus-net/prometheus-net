@@ -400,7 +400,7 @@ httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("
 
 var pusher = new MetricPusher(new MetricPusherOptions
 {
-    Endpoint = $"http://localhost:{TesterConstants.TesterPort}/metrics",
+    Endpoint =  "https://pushgateway.example.org:9091/metrics",
     Job = "some_job",
     HttpClientProvider = () => httpClient
 });
