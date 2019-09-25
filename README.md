@@ -393,8 +393,7 @@ You can use a custom HttpClient to supply credentials for the Pushgateway.
 
 ```csharp
 // Placeholder username and password here - replace with your own data.
-var headerValue = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("username:password"));
-var authorizationHeader = new AuthenticationHeaderValue("Basic", headerValue);
+var headerValue = Convert.ToBase64String(Encoding.UTF8.GetBytes("username:password"));
 var httpClient = new HttpClient();
 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", headerValue);
 
