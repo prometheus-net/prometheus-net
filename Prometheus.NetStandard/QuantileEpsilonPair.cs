@@ -1,6 +1,6 @@
 ﻿namespace Prometheus
 {
-    public struct QuantileEpsilonPair
+    public readonly struct QuantileEpsilonPair
     {
         public QuantileEpsilonPair(double quantile, double epsilon)
         {
