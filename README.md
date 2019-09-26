@@ -303,7 +303,7 @@ The library provides some metrics for ASP.NET Core applications:
 * Total number of received HTTP requests.
 * Duration of HTTP requests.
 
-These metrics include labels for status code, HTTP method, ASP.NET Core MVC Controller and ASP.NET Core MVC Action.
+These metrics include labels for status code, HTTP method, ASP.NET Core MVC Controller and ASP.NET Core MVC Action. The exception is the "requests in progress" metric, which is not differentiated by any labels due to technical limitations of ASP.NET Core.
 
 You can capture HTTP metrics by adjusting your app's `Configure()` method as follows:
 
@@ -337,7 +337,9 @@ app.UseHttpMetrics(options =>
 });
 ```
 
-The labels for the custom metric you provide *must* be a subset of the following:
+For "requests in progress", the custom metric cannot have labels.
+
+For "request duration" and "total request count", the labels for the custom metric you provide *must* be a subset of the following:
 
 * "code" - Status Code
 * "method" - HTTP method
