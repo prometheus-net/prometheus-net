@@ -14,11 +14,19 @@ namespace Prometheus
     /// </remarks>
     public sealed class DiagnosticSourceAdapter : IDisposable
     {
-        public DiagnosticSourceAdapter() : this(DiagnosticSourceAdapterOptions.Default)
-        {
-        }
+        /// <summary>
+        /// Starts listening for DiagnosticSource events and reporting them as Prometheus metrics.
+        /// Dispose of the return value to stop listening.
+        /// </summary>
+        public static IDisposable StartListening() => StartListening(DiagnosticSourceAdapterOptions.Default);
 
-        public DiagnosticSourceAdapter(DiagnosticSourceAdapterOptions options)
+        /// <summary>
+        /// Starts listening for DiagnosticSource events and reporting them as Prometheus metrics.
+        /// Dispose of the return value to stop listening.
+        /// </summary>
+        public static IDisposable StartListening(DiagnosticSourceAdapterOptions options) => new DiagnosticSourceAdapter(options);
+
+        private DiagnosticSourceAdapter(DiagnosticSourceAdapterOptions options)
         {
             _options = options;
             _metric = Metrics.WithCustomRegistry(options.Registry)

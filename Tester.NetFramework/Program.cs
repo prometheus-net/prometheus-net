@@ -73,7 +73,7 @@ namespace tester
             //Metrics.DefaultRegistry.AddBeforeCollectCallback(() => throw new ScrapeFailedException());
 
 #if NETCOREAPP
-            var diagnosticSourceAdapter = new DiagnosticSourceAdapter();
+            var diagnosticSourceRegistration = DiagnosticSourceAdapter.StartListening();
 #endif
 
             var cts = new CancellationTokenSource();
