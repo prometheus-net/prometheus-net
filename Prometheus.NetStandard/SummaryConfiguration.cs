@@ -12,6 +12,8 @@ namespace Prometheus
         /// 
         /// For example, a quantile of 0.95 with an epsilon of 0.01 means the calculated value
         /// will be between the 94th and 96th quantile.
+        /// 
+        /// If null, no quantiles will be calculated!
         /// </summary>
         public IReadOnlyList<QuantileEpsilonPair> Objectives { get; set; } = Summary.DefObjectivesArray;
 
