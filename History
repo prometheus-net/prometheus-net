@@ -1,3 +1,5 @@
+* 3.2.1
+- Fix NuGet packaging defect that caused reference failures after installing .2.0 on .NET Core 2.1 or newer. #158
 * 3.2.0
 - Enable custom HTTP client to be used in MetricPusher, allowing for Basic auth and more flexibility. #125
 - Add DiagnosticSourceAdapter (.NET Core only). #153
