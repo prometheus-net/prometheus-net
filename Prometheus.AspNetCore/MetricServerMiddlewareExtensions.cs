@@ -41,28 +41,27 @@ namespace Prometheus
                 Registry = registry
             });
         }
+    }
 
-        public class PathAndPort
+    public class PathAndPort
+    {
+        public PathAndPort(string path, int port)
         {
-            public PathAndPort(string path, int port)
-            {
-                Path = path;
-                Port = port;
-            }
-
-            /// <summary>
-            /// Creates a <see cref="PathAndPort"/> with the default URL <c>/metrics</c>, which is a Prometheus convention.
-            /// </summary>
-            /// <param name="port"></param>
-            /// <returns></returns>
-            public static PathAndPort WithDefaultPath(int port)
-            {
-                return new PathAndPort("/metrics", port);
-            }
-
-            public string Path { get; }
-            public int Port { get; }
+            Path = path;
+            Port = port;
         }
 
+        /// <summary>
+        /// Creates a <see cref="PathAndPort"/> with the default URL <c>/metrics</c>, which is a Prometheus convention.
+        /// </summary>
+        /// <param name="port"></param>
+        /// <returns></returns>
+        public static PathAndPort WithDefaultPath(int port)
+        {
+            return new PathAndPort("/metrics", port);
+        }
+
+        public string Path { get; }
+        public int Port { get; }
     }
 }
