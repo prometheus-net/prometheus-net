@@ -56,6 +56,11 @@ namespace Prometheus.HttpMetrics
                     routeData?.Values["Action"] as string ?? string.Empty);
                 UpdateMetricValueIfExists(HttpRequestLabelNames.Controller,
                     routeData?.Values["Controller"] as string ?? string.Empty);
+                if ((routeData?.Values.ContainsKey("odataPath")).GetValueOrDefault())
+                {
+                    UpdateMetricValueIfExists(HttpRequestLabelNames.Controller,
+                        routeData?.Values["odataPath"] as string ?? string.Empty);    
+                }
             }
 
             return _labelNames.Where(_labelData.ContainsKey).Select(x => _labelData[x]).ToArray();
