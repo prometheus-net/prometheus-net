@@ -56,9 +56,28 @@ namespace Prometheus.HttpMetrics
                     routeData?.Values["Action"] as string ?? string.Empty);
                 UpdateMetricValueIfExists(HttpRequestLabelNames.Controller,
                     routeData?.Values["Controller"] as string ?? string.Empty);
+                if (routeData != null && routeData.Values.ContainsKey("odataPath"))
+                    HandleODataPath(routeData);
+                
             }
 
             return _labelNames.Where(_labelData.ContainsKey).Select(x => _labelData[x]).ToArray();
+        }
+
+        private void HandleODataPath(RouteData routeData)
+        {
+            var controller = routeData.Values["odataPath"] as string ?? string.Empty;
+            //Remove the parameters from the odataPath to avoid getting too many entry points - Example Item('A00001') -> Item() | CopyFromItem(ItemKey='X') -> CopyFromItem(ItemKey=) | Transfer(Number=1) -> Transfer(Number=) 
+            foreach (var x in routeData.Values.Where(x => x.Key != "odataPath" && x.Key != "action").OrderByDescending(x => (x.Value as string ?? string.Empty).Length))
+            {
+                var value = x.Value as string ?? string.Empty;
+                if (value.Length > 0)
+                {
+                    controller = controller.Replace(value, string.Empty);
+                }
+            }
+
+            UpdateMetricValueIfExists(HttpRequestLabelNames.Controller, controller.Replace("'", string.Empty));
         }
 
         private bool LabelsAreValid(string[] labelNames)

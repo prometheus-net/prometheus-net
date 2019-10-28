@@ -23,6 +23,22 @@ namespace Tests.HttpExporter
             };
         }
 
+        public static void SetupHttpContextOData(DefaultHttpContext hc, int expectedStatusCode, string expectedMethod,
+            string expectedAction, string expectedController, string key)
+        {
+            hc.Response.StatusCode = expectedStatusCode;
+            hc.Request.Method = expectedMethod;
+
+            expectedController = $"{expectedController}({key})";
+            hc.Features[typeof(IRoutingFeature)] = new FakeRoutingFeature
+            {
+                RouteData = new RouteData
+                {
+                    Values = { { "Action", expectedAction }, { "odataPath", expectedController }, {"Key", key} }
+                }
+            };
+        }
+
         internal static string GetLabelValueOrDefault(Labels labels, string name)
         {
             return labels.Names
