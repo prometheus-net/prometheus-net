@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Prometheus
@@ -51,7 +52,6 @@ namespace Prometheus
                 });
 
                 await _registry.CollectAndSerializeAsync(serializer, default);
-                response.Body.Dispose();
             }
             catch (ScrapeFailedException ex)
             {
@@ -61,7 +61,8 @@ namespace Prometheus
 
                 if (!string.IsNullOrWhiteSpace(ex.Message))
                 {
-                    using (var writer = new StreamWriter(response.Body))
+                    using (var writer = new StreamWriter(response.Body, PrometheusConstants.ExportEncoding,
+                        bufferSize: -1, leaveOpen: true))
                         await writer.WriteAsync(ex.Message);
                 }
             }
