@@ -63,25 +63,31 @@ namespace Prometheus
             _startTime.Set((_process.StartTime.ToUniversalTime() - epoch).TotalSeconds);
         }
 
+        // The Process class is not thread-safe so let's synchronize the updates to avoid data tearing.
+        private readonly object _updateLock = new object();
+
         private void UpdateMetrics()
         {
             try
             {
-                _process.Refresh();
-
-                for (var gen = 0; gen <= GC.MaxGeneration; gen++)
+                lock (_updateLock)
                 {
-                    var collectionCount = _collectionCounts[gen];
-                    collectionCount.Inc(GC.CollectionCount(gen) - collectionCount.Value);
-                }
+                    _process.Refresh();
 
-                _totalMemory.Set(GC.GetTotalMemory(false));
-                _virtualMemorySize.Set(_process.VirtualMemorySize64);
-                _workingSet.Set(_process.WorkingSet64);
-                _privateMemorySize.Set(_process.PrivateMemorySize64);
-                _cpuTotal.Inc(Math.Max(0, _process.TotalProcessorTime.TotalSeconds - _cpuTotal.Value));
-                _openHandles.Set(_process.HandleCount);
-                _numThreads.Set(_process.Threads.Count);
+                    for (var gen = 0; gen <= GC.MaxGeneration; gen++)
+                    {
+                        var collectionCount = _collectionCounts[gen];
+                        collectionCount.Inc(GC.CollectionCount(gen) - collectionCount.Value);
+                    }
+
+                    _totalMemory.Set(GC.GetTotalMemory(false));
+                    _virtualMemorySize.Set(_process.VirtualMemorySize64);
+                    _workingSet.Set(_process.WorkingSet64);
+                    _privateMemorySize.Set(_process.PrivateMemorySize64);
+                    _cpuTotal.Inc(Math.Max(0, _process.TotalProcessorTime.TotalSeconds - _cpuTotal.Value));
+                    _openHandles.Set(_process.HandleCount);
+                    _numThreads.Set(_process.Threads.Count);
+                }
             }
             catch (Exception)
             {
