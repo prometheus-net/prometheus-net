@@ -10,6 +10,9 @@ namespace tester
     {
         private static void Main()
         {
+            // Uncomment this to suppress the default sample metrics.
+            //Metrics.SuppressDefaultMetrics();
+
             // Replace the first line with an appropriate type of tester to run different manual tests.
             //var tester = new MetricPusherTester();
             //var tester = new KestrelMetricServerTester();

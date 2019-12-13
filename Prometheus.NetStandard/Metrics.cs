@@ -79,23 +79,24 @@
         static Metrics()
         {
             DefaultRegistry = new CollectorRegistry();
-            _defaultFactory = new MetricFactory(DefaultRegistry);
+            DefaultRegistry.SetBeforeFirstCollectCallback(delegate
+            {
+                // We include some metrics by default, just to give some output when a user first uses the library.
+                // These are not designed to be super meaningful/useful metrics.
+                DotNetStats.Register(DefaultRegistry);
+            });
 
-            // We include some metrics by default, just to give some output when a user first uses the library.
-            // These are not designed to be super meaningful/useful metrics.
-            DotNetStats.Register(DefaultRegistry);
+            _defaultFactory = new MetricFactory(DefaultRegistry);
         }
 
         /// <summary>
-        /// Replaces the default registry with a completely empty registry.
-        /// This will remove all registered metrics, so call this before doing any of your own registrations.
+        /// Suppresses the registration of the default sample metrics from the default registry.
+        /// Has no effect if not called on startup (it will not remove metrics from a registry already in use).
         /// </summary>
         public static void SuppressDefaultMetrics()
         {
-            // This should only be called before ever using any of the CreateXYZ() methods.
-
-            DefaultRegistry = new CollectorRegistry();
-            _defaultFactory = new MetricFactory(DefaultRegistry);
+            // Only has effect if called before the registry is collected from.
+            DefaultRegistry.SetBeforeFirstCollectCallback(delegate { });
         }
     }
 }

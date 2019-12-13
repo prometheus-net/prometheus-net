@@ -9,15 +9,19 @@ namespace Prometheus.Tests
     [TestClass]
     public class MetricsTests
     {
+        private CollectorRegistry _registry;
+        private MetricFactory _metrics;
+
         public MetricsTests()
         {
-            Metrics.SuppressDefaultMetrics();
+            _registry = Metrics.NewCustomRegistry();
+            _metrics = Metrics.WithCustomRegistry(_registry);
         }
 
         [TestMethod]
         public void api_usage()
         {
-            var gauge = Metrics.CreateGauge("name1", "help1");
+            var gauge = _metrics.CreateGauge("name1", "help1");
             gauge.Inc();
             Assert.AreEqual(1, gauge.Value);
             gauge.Inc(3.2);
@@ -78,7 +82,7 @@ namespace Prometheus.Tests
         {
             try
             {
-                Metrics.CreateHistogram("hist", "help", new HistogramConfiguration
+                _metrics.CreateHistogram("hist", "help", new HistogramConfiguration
                 {
                     Buckets = new double[0]
                 });
@@ -96,7 +100,7 @@ namespace Prometheus.Tests
         {
             try
             {
-                Metrics.CreateHistogram("hist", "help", new HistogramConfiguration
+                _metrics.CreateHistogram("hist", "help", new HistogramConfiguration
                 {
                     Buckets = new double[] { 0.5, 0.1 }
                 });
@@ -185,7 +189,7 @@ namespace Prometheus.Tests
         [TestMethod]
         public void same_labels_return_same_instance()
         {
-            var gauge = Metrics.CreateGauge("name1", "help1", "label1");
+            var gauge = _metrics.CreateGauge("name1", "help1", "label1");
 
             var labelled1 = gauge.Labels("1");
 
@@ -197,10 +201,10 @@ namespace Prometheus.Tests
         [TestMethod]
         public void cannot_create_metrics_with_the_same_name_but_different_labels()
         {
-            Metrics.CreateGauge("name1", "h");
+            _metrics.CreateGauge("name1", "h");
             try
             {
-                Metrics.CreateGauge("name1", "h", "label1");
+                _metrics.CreateGauge("name1", "h", "label1");
                 Assert.Fail("should have thrown");
             }
             catch (InvalidOperationException e)
@@ -212,10 +216,10 @@ namespace Prometheus.Tests
         [TestMethod]
         public void cannot_create_metrics_with_the_same_name_and_labels_but_different_type()
         {
-            Metrics.CreateGauge("name1", "h", "label1");
+            _metrics.CreateGauge("name1", "h", "label1");
             try
             {
-                Metrics.CreateCounter("name1", "h", "label1");
+                _metrics.CreateCounter("name1", "h", "label1");
                 Assert.Fail("should have thrown");
             }
             catch (InvalidOperationException e)
@@ -227,33 +231,33 @@ namespace Prometheus.Tests
         [TestMethod]
         public void metric_names()
         {
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("my-metric", "help"));
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("my!metric", "help"));
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("%", "help"));
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("5a", "help"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("my-metric", "help"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("my!metric", "help"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("%", "help"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("5a", "help"));
 
-            Metrics.CreateGauge("abc", "help");
-            Metrics.CreateGauge("myMetric2", "help");
-            Metrics.CreateGauge("a:3", "help");
+            _metrics.CreateGauge("abc", "help");
+            _metrics.CreateGauge("myMetric2", "help");
+            _metrics.CreateGauge("a:3", "help");
         }
 
         [TestMethod]
         public void label_names()
         {
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my-metric"));
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my!metric"));
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("a", "help1", "my%metric"));
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateHistogram("a", "help1", "le"));
-            Metrics.CreateGauge("a", "help1", "my:metric");
-            Metrics.CreateGauge("b", "help1", "good_name");
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my-metric"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my!metric"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my%metric"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateHistogram("a", "help1", "le"));
+            _metrics.CreateGauge("a", "help1", "my:metric");
+            _metrics.CreateGauge("b", "help1", "good_name");
 
-            Assert.ThrowsException<ArgumentException>(() => Metrics.CreateGauge("c", "help1", "__reserved"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("c", "help1", "__reserved"));
         }
 
         [TestMethod]
         public void label_values()
         {
-            var metric = Metrics.CreateGauge("a", "help1", "mylabelname");
+            var metric = _metrics.CreateGauge("a", "help1", "mylabelname");
 
             metric.Labels("");
             metric.Labels("mylabelvalue");
@@ -263,7 +267,7 @@ namespace Prometheus.Tests
         [TestMethod]
         public void GetAllLabelValues_GetsThemAll()
         {
-            var metric = Metrics.CreateGauge("ahdgfln", "ahegrtijpm", "a", "b", "c");
+            var metric = _metrics.CreateGauge("ahdgfln", "ahegrtijpm", "a", "b", "c");
             metric.Labels("1", "2", "3");
             metric.Labels("4", "5", "6");
 
@@ -285,7 +289,7 @@ namespace Prometheus.Tests
         [TestMethod]
         public void GetAllLabelValues_DoesNotGetUnlabelled()
         {
-            var metric = Metrics.CreateGauge("ahdggfagfln", "ahegrgftijpm");
+            var metric = _metrics.CreateGauge("ahdggfagfln", "ahegrgftijpm");
             metric.Inc();
 
             var values = metric.GetAllLabelValues().ToArray();

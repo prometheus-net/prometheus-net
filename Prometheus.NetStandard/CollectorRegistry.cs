@@ -97,11 +97,39 @@ namespace Prometheus
 
         private readonly ConcurrentDictionary<string, Collector> _collectors = new ConcurrentDictionary<string, Collector>();
 
+        internal void SetBeforeFirstCollectCallback(Action a)
+        {
+            lock (_firstCollectLock)
+            {
+                if (_hasPerformedFirstCollect)
+                    return; // Avoid keeping a reference to a callback we won't ever use.
+
+                _beforeFirstCollectCallback = a;
+            }
+        }
+
+        /// <summary>
+        /// Allows us to initialize (or not) the registry with the default metrics before the first collection.
+        /// </summary>
+        private Action? _beforeFirstCollectCallback;
+        private bool _hasPerformedFirstCollect;
+        private readonly object _firstCollectLock = new object();
+
         /// <summary>
         /// Collects metrics from all the registered collectors and sends them to the specified serializer.
         /// </summary>
         internal async Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
+            lock (_firstCollectLock)
+            {
+                if (!_hasPerformedFirstCollect)
+                {
+                    _hasPerformedFirstCollect = true;
+                    _beforeFirstCollectCallback?.Invoke();
+                    _beforeFirstCollectCallback = null;
+                }
+            }
+
             foreach (var callback in _beforeCollectCallbacks)
                 callback();
 

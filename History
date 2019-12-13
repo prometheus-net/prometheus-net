@@ -1,4 +1,5 @@
-- Separate packaging for ASP.NET Core 3 to reduce package reference management complexity for users.
+- Separate packaging for ASP.NET Core 3 to reduce package reference management complexity for users. #164
+- Lazy-initialize the default sample metrics to reduce initialization cost for those who do not need them. #170
 * 3.3.0
 - Add ability to filter requests by port number when exporting metrics. #160
 * 3.2.1
