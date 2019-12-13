@@ -30,7 +30,7 @@ namespace Prometheus
                 throw new ArgumentNullException(nameof(values));
 
             if (names.Length != values.Length)
-                throw new ArgumentException("Label values must be of same length as label names");
+                throw new ArgumentException("The list of label values must have the same number of elements as the list of label names.");
 
             if (values.Any(lv => lv == null))
                 throw new ArgumentNullException("A label value cannot be null.");

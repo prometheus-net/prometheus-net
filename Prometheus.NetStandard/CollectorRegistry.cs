@@ -90,7 +90,7 @@ namespace Prometheus
 
             if ((initializer.Configuration.LabelNames?.Length ?? 0) != collectorToUse.LabelNames.Length
                 || (!initializer.Configuration.LabelNames?.SequenceEqual(collectorToUse.LabelNames) ?? false))
-                throw new InvalidOperationException("Collector with same name must have same label names");
+                throw new InvalidOperationException("Collector matches a previous registration but has a different set of label names.");
 
             return (TCollector)collectorToUse;
         }

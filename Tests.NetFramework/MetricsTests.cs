@@ -209,7 +209,7 @@ namespace Prometheus.Tests
             }
             catch (InvalidOperationException e)
             {
-                Assert.AreEqual("Collector with same name must have same label names", e.Message);
+                Assert.AreEqual("Collector matches a previous registration but has a different set of label names.", e.Message);
             }
         }
 

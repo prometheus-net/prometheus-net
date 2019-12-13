@@ -2,6 +2,7 @@
 - Lazy-initialize the default sample metrics to reduce initialization cost for those who do not need them. #170
 - ASP.NET Core middlware no longer disposes of output stream. #171
 - Fix DotNetStats occasional data tearing under parallel collections. #173
+- Improved wording of some error messages. #169
 * 3.3.0
 - Add ability to filter requests by port number when exporting metrics. #160
 * 3.2.1
