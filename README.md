@@ -333,8 +333,8 @@ app.UseHttpMetrics(options =>
 	options.RequestDuration.Histogram = Metrics.CreateHistogram("myapp_http_request_duration_seconds", "Some help text",
 		new HistogramConfiguration
 		{
-			Buckets = Histogram.LinearBuckets(start: 1, width: 1, count: 64)
-			Labels = new[] { "code", "method" }
+			Buckets = Histogram.LinearBuckets(start: 1, width: 1, count: 64),
+			LabelNames = new[] { "code", "method" }
 		});
 });
 ```
