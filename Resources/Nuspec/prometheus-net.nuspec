@@ -15,6 +15,9 @@
     <releaseNotes></releaseNotes>
 
     <dependencies>
+      <group targetFramework="net461">
+        <dependency id="System.ValueTuple" version="4.5.0" />
+      </group>
     </dependencies>
   </metadata>
   <files>
