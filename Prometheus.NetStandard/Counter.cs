@@ -32,6 +32,12 @@ namespace Prometheus
                 Publish();
             }
 
+            public void IncTo(double targetValue)
+            {
+                _value.IncrementTo(targetValue);
+                Publish();
+            }
+
             public double Value => _value.Value;
         }
 
@@ -46,6 +52,7 @@ namespace Prometheus
         }
 
         public void Inc(double increment = 1) => Unlabelled.Inc(increment);
+        public void IncTo(double targetValue) => Unlabelled.IncTo(targetValue);
         public double Value => Unlabelled.Value;
 
         public void Publish() => Unlabelled.Publish();

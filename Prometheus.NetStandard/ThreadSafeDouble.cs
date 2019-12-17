@@ -32,10 +32,43 @@ namespace Prometheus
                 long initialValue = _value;
                 double computedValue = BitConverter.Int64BitsToDouble(initialValue) + increment;
 
-                //Compare exchange will only set the computed value if it is equal to the expected value
-                //It will always return the the value of _value prior to the exchange (whether it happens or not)
-                //So, only exit the loop if the value was what we expected it to be (initialValue) at the time of exchange otherwise another thread updated and we need to try again.
                 if (initialValue == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(computedValue), initialValue))
+                    return;
+            }
+        }
+
+        /// <summary>
+        /// Sets the value to this, unless the existing value is already greater.
+        /// </summary>
+        public void IncrementTo(double to)
+        {
+            while (true)
+            {
+                long initialRaw = _value;
+                double initialValue = BitConverter.Int64BitsToDouble(initialRaw);
+
+                if (initialValue >= to)
+                    return; // Already greater.
+
+                if (initialRaw == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(to), initialRaw))
+                    return;
+            }
+        }
+
+        /// <summary>
+        /// Sets the value to this, unless the existing value is already smaller.
+        /// </summary>
+        public void DecrementTo(double to)
+        {
+            while (true)
+            {
+                long initialRaw = _value;
+                double initialValue = BitConverter.Int64BitsToDouble(initialRaw);
+
+                if (initialValue <= to)
+                    return; // Already greater.
+
+                if (initialRaw == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(to), initialRaw))
                     return;
             }
         }

@@ -24,10 +24,33 @@ namespace Prometheus
         /// </summary>
         public static void SetToCurrentTimeUtc(this IGauge gauge)
         {
+            gauge.Set(ToUnixTimeSecondsAsDouble(DateTimeOffset.UtcNow));
+        }
+
+        /// <summary>
+        /// Sets the value of the gauge to a specific moment as the UTC timezone Unix timestamp in seconds.
+        /// Value does not include any elapsed leap seconds because Unix timestamps do not include leap seconds.
+        /// </summary>
+        public static void SetToTimeUtc(this IGauge gauge, DateTimeOffset timestamp)
+        {
+            gauge.Set(ToUnixTimeSecondsAsDouble(timestamp));
+        }
+
+        /// <summary>
+        /// Increments the value of the gauge to the current UTC time as a Unix timestamp in seconds.
+        /// Value does not include any elapsed leap seconds because Unix timestamps do not include leap seconds.
+        /// Operation is ignored if the current value is already greater.
+        /// </summary>
+        public static void IncToCurrentTimeUtc(this IGauge gauge)
+        {
+            gauge.IncTo(ToUnixTimeSecondsAsDouble(DateTimeOffset.UtcNow));
+        }
+
+        private static double ToUnixTimeSecondsAsDouble(DateTimeOffset timestamp)
+        {
             // This gets us sub-millisecond precision, which is better than ToUnixTimeMilliseconds().
-            var ticksSinceUnixEpoch = DateTimeOffset.UtcNow.Ticks - UnixEpochSeconds * TimeSpan.TicksPerSecond;
-            var secondsSinceUnixEpoch = ticksSinceUnixEpoch / (double)TimeSpan.TicksPerSecond;
-            gauge.Set(secondsSinceUnixEpoch);
+            var ticksSinceUnixEpoch = timestamp.ToUniversalTime().Ticks - UnixEpochSeconds * TimeSpan.TicksPerSecond;
+            return ticksSinceUnixEpoch / (double)TimeSpan.TicksPerSecond;
         }
 
         private sealed class InProgressTracker : IDisposable

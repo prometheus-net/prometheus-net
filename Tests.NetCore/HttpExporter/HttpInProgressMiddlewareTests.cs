@@ -83,6 +83,16 @@ namespace Tests.HttpExporter
             Value -= decrement;
         }
 
+        public void IncTo(double targetValue)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DecTo(double targetValue)
+        {
+            throw new NotImplementedException();
+        }
+
         public double Value { get; private set; }
     }
 }

@@ -39,6 +39,18 @@ namespace Prometheus
                 Inc(-decrement);
             }
 
+            public void IncTo(double targetValue)
+            {
+                _value.IncrementTo(targetValue);
+                Publish();
+            }
+
+            public void DecTo(double targetValue)
+            {
+                _value.DecrementTo(targetValue);
+                Publish();
+            }
+
             public double Value => _value.Value;
         }
 
@@ -55,8 +67,9 @@ namespace Prometheus
         public void Inc(double increment = 1) => Unlabelled.Inc(increment);
         public void Set(double val) => Unlabelled.Set(val);
         public void Dec(double decrement = 1) => Unlabelled.Dec(decrement);
+        public void IncTo(double targetValue) => Unlabelled.IncTo(targetValue);
+        public void DecTo(double targetValue) => Unlabelled.DecTo(targetValue);
         public double Value => Unlabelled.Value;
-
         public void Publish() => Unlabelled.Publish();
 
         private protected override MetricType Type => MetricType.Gauge;
