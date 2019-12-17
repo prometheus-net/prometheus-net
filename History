@@ -5,6 +5,7 @@
 - Improved wording of some error messages. #169
 - Added Counter.IncTo(), Gauge.IncTo(), Gauge.DecTo(). #181
 - Added Gauge.Set(DateTimeOffset) and Gauge.IncTo(DateTimeOffset). #181
+- Improve .NET Framework 4.6.1 packaging to include the ValueTuple reference automatically. #179
 * 3.3.0
 - Add ability to filter requests by port number when exporting metrics. #160
 * 3.2.1
