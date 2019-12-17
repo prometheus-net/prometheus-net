@@ -14,6 +14,37 @@ The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/
 
 The ASP.NET Core specific functionality requires ASP.NET Core 2.1 or newer. The .NET Core specific functionality requires .NET Core 2.1 or newer.
 
+Related projects:
+
+* [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) instruments .NET Core apps to export metrics on .NET Core performance.
+* [prometheus-net Grafana dashboards](https://github.com/prometheus-net/grafana-dashboards) provides example dashboards for visualizing prometheus-net metrics in [Grafana](https://grafana.com/).
+
+# Table of contents
+
+* [Best practices and usage](#best-practices-and-usage)
+* [Installation](#installation)
+* [Quick start](#quick-start)
+* [Counters](#counters)
+* [Gauges](#gauges)
+* [Summary](#summary)
+* [Histogram](#histogram)
+* [Measuring operation duration](#measuring-operation-duration)
+* [Tracking in-progress operations](#tracking-in-progress-operations)
+* [Counting exceptions](#counting-exceptions)
+* [Labels](#labels)
+* [When are metrics published?](#when-are-metrics-published)
+* [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
+* [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
+* [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
+* [Kestrel stand-alone server](#kestrel-stand-alone-server)
+* [Publishing to Pushgateway](#publishing-to-pushgateway)
+* [Publishing to Pushgateway with basic authentication](#publishing-to-pushgateway-with-basic-authentication)
+* [Publishing via standalone HTTP handler](#publishing-via-standalone-http-handler)
+* [Publishing raw metrics document](#publishing-raw-metrics-document)
+* [Just-in-time updates](#just-in-time-updates)
+* [Suppressing default metrics](#suppressing-default-metrics)
+* [DiagnosticSource integration](#diagnosticsource-integration)
+
 # Best practices and usage
 
 This library allows you to instrument your code with custom metrics and provides some built-in metric collection integrations for ASP.NET Core.
@@ -466,8 +497,3 @@ diagnostic_events_total{source="HttpHandlerDiagnosticListener",event="System.Net
 ```
 
 The level of detail obtained from this is rather low - only the total count for each event is exported. For more fine-grained analytics, you need to listen to DiagnosticSource events on your own and create custom metrics that can understand the meaning of each particular type of event that is of interest to you.
-
-# Related projects
-
-* [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) instruments .NET Core 2.2 apps to export metrics on .NET Core performance.
-* [prometheus-net Grafana dashboards](https://github.com/prometheus-net/grafana-dashboards) provides example dashboards for visualizing prometheus-net metrics in [Grafana](https://grafana.com/).
