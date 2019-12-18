@@ -33,6 +33,7 @@ namespace tester
                     app.UseMetricServer();
 
                     app.UseHttpMetrics();
+                    app.CaptureRouteDataForHttpMetrics();
                     app.UseMvc();
                 })
                 .ConfigureLogging(logging => logging.ClearProviders())

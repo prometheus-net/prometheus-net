@@ -50,12 +50,17 @@ namespace Prometheus.HttpMetrics
 
             if (_requiresRouteData)
             {
-                var routeData = context.GetRouteData();
+                var routeData = context.Features.Get<ICapturedRouteDataFeature>()?.Values;
+
+                // If we have captured route data, we always prefer it.
+                // Otherwise, we extract new route data right now.
+                if (routeData == null)
+                    routeData = context.GetRouteData()?.Values;
 
                 UpdateMetricValueIfExists(HttpRequestLabelNames.Action,
-                    routeData?.Values["Action"] as string ?? string.Empty);
+                    routeData?["Action"] as string ?? string.Empty);
                 UpdateMetricValueIfExists(HttpRequestLabelNames.Controller,
-                    routeData?.Values["Controller"] as string ?? string.Empty);
+                    routeData?["Controller"] as string ?? string.Empty);
             }
 
             return _labelNames.Where(_labelData.ContainsKey).Select(x => _labelData[x]).ToArray();
