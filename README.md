@@ -271,7 +271,10 @@ private static readonly Counter RequestCountByMethod = Metrics
 counter.WithLabels("GET").Inc();
 ```
 
-NB! Best practices of metric design is to minimize the number of different label values. HTTP request method is good - there are not many values. However, URL would be a bad choice for labeling - it has too many possible values and would lead to significant data processing inefficiency. Try to minimize the possible number of label values in your metric model.
+NB! Best practices of metric design is to **minimize the number of different label values**. For example:
+
+* HTTP request method is a good choice for labeling - there are not many values.
+* URL is a bad choice for labeling - it has many possible values and would lead to significant data processing inefficiency.
 
 # When are metrics published?
 
@@ -302,84 +305,65 @@ For projects built with ASP.NET Core, a middleware plugin is provided.
 If you use the default Visual Studio project template, modify *Startup.cs* as follows:
 
 ```csharp
-public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+public void Configure(IApplicationBuilder app, ...)
 {
-    // ...
-
     app.UseMetricServer();
 
-    app.Run(async (context) =>
-    {
-        // ...
-    });
+    // ...
 }
 ```
 
-Alternatively, if you use a custom project startup cycle, you can add this directly to the WebHostBuilder instance:
+The default configuration will publish metrics on the `/metrics` URL.
 
-```csharp
-WebHost.CreateDefaultBuilder()
-	.Configure(app => app.UseMetricServer())
-	.Build()
-	.Run();
-```
-
-The default configuration will publish metrics on the /metrics URL.
-
-This functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
+The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
 # ASP.NET Core HTTP request metrics
 
-The library provides some metrics for ASP.NET Core applications:
+The library exposes some metrics from ASP.NET Core applications:
 
 * Number of HTTP requests in progress.
 * Total number of received HTTP requests.
 * Duration of HTTP requests.
 
-These metrics include labels for status code, HTTP method, ASP.NET Core MVC Controller and ASP.NET Core MVC Action. The exception is the "requests in progress" metric, which is not differentiated by any labels due to technical limitations of ASP.NET Core.
+These metrics include labels for status code, HTTP method, Controller and Action.
 
-You can capture HTTP metrics by adjusting your app's `Configure()` method as follows:
+The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
+
+You can expose HTTP metrics by adjusting your app's `Configure()` method as follows:
 
 ```csharp
-app.UseHttpMetrics();
+public void Configure(IApplicationBuilder app, ...)
+{
+    app.UseMetricServer(); // Enables the metric server on /metrics
+	app.UseHttpMetrics(); // Exposes HTTP metrics for any HTTP requests processed (excluding /metrics).
+
+    // ...
+
+	// ASP.NET Core 3 uses endpoint routing which enables prometheus-net to more accurately determine the routes for the labels.
+	// You need to call UseRouteDataForHttpMetrics() when the routing data has been determined.
+	// The following two lines are not necessary in an ASP.NET Core 2 project, as endpoint routing is an ASP.NET Core 3 feature.
+	app.UseRouting();
+	app.UseRouteDataForHttpMetrics(); // Captures the result of the router to enhance metrics with accurate route data.
+
+	// ...
+}
 ```
 
 **NB! ASP.NET Core executes middleware in a strictly defined order, based on the `app.UseXYZ()` calls you make
-when setting up the pipeline. You must carefully consider the order in which you configure middleware.**
+when setting up the pipeline. You must carefully consider the order in which you configure middleware as this will
+affect the data that ASP.NET Core makes available to prometheus-net.**
 
-Keep the following in mind when composing the pipeline:
+Speficailly, when processing HTTP requests, prometheus-net will:
 
-* Any call to `UseMvc()` should be **after** `UseHttpMetrics()`. Otherwise, the `controller` and `action` labels will always have empty values.
+1. Record route data when you call `UseRouteDataForHttpMetrics()`. This is intended to be used with ASP.NET Core 3 endpoint routing and will ensure that any alter modifications by ASP.NET Core will not be reflected in metrics (e.g. if ASP.NET Core changes the route data when redirecting the user to an error handler).
+2. Record route data when request processing finishes, unless it was already recorded in the first step. This serves as a fallback option (for cases where request processing never reaches `UseRouteDataForHttpMetrics()`) and as the primary route identification mechanism with ASP.NET Core 2. However, route data read at this point may have been modified by earlier processing steps.
+
+If `UseRouteDataForHttpMetrics()` is not used, the "in progress requests" metric will not have labels for the controller/action.
+
+Care must be taken when configuring ASP.NET Core exception handling, to ensure the correct HTTP status code is recorded in metrics:
+
 * Any call to `UseExceptionHandler()` or `UseDeveloperExceptionPage()` should be **after** `UseHttpMetrics()`. Otherwise, the wrong HTTP status code may be reported in metrics when exceptions occur (the middleware will not see that the exception handler changed the status code from 200 to 500).
 * You should use either `UseExceptionHandler()` or a custom exception handler middleware. Otherwise, prometheus-net cannot see what the web host's default exception handler does and may report the wrong HTTP status code for exceptions (e.g. 200 instead of 500).
-
-The metrics reported by the middleware are configurable. If you wish to provide a custom metric instance
-or disable certain metrics you can configure it like this:
-
-```csharp
-app.UseHttpMetrics(options =>
-{
-	options.RequestCount.Enabled = false;
-
-	options.RequestDuration.Histogram = Metrics.CreateHistogram("myapp_http_request_duration_seconds", "Some help text",
-		new HistogramConfiguration
-		{
-			Buckets = Histogram.LinearBuckets(start: 1, width: 1, count: 64),
-			LabelNames = new[] { "code", "method" }
-		});
-});
-```
-
-For "requests in progress", the custom metric cannot have labels.
-
-For "request duration" and "total request count", the labels for the custom metric you provide *must* be a subset of the following:
-
-* "code" - Status Code
-* "method" - HTTP method
-* "controller" - ASP.NET Core MVC Controller
-* "action" - ASP.NET Core MVC Action
-
-Any requests that do not match an ASP.NET Core MVC controller or action will have an empty string as the label value.
 
 # ASP.NET Core with basic authentication
 
