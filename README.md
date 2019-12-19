@@ -109,7 +109,7 @@ Counters only increase in value and reset to zero when the process restarts.
 
 ```csharp
 private static readonly Counter ProcessedJobCount = Metrics
-	.CreateCounter("myapp_jobs_processed_total", "Number of processed jobs.");
+    .CreateCounter("myapp_jobs_processed_total", "Number of processed jobs.");
 
 ...
 
@@ -123,7 +123,7 @@ Gauges can have any numeric value and change arbitrarily.
 
 ```csharp
 private static readonly Gauge JobsInQueue = Metrics
-	.CreateGauge("myapp_jobs_queued", "Number of jobs waiting for processing in the queue.");
+    .CreateGauge("myapp_jobs_queued", "Number of jobs waiting for processing in the queue.");
 
 ...
 
@@ -142,7 +142,7 @@ Summaries track the trends in events over time (10 minutes by default).
 
 ```csharp
 private static readonly Summary RequestSizeSummary = Metrics
-	.CreateSummary("myapp_request_size_bytes", "Summary of request sizes (in bytes) over last 10 minutes.");
+    .CreateSummary("myapp_request_size_bytes", "Summary of request sizes (in bytes) over last 10 minutes.");
 
 ...
 
@@ -153,17 +153,17 @@ By default, only the sum and total count are reported. You may also specify quan
 
 ```csharp
 private static readonly Summary RequestSizeSummary = Metrics
-	.CreateSummary("myapp_request_size_bytes", "Summary of request sizes (in bytes) over last 10 minutes.",
-		new SummaryConfiguration
-		{
-			Objectives = new[]
-			{
-				new QuantileEpsilonPair(0.5, 0.05),
-				new QuantileEpsilonPair(0.9, 0.05),
-				new QuantileEpsilonPair(0.95, 0.01),
-				new QuantileEpsilonPair(0.99, 0.005),
-			}
-		});
+    .CreateSummary("myapp_request_size_bytes", "Summary of request sizes (in bytes) over last 10 minutes.",
+        new SummaryConfiguration
+        {
+            Objectives = new[]
+            {
+                new QuantileEpsilonPair(0.5, 0.05),
+                new QuantileEpsilonPair(0.9, 0.05),
+                new QuantileEpsilonPair(0.95, 0.01),
+                new QuantileEpsilonPair(0.99, 0.005),
+            }
+        });
 ```
 
 The epsilon indicates the absolute error allowed in measurements. For more information, refer to the [Prometheus documentation on summaries and histograms](https://prometheus.io/docs/practices/histograms/).
@@ -174,12 +174,12 @@ Histograms track the size and number of events in buckets. This allows for aggre
 
 ```csharp
 private static readonly Histogram OrderValueHistogram = Metrics
-	.CreateHistogram("myapp_order_value_usd", "Histogram of received order values (in USD).",
-		new HistogramConfiguration
-		{
-			// We divide measurements in 10 buckets of $100 each, up to $1000.
-			Buckets = Histogram.LinearBuckets(start: 100, width: 100, count: 10)
-		});
+    .CreateHistogram("myapp_order_value_usd", "Histogram of received order values (in USD).",
+        new HistogramConfiguration
+        {
+            // We divide measurements in 10 buckets of $100 each, up to $1000.
+            Buckets = Histogram.LinearBuckets(start: 100, width: 100, count: 10)
+        });
 
 ...
 
@@ -192,7 +192,7 @@ Timers can be used to report the duration of an operation (in seconds) to a Summ
 
 ```csharp
 private static readonly Histogram LoginDuration = Metrics
-	.CreateHistogram("myapp_login_duration_seconds", "Histogram of login call processing durations.");
+    .CreateHistogram("myapp_login_duration_seconds", "Histogram of login call processing durations.");
 
 ...
 
@@ -208,13 +208,13 @@ You can use `Gauge.TrackInProgress()` to track how many concurrent operations ar
 
 ```csharp
 private static readonly Gauge DocumentImportsInProgress = Metrics
-	.CreateGauge("myapp_document_imports_in_progress", "Number of import operations ongoing.");
+    .CreateGauge("myapp_document_imports_in_progress", "Number of import operations ongoing.");
 
 ...
 
 using (DocumentImportsInProgress.TrackInProgress())
 {
-	DocumentRepository.ImportDocument(path);
+    DocumentRepository.ImportDocument(path);
 }
 ```
 
@@ -225,7 +225,7 @@ You can use `Counter.CountExceptions()` to count the number of exceptions that o
 
 ```csharp
 private static readonly Counter FailedDocumentImports = Metrics
-	.CreateCounter("myapp_document_imports_failed_total", "Number of import operations that failed.");
+    .CreateCounter("myapp_document_imports_failed_total", "Number of import operations that failed.");
 
 ...
 
@@ -239,11 +239,11 @@ FailedDocumentImports.CountExceptions(() => DocumentRepository.ImportDocument(pa
 
 bool IsImportRelatedException(Exception ex)
 {
-	// Do not count "access denied" exceptions - those are user error for pointing us to a forbidden file.
-	if (ex is UnauthorizedAccessException)
-		return false;
+    // Do not count "access denied" exceptions - those are user error for pointing us to a forbidden file.
+    if (ex is UnauthorizedAccessException)
+        return false;
 
-	return true;
+    return true;
 }
 ```
 
@@ -258,12 +258,12 @@ Taking a counter as an example:
 
 ```csharp
 private static readonly Counter RequestCountByMethod = Metrics
-	.CreateCounter("myapp_requests_total", "Number of requests received, by HTTP method.",
-		new CounterConfiguration
-		{
-			// Here you specify only the names of the labels.
-			LabelNames = new[] { "method" }
-		});
+    .CreateCounter("myapp_requests_total", "Number of requests received, by HTTP method.",
+        new CounterConfiguration
+        {
+            // Here you specify only the names of the labels.
+            LabelNames = new[] { "method" }
+        });
 
 ...
 
@@ -284,11 +284,11 @@ Sometimes you want to delay publishing a metric until you have loaded some data 
 
 ```csharp
 private static readonly Gauge UsersLoggedIn = Metrics
-	.CreateGauge("myapp_users_logged_in", "Number of active user sessions",
-		new GaugeConfiguration
-		{
-			SuppressInitialValue = true
-		});
+    .CreateGauge("myapp_users_logged_in", "Number of active user sessions",
+        new GaugeConfiguration
+        {
+            SuppressInitialValue = true
+        });
 
 ...
 
@@ -335,17 +335,20 @@ You can expose HTTP metrics by adjusting your app's `Configure()` method as foll
 public void Configure(IApplicationBuilder app, ...)
 {
     app.UseMetricServer(); // Enables the metric server on /metrics
-	app.UseHttpMetrics(); // Exposes HTTP metrics for any HTTP requests processed (excluding /metrics).
+    app.UseHttpMetrics(); // Exposes HTTP metrics for any HTTP requests processed (excluding /metrics).
 
     // ...
 
-	// ASP.NET Core 3 uses endpoint routing which enables prometheus-net to more accurately determine the routes for the labels.
-	// You need to call UseRouteDataForHttpMetrics() when the routing data has been determined.
-	// The following two lines are not necessary in an ASP.NET Core 2 project, as endpoint routing is an ASP.NET Core 3 feature.
-	app.UseRouting();
-	app.UseRouteDataForHttpMetrics(); // Captures the result of the router to enhance metrics with accurate route data.
+    // ASP.NET Core 3 uses endpoint routing which enables prometheus-net to more accurately
+    // determine the routes for the labels. You need to call UseRouteDataForHttpMetrics() when
+    // the routing data has been determined.
+    // 
+    // The following two lines are not necessary in an ASP.NET Core 2 project,
+    // as endpoint routing is an ASP.NET Core 3 feature.
+    app.UseRouting();
+    app.UseRouteDataForHttpMetrics(); // Captures the result of the router to enhance metrics with accurate route data.
 
-	// ...
+    // ...
 }
 ```
 
@@ -355,7 +358,7 @@ affect the data that ASP.NET Core makes available to prometheus-net.**
 
 Speficailly, when processing HTTP requests, prometheus-net will:
 
-1. Record route data when you call `UseRouteDataForHttpMetrics()`. This is intended to be used with ASP.NET Core 3 endpoint routing and will ensure that any alter modifications by ASP.NET Core will not be reflected in metrics (e.g. if ASP.NET Core changes the route data when redirecting the user to an error handler).
+1. Record route data when you call `UseRouteDataForHttpMetrics()`. This is intended to be used with ASP.NET Core 3 endpoint routing and will ensure that any alter modifications by ASP.NET Core will not be reflected in metrics (e.g. if ASP.NET Core changes the route data when redirecting the user to an error handler). It may optionally be used with ASP.NET Core 2 routing if you wish to capture route data from a specific point in the pipeline.
 2. Record route data when request processing finishes, unless it was already recorded in the first step. This serves as a fallback option (for cases where request processing never reaches `UseRouteDataForHttpMetrics()`) and as the primary route identification mechanism with ASP.NET Core 2. However, route data read at this point may have been modified by earlier processing steps.
 
 If `UseRouteDataForHttpMetrics()` is not used, the "in progress requests" metric will not have labels for the controller/action.
@@ -399,8 +402,8 @@ Metrics can be posted to a [Pushgateway](https://prometheus.io/docs/practices/pu
 ```csharp
 var pusher = new MetricPusher(new MetricPusherOptions
 {
-	Endpoint = "https://pushgateway.example.org:9091/metrics",
-	Job = "some_job"
+    Endpoint = "https://pushgateway.example.org:9091/metrics",
+    Job = "some_job"
 });
 
 pusher.Start();
