@@ -334,8 +334,11 @@ You can expose HTTP metrics by adjusting your app's `Configure()` method as foll
 ```csharp
 public void Configure(IApplicationBuilder app, ...)
 {
-    app.UseMetricServer(); // Enables the metric server on /metrics
-    app.UseHttpMetrics(); // Exposes HTTP metrics for any HTTP requests processed (excluding /metrics).
+    // Enables the metric server on /metrics
+    app.UseMetricServer();
+
+    // Exposes HTTP metrics for any HTTP requests processed (excluding /metrics).
+    app.UseHttpMetrics();
 
     // ...
 
@@ -343,10 +346,9 @@ public void Configure(IApplicationBuilder app, ...)
     // determine the routes for the labels. You need to call UseRouteDataForHttpMetrics() when
     // the routing data has been determined.
     // 
-    // The following two lines are not necessary in an ASP.NET Core 2 project,
-    // as endpoint routing is an ASP.NET Core 3 feature.
+    // ASP.NET Core 3 only - omit these lines with ASP.NET Core 2.
     app.UseRouting();
-    app.UseRouteDataForHttpMetrics(); // Captures the result of the router to enhance metrics with accurate route data.
+    app.UseRouteDataForHttpMetrics();
 
     // ...
 }
