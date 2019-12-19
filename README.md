@@ -360,10 +360,11 @@ affect the data that ASP.NET Core makes available to prometheus-net.**
 
 Speficailly, when processing HTTP requests, prometheus-net will:
 
-1. Record route data when you call `UseRouteDataForHttpMetrics()`. This is intended to be used with ASP.NET Core 3 endpoint routing and will ensure that any alter modifications by ASP.NET Core will not be reflected in metrics (e.g. if ASP.NET Core changes the route data when redirecting the user to an error handler). It may optionally be used with ASP.NET Core 2 routing if you wish to capture route data from a specific point in the pipeline.
+1. Record route data when you call `UseRouteDataForHttpMetrics()`. This is intended to be used with ASP.NET Core 3 endpoint routing and will ensure that any later modifications by ASP.NET Core will not be reflected in metrics (e.g. redirecting to an error handler).
+    * This call may also be used with ASP.NET Core 2 routing if you wish to capture route data from a specific point in the pipeline.
 2. Record route data when request processing finishes, unless it was already recorded in the first step. This serves as a fallback option (for cases where request processing never reaches `UseRouteDataForHttpMetrics()`) and as the primary route identification mechanism with ASP.NET Core 2. However, route data read at this point may have been modified by earlier processing steps.
 
-If `UseRouteDataForHttpMetrics()` is not used, the "in progress requests" metric will not have labels for the controller/action.
+If `UseRouteDataForHttpMetrics()` is not called or route data is not available at the point where it is called, the "in progress requests" metric will always have empty controller/action labels.
 
 Care must be taken when configuring ASP.NET Core exception handling, to ensure the correct HTTP status code is recorded in metrics:
 
