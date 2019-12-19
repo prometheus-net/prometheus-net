@@ -70,7 +70,7 @@ namespace Prometheus
     /// <summary>
     /// Base class for metrics collectors, providing common labeled child management functionality.
     /// </summary>
-    public abstract class Collector<TChild> : Collector
+    public abstract class Collector<TChild> : Collector, ICollector<TChild>
         where TChild : ChildBase
     {
         private readonly ConcurrentDictionary<Labels, TChild> _labelledMetrics = new ConcurrentDictionary<Labels, TChild>();
@@ -82,6 +82,9 @@ namespace Prometheus
         /// Gets the child instance that has no labels.
         /// </summary>
         protected internal TChild Unlabelled => _unlabelledLazy.Value;
+
+        // We need it for the ICollector interface but using this is rarely relevant in client code, so keep it obscured.
+        TChild ICollector<TChild>.Unlabelled => Unlabelled;
 
         // This servers a slightly silly but useful purpose: by default if you start typing .La... and trigger Intellisense
         // it will often for whatever reason focus on LabelNames instead of Labels, leading to tiny but persistent frustration.

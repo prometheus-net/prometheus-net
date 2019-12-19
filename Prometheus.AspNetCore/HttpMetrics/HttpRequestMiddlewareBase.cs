@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Prometheus.HttpMetrics
@@ -18,62 +18,80 @@ namespace Prometheus.HttpMetrics
     /// Similarly, if either 'controller' or 'action' is provided, the data will be taken from the RouteData of
     /// the current HTTP context.
     /// </summary>
-    /// <typeparam name="T">The metric being used.</typeparam>
-    public abstract class HttpRequestMiddlewareBase<T> where T : Collector
+    public abstract class HttpRequestMiddlewareBase<TCollector, TChild>
+        where TCollector : ICollector<TChild>
+        where TChild : ICollectorChild
     {
-        private readonly HashSet<string> _allowedLabelNames = new HashSet<string>(HttpRequestLabelNames.All);
+        protected abstract string[] AllowedLabelNames { get; }
 
-        private readonly Dictionary<string, string> _labelData;
-        private readonly string[] _labelNames;
-        private readonly bool _requiresRouteData;
+        /// <summary>
+        /// Informs the label data logic on whether we need to account for routing data in the metric labels.
+        /// Can also be used by subclasses to determine if they need to export routing-specific logic.
+        /// </summary>
+        protected readonly bool _labelsIncludeRouteData;
 
-        protected HttpRequestMiddlewareBase(T collector)
+        protected readonly TCollector _metric;
+
+        protected HttpRequestMiddlewareBase(TCollector metric)
         {
-            if (collector == null) throw new ArgumentException(nameof(collector));
+            if (metric == null) throw new ArgumentException(nameof(metric));
 
-            if (!LabelsAreValid(collector.LabelNames))
-                throw new ArgumentException(
-                    $"The metric used for HTTP requests may only use labels from the following set: {string.Join(", ", HttpRequestLabelNames.All)}");
+            if (!LabelsAreValid(metric.LabelNames))
+                throw new ArgumentException($"{metric.Name} may only use labels from the following set: {string.Join(", ", AllowedLabelNames)}");
 
-            _labelNames = collector.LabelNames;
-            _labelData = _labelNames.ToDictionary(key => key);
-            _requiresRouteData = _labelData.ContainsKey(HttpRequestLabelNames.Action) ||
-                                 _labelData.ContainsKey(HttpRequestLabelNames.Controller);
+            _labelsIncludeRouteData = metric.LabelNames.Intersect(HttpRequestLabelNames.RouteSpecific).Any();
+            _metric = metric;
         }
 
-        protected string[] GetLabelData(HttpContext context)
+        protected TChild CreateChild(HttpContext context)
         {
-            if (_labelNames.Length == 0) return new string[0];
+            if (!_metric.LabelNames.Any())
+                return _metric.Unlabelled;
 
-            UpdateMetricValueIfExists(HttpRequestLabelNames.Method, context.Request.Method);
-            UpdateMetricValueIfExists(HttpRequestLabelNames.Code, context.Response.StatusCode.ToString());
+            if (!_labelsIncludeRouteData)
+                return CreateChild(context, null);
 
-            if (_requiresRouteData)
+            var routeData = context.Features.Get<ICapturedRouteDataFeature>()?.Values;
+
+            // If we have captured route data, we always prefer it.
+            // Otherwise, we extract new route data right now.
+            if (routeData == null)
+                routeData = context.GetRouteData()?.Values;
+
+            return CreateChild(context, routeData);
+        }
+
+        protected TChild CreateChild(HttpContext context, RouteValueDictionary? routeData)
+        {
+            var labelValues = new string[_metric.LabelNames.Length];
+
+            for (var i = 0; i < labelValues.Length; i++)
             {
-                var routeData = context.Features.Get<ICapturedRouteDataFeature>()?.Values;
-
-                // If we have captured route data, we always prefer it.
-                // Otherwise, we extract new route data right now.
-                if (routeData == null)
-                    routeData = context.GetRouteData()?.Values;
-
-                UpdateMetricValueIfExists(HttpRequestLabelNames.Action,
-                    routeData?["Action"] as string ?? string.Empty);
-                UpdateMetricValueIfExists(HttpRequestLabelNames.Controller,
-                    routeData?["Controller"] as string ?? string.Empty);
+                switch (_metric.LabelNames[i])
+                {
+                    case HttpRequestLabelNames.Method:
+                        labelValues[i] = context.Request.Method;
+                        break;
+                    case HttpRequestLabelNames.Code:
+                        labelValues[i] = context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
+                        break;
+                    case HttpRequestLabelNames.Controller:
+                        labelValues[i] = routeData?["Controller"] as string ?? string.Empty;
+                        break;
+                    case HttpRequestLabelNames.Action:
+                        labelValues[i] = routeData?["Action"] as string ?? string.Empty;
+                        break;
+                    default:
+                        throw new NotSupportedException($"Unexpected label name on {_metric.Name}: {_metric.LabelNames[i]}");
+                }
             }
 
-            return _labelNames.Where(_labelData.ContainsKey).Select(x => _labelData[x]).ToArray();
+            return _metric.WithLabels(labelValues);
         }
 
         private bool LabelsAreValid(string[] labelNames)
         {
-            return _allowedLabelNames.IsSupersetOf(labelNames);
-        }
-
-        private void UpdateMetricValueIfExists(string key, string value)
-        {
-            if (_labelData.ContainsKey(key)) _labelData[key] = value;
+            return !labelNames.Except(AllowedLabelNames).Any();
         }
     }
 }

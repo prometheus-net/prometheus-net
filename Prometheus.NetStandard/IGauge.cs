@@ -1,6 +1,6 @@
 ﻿namespace Prometheus
 {
-    public interface IGauge
+    public interface IGauge : ICollectorChild
     {
         void Inc(double increment = 1);
         void Set(double val);

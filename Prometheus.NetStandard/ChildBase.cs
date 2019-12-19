@@ -6,7 +6,7 @@ namespace Prometheus
     /// <summary>
     /// Base class for labeled instances of metrics (with all label names and label values defined).
     /// </summary>
-    public abstract class ChildBase
+    public abstract class ChildBase : ICollectorChild
     {
         internal ChildBase(Collector parent, Labels labels, bool publish)
         {

@@ -1,6 +1,6 @@
 ﻿namespace Prometheus
 {
-    public interface ICounter
+    public interface ICounter : ICollectorChild
     {
         void Inc(double increment = 1);
         void IncTo(double targetValue);

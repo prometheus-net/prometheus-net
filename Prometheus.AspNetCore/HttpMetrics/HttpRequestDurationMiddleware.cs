@@ -5,16 +5,16 @@ using System.Threading.Tasks;
 
 namespace Prometheus.HttpMetrics
 {
-    public sealed class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<Histogram>
+    public sealed class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<ICollector<IHistogram>, IHistogram>
     {
         private readonly RequestDelegate _next;
-        private readonly Histogram _requestDuration;
 
-        public HttpRequestDurationMiddleware(RequestDelegate next, Histogram histogram)
+        protected override string[] AllowedLabelNames => HttpRequestLabelNames.All;
+
+        public HttpRequestDurationMiddleware(RequestDelegate next, ICollector<IHistogram> histogram)
             : base(histogram)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
-            _requestDuration = histogram;
         }
 
         public async Task Invoke(HttpContext context)
@@ -23,6 +23,7 @@ namespace Prometheus.HttpMetrics
 
             // We need to write this out in long form instead of using a timer because
             // GetLabelData() can only return values *after* executing the next request delegate.
+            // So we would not have the labels if we tried to create the child early on.
             try
             {
                 await _next(context);
@@ -31,10 +32,7 @@ namespace Prometheus.HttpMetrics
             {
                 stopWatch.Stop();
 
-                // GetLabelData() route data is only available *after* invoking the next request delegate.
-                _requestDuration
-                    .WithLabels(GetLabelData(context))
-                    .Observe(stopWatch.Elapsed.TotalSeconds);
+                CreateChild(context).Observe(stopWatch.Elapsed.TotalSeconds);
             }
         }
     }

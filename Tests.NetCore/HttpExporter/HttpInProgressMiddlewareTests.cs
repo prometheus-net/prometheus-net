@@ -60,7 +60,7 @@ namespace Tests.HttpExporter
         }
     }
 
-    internal class FakeGauge : IGauge
+    internal class FakeGauge : ICollector<IGauge>, IGauge
     {
         public int IncrementCount { get; private set; }
         public int DecrementCount { get; private set; }
@@ -93,6 +93,18 @@ namespace Tests.HttpExporter
             throw new NotImplementedException();
         }
 
+        public IGauge WithLabels(params string[] labelValues)
+        {
+            return this;
+        }
+
         public double Value { get; private set; }
+
+        public IGauge Unlabelled => this;
+
+        public string[] LabelNames => new string[0];
+
+        public string Name => "name";
+        public string Help => "help";
     }
 }
