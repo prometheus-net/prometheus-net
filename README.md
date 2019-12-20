@@ -302,7 +302,9 @@ You can also use `.Publish()` on a metric to mark it as ready to be published wi
 
 For projects built with ASP.NET Core, a middleware plugin is provided.
 
-If you use the default Visual Studio project template, modify *Startup.cs* as follows:
+If you use the default Visual Studio project template, modify `Startup.cs` as follows:
+
+1. Add `app.UseMetricServer()` to the top of the `Configure` method.
 
 ```csharp
 public void Configure(IApplicationBuilder app, ...)
@@ -332,7 +334,6 @@ The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` N
 You can expose HTTP metrics by performing the following steps:
 
 1. Modify your `Startup.Configure()` method:
-    1. At the start of the method, add `app.UseMetricServer()`.
     1. (ASP.NET Core 3 or newer) after `app.UseRouting()` add `app.UseHttpMetrics()`.
     1. (ASP.NET Core 2) after `app.UseMetricServer()` add `app.UseHttpMetrics()`.
 
@@ -341,8 +342,6 @@ Example `Startup.cs` (ASP.NET Core 3):
 ```csharp
 public void Configure(IApplicationBuilder app, ...)
 {
-    app.UseMetricServer();
-
     // ...
 
     app.UseRouting();
