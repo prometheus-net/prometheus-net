@@ -19,7 +19,7 @@ namespace Prometheus.HttpMetrics
         {
             // Always available, part of request.
             Method,
-            // These two are available only in ASP.NET Core 3, if using UseRouteDataForHttpMetricsMiddleware.
+            // These two are available only in ASP.NET Core 3.
             Controller,
             Action
         };

@@ -24,12 +24,11 @@ namespace Prometheus.HttpMetrics
             }
             finally
             {
-                // GetLabelData() route data is only available *after* invoking the next request delegate.
-                // So we would not have the labels if we tried to create the child early on.
-                // In ASP.NET Core 3, it is actually available after .UseRouting() but we don't need to rush.
+                // We need to record metrics after inner handler execution because routing data in
+                // ASP.NET Core 2 is only available *after* executing the next request delegate.
+                // So we would not have the right labels if we tried to create the child early on.
                 CreateChild(context).Inc();
             }
-
         }
     }
 }

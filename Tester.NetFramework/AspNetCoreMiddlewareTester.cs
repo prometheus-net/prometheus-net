@@ -31,9 +31,7 @@ namespace tester
                 .Configure(app =>
                 {
                     app.UseMetricServer();
-
                     app.UseHttpMetrics();
-                    app.UseRouteDataForHttpMetrics();
                     app.UseMvc();
                 })
                 .ConfigureLogging(logging => logging.ClearProviders())

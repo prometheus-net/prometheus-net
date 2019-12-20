@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Routing;
 
-namespace Prometheus
+namespace Prometheus.HttpMetrics
 {
     sealed class CapturedRouteDataFeature : ICapturedRouteDataFeature
     {

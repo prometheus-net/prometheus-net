@@ -8,6 +8,8 @@ namespace Prometheus
     {
         /// <summary>
         /// Configures the ASP.NET Core request pipeline to collect Prometheus metrics on processed HTTP requests.
+        /// 
+        /// If using ASP.NET Core 3 or newer, call this after .UseRouting().
         /// </summary>
         public static IApplicationBuilder UseHttpMetrics(this IApplicationBuilder app,
             Action<HttpMiddlewareExporterOptions> configure)
@@ -23,11 +25,15 @@ namespace Prometheus
 
         /// <summary>
         /// Configures the ASP.NET Core request pipeline to collect Prometheus metrics on processed HTTP requests.
+        /// 
+        /// If using ASP.NET Core 3 or newer, call this after .UseRouting().
         /// </summary>
         public static IApplicationBuilder UseHttpMetrics(this IApplicationBuilder app,
             HttpMiddlewareExporterOptions? options = null)
         {
             if (options == null) options = new HttpMiddlewareExporterOptions();
+
+            app.UseMiddleware<CaptureRouteDataMiddleware>();
 
             if (options.InProgress.Enabled)
                 app.UseMiddleware<HttpInProgressMiddleware>(options.InProgress.Gauge);

@@ -329,47 +329,30 @@ These metrics include labels for status code, HTTP method, Controller and Action
 
 The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
-You can expose HTTP metrics by adjusting your app's `Configure()` method as follows:
+You can expose HTTP metrics by performing the following steps:
+
+1. Modify your `Startup.Configure()` method:
+    1. At the start of the method, add `app.UseMetricServer()`.
+    1. (ASP.NET Core 3 or newer) after `app.UseRouting()` add `app.UseHttpMetrics()`.
+    1. (ASP.NET Core 2) after `app.UseMetricServer()` add `app.UseHttpMetrics()`.
+
+Example `Startup.cs` (ASP.NET Core 3):
 
 ```csharp
 public void Configure(IApplicationBuilder app, ...)
 {
-    // Enables the metric server on /metrics
     app.UseMetricServer();
-
-    // Exposes HTTP metrics for any HTTP requests processed (excluding /metrics).
-    app.UseHttpMetrics();
 
     // ...
 
-    // ASP.NET Core 3 uses endpoint routing which enables prometheus-net to more accurately
-    // determine the routes for the labels. You need to call UseRouteDataForHttpMetrics() when
-    // the routing data has been determined.
-    // 
-    // ASP.NET Core 3 only - omit these lines with ASP.NET Core 2.
     app.UseRouting();
-    app.UseRouteDataForHttpMetrics();
+    app.UseHttpMetrics();
 
     // ...
 }
 ```
 
-**NB! ASP.NET Core executes middleware in a strictly defined order, based on the `app.UseXYZ()` calls you make
-when setting up the pipeline. You must carefully consider the order in which you configure middleware as this will
-affect the data that ASP.NET Core makes available to prometheus-net.**
-
-Speficailly, when processing HTTP requests, prometheus-net will:
-
-1. Record route data when you call `UseRouteDataForHttpMetrics()`. This is intended to be used with ASP.NET Core 3 endpoint routing and will ensure that any later modifications by ASP.NET Core will not be reflected in metrics (e.g. redirecting to an error handler).
-    * This call may also be used with ASP.NET Core 2 routing if you wish to capture route data from a specific point in the pipeline.
-2. Record route data when request processing finishes, unless it was already recorded in the first step. This serves as a fallback option (for cases where request processing never reaches `UseRouteDataForHttpMetrics()`) and as the primary route identification mechanism with ASP.NET Core 2. However, route data read at this point may have been modified by earlier processing steps.
-
-If `UseRouteDataForHttpMetrics()` is not called or route data is not available at the point where it is called, the "in progress requests" metric will always have empty controller/action labels.
-
-Care must be taken when configuring ASP.NET Core exception handling, to ensure the correct HTTP status code is recorded in metrics:
-
-* Any call to `UseExceptionHandler()` or `UseDeveloperExceptionPage()` should be **after** `UseHttpMetrics()`. Otherwise, the wrong HTTP status code may be reported in metrics when exceptions occur (the middleware will not see that the exception handler changed the status code from 200 to 500).
-* You should use either `UseExceptionHandler()` or a custom exception handler middleware. Otherwise, prometheus-net cannot see what the web host's default exception handler does and may report the wrong HTTP status code for exceptions (e.g. 200 instead of 500).
+Any middlware that changes HTTP response codes should be inserted into the pipeline **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
 
 # ASP.NET Core with basic authentication
 
