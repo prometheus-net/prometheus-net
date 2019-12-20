@@ -304,10 +304,10 @@ For projects built with ASP.NET Core, a middleware plugin is provided.
 
 If you use the default Visual Studio project template, modify `Startup.cs` as follows:
 
-* ASP.NET Core 3 or newer)
-    1. Add `endpoints.MapMetrics()` to the endpoint configuration under `app.UseEndpoints`.
+* ASP.NET Core 3 or newer
+    * Add `endpoints.MapMetrics()` to the endpoint configuration under `app.UseEndpoints`.
 * ASP.NET Core 2
-    1. Add `app.UseMetricServer()` to the top of the `Configure` method.
+    * Add `app.UseMetricServer()` to the top of the `Configure` method.
 
 ```csharp
 public void Configure(IApplicationBuilder app, ...)
@@ -319,10 +319,10 @@ public void Configure(IApplicationBuilder app, ...)
 
     // ASP.NET Core 3 or newer
     app.UseEndpoints(endpoints =>
-	{
-		// ...
+    {
+        // ...
 
-		endpoints.MapMetrics();
+        endpoints.MapMetrics();
     };
 }
 ```
@@ -346,9 +346,9 @@ The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` N
 You can expose HTTP metrics by modifying your `Startup.Configure()` method:
 
 * ASP.NET Core 3 or newer
-    1. After `app.UseRouting()` add `app.UseHttpMetrics()`.
+    * After `app.UseRouting()` add `app.UseHttpMetrics()`.
 * ASP.NET Core 2
-    1. After `app.UseMetricServer()` add `app.UseHttpMetrics()`.
+    * After `app.UseMetricServer()` add `app.UseHttpMetrics()`.
 
 Example `Startup.cs` (ASP.NET Core 3):
 
