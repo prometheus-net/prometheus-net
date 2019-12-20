@@ -29,7 +29,6 @@ namespace Prometheus
                 .UseMiddleware<MetricServerMiddleware>(
                     new MetricServerMiddleware.Settings
                     {
-                        OnlyHandleRoot = false,
                         Registry = registry
                     }
                 )

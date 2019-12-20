@@ -13,33 +13,18 @@ namespace Prometheus
     {
         public MetricServerMiddleware(RequestDelegate next, Settings settings)
         {
-            _next = next;
-
-            _onlyHandleRoot = settings.OnlyHandleRoot;
             _registry = settings.Registry ?? Metrics.DefaultRegistry;
         }
 
         public sealed class Settings
         {
-            public bool OnlyHandleRoot { get; set; } = true;
             public CollectorRegistry? Registry { get; set; }
         }
-
-        private readonly RequestDelegate _next;
-
-        private readonly bool _onlyHandleRoot;
 
         private readonly CollectorRegistry _registry;
 
         public async Task Invoke(HttpContext context)
         {
-            // We just handle the root URL (/metrics or whatnot).
-            if (_onlyHandleRoot && !string.IsNullOrWhiteSpace(context.Request.Path.Value.Trim('/')))
-            {
-                await _next(context);
-                return;
-            }
-
             var response = context.Response;
 
             try
