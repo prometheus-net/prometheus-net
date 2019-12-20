@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Prometheus
@@ -14,8 +13,6 @@ namespace Prometheus
     {
         public MetricServerMiddleware(RequestDelegate next, Settings settings)
         {
-            _next = next;
-
             _registry = settings.Registry ?? Metrics.DefaultRegistry;
         }
 
@@ -24,20 +21,10 @@ namespace Prometheus
             public CollectorRegistry? Registry { get; set; }
         }
 
-        private readonly RequestDelegate _next;
-
         private readonly CollectorRegistry _registry;
 
         public async Task Invoke(HttpContext context)
         {
-            // We just handle the root URL (/metrics or whatnot).
-            if (!string.IsNullOrWhiteSpace(context.Request.Path.Value.Trim('/')))
-            {
-                await _next(context);
-                return;
-            }
-
-            var request = context.Request;
             var response = context.Response;
 
             try
