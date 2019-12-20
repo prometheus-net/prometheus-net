@@ -304,14 +304,26 @@ For projects built with ASP.NET Core, a middleware plugin is provided.
 
 If you use the default Visual Studio project template, modify `Startup.cs` as follows:
 
-1. Add `app.UseMetricServer()` to the top of the `Configure` method.
+* ASP.NET Core 3 or newer)
+    1. Add `endpoints.MapMetrics()` to the endpoint configuration under `app.UseEndpoints`.
+* ASP.NET Core 2
+    1. Add `app.UseMetricServer()` to the top of the `Configure` method.
 
 ```csharp
 public void Configure(IApplicationBuilder app, ...)
 {
+    // ASP.NET Core 2
     app.UseMetricServer();
 
     // ...
+
+    // ASP.NET Core 3 or newer
+    app.UseEndpoints(endpoints =>
+	{
+		// ...
+
+		endpoints.MapMetrics();
+    };
 }
 ```
 
@@ -331,11 +343,12 @@ These metrics include labels for status code, HTTP method, Controller and Action
 
 The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
-You can expose HTTP metrics by performing the following steps:
+You can expose HTTP metrics by modifying your `Startup.Configure()` method:
 
-1. Modify your `Startup.Configure()` method:
-    1. (ASP.NET Core 3 or newer) after `app.UseRouting()` add `app.UseHttpMetrics()`.
-    1. (ASP.NET Core 2) after `app.UseMetricServer()` add `app.UseHttpMetrics()`.
+* ASP.NET Core 3 or newer
+    1. After `app.UseRouting()` add `app.UseHttpMetrics()`.
+* ASP.NET Core 2
+    1. After `app.UseMetricServer()` add `app.UseHttpMetrics()`.
 
 Example `Startup.cs` (ASP.NET Core 3):
 
@@ -351,7 +364,7 @@ public void Configure(IApplicationBuilder app, ...)
 }
 ```
 
-Any middlware that changes HTTP response codes should be inserted into the pipeline **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
+NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
 
 # ASP.NET Core with basic authentication
 
