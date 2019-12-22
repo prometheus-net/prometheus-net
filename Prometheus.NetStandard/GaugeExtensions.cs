@@ -46,6 +46,16 @@ namespace Prometheus
             gauge.IncTo(ToUnixTimeSecondsAsDouble(DateTimeOffset.UtcNow));
         }
 
+        /// <summary>
+        /// Increments the value of the gauge to a specific moment as the UTC Unix timestamp in seconds.
+        /// Value does not include any elapsed leap seconds because Unix timestamps do not include leap seconds.
+        /// Operation is ignored if the current value is already greater.
+        /// </summary>
+        public static void IncToTimeUtc(this IGauge gauge, DateTimeOffset timestamp)
+        {
+            gauge.IncTo(ToUnixTimeSecondsAsDouble(timestamp));
+        }
+
         private static double ToUnixTimeSecondsAsDouble(DateTimeOffset timestamp)
         {
             // This gets us sub-millisecond precision, which is better than ToUnixTimeMilliseconds().
