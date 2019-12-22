@@ -9,6 +9,7 @@
 - ASP.NET Core HTTP metrics now capture route data before it is overwritten by an exception handler. #177
 - ASP.NET Core HTTP "in progress" metrics now include controller/action labels (ASP.NET Core 3 only).
 - Fixed concurrently defect in HTTP metrics that may have caused label values from wrong request to apply. #182
+- The HttpListener based MetricServer can now handle more than one concurrent request.
 * 3.3.0
 - Add ability to filter requests by port number when exporting metrics. #160
 * 3.2.1
