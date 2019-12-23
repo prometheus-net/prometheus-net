@@ -21,6 +21,10 @@ namespace Prometheus
         /// <summary>
         /// Registers an action to be called before metrics are collected.
         /// This enables you to do last-minute updates to metric values very near the time of collection.
+        /// Callbacks will delay the metric collection, so do not make them too long or it may time out.
+        /// 
+        /// The callback will be executed synchronously and should not take more than a few milliseconds.
+        /// To execute longer-duration callbacks, register an asynchronous callback (Func&lt;Task&gt;).
         /// 
         /// If the callback throws <see cref="ScrapeFailedException"/> then the entire metric collection will fail.
         /// This will result in an appropriate HTTP error code or a skipped push, depending on type of exporter.
@@ -33,6 +37,26 @@ namespace Prometheus
                 throw new ArgumentNullException(nameof(callback));
 
             _beforeCollectCallbacks.Add(callback);
+        }
+
+        /// <summary>
+        /// Registers an action to be called before metrics are collected.
+        /// This enables you to do last-minute updates to metric values very near the time of collection.
+        /// Callbacks will delay the metric collection, so do not make them too long or it may time out.
+        /// 
+        /// Asynchronous callbacks will be executed concurrently and may last longer than a few milliseconds.
+        /// 
+        /// If the callback throws <see cref="ScrapeFailedException"/> then the entire metric collection will fail.
+        /// This will result in an appropriate HTTP error code or a skipped push, depending on type of exporter.
+        /// 
+        /// If multiple concurrent collections occur, the callback may be called multiple times concurrently.
+        /// </summary>
+        public void AddBeforeCollectCallback(Func<Task> callback)
+        {
+            if (callback == null)
+                throw new ArgumentNullException(nameof(callback));
+
+            _beforeCollectAsyncCallbacks.Add(callback);
         }
 
         /// <summary>
@@ -49,6 +73,7 @@ namespace Prometheus
         }
 
         private readonly ConcurrentBag<Action> _beforeCollectCallbacks = new ConcurrentBag<Action>();
+        private readonly ConcurrentBag<Func<Task>> _beforeCollectAsyncCallbacks = new ConcurrentBag<Func<Task>>();
 
         // We pass this thing to GetOrAdd to avoid allocating a collector or a closure.
         // This reduces memory usage in situations where the collector is already registered.
@@ -132,6 +157,8 @@ namespace Prometheus
 
             foreach (var callback in _beforeCollectCallbacks)
                 callback();
+
+            await Task.WhenAll(_beforeCollectAsyncCallbacks.Select(callback => callback()));
 
             foreach (var collector in _collectors.Values)
                 await collector.CollectAndSerializeAsync(serializer, cancel);

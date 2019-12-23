@@ -69,7 +69,18 @@ namespace tester
             // Example implementation of updating values before every collection.
             var collectionCount = Metrics.CreateCounter("beforecollect_example", "This counter is incremented before every data collection.");
 
+            // Synchronous callbacks should be instantaneous, to avoid causing delays in the pipeline.
             Metrics.DefaultRegistry.AddBeforeCollectCallback(() => collectionCount.Inc());
+
+            var collectionCountAsync = Metrics.CreateCounter("beforecollect_async_example", "This counter is incremented before every data collection, but asynchronously.");
+
+            // Callbacks can also be asynchronous. It is fine for these to take a bit more time.
+            // For example, you can make an asynchronous HTTP request to a remote system in such a callback.
+            Metrics.DefaultRegistry.AddBeforeCollectCallback(async delegate
+            {
+                await Task.Yield();
+                collectionCountAsync.Inc();
+            });
 
             // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
             // With MetricPusherTester you might get a 1st push already before it fails but after that it should stop pushing.
