@@ -76,9 +76,10 @@ namespace tester
 
             // Callbacks can also be asynchronous. It is fine for these to take a bit more time.
             // For example, you can make an asynchronous HTTP request to a remote system in such a callback.
-            Metrics.DefaultRegistry.AddBeforeCollectCallback(async delegate
+            Metrics.DefaultRegistry.AddBeforeCollectCallback(async (cancel) =>
             {
-                await Task.Yield();
+                // Imagine that this delay is some HTTP call to an external system to ask for its state.
+                await Task.Delay(TimeSpan.FromSeconds(0.1), cancel);
                 collectionCountAsync.Inc();
             });
 

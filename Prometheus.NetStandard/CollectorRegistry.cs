@@ -51,7 +51,7 @@ namespace Prometheus
         /// 
         /// If multiple concurrent collections occur, the callback may be called multiple times concurrently.
         /// </summary>
-        public void AddBeforeCollectCallback(Func<Task> callback)
+        public void AddBeforeCollectCallback(Func<CancellationToken, Task> callback)
         {
             if (callback == null)
                 throw new ArgumentNullException(nameof(callback));
@@ -73,7 +73,7 @@ namespace Prometheus
         }
 
         private readonly ConcurrentBag<Action> _beforeCollectCallbacks = new ConcurrentBag<Action>();
-        private readonly ConcurrentBag<Func<Task>> _beforeCollectAsyncCallbacks = new ConcurrentBag<Func<Task>>();
+        private readonly ConcurrentBag<Func<CancellationToken, Task>> _beforeCollectAsyncCallbacks = new ConcurrentBag<Func<CancellationToken, Task>>();
 
         // We pass this thing to GetOrAdd to avoid allocating a collector or a closure.
         // This reduces memory usage in situations where the collector is already registered.
@@ -158,7 +158,7 @@ namespace Prometheus
             foreach (var callback in _beforeCollectCallbacks)
                 callback();
 
-            await Task.WhenAll(_beforeCollectAsyncCallbacks.Select(callback => callback()));
+            await Task.WhenAll(_beforeCollectAsyncCallbacks.Select(callback => callback(cancel)));
 
             foreach (var collector in _collectors.Values)
                 await collector.CollectAndSerializeAsync(serializer, cancel);
