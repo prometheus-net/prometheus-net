@@ -308,6 +308,27 @@ namespace Prometheus.Tests
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
             await serializer.ReceivedWithAnyArgs(9).WriteMetricAsync(default, default, default);
         }
+
+        [TestMethod]
+        public async Task CreatingLabelledMetric_AndUnpublishingAfterObservingData_DoesNotExport()
+        {
+            var registry = Metrics.NewCustomRegistry();
+            var factory = Metrics.WithCustomRegistry(registry);
+
+            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
+            {
+                LabelNames = new[] { "foo" }
+            }).WithLabels("bar");
+
+            counter.Inc();
+            counter.Unpublish();
+
+            var serializer = Substitute.For<IMetricsSerializer>();
+            await registry.CollectAndSerializeAsync(serializer, default);
+
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(0).WriteMetricAsync(default, default, default);
+        }
         #endregion
 
         #region Relation between labelled and unlabelled

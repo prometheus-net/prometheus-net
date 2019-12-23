@@ -29,6 +29,17 @@ namespace Prometheus
             Volatile.Write(ref _publish, true);
         }
 
+
+        /// <summary>
+        /// Marks the metric as one to not be published.
+        /// 
+        /// The metric will be published when Publish() is called or the value is updated.
+        /// </summary>
+        public void Unpublish()
+        {
+            Volatile.Write(ref _publish, false);
+        }
+
         /// <summary>
         /// Removes this labeled instance from metrics.
         /// It will no longer be published and any existing measurements/buckets will be discarded.
