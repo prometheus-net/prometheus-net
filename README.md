@@ -457,7 +457,18 @@ In some scenarios you may want to only collect data when it is requested by Prom
 Every callback will be executed before each collection, which will not finish until every callback has finished executing. Prometheus will expect each scrape to complete within a certain amount of seconds. To avoid timeouts, ensure that any registered callbacks execute quickly.
 
 * A synchronous callback (of type `Action`) should not take more than a few milliseconds. Do not read data from remote systems in these callbacks.
-* An asynchronous callback (of type `Func<Task>`) is more suitable for long-running data collection work (lasting a few seconds). You can use asynchronous callbacks for reading data from remote systems.
+* An asynchronous callback (of type `Func<CancellationToken, Task>`) is more suitable for long-running data collection work (lasting a few seconds). You can use asynchronous callbacks for reading data from remote systems.
+
+```csharp
+Metrics.DefaultRegistry.AddBeforeCollectCallback(async (cancel) =>
+{
+    // Probe a remote system.
+    var response = await httpClient.GetAsync("https://google.com", cancel);
+
+    // Increase a counter by however many bytes we loaded.
+    googlePageBytes.Inc(response.Content.Headers.ContentLength ?? 0);
+});
+```
 
 # Suppressing default metrics
 

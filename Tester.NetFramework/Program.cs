@@ -1,6 +1,7 @@
 ﻿using Prometheus;
 using System;
 using System.Diagnostics;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -72,15 +73,19 @@ namespace tester
             // Synchronous callbacks should be instantaneous, to avoid causing delays in the pipeline.
             Metrics.DefaultRegistry.AddBeforeCollectCallback(() => collectionCount.Inc());
 
-            var collectionCountAsync = Metrics.CreateCounter("beforecollect_async_example", "This counter is incremented before every data collection, but asynchronously.");
+            var googlePageBytes = Metrics.CreateCounter("beforecollect_async_example", "This counter is incremented before every data collection, but asynchronously.");
 
             // Callbacks can also be asynchronous. It is fine for these to take a bit more time.
             // For example, you can make an asynchronous HTTP request to a remote system in such a callback.
+            var httpClient = new HttpClient();
+
             Metrics.DefaultRegistry.AddBeforeCollectCallback(async (cancel) =>
             {
-                // Imagine that this delay is some HTTP call to an external system to ask for its state.
-                await Task.Delay(TimeSpan.FromSeconds(0.1), cancel);
-                collectionCountAsync.Inc();
+                // Probe a remote system.
+                var response = await httpClient.GetAsync("https://google.com", cancel);
+
+                // Increase a counter by however many bytes we loaded.
+                googlePageBytes.Inc(response.Content.Headers.ContentLength ?? 0);
             });
 
             // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
