@@ -32,6 +32,9 @@ namespace Prometheus
 
         internal abstract Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel);
 
+        // Used by ChildBase.Remove()
+        internal abstract void RemoveLabelled(Labels labels);
+
         private static readonly string[] EmptyLabelNames = new string[0];
 
         private const string ValidMetricNameExpression = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
@@ -103,6 +106,11 @@ namespace Prometheus
         {
             var key = new Labels(LabelNames, labelValues);
             _labelledMetrics.TryRemove(key, out _);
+        }
+
+        internal override void RemoveLabelled(Labels labels)
+        {
+            _labelledMetrics.TryRemove(labels, out _);
         }
 
         /// <summary>

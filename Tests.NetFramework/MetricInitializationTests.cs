@@ -392,5 +392,27 @@ namespace Prometheus.Tests
             await serializer.ReceivedWithAnyArgs(9 * 2).WriteMetricAsync(default, default, default);
         }
         #endregion
+
+        [TestMethod]
+        public void RemovingLabeledInstance_ThenRecreatingIt_CreatesIndependentInstance()
+        {
+            var registry = Metrics.NewCustomRegistry();
+            var factory = Metrics.WithCustomRegistry(registry);
+
+            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
+            {
+                LabelNames = new[] { "foo" }
+            });
+
+            var bar1 = counter.WithLabels("bar");
+            bar1.Inc();
+
+            Assert.AreEqual(1, bar1.Value);
+            bar1.Remove();
+
+            // The new instance after the old one was removed must be independent.
+            var bar2 = counter.WithLabels("bar");
+            Assert.AreEqual(0, bar2.Value);
+        }
     }
 }

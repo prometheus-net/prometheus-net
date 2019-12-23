@@ -29,6 +29,15 @@ namespace Prometheus
             Volatile.Write(ref _publish, true);
         }
 
+        /// <summary>
+        /// Removes this labeled instance from metrics.
+        /// It will no longer be published and any existing measurements/buckets will be discarded.
+        /// </summary>
+        public void Remove()
+        {
+            _parent.RemoveLabelled(_labels);
+        }
+
         private readonly Collector _parent;
         private readonly Labels _labels;
 

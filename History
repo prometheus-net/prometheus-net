@@ -11,6 +11,7 @@
 - Fixed concurrently defect in HTTP metrics that may have caused label values from wrong request to apply. #182
 - The HttpListener based MetricServer can now handle more than one concurrent request.
 - Added asynchronous "before collect" callbacks, giving user code more flexibility in metric updates.
+- Added .Remove() to labeled collector instances for more convenient removal API (previously had to call method on parent instance).
 * 3.3.0
 - Add ability to filter requests by port number when exporting metrics. #160
 * 3.2.1
