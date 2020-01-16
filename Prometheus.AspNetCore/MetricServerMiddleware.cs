@@ -38,7 +38,7 @@ namespace Prometheus
                     return response.Body;
                 });
 
-                await _registry.CollectAndSerializeAsync(serializer, default);
+                await _registry.CollectAndSerializeAsync(serializer, context.RequestAborted);
             }
             catch (ScrapeFailedException ex)
             {
