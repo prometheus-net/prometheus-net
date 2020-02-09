@@ -15,10 +15,12 @@
     <releaseNotes></releaseNotes>
 
     <dependencies>
-        <dependency id="Microsoft.AspNet.WebApi.Client" version="5.2.7" targetFramework="net461" />
-        <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.7" targetFramework="net461" />
+        <group targetFramework=".NETFramework4.6.1">
+            <dependency id="Microsoft.AspNet.WebApi.Client" version="5.2.7" targetFramework="net461" />
+            <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.7" targetFramework="net461" />
 
-        <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
+            <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
+        </group>
     </dependencies>
   </metadata>
   <files>
