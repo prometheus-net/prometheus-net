@@ -1,3 +1,4 @@
+- Exposed metric.Unpublish() method since there was already a matching Publish() there.
 - When the scrape is aborted, stop collecting/serializing metrics. #189
 * 3.4.0
 - Separate packaging for ASP.NET Core 3 to reduce package reference management complexity for users. #164
