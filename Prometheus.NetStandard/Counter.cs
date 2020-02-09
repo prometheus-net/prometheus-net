@@ -56,6 +56,7 @@ namespace Prometheus
         public double Value => Unlabelled.Value;
 
         public void Publish() => Unlabelled.Publish();
+        public void Unpublish() => Unlabelled.Unpublish();
 
         private protected override MetricType Type => MetricType.Counter;
     }

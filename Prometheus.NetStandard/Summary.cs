@@ -307,5 +307,6 @@ namespace Prometheus
         }
 
         public void Publish() => Unlabelled.Publish();
+        public void Unpublish() => Unlabelled.Unpublish();
     }
 }

@@ -130,6 +130,7 @@ namespace Prometheus
         public void Observe(double val) => Unlabelled.Observe(val, 1);
         public void Observe(double val, long count) => Unlabelled.Observe(val, count);
         public void Publish() => Unlabelled.Publish();
+        public void Unpublish() => Unlabelled.Unpublish();
 
         // From https://github.com/prometheus/client_golang/blob/master/prometheus/histogram.go
         /// <summary>  
