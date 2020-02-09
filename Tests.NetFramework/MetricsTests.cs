@@ -131,6 +131,33 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
+        public async Task DisposeChild_RemovesMetric()
+        {
+            var metric = _metrics.CreateCounter("my_family", "", new CounterConfiguration
+            {
+                SuppressInitialValue = true,
+                LabelNames = new[] { "labelname" }
+            });
+
+            var instance = metric.WithLabels("labelvalue");
+            instance.Inc();
+
+            var serializer = Substitute.For<IMetricsSerializer>();
+            await _registry.CollectAndSerializeAsync(serializer, default);
+
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteMetricAsync(default, default, default);
+            serializer.ClearReceivedCalls();
+
+            instance.Dispose();
+
+            await _registry.CollectAndSerializeAsync(serializer, default);
+
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+        }
+
+        [TestMethod]
         public void histogram_no_buckets()
         {
             try

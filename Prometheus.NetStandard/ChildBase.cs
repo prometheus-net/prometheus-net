@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -6,7 +7,7 @@ namespace Prometheus
     /// <summary>
     /// Base class for labeled instances of metrics (with all label names and label values defined).
     /// </summary>
-    public abstract class ChildBase : ICollectorChild
+    public abstract class ChildBase : ICollectorChild, IDisposable
     {
         internal ChildBase(Collector parent, Labels labels, bool publish)
         {
@@ -48,6 +49,8 @@ namespace Prometheus
         {
             _parent.RemoveLabelled(_labels);
         }
+
+        public void Dispose() => Remove();
 
         private readonly Collector _parent;
         private readonly Labels _labels;
