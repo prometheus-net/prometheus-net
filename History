@@ -1,3 +1,4 @@
+- When the scrape is aborted, stop collecting/serializing metrics. #189
 * 3.4.0
 - Separate packaging for ASP.NET Core 3 to reduce package reference management complexity for users. #164
 - Lazy-initialize the default sample metrics to reduce initialization cost for those who do not need them. #170
