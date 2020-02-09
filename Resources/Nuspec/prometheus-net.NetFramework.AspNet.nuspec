@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata minClientVersion="2.8">
+    <id>prometheus-net.NetFramework.AspNet</id>
+    <authors>sandersaares</authors>
+    <description>ASP.NET Web API exporter for Prometheus</description>
+    <projectUrl>https://github.com/prometheus-net/prometheus-net</projectUrl>
+    <license type="expression">MIT</license>
+    <tags>metrics prometheus aspnet webapi</tags>
+    <copyright>Copyright © 2020 sandersaares</copyright>
+    <icon>images/prometheus-net-logo.png</icon>
+
+    <!-- Automatically set by release automation. -->
+    <version>__NUGETPACKAGEVERSION__</version>
+    <releaseNotes></releaseNotes>
+
+    <dependencies>
+        <dependency id="Microsoft.AspNet.WebApi.Client" version="5.2.7" targetFramework="net461" />
+        <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.7" targetFramework="net461" />
+
+        <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
+    </dependencies>
+  </metadata>
+  <files>
+    <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
+    <file src="..\Prometheus.NetFramework.AspNet\**" target="lib\net461" />
+
+    <file src="prometheus-net-logo.png" target="images\" />
+  </files>
+</package>

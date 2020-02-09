@@ -40,6 +40,7 @@ Related projects:
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
 * [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
+* [ASP.NET Web API exporter](#aspnet-web-api-exporter)
 * [Kestrel stand-alone server](#kestrel-stand-alone-server)
 * [Publishing to Pushgateway](#publishing-to-pushgateway)
 * [Publishing to Pushgateway with basic authentication](#publishing-to-pushgateway-with-basic-authentication)
@@ -70,6 +71,11 @@ Nuget package for general use and metrics export via HttpListener or to Pushgate
 Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server: [prometheus-net.AspNetCore](https://www.nuget.org/packages/prometheus-net.AspNetCore)
 
 >Install-Package prometheus-net.AspNetCore
+
+Nuget package for ASP.NET Web API middleware on .NET Framework: [prometheus-net.NetFramework.AspNet](https://www.nuget.org/packages/prometheus-net.NetFramework.AspNet)
+
+>Install-Package prometheus-net.NetFramework.AspNet
+
 
 # Quick start
 
@@ -385,6 +391,21 @@ app.Map("/metrics", metricsApp =>
     metricsApp.UseMetricServer("");
 });
 ```
+
+# ASP.NET Web API exporter
+
+The easiest way to export metrics from an ASP.NET Web API app on the full .NET Framework is to use `AspNetMetricServer` in your `Global.asax.cs` file:
+
+```csharp
+protected void Application_Start(object sender, EventArgs e)
+{
+    AspNetMetricServer.RegisterRoutes(GlobalConfiguration.Configuration);
+}
+```
+
+The above snippet exposes metrics on the `/metrics` URL.
+
+The `AspNetMetricServer` class is provided by the `prometheus-net.NetFramework.AspNet` NuGet package.
 
 # Kestrel stand-alone server
 
