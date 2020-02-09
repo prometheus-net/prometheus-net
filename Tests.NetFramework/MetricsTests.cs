@@ -78,6 +78,59 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
+        public async Task Export_FamilyWithOnlyNonpublishedUnlabeledMetrics_ExportsFamilyDeclaration()
+        {
+            // See https://github.com/prometheus-net/prometheus-net/issues/196
+            var metric = _metrics.CreateCounter("my_family", "", new CounterConfiguration
+            {
+                SuppressInitialValue = true
+            });
+
+            var serializer = Substitute.For<IMetricsSerializer>();
+            await _registry.CollectAndSerializeAsync(serializer, default);
+
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+            serializer.ClearReceivedCalls();
+
+            metric.Inc();
+            metric.Unpublish();
+
+            await _registry.CollectAndSerializeAsync(serializer, default);
+
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+        }
+
+        [TestMethod]
+        public async Task Export_FamilyWithOnlyNonpublishedLabeledMetrics_ExportsFamilyDeclaration()
+        {
+            // See https://github.com/prometheus-net/prometheus-net/issues/196
+            var metric = _metrics.CreateCounter("my_family", "", new CounterConfiguration
+            {
+                SuppressInitialValue = true,
+                LabelNames = new[] { "labelname" }
+            });
+
+            var instance = metric.WithLabels("labelvalue");
+
+            var serializer = Substitute.For<IMetricsSerializer>();
+            await _registry.CollectAndSerializeAsync(serializer, default);
+
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+            serializer.ClearReceivedCalls();
+
+            instance.Inc();
+            instance.Unpublish();
+
+            await _registry.CollectAndSerializeAsync(serializer, default);
+
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+        }
+
+        [TestMethod]
         public void histogram_no_buckets()
         {
             try
