@@ -10,7 +10,7 @@ namespace Prometheus
     /// Only the values are considered for equality purposes - the caller must ensure that
     /// LabelValues objects with different sets of names are never compared to each other.
     /// </remarks>
-    internal sealed class Labels : IEquatable<Labels>
+    internal struct Labels : IEquatable<Labels>
     {
         public static readonly Labels Empty = new Labels(new string[0], new string[0]);
 
