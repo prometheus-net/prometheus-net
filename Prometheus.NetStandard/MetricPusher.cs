@@ -18,7 +18,7 @@ namespace Prometheus
         private readonly TimeSpan _pushInterval;
         private readonly Uri _targetUrl;
         private readonly Func<HttpClient> _httpClientProvider;
-        private readonly RecyclableMemoryStreamManager? _memoryStreamManager;
+        private readonly RecyclableMemoryStreamManager _memoryStreamManager;
 
         public MetricPusher(string endpoint, string job, string? instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>>? additionalLabels = null, CollectorRegistry? registry = null,
             RecyclableMemoryStreamManager? memoryStreamManager = null) 
