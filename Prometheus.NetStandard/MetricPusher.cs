@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.IO;
 
 namespace Prometheus
 {
@@ -17,15 +18,19 @@ namespace Prometheus
         private readonly TimeSpan _pushInterval;
         private readonly Uri _targetUrl;
         private readonly Func<HttpClient> _httpClientProvider;
+        private readonly RecyclableMemoryStreamManager? _memoryStreamManager;
 
-        public MetricPusher(string endpoint, string job, string? instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>>? additionalLabels = null, CollectorRegistry? registry = null) : this(new MetricPusherOptions
+        public MetricPusher(string endpoint, string job, string? instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>>? additionalLabels = null, CollectorRegistry? registry = null,
+            RecyclableMemoryStreamManager? memoryStreamManager = null) 
+            : this(new MetricPusherOptions
         {
             Endpoint = endpoint,
             Job = job,
             Instance = instance,
             IntervalMilliseconds = intervalMilliseconds,
             AdditionalLabels = additionalLabels,
-            Registry = registry
+            Registry = registry,
+            MemoryStreamManager = memoryStreamManager
         })
         {
         }
@@ -64,6 +69,7 @@ namespace Prometheus
             }
 
             _pushInterval = TimeSpan.FromMilliseconds(options.IntervalMilliseconds);
+            _memoryStreamManager = options.MemoryStreamManager ?? new RecyclableMemoryStreamManager();
         }
 
         private static readonly HttpClient _singletonHttpClient = new HttpClient();
@@ -81,7 +87,7 @@ namespace Prometheus
 
                     try
                     {
-                        using (var stream = new MemoryStream())
+                        using (var stream = _memoryStreamManager.GetStream())
                         {
                             var serializer = new TextSerializer(stream);
 

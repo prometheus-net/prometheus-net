@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using Microsoft.IO;
 
 namespace Prometheus
 {
@@ -14,6 +15,7 @@ namespace Prometheus
         public long IntervalMilliseconds { get; set; } = 1000;
         public IEnumerable<Tuple<string, string>>? AdditionalLabels { get; set; }
         public CollectorRegistry? Registry { get; set; }
+        public RecyclableMemoryStreamManager? MemoryStreamManager { get; set; }
 
         /// <summary>
         /// If null, a singleton HttpClient will be used.

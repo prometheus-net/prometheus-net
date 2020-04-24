@@ -11,6 +11,7 @@ namespace Benchmark.NetCore
             //BenchmarkRunner.Run<LabelBenchmarks>();
             //BenchmarkRunner.Run<HttpExporterBenchmarks>();
             BenchmarkRunner.Run<SummaryBenchmarks>();
+            // BenchmarkRunner.Run<MetricPusherBenchmarks>();
         }
     }
 }
