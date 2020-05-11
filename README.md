@@ -376,6 +376,29 @@ public void Configure(IApplicationBuilder app, ...)
 
 NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
 
+# ASP.NET gRPC HTTP request metrics
+
+The library also exposes some metrics from ASP.NET Core gRPC services. These metrics include labels for service and method name.
+
+The ASP.NET Core functionality is delivered in the `prometheus-net.Grpc` NuGet package.
+
+You can expose HTTP metrics by modifying your `Startup.Configure()` method:
+* After `app.UseRouting()` add `app.UseGrpcMetrics()`.
+
+Example `Startup.cs` (ASP.NET Core 3):
+
+```csharp
+public void Configure(IApplicationBuilder app, ...)
+{
+    // ...
+
+    app.UseRouting();
+    app.UseGrpcMetrics();
+
+    // ...
+}
+```
+
 # ASP.NET Core with basic authentication
 
 You may wish to restrict access to the metrics export URL. This can be accomplished using any ASP.NET Core authentication mechanism, as prometheus-net integrates directly into the composable ASP.NET Core request processing pipeline.
