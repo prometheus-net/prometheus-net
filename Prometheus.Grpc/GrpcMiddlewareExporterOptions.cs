@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Prometheus.Grpc
+﻿namespace Prometheus.Grpc
 {
     public sealed class GrpcMiddlewareExporterOptions
     {
