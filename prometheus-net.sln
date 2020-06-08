@@ -6,7 +6,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.NetStandard", "P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Resources", "Resources\Resources.csproj", "{608F1849-C417-4077-B60F-1BBF26762670}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests.NetCore", "Tests.NetCore\Tests.NetCore.csproj", "{09EED3ED-25BF-4942-8428-383B51DA0D86}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests.NetCore2", "Tests.NetCore2\Tests.NetCore2.csproj", "{09EED3ED-25BF-4942-8428-383B51DA0D86}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.NetFramework", "Tests.NetFramework\Tests.NetFramework.csproj", "{A45A8238-966E-482D-BF1A-95A25BB3169B}"
 EndProject
@@ -30,6 +30,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.NetFramework.AspNet", "Prometheus.NetFramework.AspNet\Prometheus.NetFramework.AspNet.csproj", "{25C05E15-A8F8-4F36-A35C-4004C0948305}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester.NetFramework.AspNet", "Tester.NetFramework.AspNet\Tester.NetFramework.AspNet.csproj", "{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.NetCore3", "Tests.NetCore3\Tests.NetCore3.csproj", "{D3687459-A188-4DF1-B6BD-3257760E96F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,6 +81,10 @@ Global
 		{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3687459-A188-4DF1-B6BD-3257760E96F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3687459-A188-4DF1-B6BD-3257760E96F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3687459-A188-4DF1-B6BD-3257760E96F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3687459-A188-4DF1-B6BD-3257760E96F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
