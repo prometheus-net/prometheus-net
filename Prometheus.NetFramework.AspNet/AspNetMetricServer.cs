@@ -51,7 +51,7 @@ namespace Prometheus
                     {
                         try
                         {
-                            await _registry.CollectAndExportAsTextAsync(stream, default);
+                            await _registry.CollectAndExportAsTextAsync(stream, cancellationToken);
                         }
                         finally
                         {
