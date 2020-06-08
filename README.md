@@ -532,7 +532,7 @@ The library provides some sample metrics about the current process out of the bo
 
 # DiagnosticSource integration
 
-[.NET Core provides the DiagnosticSource mechanism for reporting diagnostic events](https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md), used widely by .NET and ASP.NET Core classes. To expose basic data on these events via Prometheus, you can use the `DiagnosticSourceAdapter` class:
+[.NET Core provides the DiagnosticSource mechanism for reporting diagnostic events](https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md), used widely by .NET and ASP.NET Core classes. To expose basic data on these events via Prometheus, you can use the `DiagnosticSourceAdapter` class:
 
 ```csharp
 // An optional "options" parameter is available to customize adapter behavior.
