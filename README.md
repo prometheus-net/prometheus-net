@@ -394,12 +394,14 @@ app.Map("/metrics", metricsApp =>
 
 # ASP.NET Web API exporter
 
-The easiest way to export metrics from an ASP.NET Web API app on the full .NET Framework is to use `AspNetMetricServer` in your `Global.asax.cs` file:
+The easiest way to export metrics from an ASP.NET Web API app on the full .NET Framework is to use `AspNetMetricServer` in your `Global.asax.cs` file. Insert the following line to the top of the `Application_Start` method:
 
 ```csharp
 protected void Application_Start(object sender, EventArgs e)
 {
     AspNetMetricServer.RegisterRoutes(GlobalConfiguration.Configuration);
+    
+    // Other code follows.
 }
 ```
 
