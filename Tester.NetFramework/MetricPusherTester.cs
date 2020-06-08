@@ -58,6 +58,9 @@ namespace tester
                         {
                             PrintRequestDetails(request.Url);
 
+                            if (request.InputStream == null) // No data (e.g. GET)
+                                continue; // This is fine - for example the benchmark code does this to probe that tester is running.
+
                             string body;
                             using (var reader = new StreamReader(request.InputStream))
                             {

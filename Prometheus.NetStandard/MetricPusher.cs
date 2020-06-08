@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,6 +66,8 @@ namespace Prometheus
             _pushInterval = TimeSpan.FromMilliseconds(options.IntervalMilliseconds);
         }
 
+        private static readonly MediaTypeHeaderValue ContentTypeHeaderValue = new MediaTypeHeaderValue(PrometheusConstants.ExporterContentTypeMinimal);
+
         private static readonly HttpClient _singletonHttpClient = new HttpClient();
 
         protected override Task StartServer(CancellationToken cancel)
@@ -81,21 +83,24 @@ namespace Prometheus
 
                     try
                     {
-                        using (var stream = new MemoryStream())
+                        var httpClient = _httpClientProvider();
+
+                        // We use a copy-pasted implementation of PushStreamContent here to avoid taking a dependency on the old ASP.NET Web API where it lives.
+                        var response = await httpClient.PostAsync(_targetUrl, new PushStreamContentInternal(async (stream, content, context) =>
                         {
-                            var serializer = new TextSerializer(stream);
+                            try
+                            {
+                                // Do not pass CT because we only want to cancel after pushing, so a flush is always performed.
+                                await _registry.CollectAndExportAsTextAsync(stream, default);
+                            }
+                            finally
+                            {
+                                stream.Close();
+                            }
+                        }, ContentTypeHeaderValue));
 
-                            // Do not pass CT because we only want to cancel after pushing, so a flush is always performed.
-                            await _registry.CollectAndSerializeAsync(serializer, default);
-
-                            stream.Position = 0;
-                            // StreamContent takes ownership of the stream.
-                            var httpClient = _httpClientProvider();
-                            var response = await httpClient.PostAsync(_targetUrl, new StreamContent(stream));
-
-                            // If anything goes wrong, we want to get at least an entry in the trace log.
-                            response.EnsureSuccessStatusCode();
-                        }
+                        // If anything goes wrong, we want to get at least an entry in the trace log.
+                        response.EnsureSuccessStatusCode();
                     }
                     catch (ScrapeFailedException ex)
                     {
