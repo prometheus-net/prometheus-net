@@ -40,6 +40,7 @@ Related projects:
 * [When are metrics published?](#when-are-metrics-published)
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
+* [ASP.NET Core health check status metrics](#aspnet-core-health-check-status-metrics)
 * [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
 * [ASP.NET Web API exporter](#aspnet-web-api-exporter)
 * [Kestrel stand-alone server](#kestrel-stand-alone-server)
@@ -376,6 +377,27 @@ public void Configure(IApplicationBuilder app, ...)
 ```
 
 NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
+
+# ASP.NET Core health check status metrics
+
+You can expose the current status of [ASP.NET Core health checks](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) as Prometheus metrics by extending your `IHealthChecksBuilder` in the `Startup.ConfigureServices()` method:
+
+```csharp
+public void ConfigureServices(IServiceCollection services, ...)
+{
+    // ...
+
+    services.AddHealthChecks()
+             // ...
+             <Your Health Checks>
+             // ...
+             .ForwardToPrometheus();
+
+    // ...
+}
+```
+
+The ASP.NET Core health check integration is delivered in the `prometheus-net.AspNetCore.HealthChecks` NuGet package.
 
 # ASP.NET Core with basic authentication
 
