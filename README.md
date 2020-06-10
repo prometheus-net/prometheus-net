@@ -74,6 +74,10 @@ Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server
 
 >Install-Package prometheus-net.AspNetCore
 
+Nuget package for ASP.NET Core Health Check integration: [prometheus-net.AspNetCore.HealthChecks](https://www.nuget.org/packages/prometheus-net.AspNetCore.HealthChecks)
+
+>Install-Package prometheus-net.AspNetCore.HealthChecks
+
 Nuget package for ASP.NET Web API middleware on .NET Framework: [prometheus-net.NetFramework.AspNet](https://www.nuget.org/packages/prometheus-net.NetFramework.AspNet)
 
 >Install-Package prometheus-net.NetFramework.AspNet
