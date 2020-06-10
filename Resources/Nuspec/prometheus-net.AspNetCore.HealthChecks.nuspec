@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata minClientVersion="2.8">
+    <id>prometheus-net.AspNetCore.HealthChecks</id>
+    <authors>sandersaares</authors>
+    <description>ASP.NET Core Health Checks integration with Prometheus</description>
+    <projectUrl>https://github.com/prometheus-net/prometheus-net</projectUrl>
+    <license type="expression">MIT</license>
+    <tags>metrics prometheus aspnetcore healthchecks</tags>
+    <copyright>Copyright © sandersaares</copyright>
+    <icon>images/prometheus-net-logo.png</icon>
+
+    <!-- Automatically set by release automation. -->
+    <version>__NUGETPACKAGEVERSION__</version>
+    <releaseNotes></releaseNotes>
+
+    <dependencies>
+      <group targetFramework="netstandard2.0">
+        <dependency id="Microsoft.AspNetCore" version="2.1.7" />
+        <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
+      </group>
+
+      <group targetFramework="netcoreapp3.0">
+        <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
+    <file src="..\Prometheus.AspNetCore.HealthChecks\netstandard2.0\**" target="lib\netstandard2.0" />
+    <file src="..\Prometheus.AspNetCore.HealthChecks\netcoreapp3.0\**" target="lib\netcoreapp3.0" />
+
+    <file src="prometheus-net-logo.png" target="images\" />
+  </files>
+</package>

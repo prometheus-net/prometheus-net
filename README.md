@@ -40,7 +40,7 @@ Related projects:
 * [When are metrics published?](#when-are-metrics-published)
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
-* [ASP.NET Core HealthChecks](#aspnet-core-healthChecks)
+* [ASP.NET Core health check status metrics](#aspnet-core-health-check-status-metrics)
 * [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
 * [ASP.NET Web API exporter](#aspnet-web-api-exporter)
 * [Kestrel stand-alone server](#kestrel-stand-alone-server)
@@ -327,7 +327,7 @@ public void Configure(IApplicationBuilder app, ...)
     // ASP.NET Core 2
     app.UseMetricServer();
 
-    // ...#aspnet-core-http-request-metrics
+    // ...
 
     // ASP.NET Core 3 or newer
     app.UseEndpoints(endpoints =>
@@ -378,17 +378,9 @@ public void Configure(IApplicationBuilder app, ...)
 
 NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
 
-# ASP.NET Core HealthChecks
+# ASP.NET Core health check status metrics
 
-The library exposes any metrics from ASP.NET Core applications via Microsoft.Extensions.Diagnostics.HealthChecks:
-
-These metrics include labels for healthCheckEntry Key and healthCheckEntry Status which can be (0={Unhealthy}, 1={Degraded}, 2={Healthy})
-
-The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
-
-You can expose HTTP metrics by fluently extending your IHealthChecksBuilder `Startup.ConfigureServices()` method:
-
-Example `Startup.cs` :
+You can expose the current status of [ASP.NET Core health checks](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) as Prometheus metrics by extending your `IHealthChecksBuilder` in the `Startup.ConfigureServices()` method:
 
 ```csharp
 public void ConfigureServices(IServiceCollection services, ...)
@@ -404,6 +396,8 @@ public void ConfigureServices(IServiceCollection services, ...)
     // ...
 }
 ```
+
+The ASP.NET Core health check integration is delivered in the `prometheus-net.AspNetCore.HealthChecks` NuGet package.
 
 # ASP.NET gRPC HTTP request metrics
 
