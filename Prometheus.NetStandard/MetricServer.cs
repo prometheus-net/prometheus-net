@@ -35,6 +35,7 @@ namespace Prometheus
             {
                 try
                 {
+                    Thread.CurrentThread.Name = "Metric Server";     //Max length 16 chars (Linux limitation)
                     while (!cancel.IsCancellationRequested)
                     {
                         // There is no way to give a CancellationToken to GCA() so, we need to hack around it a bit.
@@ -50,6 +51,7 @@ namespace Prometheus
 
                               try
                               {
+                                  Thread.CurrentThread.Name = "Metric Process";
                                   try
                                   {
                                       // We first touch the response.OutputStream only in the callback because touching
@@ -82,7 +84,7 @@ namespace Prometheus
                                   if (!_httpListener.IsListening)
                                       return; // We were shut down.
 
-                                  Trace.WriteLine(string.Format("Error in MetricsServer: {0}", ex));
+                                  Trace.WriteLine(string.Format("Error in {0}: {1}", nameof(MetricServer), ex));
 
                                   try
                                   {

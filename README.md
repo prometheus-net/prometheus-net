@@ -18,6 +18,7 @@ Related projects:
 
 * [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) instruments .NET Core apps to export metrics on .NET Core performance.
 * [prometheus-net.AspNet](https://github.com/rocklan/prometheus-net.AspNet) instruments ASP.NET full framework apps to export metrics on performance. 
+* [prometheus-net.SystemMetrics](https://github.com/Daniel15/prometheus-net.SystemMetrics) exports various system metrics such as CPU usage, disk usage, etc.
 * [prometheus-net/docker_exporter](https://github.com/prometheus-net/docker_exporter) exports metrics about a Docker installations.
 * [prometheus-net/tzsp_packetstream_exporter](https://github.com/prometheus-net/tzsp_packetstream_exporter) exports metrics about the data flows found in a stream of IPv4 packets.
 * [prometheus-net Grafana dashboards](https://github.com/prometheus-net/grafana-dashboards) provides example dashboards for visualizing prometheus-net metrics in [Grafana](https://grafana.com/).
@@ -54,7 +55,7 @@ Related projects:
 
 This library allows you to instrument your code with custom metrics and provides some built-in metric collection integrations for ASP.NET Core.
 
-The documentation here is only a minimal quick start. For detailed guidance on using Prometheus in your solutions, refer to the [prometheus-users discussion group](https://groups.google.com/forum/#!forum/prometheus-users). You are also expected to be familiar with the [Prometheus user guide](https://prometheus.io/docs/introduction/overview/).
+The documentation here is only a minimal quick start. For detailed guidance on using Prometheus in your solutions, refer to the [prometheus-users discussion group](https://groups.google.com/forum/#!forum/prometheus-users). You are also expected to be familiar with the [Prometheus user guide](https://prometheus.io/docs/introduction/overview/). [/r/PrometheusMonitoring](https://www.reddit.com/r/PrometheusMonitoring/) on Reddit may also prove a helpful resource.
 
 Four types of metrics are available: Counter, Gauge, Summary and Histogram. See the documentation on [metric types](http://prometheus.io/docs/concepts/metric_types/) and [instrumentation best practices](http://prometheus.io/docs/practices/instrumentation/#counter-vs.-gauge-vs.-summary) to learn what each is good for.
 
@@ -417,12 +418,14 @@ app.Map("/metrics", metricsApp =>
 
 # ASP.NET Web API exporter
 
-The easiest way to export metrics from an ASP.NET Web API app on the full .NET Framework is to use `AspNetMetricServer` in your `Global.asax.cs` file:
+The easiest way to export metrics from an ASP.NET Web API app on the full .NET Framework is to use `AspNetMetricServer` in your `Global.asax.cs` file. Insert the following line to the top of the `Application_Start` method:
 
 ```csharp
 protected void Application_Start(object sender, EventArgs e)
 {
     AspNetMetricServer.RegisterRoutes(GlobalConfiguration.Configuration);
+    
+    // Other code follows.
 }
 ```
 
@@ -437,6 +440,12 @@ In some situation, you may wish to start a stand-alone metric server using Kestr
 ```csharp
 var metricServer = new KestrelMetricServer(port: 1234);
 metricServer.Start();
+```
+
+Even when you integrate prometheus-net Kestrel server into a stand-alone console app, the project file must be using the ASP.NET Core SDK. In other words, you must have the `.Web` at the end of the `Sdk` attribute value in the project file:
+
+```
+<Project Sdk="Microsoft.NET.Sdk.Web">
 ```
 
 The default configuration will publish metrics on the `/metrics` URL.
@@ -524,7 +533,7 @@ The library provides some sample metrics about the current process out of the bo
 
 # DiagnosticSource integration
 
-[.NET Core provides the DiagnosticSource mechanism for reporting diagnostic events](https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md), used widely by .NET and ASP.NET Core classes. To expose basic data on these events via Prometheus, you can use the `DiagnosticSourceAdapter` class:
+[.NET Core provides the DiagnosticSource mechanism for reporting diagnostic events](https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md), used widely by .NET and ASP.NET Core classes. To expose basic data on these events via Prometheus, you can use the `DiagnosticSourceAdapter` class:
 
 ```csharp
 // An optional "options" parameter is available to customize adapter behavior.

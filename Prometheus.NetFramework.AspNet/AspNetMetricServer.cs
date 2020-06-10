@@ -47,9 +47,16 @@ namespace Prometheus
 
                 var response = new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new PushStreamContent((stream, content, context) =>
+                    Content = new PushStreamContent(async (stream, content, context) =>
                     {
-                        return Metrics.DefaultRegistry.CollectAndExportAsTextAsync(stream, default);
+                        try
+                        {
+                            await _registry.CollectAndExportAsTextAsync(stream, cancellationToken);
+                        }
+                        finally
+                        {
+                            stream.Close();
+                        }
                     }, PrometheusConstants.ExporterContentTypeMinimal)
                 };
 
