@@ -8,7 +8,7 @@ namespace Prometheus
     public static class MetricServerMiddlewareExtensions
     {
 
-#if NETCOREAPP3_0
+#if NETCOREAPP3_1
 
         private const string DefaultDisplayName = "Prometheus metrics";
 

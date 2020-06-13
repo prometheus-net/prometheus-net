@@ -20,7 +20,7 @@
         <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
       </group>
 
-      <group targetFramework="netcoreapp3.0">
+      <group targetFramework="netcoreapp3.1">
         <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
       </group>
     </dependencies>
@@ -28,7 +28,7 @@
   <files>
     <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
     <file src="..\Prometheus.AspNetCore\netstandard2.0\**" target="lib\netstandard2.0" />
-    <file src="..\Prometheus.AspNetCore\netcoreapp3.0\**" target="lib\netcoreapp3.0" />
+    <file src="..\Prometheus.AspNetCore\netcoreapp3.1\**" target="lib\netcoreapp3.1" />
 
     <file src="prometheus-net-logo.png" target="images\" />
   </files>
