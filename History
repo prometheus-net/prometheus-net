@@ -4,6 +4,7 @@
 - Fixed ASP.NET Web API exporter exporting metrics from the wrong registry. #217
 - Reduced memory use in MetricPusher implementation. Inspired by #208
 - Added basic gRPC service metrics support. #212
+- Reduce pointless log spam on cancelled scrapes - will silently ignore cancelled scrapes in the ASP.NET Core exporter. #220
 * 3.5.0
 - Exposed metric.Unpublish() method since there was already a matching Publish() there.
 - When the scrape is aborted, stop collecting/serializing metrics. #189

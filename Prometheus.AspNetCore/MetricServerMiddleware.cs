@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -39,6 +40,10 @@ namespace Prometheus
                 });
 
                 await _registry.CollectAndSerializeAsync(serializer, context.RequestAborted);
+            }
+            catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+            {
+                // The scrape was cancalled by the client. This is fine. Just swallow the exception to not generate pointless spam.
             }
             catch (ScrapeFailedException ex)
             {
