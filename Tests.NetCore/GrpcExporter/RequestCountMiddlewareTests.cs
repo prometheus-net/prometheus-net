@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.Grpc;
+using Prometheus;
 using Tests.HttpExporter;
 using static Prometheus.Tests.GrpcExporter.TestHelpers;
 

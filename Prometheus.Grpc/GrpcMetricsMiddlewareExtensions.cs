@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Builder;
 
-namespace Prometheus.Grpc
+namespace Prometheus
 {
     public static class GrpcMetricsMiddlewareExtensions
     {

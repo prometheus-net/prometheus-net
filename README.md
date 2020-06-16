@@ -12,7 +12,11 @@ The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/
 * .NET Core 2.0
 * Mono 5.4
 
-The ASP.NET Core specific functionality requires ASP.NET Core 2.1 or newer. The .NET Core specific functionality requires .NET Core 2.1 or newer.
+Some specialized subsets of functionality require more modern runtimes:
+
+* The ASP.NET Core specific functionality requires ASP.NET Core 2.1 or newer.
+* The .NET Core specific functionality requires .NET Core 2.1 or newer.
+* The gRPC specific functionality requires .NET Core 3.1 or newer.
 
 Related projects:
 
@@ -40,6 +44,7 @@ Related projects:
 * [When are metrics published?](#when-are-metrics-published)
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
+* [ASP.NET Core gRPC request metrics](#aspnet-core-grpc-request-metrics)
 * [ASP.NET Core health check status metrics](#aspnet-core-health-check-status-metrics)
 * [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
 * [ASP.NET Web API exporter](#aspnet-web-api-exporter)
@@ -77,6 +82,10 @@ Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server
 Nuget package for ASP.NET Core Health Check integration: [prometheus-net.AspNetCore.HealthChecks](https://www.nuget.org/packages/prometheus-net.AspNetCore.HealthChecks)
 
 >Install-Package prometheus-net.AspNetCore.HealthChecks
+
+Nuget package for ASP.NET Core gRPC integration: [prometheus-net.AspNetCore.HealthChecks](https://www.nuget.org/packages/prometheus-net.AspNetCore.Grpc)
+
+>Install-Package prometheus-net.AspNetCore.Grpc
 
 Nuget package for ASP.NET Web API middleware on .NET Framework: [prometheus-net.NetFramework.AspNet](https://www.nuget.org/packages/prometheus-net.NetFramework.AspNet)
 
@@ -382,6 +391,29 @@ public void Configure(IApplicationBuilder app, ...)
 
 NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
 
+# ASP.NET Core gRPC request metrics
+
+The library allows you to expose some metrics from ASP.NET Core gRPC services. These metrics include labels for service and method name.
+
+You can expose gRPC metrics by modifying your `Startup.Configure()` method:
+* After `app.UseRouting()` add `app.UseGrpcMetrics()`.
+
+Example `Startup.cs`:
+
+```csharp
+public void Configure(IApplicationBuilder app, ...)
+{
+    // ...
+
+    app.UseRouting();
+    app.UseGrpcMetrics();
+
+    // ...
+}
+```
+
+The gRPC functionality is delivered in the `prometheus-net.AspNetCore.Grpc` NuGet package.
+
 # ASP.NET Core health check status metrics
 
 You can expose the current status of [ASP.NET Core health checks](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) as Prometheus metrics by extending your `IHealthChecksBuilder` in the `Startup.ConfigureServices()` method:
@@ -402,29 +434,6 @@ public void ConfigureServices(IServiceCollection services, ...)
 ```
 
 The ASP.NET Core health check integration is delivered in the `prometheus-net.AspNetCore.HealthChecks` NuGet package.
-
-# ASP.NET gRPC HTTP request metrics
-
-The library also exposes some metrics from ASP.NET Core gRPC services. These metrics include labels for service and method name.
-
-The ASP.NET Core functionality is delivered in the `prometheus-net.Grpc` NuGet package.
-
-You can expose HTTP metrics by modifying your `Startup.Configure()` method:
-* After `app.UseRouting()` add `app.UseGrpcMetrics()`.
-
-Example `Startup.cs` (ASP.NET Core 3):
-
-```csharp
-public void Configure(IApplicationBuilder app, ...)
-{
-    // ...
-
-    app.UseRouting();
-    app.UseGrpcMetrics();
-
-    // ...
-}
-```
 
 # ASP.NET Core with basic authentication
 

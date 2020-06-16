@@ -1,4 +1,4 @@
-﻿namespace Prometheus.Grpc
+﻿namespace Prometheus
 {
     public static class GrpcRequestLabelNames
     {

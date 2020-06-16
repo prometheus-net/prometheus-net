@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
-    <RootNamespace>Prometheus.Grpc</RootNamespace>
+    <RootNamespace>Prometheus</RootNamespace>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 

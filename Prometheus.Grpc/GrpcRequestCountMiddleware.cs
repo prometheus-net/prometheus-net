@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Prometheus.Grpc
+namespace Prometheus
 {
     /// <summary>
     /// Counts the number of requests to gRPC services.

@@ -1,6 +1,6 @@
 ﻿using Prometheus.HttpMetrics;
 
-namespace Prometheus.Grpc
+namespace Prometheus
 {
     public sealed class GrpcRequestCountOptions : HttpMetricsOptionsBase
     {

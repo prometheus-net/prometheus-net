@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using Grpc.AspNetCore.Server;
 
-namespace Prometheus.Grpc
+namespace Prometheus
 {
     public abstract class GrpcRequestMiddlewareBase<TCollector, TChild>
         where TCollector : ICollector<TChild>
