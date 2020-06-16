@@ -35,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.AspNetCore.Healt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tester.AspNetCore.HealthChecks", "Tester.AspNetCore.HealthChecks\Tester.AspNetCore.HealthChecks.csproj", "{7A0E037C-501E-4FF5-BEEC-0132C809AF67}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.AspNetCore.Grpc", "Prometheus.Grpc\Prometheus.AspNetCore.Grpc.csproj", "{86943076-6025-49F3-AC6D-6D63142364F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.AspNetCore.Grpc", "Prometheus.AspNetCore.Grpc\Prometheus.AspNetCore.Grpc.csproj", "{86943076-6025-49F3-AC6D-6D63142364F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
