@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>tester</RootNamespace>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>prometheus-net.snk</AssemblyOriginatorKeyFile>
@@ -34,15 +34,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.1.7" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.29.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
+    <ProjectReference Include="..\Prometheus.Grpc\Prometheus.Grpc.csproj" />
     <ProjectReference Include="..\Prometheus.NetCore\Prometheus.NetCore.csproj" />
     <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<Protobuf Include="Protos\greet.proto" GrpcServices="Both" />
+	</ItemGroup>
 
   <ItemGroup>
     <None Update="prometheus-net.test.pfx">

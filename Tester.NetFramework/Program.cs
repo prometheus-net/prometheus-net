@@ -15,9 +15,10 @@ namespace tester
             //Metrics.SuppressDefaultMetrics();
 
             // Replace the first line with an appropriate type of tester to run different manual tests.
-            var tester = new MetricPusherTester();
+            //var tester = new MetricPusherTester();
             //var tester = new KestrelMetricServerTester();
             //var tester = new AspNetCoreMiddlewareTester();
+            var tester = new GrpcMiddlewareTester();
             //var tester = new MetricServerTester();
 
             // For testing Kestrel metric server with HTTPS, you need at least a self-signed certificate (one included here)

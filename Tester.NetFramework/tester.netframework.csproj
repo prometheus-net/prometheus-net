@@ -487,6 +487,7 @@
   <ItemGroup>
     <Compile Include="AspNetCoreMiddlewareTester.cs" />
     <Compile Include="Controllers\DummyController.cs" />
+    <Compile Include="GrpcMiddlewareTester.cs" />
     <Compile Include="KestrelMetricServerTester.cs" />
     <Compile Include="MetricPusherTester.cs" />
     <Compile Include="MetricServerTester.cs" />
