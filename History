@@ -1,7 +1,9 @@
+* 3.6.0
 - Added ASP.NET Core health check publisher for publishing metrics on health check status. #203 #209
 - Fixed hang in ASP.NET Web API exporter. #215
 - Fixed ASP.NET Web API exporter exporting metrics from the wrong registry. #217
 - Reduced memory use in MetricPusher implementation. Inspired by #208
+- Added basic gRPC service metrics support. #212
 * 3.5.0
 - Exposed metric.Unpublish() method since there was already a matching Publish() there.
 - When the scrape is aborted, stop collecting/serializing metrics. #189
