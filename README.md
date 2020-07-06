@@ -394,8 +394,8 @@ The `action` and `controller` route parameters are captured by default. You can 
 ```csharp
 app.UseHttpMetrics(options =>
 {
-    options.AddAdditionalRouteParameter("foo");
-    options.AddAdditionalRouteParameter("bar");
+    options.AddRouteParameter("foo");
+    options.AddRouteParameter("bar");
 });
 ```
 
