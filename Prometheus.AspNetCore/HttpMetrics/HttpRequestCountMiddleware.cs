@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Prometheus.HttpMetrics
 {
-    public sealed class HttpRequestCountMiddleware : HttpRequestMiddlewareBase<ICollector<ICounter>, ICounter>
+    internal sealed class HttpRequestCountMiddleware : HttpRequestMiddlewareBase<ICollector<ICounter>, ICounter>
     {
         private readonly RequestDelegate _next;
 

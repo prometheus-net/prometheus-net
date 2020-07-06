@@ -24,7 +24,7 @@ namespace Prometheus.HttpMetrics
     /// If a custom metric is provided in the options, it must not be missing any labels for explicitly defined
     /// custom route parameters. However, it is permitted to lack any of the default labels (code/method/...).
     /// </summary>
-    public abstract class HttpRequestMiddlewareBase<TCollector, TChild>
+    internal abstract class HttpRequestMiddlewareBase<TCollector, TChild>
         where TCollector : class, ICollector<TChild>
         where TChild : class, ICollectorChild
     {

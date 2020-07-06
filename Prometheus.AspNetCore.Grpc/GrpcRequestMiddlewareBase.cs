@@ -6,7 +6,7 @@ using Grpc.AspNetCore.Server;
 namespace Prometheus
 {
     // Modeled after HttpRequestMiddlewareBase, just with gRPC specific functionality.
-    public abstract class GrpcRequestMiddlewareBase<TCollector, TChild>
+    internal abstract class GrpcRequestMiddlewareBase<TCollector, TChild>
         where TCollector : class, ICollector<TChild>
         where TChild : class, ICollectorChild
     {

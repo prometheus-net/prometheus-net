@@ -1,5 +1,8 @@
 ﻿namespace Prometheus
 {
+    /// <summary>
+    /// Reserved label names used in gRPC metrics.
+    /// </summary>
     public static class GrpcRequestLabelNames
     {
         public const string Service = "service";

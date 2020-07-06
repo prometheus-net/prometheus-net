@@ -13,7 +13,7 @@ namespace Prometheus.HttpMetrics
     /// 
     /// The captured route data is stored in the context via ICapturedRouteDataFeature.
     /// </remarks>
-    public sealed class CaptureRouteDataMiddleware
+    internal sealed class CaptureRouteDataMiddleware
     {
         private readonly RequestDelegate _next;
 

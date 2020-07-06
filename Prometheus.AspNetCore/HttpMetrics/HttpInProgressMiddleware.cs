@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Prometheus.HttpMetrics
 {
-    public sealed class HttpInProgressMiddleware : HttpRequestMiddlewareBase<ICollector<IGauge>, IGauge>
+    internal sealed class HttpInProgressMiddleware : HttpRequestMiddlewareBase<ICollector<IGauge>, IGauge>
     {
         private readonly RequestDelegate _next;
 

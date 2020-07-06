@@ -7,7 +7,7 @@ namespace Prometheus
     /// <summary>
     /// Counts the number of requests to gRPC services.
     /// </summary>
-    public sealed class GrpcRequestCountMiddleware : GrpcRequestMiddlewareBase<ICollector<ICounter>, ICounter>
+    internal sealed class GrpcRequestCountMiddleware : GrpcRequestMiddlewareBase<ICollector<ICounter>, ICounter>
     {
         private readonly RequestDelegate _next;
 
