@@ -1,13 +1,10 @@
-﻿using Prometheus.HttpMetrics;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
-    public sealed class GrpcRequestCountOptions : HttpMetricsOptionsBase
+    public sealed class GrpcRequestCountOptions : GrpcMetricsOptionsBase
     {
-        private const string DefaultName = "grpc_requests_received_total";
-        private const string DefaultHelp = "Provides the count of gRPC requests that have been processed";
-
-        public Counter Counter { get; set; } =
-            Metrics.CreateCounter(DefaultName, DefaultHelp, GrpcRequestLabelNames.All);
+        /// <summary>
+        /// Set this to use a custom metric instead of the default.
+        /// </summary>
+        public ICollector<ICounter>? Counter { get; set; }
     }
 }

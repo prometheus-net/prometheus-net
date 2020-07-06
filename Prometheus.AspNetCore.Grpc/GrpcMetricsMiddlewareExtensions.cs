@@ -7,7 +7,6 @@ namespace Prometheus
     {
         /// <summary>
         /// Configures the ASP.NET Core request pipeline to collect Prometheus metrics on processed gRPC requests.
-        /// Call this after .UseRouting().
         /// </summary>
         public static IApplicationBuilder UseGrpcMetrics(this IApplicationBuilder app,
             Action<GrpcMiddlewareExporterOptions> configure)
@@ -20,7 +19,6 @@ namespace Prometheus
 
         /// <summary>
         /// Configures the ASP.NET Core request pipeline to collect Prometheus metrics on processed gRPC requests.
-        /// Call this after .UseRouting().
         /// </summary>
         public static IApplicationBuilder UseGrpcMetrics(this IApplicationBuilder app,
             GrpcMiddlewareExporterOptions? options = null)

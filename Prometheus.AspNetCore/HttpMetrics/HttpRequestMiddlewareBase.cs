@@ -26,7 +26,7 @@ namespace Prometheus.HttpMetrics
     /// </summary>
     public abstract class HttpRequestMiddlewareBase<TCollector, TChild>
         where TCollector : class, ICollector<TChild>
-        where TChild : ICollectorChild
+        where TChild : class, ICollectorChild
     {
         /// <summary>
         /// The set of labels from among the defaults that this metric supports.

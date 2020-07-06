@@ -5,25 +5,46 @@ using Grpc.AspNetCore.Server;
 
 namespace Prometheus
 {
+    // Modeled after HttpRequestMiddlewareBase, just with gRPC specific functionality.
     public abstract class GrpcRequestMiddlewareBase<TCollector, TChild>
-        where TCollector : ICollector<TChild>
+        where TCollector : class, ICollector<TChild>
         where TChild : class, ICollectorChild
     {
-        protected abstract string[] AllowedLabelNames { get; }
+        /// <summary>
+        /// The set of labels from among the defaults that this metric supports.
+        /// 
+        /// This set will be automatically extended with labels for additional
+        /// route parameters when creating the default metric instance.
+        /// </summary>
+        protected abstract string[] DefaultLabels { get; }
 
-        protected readonly TCollector _metric;
+        /// <summary>
+        /// Creates the default metric instance with the specified set of labels.
+        /// Only used if the caller does not provide a custom metric instance in the options.
+        /// </summary>
+        protected abstract TCollector CreateMetricInstance(string[] labelNames);
 
-        protected GrpcRequestMiddlewareBase(TCollector metric)
+        /// <summary>
+        /// The factory to use for creating the default metric for this middleware.
+        /// Not used if a custom metric is alreaedy provided in options.
+        /// </summary>
+        protected MetricFactory MetricFactory { get; }
+
+        private readonly TCollector _metric;
+
+        protected GrpcRequestMiddlewareBase(GrpcMetricsOptionsBase? options, TCollector? customMetric)
         {
-            if (metric == null) throw new ArgumentException(nameof(metric));
+            MetricFactory = Metrics.WithCustomRegistry(options?.Registry ?? Metrics.DefaultRegistry);
 
-            if (!LabelsAreValid(metric.LabelNames))
+            if (customMetric != null)
             {
-                throw new ArgumentException(
-                    $"{metric.Name} may only use labels from the following set: {string.Join(", ", AllowedLabelNames)}");
+                _metric = customMetric;
+                ValidateNoUnexpectedLabelNames();
             }
-
-            _metric = metric;
+            else
+            {
+                _metric = CreateMetricInstance(DefaultLabels);
+            }
         }
 
         protected TChild? CreateChild(HttpContext context)
@@ -58,6 +79,7 @@ namespace Prometheus
                         labelValues[i] = metadata.Method.Name;
                         break;
                     default:
+                        // Should never reach this point because we validate in ctor.
                         throw new NotSupportedException($"Unexpected label name on {_metric.Name}: {_metric.LabelNames[i]}");
                 }
             }
@@ -65,9 +87,15 @@ namespace Prometheus
             return _metric.WithLabels(labelValues);
         }
 
-        private bool LabelsAreValid(string[] labelNames)
+        /// <summary>
+        /// If we use a custom metric, it should not have labels that are neither defaults nor additional route parameters.
+        /// </summary>
+        private void ValidateNoUnexpectedLabelNames()
         {
-            return !labelNames.Except(AllowedLabelNames).Any();
+            var unexpected = _metric.LabelNames.Except(DefaultLabels);
+
+            if (unexpected.Any())
+                throw new ArgumentException($"Provided custom gRPC request metric instance for {GetType().Name} has some unexpected labels: {string.Join(", ", unexpected)}.");
         }
     }
 }

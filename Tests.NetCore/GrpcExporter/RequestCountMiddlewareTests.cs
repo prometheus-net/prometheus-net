@@ -29,14 +29,10 @@ namespace Prometheus.Tests.GrpcExporter
 
             _httpContext = new DefaultHttpContext();
 
-            _sut = new GrpcRequestCountMiddleware(_requestDelegate, _counter);
-        }
-
-        [TestMethod]
-        public void Given_null_counter_then_throws()
-        {
-            Assert.ThrowsException<ArgumentException>(() =>
-                new GrpcRequestCountMiddleware(_requestDelegate, null));
+            _sut = new GrpcRequestCountMiddleware(_requestDelegate, new GrpcRequestCountOptions
+            {
+                Counter = _counter
+            });
         }
 
         [TestMethod]
@@ -45,7 +41,7 @@ namespace Prometheus.Tests.GrpcExporter
             var counter = _factory.CreateCounter("invalid_labels_counter", "", "invalid");
 
             Assert.ThrowsException<ArgumentException>(() =>
-                new GrpcRequestCountMiddleware(_requestDelegate, counter));
+                new GrpcRequestCountMiddleware(_requestDelegate, new GrpcRequestCountOptions { Counter = counter }));
         }
 
         [TestMethod]
@@ -78,7 +74,7 @@ namespace Prometheus.Tests.GrpcExporter
             const string expectedService = "CoolService";
             const string expectedMethod = "SayHello";
             SetupHttpContext(_httpContext, expectedService, expectedMethod);
-            _sut = new GrpcRequestCountMiddleware(_requestDelegate, counter);
+            _sut = new GrpcRequestCountMiddleware(_requestDelegate, new GrpcRequestCountOptions { Counter = counter });
 
             await _sut.Invoke(_httpContext);
 

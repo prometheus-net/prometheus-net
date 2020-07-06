@@ -11,24 +11,27 @@ namespace Prometheus
     {
         private readonly RequestDelegate _next;
 
-        protected override string[] AllowedLabelNames => GrpcRequestLabelNames.All;
-
-        public GrpcRequestCountMiddleware(RequestDelegate next, ICollector<ICounter> counter)
-            : base(counter)
+        public GrpcRequestCountMiddleware(RequestDelegate next, GrpcRequestCountOptions? options)
+            : base(options, options?.Counter)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
         }
 
         public async Task Invoke(HttpContext context)
         {
-            try
-            {
-                await _next(context);
-            }
-            finally
-            {
-                CreateChild(context)?.Inc();
-            }
+            CreateChild(context)?.Inc();
+
+            await _next(context);
         }
+
+        protected override string[] DefaultLabels => GrpcRequestLabelNames.All;
+
+        protected override ICollector<ICounter> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateCounter(
+            "grpc_requests_received_total",
+            "Number of gRPC requests received (including those currently being processed).",
+            new CounterConfiguration
+            {
+                LabelNames = labelNames
+            });
     }
 }
