@@ -27,7 +27,7 @@ namespace Prometheus
 
             if (options.RequestCount.Enabled)
             {
-                app.UseMiddleware<GrpcRequestCountMiddleware>(options.RequestCount.Counter);
+                app.UseMiddleware<GrpcRequestCountMiddleware>(options.RequestCount);
             }
 
             return app;
