@@ -23,7 +23,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Tester.NetFramework\AspNetCoreMiddlewareTester.cs" Link="AspNetCoreMiddlewareTester.cs" />
     <Compile Include="..\Tester.NetFramework\Controllers\DummyController.cs" Link="Controllers\DummyController.cs" />
     <Compile Include="..\Tester.NetFramework\KestrelMetricServerTester.cs" Link="KestrelMetricServerTester.cs" />
     <Compile Include="..\Tester.NetFramework\MetricPusherTester.cs" Link="MetricPusherTester.cs" />
