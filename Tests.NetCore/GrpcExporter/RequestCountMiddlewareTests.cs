@@ -1,10 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus;
-using Tests.HttpExporter;
 using static Prometheus.Tests.GrpcExporter.TestHelpers;
 
 namespace Prometheus.Tests.GrpcExporter
@@ -87,12 +85,19 @@ namespace Prometheus.Tests.GrpcExporter
             var labels = counter.GetAllLabels().Single();
             Assert.AreEqual(
                 expectedService, 
-                MetricTestHelpers.GetLabelValueOrDefault(labels, GrpcRequestLabelNames.Service)
+                GetLabelValueOrDefault(labels, GrpcRequestLabelNames.Service)
             );
             Assert.AreEqual(
                 expectedMethod,
-                MetricTestHelpers.GetLabelValueOrDefault(labels, GrpcRequestLabelNames.Method)
+                GetLabelValueOrDefault(labels, GrpcRequestLabelNames.Method)
             );
+        }
+
+        private static string GetLabelValueOrDefault(Labels labels, string name)
+        {
+            return labels.Names
+                .Zip(labels.Values, (n, v) => (n, v))
+                .FirstOrDefault(pair => pair.n == name).v;
         }
     }
 }

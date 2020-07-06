@@ -31,16 +31,16 @@ namespace Prometheus
         public static IApplicationBuilder UseHttpMetrics(this IApplicationBuilder app,
             HttpMiddlewareExporterOptions? options = null)
         {
-            if (options == null) options = new HttpMiddlewareExporterOptions();
+            options = options ?? new HttpMiddlewareExporterOptions();
 
             app.UseMiddleware<CaptureRouteDataMiddleware>();
 
             if (options.InProgress.Enabled)
-                app.UseMiddleware<HttpInProgressMiddleware>(options.InProgress.Gauge);
+                app.UseMiddleware<HttpInProgressMiddleware>(options.InProgress);
             if (options.RequestCount.Enabled)
-                app.UseMiddleware<HttpRequestCountMiddleware>(options.RequestCount.Counter);
+                app.UseMiddleware<HttpRequestCountMiddleware>(options.RequestCount);
             if (options.RequestDuration.Enabled)
-                app.UseMiddleware<HttpRequestDurationMiddleware>(options.RequestDuration.Histogram);
+                app.UseMiddleware<HttpRequestDurationMiddleware>(options.RequestDuration);
 
             return app;
         }

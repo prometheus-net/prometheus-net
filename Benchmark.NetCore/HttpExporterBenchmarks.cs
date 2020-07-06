@@ -24,12 +24,18 @@ namespace Benchmark.NetCore
             _registry = Metrics.NewCustomRegistry();
             _factory = Metrics.WithCustomRegistry(_registry);
 
-            _inProgressMiddleware =
-                new HttpInProgressMiddleware(next => Task.CompletedTask, _factory.CreateGauge("in_progress", "help"));
-            _countMiddleware =
-                new HttpRequestCountMiddleware(next => Task.CompletedTask, _factory.CreateCounter("count", "help"));
-            _durationMiddleware =
-                new HttpRequestDurationMiddleware(next => Task.CompletedTask, _factory.CreateHistogram("duration", "help"));
+            _inProgressMiddleware = new HttpInProgressMiddleware(next => Task.CompletedTask, new HttpInProgressOptions
+            {
+                Gauge = _factory.CreateGauge("in_progress", "help")
+            });
+            _countMiddleware = new HttpRequestCountMiddleware(next => Task.CompletedTask, new HttpRequestCountOptions
+            {
+                Counter = _factory.CreateCounter("count", "help")
+            });
+            _durationMiddleware = new HttpRequestDurationMiddleware(next => Task.CompletedTask, new HttpRequestDurationOptions
+            {
+                Histogram = _factory.CreateHistogram("duration", "help")
+            });
         }
 
         [Benchmark]

@@ -8,10 +8,8 @@ namespace Prometheus.HttpMetrics
     {
         private readonly RequestDelegate _next;
 
-        protected override string[] AllowedLabelNames => HttpRequestLabelNames.All;
-
-        public HttpRequestCountMiddleware(RequestDelegate next, ICollector<ICounter> counter)
-            : base(counter)
+        public HttpRequestCountMiddleware(RequestDelegate next, HttpRequestCountOptions? options)
+            : base(options, options?.Counter)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
         }
@@ -30,5 +28,15 @@ namespace Prometheus.HttpMetrics
                 CreateChild(context).Inc();
             }
         }
+
+        protected override string[] DefaultLabels => HttpRequestLabelNames.All;
+
+        protected override ICollector<ICounter> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateCounter(
+            "http_requests_received_total",
+            "Provides the count of HTTP requests that have been processed by the ASP.NET Core pipeline.",
+            new CounterConfiguration
+            {
+                LabelNames = labelNames
+            });
     }
 }

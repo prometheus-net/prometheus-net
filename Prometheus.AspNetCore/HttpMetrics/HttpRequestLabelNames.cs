@@ -1,5 +1,8 @@
 namespace Prometheus.HttpMetrics
 {
+    /// <summary>
+    /// Label names reserved for the use by the HTTP request metrics.
+    /// </summary>
     public static class HttpRequestLabelNames
     {
         public const string Code = "code";
@@ -24,10 +27,11 @@ namespace Prometheus.HttpMetrics
             Action
         };
 
-        internal static readonly string[] RouteSpecific =
+        // Labels that do not need routing information to be collected.
+        internal static readonly string[] NonRouteSpecific =
         {
-            Controller,
-            Action
+            Code,
+            Method
         };
     }
 }

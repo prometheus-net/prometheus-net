@@ -57,16 +57,21 @@ namespace Prometheus
                 if (labelName == null)
                     throw new ArgumentNullException("Label name was null.");
 
-                if (!LabelNameRegex.IsMatch(labelName))
-                    throw new ArgumentException($"Label name '{labelName}' does not match regex '{ValidLabelNameExpression}'.");
-
-                if (ReservedLabelRegex.IsMatch(labelName))
-                    throw new ArgumentException($"Label name '{labelName}' is not valid - labels starting with double underscore are reserved!");
+                ValidateLabelName(labelName);
             }
 
             Name = name;
             Help = help;
             LabelNames = labelNames;
+        }
+
+        internal static void ValidateLabelName(string labelName)
+        {
+            if (!LabelNameRegex.IsMatch(labelName))
+                throw new ArgumentException($"Label name '{labelName}' does not match regex '{ValidLabelNameExpression}'.");
+
+            if (ReservedLabelRegex.IsMatch(labelName))
+                throw new ArgumentException($"Label name '{labelName}' is not valid - labels starting with double underscore are reserved!");
         }
     }
 

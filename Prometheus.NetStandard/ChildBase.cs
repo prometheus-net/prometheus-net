@@ -12,7 +12,7 @@ namespace Prometheus
         internal ChildBase(Collector parent, Labels labels, bool publish)
         {
             _parent = parent;
-            _labels = labels;
+            Labels = labels;
             _publish = publish;
         }
 
@@ -30,7 +30,6 @@ namespace Prometheus
             Volatile.Write(ref _publish, true);
         }
 
-
         /// <summary>
         /// Marks the metric as one to not be published.
         /// 
@@ -47,13 +46,17 @@ namespace Prometheus
         /// </summary>
         public void Remove()
         {
-            _parent.RemoveLabelled(_labels);
+            _parent.RemoveLabelled(Labels);
         }
 
         public void Dispose() => Remove();
 
+        /// <summary>
+        /// Internal for testing purposes only.
+        /// </summary>
+        internal Labels Labels { get; }
+
         private readonly Collector _parent;
-        private readonly Labels _labels;
 
         private bool _publish;
 
@@ -82,9 +85,9 @@ namespace Prometheus
         {
             var fullName = postfix != null ? $"{_parent.Name}_{postfix}" : _parent.Name;
 
-            var labels = _labels;
+            var labels = Labels;
             if (extraLabels?.Length > 0)
-                labels = _labels.Concat(extraLabels);
+                labels = Labels.Concat(extraLabels);
 
             if (labels.Count != 0)
                 return PrometheusConstants.ExportEncoding.GetBytes($"{fullName}{{{labels.Serialize()}}}");

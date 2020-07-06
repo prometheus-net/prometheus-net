@@ -364,8 +364,6 @@ The library exposes some metrics from ASP.NET Core applications:
 * Total number of received HTTP requests.
 * Duration of HTTP requests.
 
-These metrics include labels for status code, HTTP method, Controller and Action.
-
 The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
 You can expose HTTP metrics by modifying your `Startup.Configure()` method:
@@ -390,6 +388,16 @@ public void Configure(IApplicationBuilder app, ...)
 ```
 
 NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
+
+The `action` and `controller` route parameters are captured by default. You can include additional route parameters as follows:
+
+```csharp
+app.UseHttpMetrics(options =>
+{
+    options.AddAdditionalRouteParameter("foo");
+    options.AddAdditionalRouteParameter("bar");
+});
+```
 
 # ASP.NET Core gRPC request metrics
 
