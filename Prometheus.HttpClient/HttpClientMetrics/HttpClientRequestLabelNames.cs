@@ -9,13 +9,11 @@ namespace Prometheus.HttpClientMetrics
     {
         public const string Method = "method";
         public const string Host = "host";
-        public const string Path = "path";
 
         public static readonly string[] All =
         {
             Method,
-            Host,
-            Path
+            Host
         };
 
         public static IDictionary<string, string> AsParameterMap()

@@ -73,9 +73,6 @@ namespace Prometheus.HttpClientMetrics
                     case HttpClientRequestLabelNames.Host:
                         labelValues[i] = request.RequestUri.Host;
                         break;
-                    case HttpClientRequestLabelNames.Path:
-                        labelValues[i] = request.RequestUri.PathAndQuery;
-                        break;
                 }
             }
 
