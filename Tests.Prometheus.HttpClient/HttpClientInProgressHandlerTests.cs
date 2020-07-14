@@ -68,7 +68,7 @@ namespace Tests.Prometheus.HttpClient
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
                                                                    CancellationToken cancellationToken)
             {
-                CapturedValue = Gauge.WithLabels("GET", "www.google.com", "/").Value;
+                CapturedValue = Gauge.WithLabels("GET", "www.google.com").Value;
                 return base.SendAsync(request, cancellationToken);
             }
         }
