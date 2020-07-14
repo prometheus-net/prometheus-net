@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Prometheus.HttpClientMetrics
 {
-    internal sealed class
+    public sealed class
         HttpClientRequestCountHandler : HttpClientDelegatingHandlerBase<ICollector<ICounter>, ICounter>
     {
         public HttpClientRequestCountHandler(
