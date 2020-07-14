@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Prometheus.HttpClientMetrics
 {
-    internal sealed class
+    public sealed class
         HttpClientRequestDurationHandler : HttpClientDelegatingHandlerBase<ICollector<IHistogram>, IHistogram>
     {
         public HttpClientRequestDurationHandler(

@@ -11,7 +11,7 @@ namespace Prometheus.HttpClientMetrics
     ///     'host' (The host name of  HTTP request)
     ///     'path' (The query path HTTP request)
     /// </summary>
-    internal abstract class HttpClientDelegatingHandlerBase<TCollector, TChild> : DelegatingHandler
+    public abstract class HttpClientDelegatingHandlerBase<TCollector, TChild> : DelegatingHandler
         where TCollector : class, ICollector<TChild>
         where TChild : class, ICollectorChild
     {
@@ -25,7 +25,17 @@ namespace Prometheus.HttpClientMetrics
             _metric = customMetric ?? CreateMetricInstance(HttpClientRequestLabelNames.All);
         }
 
-      
+        protected HttpClientDelegatingHandlerBase(HttpMessageHandler innerHandler,
+                                                  HttpClientMetricsOptionsBase? options,
+                                                  TCollector? customMetric)
+        {
+            MetricFactory = Metrics.WithCustomRegistry(options?.Registry ?? Metrics.DefaultRegistry);
+
+            _metric = customMetric ?? CreateMetricInstance(HttpClientRequestLabelNames.All);
+
+            InnerHandler = innerHandler;
+        }
+
 
         /// <summary>
         ///     The factory to use for creating the default metric for this handler.
@@ -71,6 +81,5 @@ namespace Prometheus.HttpClientMetrics
 
             return _metric.WithLabels(labelValues);
         }
-
     }
 }

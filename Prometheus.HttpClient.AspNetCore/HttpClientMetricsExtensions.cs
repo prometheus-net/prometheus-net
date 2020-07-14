@@ -10,7 +10,7 @@ namespace Prometheus
         ///     Configures the HttpClient pipeline to collect Prometheus metrics.
         /// </summary>
         public static IHttpClientBuilder UseHttpClientMetrics(this IHttpClientBuilder builder,
-                                                        Action<HttpClientHandlerExporterOptions> configure)
+                                                              Action<HttpClientHandlerExporterOptions> configure)
         {
             var options = new HttpClientHandlerExporterOptions();
 

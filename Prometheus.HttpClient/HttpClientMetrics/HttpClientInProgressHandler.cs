@@ -4,13 +4,22 @@ using System.Threading.Tasks;
 
 namespace Prometheus.HttpClientMetrics
 {
-    internal sealed class
+    public sealed class
         HttpClientInProgressHandler : HttpClientDelegatingHandlerBase<ICollector<IGauge>, IGauge>
     {
         public HttpClientInProgressHandler(HttpClientInProgressOptions? options)
             : base(options, options?.Gauge)
         {
         }
+
+
+        public HttpClientInProgressHandler(HttpMessageHandler innerHandler,HttpClientInProgressOptions? options)
+            : base(innerHandler, options, options?.Gauge)
+        {
+            
+        }
+
+
 
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
