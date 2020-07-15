@@ -14,6 +14,13 @@ namespace Prometheus.HttpClientMetrics
         {
         }
 
+
+        public HttpClientRequestDurationHandler(HttpMessageHandler innerHandler,
+                                                HttpClientRequestDurationOptions? options)
+            : base(innerHandler, options, options?.Histogram)
+        {
+        }
+
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
