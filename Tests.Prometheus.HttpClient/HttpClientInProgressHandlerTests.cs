@@ -11,7 +11,7 @@ namespace Tests.Prometheus.HttpClient
     public class HttpClientInProgressHandlerTests
     {
         [TestMethod]
-        public async Task when_i_request_a_uri_should_inprogress_metric_added_by_one()
+        public async Task when_i_request_a_uri_should_inc_inprogress_metric_and_dec_after_that()
         {
             //////////////////////////////////////
             // Arrange
@@ -52,6 +52,7 @@ namespace Tests.Prometheus.HttpClient
 
 
             Assert.AreEqual(1, captureGaugeValueHttpHandler.CapturedValue);
+            Assert.AreEqual(0, gauge.Value);
         }
 
         internal class CaptureGaugeValueHttpHandler : DelegatingHandler

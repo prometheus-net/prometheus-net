@@ -14,6 +14,13 @@ namespace Prometheus.HttpClientMetrics
         }
 
 
+        public HttpClientRequestCountHandler(HttpMessageHandler innerHandler, HttpClientRequestCountOptions? options)
+            : base(innerHandler, options, options?.Counter)
+        {
+
+        }
+
+
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
