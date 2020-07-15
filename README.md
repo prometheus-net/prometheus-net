@@ -6,6 +6,15 @@ This is a .NET library for instrumenting your applications and exporting metrics
 
 ![](Screenshot.png)
 
+HttpClient TODO:
+
+* Create Counter for Exceptions.
+* Create extension for adding Handlers to HttpClient instance.
+* Add optional parameters.
+* Write test for using HttpClient with Asp.Net Core extension
+* Add listener metrics
+
+
 The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard) which supports the following runtimes (and newer):
 
 * .NET Framework 4.6.1
