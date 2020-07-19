@@ -117,6 +117,11 @@ namespace Prometheus.HttpMetrics
                     case HttpRequestLabelNames.Code:
                         labelValues[i] = context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
                         break;
+#if NETCOREAPP3_1
+                    case HttpRequestLabelNames.RoutePattern:
+                        labelValues[i] = GetRoutePattern(context);
+                        break;
+#endif
                     default:
                         // We validate the label set on initialization, so it must be a route parameter if we get to this point.
                         var parameterName = _labelToRouteParameterMap[_metric.LabelNames[i]];
@@ -202,5 +207,18 @@ namespace Prometheus.HttpMetrics
             if (unexpected.Any())
                 throw new ArgumentException($"Provided custom HTTP request metric instance for {GetType().Name} has some unexpected labels: {string.Join(", ", unexpected)}.");
         }
+
+#if NETCOREAPP3_1
+        private static string GetRoutePattern(HttpContext context)
+        {
+            var endpoint = context.GetEndpoint();
+            if (endpoint is RouteEndpoint routeEndpoint)
+            {
+                return routeEndpoint.RoutePattern.RawText ?? string.Empty;
+            }
+
+            return string.Empty;
+        }
+#endif
     }
 }

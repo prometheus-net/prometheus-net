@@ -5,6 +5,8 @@ using Prometheus.HttpMetrics;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Routing.Patterns;
 
 namespace Prometheus.Tests.HttpExporter
 {
@@ -25,6 +27,7 @@ namespace Prometheus.Tests.HttpExporter
         private const string TestMethod = "DELETE";
         private const string TestController = "controllerAbcde";
         private const string TestAction = "action1234";
+        private const string TestRoutePattern = "controllerAbcde/action1234";
 
         public RouteParameterMappingTests()
         {
@@ -38,7 +41,7 @@ namespace Prometheus.Tests.HttpExporter
         [TestMethod]
         public void DefaultMetric_AppliesStandardLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, TestRoutePattern);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -52,14 +55,15 @@ namespace Prometheus.Tests.HttpExporter
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
-                TestController
+                TestController,
+                TestRoutePattern
             }, child.Labels.Values);
         }
 
         [TestMethod]
         public void CustomMetric_WithNoLabels_AppliesNoLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, TestRoutePattern);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -73,7 +77,7 @@ namespace Prometheus.Tests.HttpExporter
         [TestMethod]
         public void CustomMetric_WithStandardLabels_AppliesStandardLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, TestRoutePattern);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -87,7 +91,8 @@ namespace Prometheus.Tests.HttpExporter
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
-                TestController
+                TestController,
+                TestRoutePattern
             }, child.Labels.Values);
         }
 
@@ -98,7 +103,7 @@ namespace Prometheus.Tests.HttpExporter
             // foo = 123
             // bar = (missing)
             // method = excellent // remapped to route_method
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController,
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, TestRoutePattern,
                 new[]
                 {
                     ("foo", "123"),
@@ -126,6 +131,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestMethod,
                 TestAction,
                 TestController,
+                TestRoutePattern,
                 "123", // foo
                 "", // bar
                 "excellent" // route_method
@@ -139,7 +145,7 @@ namespace Prometheus.Tests.HttpExporter
             // foo = 123
             // bar = (missing)
             // method = excellent // remapped to route_method
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController,
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, TestRoutePattern,
                 new[]
                 {
                     ("foo", "123"),
@@ -167,6 +173,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestMethod,
                 TestAction,
                 TestController,
+                TestRoutePattern,
                 "123", // foo
                 "", // bar
                 "excellent" // route_method
@@ -251,7 +258,53 @@ namespace Prometheus.Tests.HttpExporter
             });
         }
 
-        private static void SetupHttpContext(DefaultHttpContext context, int statusCode, string httpMethod, string action, string controller, (string name, string value)[] routeParameters = null)
+        [TestMethod]
+        public void DefaultMetric_WhenNoRouteEndpoint_PopulatesRoutePatternLabelCorrectly()
+        {
+            _context.Features[typeof(IEndpointFeature)] = new FakeEndpointFeature
+            {
+                Endpoint = new Endpoint(_ => Task.CompletedTask, new EndpointMetadataCollection(), string.Empty)
+            };
+            
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry
+            });
+            
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            var labelValue = GetLabelValueOrDefault(child.Labels, HttpRequestLabelNames.RoutePattern);
+
+            Assert.AreEqual(string.Empty, labelValue);
+        }
+
+        [TestMethod]
+        public void DefaultMetric_WhenNoRoutepatternRawtext_PopulatesRoutepatternLabelCorrectly()
+        {
+            var pattern = RoutePatternFactory.Pattern((string)null);
+            _context.Features[typeof(IEndpointFeature)] = new FakeEndpointFeature
+            {
+                Endpoint = new RouteEndpoint(
+                    _ => Task.CompletedTask,
+                    pattern,
+                    0,
+                    new EndpointMetadataCollection(),
+                    string.Empty
+                )
+            };
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry
+            });
+            
+            var child = (ChildBase)middleware.CreateChild(_context);
+            
+            var labelValue = GetLabelValueOrDefault(child.Labels, HttpRequestLabelNames.RoutePattern);
+
+            Assert.AreEqual(string.Empty, labelValue);
+        }
+
+        private static void SetupHttpContext(DefaultHttpContext context, int statusCode, string httpMethod, string action, string controller, string routePattern, (string name, string value)[] routeParameters = null)
         {
             context.Response.StatusCode = statusCode;
             context.Request.Method = httpMethod;
@@ -264,6 +317,8 @@ namespace Prometheus.Tests.HttpExporter
                 }
             };
 
+            var pattern = RoutePatternFactory.Pattern(routePattern);
+
             if (routeParameters != null)
             {
                 foreach (var parameter in routeParameters)
@@ -271,11 +326,33 @@ namespace Prometheus.Tests.HttpExporter
             }
 
             context.Features[typeof(IRoutingFeature)] = routing;
+            context.Features[typeof(IEndpointFeature)] = new FakeEndpointFeature
+            {
+                Endpoint = new RouteEndpoint(
+                    _ => Task.CompletedTask,
+                    pattern,
+                    0,
+                    new EndpointMetadataCollection(),
+                    string.Empty
+                )
+            };
+        }
+
+        private static string GetLabelValueOrDefault(Labels labels, string name)
+        {
+            return labels.Names
+                .Zip(labels.Values, (n, v) => (n, v))
+                .FirstOrDefault(pair => pair.n == name).v;
         }
 
         internal class FakeRoutingFeature : IRoutingFeature
         {
             public RouteData RouteData { get; set; }
+        }
+
+        internal class FakeEndpointFeature : IEndpointFeature
+        {
+            public Endpoint Endpoint { get; set; }
         }
     }
 }
