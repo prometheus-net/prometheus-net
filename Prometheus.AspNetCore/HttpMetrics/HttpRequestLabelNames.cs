@@ -9,19 +9,22 @@ namespace Prometheus.HttpMetrics
         public const string Method = "method";
         public const string Controller = "controller";
         public const string Action = "action";
+        public const string Host = "host";
 
         public static readonly string[] All =
         {
             Code,
             Method,
             Controller,
-            Action
+            Action,
+            Host
         };
 
         internal static readonly string[] PotentiallyAvailableBeforeExecutingFinalHandler =
         {
             // Always available, part of request.
             Method,
+            Host,
             // These two are available only in ASP.NET Core 3.
             Controller,
             Action
@@ -31,7 +34,8 @@ namespace Prometheus.HttpMetrics
         internal static readonly string[] NonRouteSpecific =
         {
             Code,
-            Method
+            Method,
+            Host
         };
     }
 }

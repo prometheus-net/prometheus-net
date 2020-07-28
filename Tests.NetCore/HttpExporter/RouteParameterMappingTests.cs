@@ -22,6 +22,7 @@ namespace Prometheus.Tests.HttpExporter
         private readonly MetricFactory _metrics;
 
         private const int TestStatusCode = 204;
+        private const string TestHost = "localhost";
         private const string TestMethod = "DELETE";
         private const string TestController = "controllerAbcde";
         private const string TestAction = "action1234";
@@ -38,7 +39,7 @@ namespace Prometheus.Tests.HttpExporter
         [TestMethod]
         public void DefaultMetric_AppliesStandardLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            SetupHttpContext(_context, TestHost, TestStatusCode, TestMethod, TestAction, TestController);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -49,6 +50,7 @@ namespace Prometheus.Tests.HttpExporter
             CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
+                TestHost,
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
@@ -59,7 +61,7 @@ namespace Prometheus.Tests.HttpExporter
         [TestMethod]
         public void CustomMetric_WithNoLabels_AppliesNoLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            SetupHttpContext(_context, TestHost, TestStatusCode, TestMethod, TestAction, TestController);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -73,7 +75,7 @@ namespace Prometheus.Tests.HttpExporter
         [TestMethod]
         public void CustomMetric_WithStandardLabels_AppliesStandardLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            SetupHttpContext(_context, TestHost, TestStatusCode, TestMethod, TestAction, TestController);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -84,6 +86,7 @@ namespace Prometheus.Tests.HttpExporter
             CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
+                TestHost,
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
@@ -98,7 +101,7 @@ namespace Prometheus.Tests.HttpExporter
             // foo = 123
             // bar = (missing)
             // method = excellent // remapped to route_method
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController,
+            SetupHttpContext(_context, TestHost, TestStatusCode, TestMethod, TestAction, TestController,
                 new[]
                 {
                     ("foo", "123"),
@@ -122,6 +125,7 @@ namespace Prometheus.Tests.HttpExporter
             CollectionAssert.AreEquivalent(allLabelNames, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
+                TestHost,
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
@@ -139,7 +143,7 @@ namespace Prometheus.Tests.HttpExporter
             // foo = 123
             // bar = (missing)
             // method = excellent // remapped to route_method
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController,
+            SetupHttpContext(_context, TestHost, TestStatusCode, TestMethod, TestAction, TestController,
                 new[]
                 {
                     ("foo", "123"),
@@ -163,6 +167,7 @@ namespace Prometheus.Tests.HttpExporter
             CollectionAssert.AreEquivalent(allLabelNames, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
+                TestHost,
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
@@ -251,8 +256,9 @@ namespace Prometheus.Tests.HttpExporter
             });
         }
 
-        private static void SetupHttpContext(DefaultHttpContext context, int statusCode, string httpMethod, string action, string controller, (string name, string value)[] routeParameters = null)
+        private static void SetupHttpContext(DefaultHttpContext context, string host, int statusCode, string httpMethod, string action, string controller, (string name, string value)[] routeParameters = null)
         {
+            context.Request.Host = new HostString(host);
             context.Response.StatusCode = statusCode;
             context.Request.Method = httpMethod;
 

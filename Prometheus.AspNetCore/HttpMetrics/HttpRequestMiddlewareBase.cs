@@ -117,6 +117,9 @@ namespace Prometheus.HttpMetrics
                     case HttpRequestLabelNames.Code:
                         labelValues[i] = context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
                         break;
+                    case HttpRequestLabelNames.Host:
+                        labelValues[i] = context.Request.Host.Host;
+                        break;
                     default:
                         // We validate the label set on initialization, so it must be a route parameter if we get to this point.
                         var parameterName = _labelToRouteParameterMap[_metric.LabelNames[i]];
