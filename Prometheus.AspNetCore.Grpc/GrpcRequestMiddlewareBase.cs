@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
+using System.Threading;
 using Grpc.AspNetCore.Server;
+using Grpc.Core;
 
 namespace Prometheus
 {
@@ -78,6 +80,10 @@ namespace Prometheus
                     case GrpcRequestLabelNames.Method:
                         labelValues[i] = metadata.Method.Name;
                         break;
+                    case GrpcRequestLabelNames.Status:
+                        labelValues[i] =  context.Response?.GetStatusCode().ToString() ?? StatusCode.OK.ToString();
+                        break;
+                    
                     default:
                         // Should never reach this point because we validate in ctor.
                         throw new NotSupportedException($"Unexpected label name on {_metric.Name}: {_metric.LabelNames[i]}");

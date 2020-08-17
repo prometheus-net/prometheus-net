@@ -30,6 +30,11 @@ namespace Prometheus
                 app.UseMiddleware<GrpcRequestCountMiddleware>(options.RequestCount);
             }
 
+            if (options.RequestDuration.Enabled)
+            {
+                app.UseMiddleware<GrpcRequestDurationMiddleware>(options.RequestDuration);
+            }
+
             return app;
         }
     }
