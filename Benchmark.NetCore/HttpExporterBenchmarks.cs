@@ -14,6 +14,7 @@ namespace Benchmark.NetCore
         private HttpInProgressMiddleware _inProgressMiddleware;
         private HttpRequestCountMiddleware _countMiddleware;
         private HttpRequestDurationMiddleware _durationMiddleware;
+        private DefaultHttpContext _ctx;
 
         [Params(1000, 10000)]
         public int RequestCount { get; set; }
@@ -23,6 +24,7 @@ namespace Benchmark.NetCore
         {
             _registry = Metrics.NewCustomRegistry();
             _factory = Metrics.WithCustomRegistry(_registry);
+            _ctx = new DefaultHttpContext();
 
             _inProgressMiddleware = new HttpInProgressMiddleware(next => Task.CompletedTask, new HttpInProgressOptions
             {
@@ -41,22 +43,22 @@ namespace Benchmark.NetCore
         [Benchmark]
         public async Task HttpInProgress()
         {
-            for (var i = 0; i < RequestCount; i++)
-                await _inProgressMiddleware.Invoke(new DefaultHttpContext());
+            for (var i = 0; i < RequestCount; i++) 
+                await _inProgressMiddleware.Invoke(_ctx);
         }
 
         [Benchmark]
         public async Task HttpRequestCount()
         {
             for (var i = 0; i < RequestCount; i++)
-                await _countMiddleware.Invoke(new DefaultHttpContext());
+                await _countMiddleware.Invoke(_ctx);
         }
 
         [Benchmark]
         public async Task HttpRequestDuration()
         {
             for (var i = 0; i < RequestCount; i++)
-                await _durationMiddleware.Invoke(new DefaultHttpContext());
+                await _durationMiddleware.Invoke(_ctx);
         }
     }
 }

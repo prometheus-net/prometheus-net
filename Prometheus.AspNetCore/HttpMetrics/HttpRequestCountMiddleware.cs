@@ -25,7 +25,7 @@ namespace Prometheus.HttpMetrics
                 // We need to record metrics after inner handler execution because routing data in
                 // ASP.NET Core 2 is only available *after* executing the next request delegate.
                 // So we would not have the right labels if we tried to create the child early on.
-                CreateChild(context).Inc();
+                CreateChild(context)?.Inc();
             }
         }
 

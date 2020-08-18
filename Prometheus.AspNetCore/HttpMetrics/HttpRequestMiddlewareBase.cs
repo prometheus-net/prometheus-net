@@ -54,6 +54,8 @@ namespace Prometheus.HttpMetrics
         private readonly Dictionary<string, string> _labelToRouteParameterMap;
 
         private readonly bool _labelsRequireRouteData;
+        
+        private readonly Func<HttpContext, bool> _ignoreCondition = ctx => false;
 
         protected HttpRequestMiddlewareBase(HttpMetricsOptionsBase? options, TCollector? customMetric)
         {
@@ -77,6 +79,7 @@ namespace Prometheus.HttpMetrics
             }
 
             _labelsRequireRouteData = _metric.LabelNames.Except(HttpRequestLabelNames.NonRouteSpecific).Any();
+            _ignoreCondition = options?.IgnoreCondition ?? _ignoreCondition;
         }
 
         /// <summary>
@@ -85,8 +88,13 @@ namespace Prometheus.HttpMetrics
         /// <remarks>
         /// Internal for testing purposes.
         /// </remarks>
-        protected internal TChild CreateChild(HttpContext context)
+        protected internal TChild? CreateChild(HttpContext context)
         {
+            if (_ignoreCondition(context))
+            {
+                return null;
+            }
+            
             if (!_metric.LabelNames.Any())
                 return _metric.Unlabelled;
 
