@@ -342,7 +342,7 @@ public void Configure(IApplicationBuilder app, ...)
 
     // ...
 
-    // ASP.NET Core 3 or newer
+    // ASP.NET Core 3.1 or newer
     app.UseEndpoints(endpoints =>
     {
         // ...
