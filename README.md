@@ -128,6 +128,8 @@ class Program
 }
 ```
 
+**NB!** Keep in mind that if you want to expose the metrics server outside of the local network you need to set the `hostname` to `*`.
+
 # Counters
 
 Counters only increase in value and reset to zero when the process restarts.
