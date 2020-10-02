@@ -83,7 +83,7 @@ Nuget package for ASP.NET Core Health Check integration: [prometheus-net.AspNetC
 
 >Install-Package prometheus-net.AspNetCore.HealthChecks
 
-Nuget package for ASP.NET Core gRPC integration: [prometheus-net.AspNetCore.HealthChecks](https://www.nuget.org/packages/prometheus-net.AspNetCore.Grpc)
+Nuget package for ASP.NET Core gRPC integration: [prometheus-net.AspNetCore.Grpc](https://www.nuget.org/packages/prometheus-net.AspNetCore.Grpc)
 
 >Install-Package prometheus-net.AspNetCore.Grpc
 
