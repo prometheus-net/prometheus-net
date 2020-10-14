@@ -44,7 +44,7 @@ namespace Prometheus.HttpMetrics
 
         /// <summary>
         /// The factory to use for creating the default metric for this middleware.
-        /// Not used if a custom metric is alreaedy provided in options.
+        /// Not used if a custom metric is already provided in options.
         /// </summary>
         protected MetricFactory MetricFactory { get; }
 
