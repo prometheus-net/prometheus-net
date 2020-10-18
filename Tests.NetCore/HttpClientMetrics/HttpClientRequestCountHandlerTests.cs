@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.HttpClientMetrics;
 
-namespace Prometheus.Tests
+namespace Prometheus.Tests.HttpClientMetrics
 {
     [TestClass]
     public class HttpClientRequestCountHandlerTests

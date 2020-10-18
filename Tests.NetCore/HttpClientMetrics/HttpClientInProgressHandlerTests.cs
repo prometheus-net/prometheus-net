@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus;
 using Prometheus.HttpClientMetrics;
 
-namespace Tests.Prometheus.HttpClient
+namespace Tests.Prometheus.HttpClientMetrics
 {
     [TestClass]
     public class HttpClientInProgressHandlerTests

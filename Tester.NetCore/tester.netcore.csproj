@@ -23,13 +23,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Tester.NetFramework\Controllers\DummyController.cs" Link="Controllers\DummyController.cs" />
-    <Compile Include="..\Tester.NetFramework\KestrelMetricServerTester.cs" Link="KestrelMetricServerTester.cs" />
+    <Compile Remove="Controllers\**" />
+    <EmbeddedResource Remove="Controllers\**" />
+    <None Remove="Controllers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="..\Tester.NetFramework\MetricPusherTester.cs" Link="MetricPusherTester.cs" />
     <Compile Include="..\Tester.NetFramework\MetricServerTester.cs" Link="MetricServerTester.cs" />
     <Compile Include="..\Tester.NetFramework\Program.cs" Link="Program.cs" />
     <Compile Include="..\Tester.NetFramework\Tester.cs" Link="Tester.cs" />
     <Compile Include="..\Tester.NetFramework\TesterConstants.cs" Link="TesterConstants.cs" />
+    <Compile Include="Controllers\DummyController.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,10 +56,6 @@
     <None Update="prometheus-net.test.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>
