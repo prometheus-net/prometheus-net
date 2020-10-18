@@ -9,46 +9,25 @@ namespace Prometheus.Tests.HttpClientMetrics
     public class HttpClientRequestDurationHandlerTests
     {
         [TestMethod]
-        public async Task when_request_a_url_should_inc_histogram_count_the_sum()
+        public async Task OnRequest_IncrementsHistogramCountAndSum()
         {
-            //////////////////////////////////////
-            // Arrange
-            //////////////////////////////////////
-
-            var histogram = Metrics.CreateHistogram(
-                                                    "httpclient_request_duration_seconds",
-                                                    "The duration of HTTP requests processed by a HttpClient.",
-                                                    new HistogramConfiguration
-                                                    {
-                                                        // 1 ms to 32K ms buckets
-                                                        Buckets = Histogram.ExponentialBuckets(0.001, 2, 16),
-                                                        LabelNames = HttpClientRequestLabelNames.All
-                                                    });
-
+            var registry = Metrics.NewCustomRegistry();
 
             var options = new HttpClientRequestDurationOptions
             {
-                Histogram = histogram
+                Registry = registry
             };
 
-            var httpClientRequestDurationHandler =
-                new HttpClientRequestDurationHandler(new HttpClientHandler(), options);
+            var handler = new HttpClientRequestDurationHandler(options);
 
+            // As we are not using the HttpClientProvider for constructing our pipeline, we need to do this manually.
+            handler.InnerHandler = new HttpClientHandler();
 
-            var httpClient = new HttpClient(httpClientRequestDurationHandler);
+            var client = new HttpClient(handler);
+            await client.GetAsync("http://www.google.com");
 
-            //////////////////////////////////////
-            // Act
-            //////////////////////////////////////
-
-            await httpClient.GetAsync("http://www.google.com").ConfigureAwait(false);
-
-            //////////////////////////////////////
-            // Assert
-            //////////////////////////////////////
-
-            Assert.AreEqual(1, histogram.WithLabels("GET", "www.google.com").Count);
-            Assert.IsTrue(histogram.WithLabels("GET", "www.google.com").Sum > 0);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.IsTrue(handler._metric.WithLabels("GET", "www.google.com").Sum > 0);
         }
     }
 }

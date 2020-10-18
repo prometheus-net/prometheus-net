@@ -4,26 +4,14 @@ using System.Threading.Tasks;
 
 namespace Prometheus.HttpClientMetrics
 {
-    public sealed class
-        HttpClientInProgressHandler : HttpClientDelegatingHandlerBase<ICollector<IGauge>, IGauge>
+    internal sealed class HttpClientInProgressHandler : HttpClientDelegatingHandlerBase<ICollector<IGauge>, IGauge>
     {
         public HttpClientInProgressHandler(HttpClientInProgressOptions? options)
             : base(options, options?.Gauge)
         {
         }
 
-
-        public HttpClientInProgressHandler(HttpMessageHandler innerHandler,HttpClientInProgressOptions? options)
-            : base(innerHandler, options, options?.Gauge)
-        {
-            
-        }
-
-
-
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             using (CreateChild(request).TrackInProgress())
             {
@@ -31,15 +19,12 @@ namespace Prometheus.HttpClientMetrics
             }
         }
 
-        protected override ICollector<IGauge> CreateMetricInstance(string[] labelNames)
-        {
-            return MetricFactory.CreateGauge(
-                                             "httpclient_requests_in_progress",
-                                             "The number of requests currently in progress in the HttpClient pipeline.",
-                                             new GaugeConfiguration
-                                             {
-                                                 LabelNames = labelNames
-                                             });
-        }
+        protected override ICollector<IGauge> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateGauge(
+            "httpclient_requests_in_progress",
+            "Number of requests currently being executed by an HttpClient.",
+            new GaugeConfiguration
+            {
+                LabelNames = labelNames
+            });
     }
 }

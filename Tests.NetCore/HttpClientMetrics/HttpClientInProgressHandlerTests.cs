@@ -1,11 +1,10 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Prometheus.HttpClientMetrics;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus;
-using Prometheus.HttpClientMetrics;
 
-namespace Tests.Prometheus.HttpClientMetrics
+namespace Prometheus.Tests.HttpClientMetrics
 {
     [TestClass]
     public class HttpClientInProgressHandlerTests
@@ -13,61 +12,36 @@ namespace Tests.Prometheus.HttpClientMetrics
         [TestMethod]
         public async Task when_i_request_a_uri_should_inc_inprogress_metric_and_dec_after_that()
         {
-            //////////////////////////////////////
-            // Arrange
-            //////////////////////////////////////
+            var registry = Metrics.NewCustomRegistry();
 
-            var gauge = Metrics.CreateGauge(
-                                            "httpclient_requests_in_progress",
-                                            "The number of requests currently in progress in the HttpClient pipeline.",
-                                            new GaugeConfiguration
-                                            {
-                                                LabelNames = HttpClientRequestLabelNames.All
-                                            });
+            var options = new HttpClientInProgressOptions
+            {
+                Registry = registry
+            };
 
+            var handler = new HttpClientInProgressHandler(options);
 
-            var captureGaugeValueHttpHandler = new CaptureGaugeValueHttpHandler();
-            captureGaugeValueHttpHandler.Gauge = gauge;
+            var gaugeInspectionHandler = new CaptureGaugeValueHttpHandler();
+            gaugeInspectionHandler.Gauge = (Gauge)handler._metric;
 
+            handler.InnerHandler = gaugeInspectionHandler;
 
-            var options = new HttpClientInProgressOptions();
-            options.Gauge = gauge;
+            // As we are not using the HttpClientProvider for constructing our pipeline, we need to do this manually.
+            gaugeInspectionHandler.InnerHandler = new HttpClientHandler();
 
-            var httpClientInProgressHandler =
-                new HttpClientInProgressHandler(captureGaugeValueHttpHandler, options);
+            var client = new HttpClient(handler);
+            await client.GetAsync("http://www.google.com");
 
-
-            var httpClient = new System.Net.Http.HttpClient(httpClientInProgressHandler);
-
-
-            //////////////////////////////////////
-            // Act
-            //////////////////////////////////////
-
-            await httpClient.GetAsync("http://www.google.com").ConfigureAwait(false);
-
-            //////////////////////////////////////
-            // Assert
-            //////////////////////////////////////
-
-
-            Assert.AreEqual(1, captureGaugeValueHttpHandler.CapturedValue);
-            Assert.AreEqual(0, gauge.Value);
+            Assert.AreEqual(1, gaugeInspectionHandler.CapturedValue);
+            Assert.AreEqual(0, ((Gauge)handler._metric).Value);
         }
 
-        internal class CaptureGaugeValueHttpHandler : DelegatingHandler
+        private sealed class CaptureGaugeValueHttpHandler : DelegatingHandler
         {
-            public CaptureGaugeValueHttpHandler()
-            {
-                InnerHandler = new HttpClientHandler();
-            }
-
             public Gauge Gauge { get; set; }
             public double CapturedValue { get; set; }
 
-
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-                                                                   CancellationToken cancellationToken)
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 CapturedValue = Gauge.WithLabels("GET", "www.google.com").Value;
                 return base.SendAsync(request, cancellationToken);

@@ -1,9 +1,7 @@
-using System.Collections.Generic;
-
 namespace Prometheus.HttpClientMetrics
 {
     /// <summary>
-    ///     Label names reserved for the use by the HttpClient metrics.
+    /// Label names reserved for the use by the HttpClient metrics.
     /// </summary>
     public static class HttpClientRequestLabelNames
     {
@@ -15,17 +13,5 @@ namespace Prometheus.HttpClientMetrics
             Method,
             Host
         };
-
-        public static IDictionary<string, string> AsParameterMap()
-        {
-            var map = new Dictionary<string, string>(All.Length);
-
-            foreach (var item in All)
-            {
-                map[item] = item;
-            }
-
-            return map;
-        }
     }
 }

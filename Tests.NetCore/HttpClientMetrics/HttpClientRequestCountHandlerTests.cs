@@ -9,43 +9,24 @@ namespace Prometheus.Tests.HttpClientMetrics
     public class HttpClientRequestCountHandlerTests
     {
         [TestMethod]
-        public async Task when_request_a_url_should_inc_request_count()
+        public async Task OnRequest_IncrementRequestCount()
         {
-            //////////////////////////////////////
-            // Arrange
-            //////////////////////////////////////
-
-            var counter = Metrics.CreateCounter(
-                                                "httpclient_requests_received_total",
-                                                "Provides the count of HttpClient requests that have been called by the client.",
-                                                new CounterConfiguration
-                                                {
-                                                    LabelNames = HttpClientRequestLabelNames.All
-                                                });
-
+            var registry = Metrics.NewCustomRegistry();
 
             var options = new HttpClientRequestCountOptions
             {
-                Counter = counter
+                Registry = registry
             };
 
-            var httpClientRequestCountHandler =
-                new HttpClientRequestCountHandler(new HttpClientHandler(), options);
+            var handler = new HttpClientRequestCountHandler(options);
 
+            // As we are not using the HttpClientProvider for constructing our pipeline, we need to do this manually.
+            handler.InnerHandler = new HttpClientHandler();
 
-            var httpClient = new HttpClient(httpClientRequestCountHandler);
+            var client = new HttpClient(handler);
+            await client.GetAsync("http://www.google.com");
 
-            //////////////////////////////////////
-            // Act
-            //////////////////////////////////////
-
-            await httpClient.GetAsync("http://www.google.com").ConfigureAwait(false);
-
-            //////////////////////////////////////
-            // Assert
-            //////////////////////////////////////
-
-            Assert.AreEqual(1, counter.WithLabels("GET", "www.google.com").Value);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com").Value);
         }
     }
 }

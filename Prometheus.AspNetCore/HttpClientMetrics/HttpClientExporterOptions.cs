@@ -1,6 +1,6 @@
 namespace Prometheus.HttpClientMetrics
 {
-    public sealed class HttpClientHandlerExporterOptions
+    public sealed class HttpClientExporterOptions
     {
         public HttpClientInProgressOptions InProgress { get; set; } = new HttpClientInProgressOptions();
         public HttpClientRequestCountOptions RequestCount { get; set; } = new HttpClientRequestCountOptions();
