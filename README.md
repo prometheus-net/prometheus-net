@@ -45,6 +45,7 @@ Related projects:
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
 * [ASP.NET Core gRPC request metrics](#aspnet-core-grpc-request-metrics)
+* [ASP.NET Core IHttpClientFactory metrics](#aspnet-core-ihttpclientfactory-metrics)
 * [ASP.NET Core health check status metrics](#aspnet-core-health-check-status-metrics)
 * [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
 * [ASP.NET Web API exporter](#aspnet-web-api-exporter)
@@ -424,6 +425,24 @@ public void Configure(IApplicationBuilder app, ...)
 
 The gRPC functionality is delivered in the `prometheus-net.AspNetCore.Grpc` NuGet package.
 
+# ASP.NET Core IHttpClientFactory metrics
+
+This library allows you to expose metrics about HttpClient instances created using [IHttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests).
+
+Example `Startup.cs`:
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    // ...
+
+    services.AddHttpClient()
+        .UseHttpClientMetrics();
+
+    // ...
+}
+```
+
 # ASP.NET Core health check status metrics
 
 You can expose the current status of [ASP.NET Core health checks](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) as Prometheus metrics by extending your `IHealthChecksBuilder` in the `Startup.ConfigureServices()` method:
@@ -434,10 +453,10 @@ public void ConfigureServices(IServiceCollection services, ...)
     // ...
 
     services.AddHealthChecks()
-             // ...
-             <Your Health Checks>
-             // ...
-             .ForwardToPrometheus();
+        // ...
+        <Your Health Checks>
+        // ...
+        .ForwardToPrometheus();
 
     // ...
 }
