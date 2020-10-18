@@ -396,8 +396,8 @@ The `action` and `controller` route parameters are captured by default. You can 
 ```csharp
 app.UseHttpMetrics(options =>
 {
-    options.AddRouteParameter("foo");
-    options.AddRouteParameter("bar");
+    // This identifies the page when using Razor Pages.
+    options.AddRouteParameter("page");
 });
 ```
 
