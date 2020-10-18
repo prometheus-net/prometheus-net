@@ -23,6 +23,10 @@
       <group targetFramework="netcoreapp3.1">
         <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
       </group>
+
+      <group>
+        <dependency id="Microsoft.Extensions.Http" version="3.1.9" />
+      </group>
     </dependencies>
   </metadata>
   <files>
