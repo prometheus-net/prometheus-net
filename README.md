@@ -128,7 +128,7 @@ class Program
 }
 ```
 
-**NB!** Keep in mind that if you want to expose the metrics server outside of the local network you need to set the `hostname` to `*`.
+**NB!** The quick start example only exposes metrics on the `http://localhost` URL. To access the metrics endpoint from other systems you need to remove the `hostname` argument and, on Windows, configure HTTP listener permissions. For more information, see [Publishing via standalone HTTP handler](#publishing-via-standalone-http-handler) for configuration instructions or consider using [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware) which requires no extra configuration.
 
 # Counters
 
