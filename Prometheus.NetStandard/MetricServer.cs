@@ -43,7 +43,7 @@ namespace Prometheus
                         getContext.Wait(cancel);
                         var context = getContext.Result;
 
-                        // Kick the request off to a background thread for processing.
+                        // Asynchronously process the request.
                         _ = Task.Factory.StartNew(async delegate
                           {
                               var request = context.Request;
@@ -99,7 +99,7 @@ namespace Prometheus
                               {
                                   response.Close();
                               }
-                          }, TaskCreationOptions.LongRunning);
+                          });
 
                     }
                 }
