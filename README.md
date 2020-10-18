@@ -429,7 +429,13 @@ The gRPC functionality is delivered in the `prometheus-net.AspNetCore.Grpc` NuGe
 
 This library allows you to expose metrics about HttpClient instances created using [IHttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests).
 
-Example `Startup.cs`:
+The exposed metrics include:
+
+* Number of HTTP requests in progress.
+* Total number of started HTTP requests.
+* Duration of HTTP requests.
+
+Example `Startup.cs` modification to enable these metrics:
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
