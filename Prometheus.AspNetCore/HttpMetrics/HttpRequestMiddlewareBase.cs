@@ -10,17 +10,17 @@ namespace Prometheus.HttpMetrics
     /// <summary>
     /// This base class performs the data management necessary to associate the correct labels and values
     /// with HTTP request metrics, depending on the options the user has provided for the HTTP metric middleware.
-    /// 
+    ///
     /// The following labels are supported:
     /// 'code' (HTTP status code)
     /// 'method' (HTTP request method)
     /// 'controller' (The Controller used to fulfill the HTTP request)
     /// 'action' (The Action used to fulfill the HTTP request)
     /// Any other label - custom HTTP route parameter (if specified in options).
-    /// 
+    ///
     /// The 'code' and 'method' data are taken from the current HTTP context.
     /// Other labels will be taken from the request routing information.
-    /// 
+    ///
     /// If a custom metric is provided in the options, it must not be missing any labels for explicitly defined
     /// custom route parameters. However, it is permitted to lack any of the default labels (code/method/...).
     /// </summary>
@@ -30,7 +30,7 @@ namespace Prometheus.HttpMetrics
     {
         /// <summary>
         /// The set of labels from among the defaults that this metric supports.
-        /// 
+        ///
         /// This set will be automatically extended with labels for additional
         /// route parameters when creating the default metric instance.
         /// </summary>
@@ -117,6 +117,9 @@ namespace Prometheus.HttpMetrics
                     case HttpRequestLabelNames.Code:
                         labelValues[i] = context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
                         break;
+                    case HttpRequestLabelNames.IsCrawler:
+                        labelValues[i] = context.Request.IsCrawlerRequest().ToString();
+                        break;
                     default:
                         // We validate the label set on initialization, so it must be a route parameter if we get to this point.
                         var parameterName = _labelToRouteParameterMap[_metric.LabelNames[i]];
@@ -128,10 +131,9 @@ namespace Prometheus.HttpMetrics
             return _metric.WithLabels(labelValues);
         }
 
-
         /// <summary>
         /// Creates the full set of labels supported for the current metric.
-        /// 
+        ///
         /// This merges (in unspecified order) the defaults from prometheus-net with any in options.AdditionalRouteParameters.
         /// </summary>
         private string[] CreateDefaultLabelSet()

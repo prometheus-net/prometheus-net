@@ -7,11 +7,13 @@ namespace Prometheus.HttpClientMetrics
     {
         public const string Method = "method";
         public const string Host = "host";
+        public const string IsCrawler = "isCrawler";
 
         public static readonly string[] All =
         {
             Method,
-            Host
+            Host,
+            IsCrawler
         };
     }
 }

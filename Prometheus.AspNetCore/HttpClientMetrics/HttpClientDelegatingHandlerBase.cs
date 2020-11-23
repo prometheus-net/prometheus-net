@@ -7,7 +7,7 @@ namespace Prometheus.HttpClientMetrics
     /// <summary>
     /// This base class performs the data management necessary to associate the correct labels and values
     /// with HttpClient metrics, depending on the options the user has provided for the HttpClient metric handler.
-    /// 
+    ///
     /// The following labels are supported:
     /// 'method' (HTTP request method)
     /// 'host' (The host name of  HTTP request)
@@ -69,6 +69,9 @@ namespace Prometheus.HttpClientMetrics
                         break;
                     case HttpClientRequestLabelNames.Host:
                         labelValues[i] = request.RequestUri.Host;
+                        break;
+                    case HttpClientRequestLabelNames.IsCrawler:
+                        labelValues[i] = request.IsCrawlerRequest().ToString();
                         break;
                     default:
                         // We validate the label set on initialization, so this is impossible.
