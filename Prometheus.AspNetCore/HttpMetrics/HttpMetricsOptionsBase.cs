@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace Prometheus.HttpMetrics
 {
@@ -15,6 +17,12 @@ namespace Prometheus.HttpMetrics
         /// own metric instance in the options (in which case you must add the required labels).
         /// </remarks>
         public List<HttpRouteParameterMapping> AdditionalRouteParameters { get; set; } = new List<HttpRouteParameterMapping>();
+
+        /// <summary>
+        /// Allows you to add custom labels to http metrics.
+        /// </summary>
+        public IDictionary<string, Func<HttpContext, string>> AdditionalLabels { get; set; } =
+            new Dictionary<string, Func<HttpContext, string>>();
 
         /// <summary>
         /// Allows you to override the registry used to create the default metric instance.

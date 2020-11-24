@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.HttpMetrics;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -38,7 +38,7 @@ namespace Prometheus.Tests.HttpExporter
         [TestMethod]
         public void DefaultMetric_AppliesStandardLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            HttpExporterTestDataProvider.SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -59,7 +59,7 @@ namespace Prometheus.Tests.HttpExporter
         [TestMethod]
         public void CustomMetric_WithNoLabels_AppliesNoLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            HttpExporterTestDataProvider.SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -73,7 +73,7 @@ namespace Prometheus.Tests.HttpExporter
         [TestMethod]
         public void CustomMetric_WithStandardLabels_AppliesStandardLabels()
         {
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+            HttpExporterTestDataProvider.SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -98,8 +98,8 @@ namespace Prometheus.Tests.HttpExporter
             // foo = 123
             // bar = (missing)
             // method = excellent // remapped to route_method
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController,
-                new[]
+            HttpExporterTestDataProvider.SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController,
+                routeParameters: new[]
                 {
                     ("foo", "123"),
                     ("method", "excellent")
@@ -139,8 +139,8 @@ namespace Prometheus.Tests.HttpExporter
             // foo = 123
             // bar = (missing)
             // method = excellent // remapped to route_method
-            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController,
-                new[]
+            HttpExporterTestDataProvider.SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController,
+                routeParameters: new[]
                 {
                     ("foo", "123"),
                     ("method", "excellent")
@@ -249,33 +249,6 @@ namespace Prometheus.Tests.HttpExporter
                     }
                 });
             });
-        }
-
-        private static void SetupHttpContext(DefaultHttpContext context, int statusCode, string httpMethod, string action, string controller, (string name, string value)[] routeParameters = null)
-        {
-            context.Response.StatusCode = statusCode;
-            context.Request.Method = httpMethod;
-
-            var routing = new FakeRoutingFeature
-            {
-                RouteData = new RouteData
-                {
-                    Values = { { "Action", action }, { "Controller", controller } }
-                }
-            };
-
-            if (routeParameters != null)
-            {
-                foreach (var parameter in routeParameters)
-                    routing.RouteData.Values[parameter.name] = parameter.value;
-            }
-
-            context.Features[typeof(IRoutingFeature)] = routing;
-        }
-
-        internal class FakeRoutingFeature : IRoutingFeature
-        {
-            public RouteData RouteData { get; set; }
         }
     }
 }

@@ -10,17 +10,17 @@ namespace Prometheus.HttpMetrics
     /// <summary>
     /// This base class performs the data management necessary to associate the correct labels and values
     /// with HTTP request metrics, depending on the options the user has provided for the HTTP metric middleware.
-    /// 
+    ///
     /// The following labels are supported:
     /// 'code' (HTTP status code)
     /// 'method' (HTTP request method)
     /// 'controller' (The Controller used to fulfill the HTTP request)
     /// 'action' (The Action used to fulfill the HTTP request)
     /// Any other label - custom HTTP route parameter (if specified in options).
-    /// 
+    ///
     /// The 'code' and 'method' data are taken from the current HTTP context.
     /// Other labels will be taken from the request routing information.
-    /// 
+    ///
     /// If a custom metric is provided in the options, it must not be missing any labels for explicitly defined
     /// custom route parameters. However, it is permitted to lack any of the default labels (code/method/...).
     /// </summary>
@@ -30,7 +30,7 @@ namespace Prometheus.HttpMetrics
     {
         /// <summary>
         /// The set of labels from among the defaults that this metric supports.
-        /// 
+        ///
         /// This set will be automatically extended with labels for additional
         /// route parameters when creating the default metric instance.
         /// </summary>
@@ -49,6 +49,8 @@ namespace Prometheus.HttpMetrics
         protected MetricFactory MetricFactory { get; }
 
         private readonly ICollection<HttpRouteParameterMapping> _additionalRouteParameters;
+        private readonly IDictionary<string, Func<HttpContext, string>> _additionalLabels;
+
         private readonly TCollector _metric;
 
         private readonly Dictionary<string, string> _labelToRouteParameterMap;
@@ -60,6 +62,7 @@ namespace Prometheus.HttpMetrics
             MetricFactory = Metrics.WithCustomRegistry(options?.Registry ?? Metrics.DefaultRegistry);
 
             _additionalRouteParameters = options?.AdditionalRouteParameters ?? new List<HttpRouteParameterMapping>(0);
+            _additionalLabels = options?.AdditionalLabels ?? new Dictionary<string, Func<HttpContext, string>>(0);
 
             ValidateAdditionalRouteParameterSet();
             _labelToRouteParameterMap = CreateLabelToRouteParameterMap();
@@ -105,39 +108,39 @@ namespace Prometheus.HttpMetrics
 
         protected TChild CreateChild(HttpContext context, RouteValueDictionary? routeData)
         {
-            var labelValues = new string[_metric.LabelNames.Length];
+            return _metric.WithLabels(_metric.LabelNames.Select(GetLabelValue).ToArray());
 
-            for (var i = 0; i < labelValues.Length; i++)
+            string GetLabelValue(string labelName)
             {
-                switch (_metric.LabelNames[i])
-                {
-                    case HttpRequestLabelNames.Method:
-                        labelValues[i] = context.Request.Method;
-                        break;
-                    case HttpRequestLabelNames.Code:
-                        labelValues[i] = context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
-                        break;
-                    default:
-                        // We validate the label set on initialization, so it must be a route parameter if we get to this point.
-                        var parameterName = _labelToRouteParameterMap[_metric.LabelNames[i]];
-                        labelValues[i] = routeData?[parameterName] as string ?? string.Empty;
-                        break;
-                }
+                if (labelName.Equals(HttpRequestLabelNames.Method))
+                    return context.Request.Method;
+
+                if (labelName.Equals(HttpRequestLabelNames.Code))
+                    return context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
+
+                if (_additionalLabels.ContainsKey(labelName))
+                    return _additionalLabels[labelName](context);
+
+                // We validate the label set on initialization, so it must be a route parameter if we get to this point.
+                var parameterName = _labelToRouteParameterMap[labelName];
+
+                if (routeData?.ContainsKey(parameterName) ?? false)
+                    return routeData?[parameterName] as string ?? string.Empty;
+
+                return string.Empty;
             }
-
-            return _metric.WithLabels(labelValues);
         }
-
 
         /// <summary>
         /// Creates the full set of labels supported for the current metric.
-        /// 
+        ///
         /// This merges (in unspecified order) the defaults from prometheus-net with any in options.AdditionalRouteParameters.
         /// </summary>
-        private string[] CreateDefaultLabelSet()
-        {
-            return DefaultLabels.Concat(_additionalRouteParameters.Select(x => x.LabelName)).ToArray();
-        }
+        private string[] CreateDefaultLabelSet() =>
+            DefaultLabels
+                .Concat(_additionalRouteParameters.Select(x => x.LabelName))
+                .Concat(_additionalLabels.Select(x => x.Key))
+                .ToArray();
 
         private void ValidateAdditionalRouteParameterSet()
         {
