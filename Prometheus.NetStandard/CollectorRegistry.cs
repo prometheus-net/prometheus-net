@@ -17,7 +17,7 @@ namespace Prometheus
     /// To encourage good concurrency practices, registries are append-only. You can add things to them but not remove.
     /// If you wish to remove things from the registry, create a new registry with only the things you wish to keep.
     /// </remarks>
-    public sealed class CollectorRegistry
+    public sealed class CollectorRegistry : ICollectorRegistry
     {
         #region "Before collect" callbacks
         /// <summary>

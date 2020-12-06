@@ -6,7 +6,7 @@ namespace Prometheus
     /// <summary>
     /// Adds metrics to a registry.
     /// </summary>
-    public sealed class MetricFactory
+    public sealed class MetricFactory : IMetricFactory
     {
         private readonly CollectorRegistry _registry;
 
