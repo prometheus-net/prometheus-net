@@ -1,3 +1,6 @@
+- Fixed HttpClient metrics duration that was incorrectly measured. #265
+- prometheus-net.NetFramework.AspNet is now strong named, just like all the other assemblies. #273
+- NetFx target is now conditional for Windows builds only, to allow easier development work on nonwindows platforms. #264
 * 4.0.0
 - Allow arbitrary ASP.NET Core route parameters to be exposed as HTTP metric labels. #225
 - Breaking change: some HTTP metrics implementation classes were changed from public to internal. They were never supposed to be public and hopefully nobody ever used them directly. Public documented API did not change.
