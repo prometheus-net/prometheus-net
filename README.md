@@ -309,8 +309,8 @@ NB! Best practices of metric design is to **minimize the number of different lab
 
 You can add static labels that always have fixed values. This is possible on two levels:
 
-* to the metrics registry (e.g. `Metrics.DefaultRegsitry`)
-* to one specific metric
+* on the metrics registry (e.g. `Metrics.DefaultRegistry`)
+* on one specific metric
 
 Both modes can be combined and instance-specific metric labels are also applied, as usual.
 
