@@ -41,6 +41,7 @@ Related projects:
 * [Tracking in-progress operations](#tracking-in-progress-operations)
 * [Counting exceptions](#counting-exceptions)
 * [Labels](#labels)
+* [Static labels](#static-labels)
 * [When are metrics published?](#when-are-metrics-published)
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
@@ -303,6 +304,40 @@ NB! Best practices of metric design is to **minimize the number of different lab
 
 * HTTP request method is a good choice for labeling - there are not many values.
 * URL is a bad choice for labeling - it has many possible values and would lead to significant data processing inefficiency.
+
+# Static labels
+
+You can add static labels that always have fixed values. This is possible on two levels:
+
+* to the metrics registry (e.g. `Metrics.DefaultRegsitry`)
+* to one specific metric
+
+Both modes can be combined and instance-specific metric labels are also applied, as usual.
+
+Example with static labels on two levels and one instance-specific label:
+
+```csharp
+Metrics.DefaultRegistry.SetStaticLabels(new Dictionary<string, string>
+{
+  // Labels applied to all metrics in the registry.
+  { "environment", "testing" }
+});
+
+var requestsHandled = Metrics.CreateCounter("myapp_requests_handled_total", "Count of requests handled, labelled by response code.",
+  new CounterConfiguration
+  {
+    // Labels applied to all instances of myapp_requests_handled_total.
+    StaticLabels = new Dictionary<string, string>
+    {
+      { "is_pci_compliant_environment", AppSettings.IsPciCompliant.ToString() }
+    },
+    LabelNames = new[] { "response_code" }
+  });
+
+// Labels applied to individual instances of the metric.
+requestsHandled.WithLabels("404").Inc();
+requestsHandled.WithLabels("200").Inc();
+```
 
 # When are metrics published?
 

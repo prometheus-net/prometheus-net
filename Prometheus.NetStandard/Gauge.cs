@@ -7,8 +7,8 @@ namespace Prometheus
     {
         public sealed class Child : ChildBase, IGauge
         {
-            internal Child(Collector parent, Labels labels, bool publish)
-                : base(parent, labels, publish)
+            internal Child(Collector parent, Labels labels, Labels flattenedLabels, bool publish)
+                : base(parent, labels, flattenedLabels, publish)
             {
                 _identifier = CreateIdentifier();
             }
@@ -54,13 +54,13 @@ namespace Prometheus
             public double Value => _value.Value;
         }
 
-        private protected override Child NewChild(Labels labels, bool publish)
+        private protected override Child NewChild(Labels labels, Labels flattenedLabels, bool publish)
         {
-            return new Child(this, labels, publish);
+            return new Child(this, labels, flattenedLabels, publish);
         }
 
-        internal Gauge(string name, string help, string[]? labelNames, bool suppressInitialValue)
-            : base(name, help, labelNames, suppressInitialValue)
+        internal Gauge(string name, string help, string[]? labelNames, Labels staticLabels, bool suppressInitialValue)
+            : base(name, help, labelNames, staticLabels, suppressInitialValue)
         {
         }
 

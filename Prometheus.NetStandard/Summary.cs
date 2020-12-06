@@ -40,12 +40,13 @@ namespace Prometheus
             string name,
             string help,
             string[]? labelNames,
+            Labels staticLabels,
             bool suppressInitialValue = false,
             IReadOnlyList<QuantileEpsilonPair>? objectives = null,
             TimeSpan? maxAge = null,
             int? ageBuckets = null,
             int? bufCap = null)
-            : base(name, help, labelNames, suppressInitialValue)
+            : base(name, help, labelNames, staticLabels, suppressInitialValue)
         {
             _objectives = objectives ?? DefObjectivesArray;
             _maxAge = maxAge ?? DefMaxAge;
@@ -68,17 +69,17 @@ namespace Prometheus
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
-        private protected override Child NewChild(Labels labels, bool publish)
+        private protected override Child NewChild(Labels labels, Labels flattenedLabels, bool publish)
         {
-            return new Child(this, labels, publish);
+            return new Child(this, labels, flattenedLabels, publish);
         }
 
         private protected override MetricType Type => MetricType.Summary;
 
         public sealed class Child : ChildBase, ISummary
         {
-            internal Child(Summary parent, Labels labels, bool publish)
-                : base(parent, labels, publish)
+            internal Child(Summary parent, Labels labels, Labels flattenedLabels, bool publish)
+                : base(parent, labels, flattenedLabels, publish)
             {
                 _objectives = parent._objectives;
                 _maxAge = parent._maxAge;

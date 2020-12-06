@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -18,6 +19,7 @@ namespace Prometheus
     /// </remarks>
     public sealed class CollectorRegistry
     {
+        #region "Before collect" callbacks
         /// <summary>
         /// Registers an action to be called before metrics are collected.
         /// This enables you to do last-minute updates to metric values very near the time of collection.
@@ -59,6 +61,86 @@ namespace Prometheus
             _beforeCollectAsyncCallbacks.Add(callback);
         }
 
+        private readonly ConcurrentBag<Action> _beforeCollectCallbacks = new ConcurrentBag<Action>();
+        private readonly ConcurrentBag<Func<CancellationToken, Task>> _beforeCollectAsyncCallbacks = new ConcurrentBag<Func<CancellationToken, Task>>();
+        #endregion
+
+        #region Static labels
+        /// <summary>
+        /// The set of static labels that are applied to all metrics in this registry.
+        /// Enumeration of the returned collection is thread-safe.
+        /// </summary>
+        public IEnumerable<KeyValuePair<string, string>> StaticLabels => _staticLabels;
+
+        /// <summary>
+        /// Defines the set of static labels to apply to all metrics in this registry.
+        /// The static labels can only be set once on startup, before adding or publishing any metrics.
+        /// </summary>
+        public void SetStaticLabels(Dictionary<string, string> labels)
+        {
+            if (labels == null)
+                throw new ArgumentNullException(nameof(labels));
+
+            // Read lock is taken when creating metrics, so we know that no metrics can be created while we hold this lock.
+            _staticLabelsLock.EnterWriteLock();
+
+            try
+            {
+                if (_staticLabels.Length != 0)
+                    throw new InvalidOperationException("Static labels have already been defined - you can only do it once per registry.");
+
+                if (_collectors.Count != 0)
+                    throw new InvalidOperationException("Metrics have already been added to the registry - cannot define static labels anymore.");
+
+                // Keep the lock for the duration of this method to make sure no publishing happens while we are setting labels.
+                lock (_firstCollectLock)
+                {
+                    if (_hasPerformedFirstCollect)
+                        throw new InvalidOperationException("The metrics registry has already been published - cannot define static labels anymore.");
+
+                    foreach (var pair in labels)
+                    {
+                        if (pair.Key == null)
+                            throw new ArgumentException("The name of a label cannot be null.");
+
+                        if (pair.Value == null)
+                            throw new ArgumentException("The value of a label cannot be null.");
+
+                        Collector.ValidateLabelName(pair.Key);
+                    }
+
+                    _staticLabels = labels.ToArray();
+                }
+            }
+            finally
+            {
+                _staticLabelsLock.ExitWriteLock();
+            }
+        }
+
+        private KeyValuePair<string, string>[] _staticLabels = new KeyValuePair<string, string>[0];
+        private readonly ReaderWriterLockSlim _staticLabelsLock = new ReaderWriterLockSlim();
+
+        /// <summary>
+        /// Executes an action while holding a read lock on the set of static labels (provided as parameter).
+        /// </summary>
+        internal TReturn WhileReadingStaticLabels<TReturn>(Func<Labels, TReturn> action)
+        {
+            _staticLabelsLock.EnterReadLock();
+
+            try
+            {
+                var labels = new Labels(_staticLabels.Select(item => item.Key).ToArray(), _staticLabels.Select(item => item.Value).ToArray());
+
+                return action(labels);
+            }
+            finally
+            {
+                _staticLabelsLock.ExitReadLock();
+            }
+        }
+        #endregion
+
         /// <summary>
         /// Collects all metrics and exports them in text document format to the provided stream.
         /// 
@@ -72,8 +154,6 @@ namespace Prometheus
             return CollectAndSerializeAsync(new TextSerializer(to), cancel);
         }
 
-        private readonly ConcurrentBag<Action> _beforeCollectCallbacks = new ConcurrentBag<Action>();
-        private readonly ConcurrentBag<Func<CancellationToken, Task>> _beforeCollectAsyncCallbacks = new ConcurrentBag<Func<CancellationToken, Task>>();
 
         // We pass this thing to GetOrAdd to avoid allocating a collector or a closure.
         // This reduces memory usage in situations where the collector is already registered.

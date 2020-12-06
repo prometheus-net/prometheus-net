@@ -35,6 +35,7 @@
     <Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
     <Compile Include="..\Tests.NetFramework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
     <Compile Include="..\Tests.NetFramework\RandomExtensions.cs" Link="RandomExtensions.cs" />
+    <Compile Include="..\Tests.NetFramework\StaticLabelTests.cs" Link="StaticLabelTests.cs" />
     <Compile Include="..\Tests.NetFramework\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
     <Compile Include="..\Tests.NetFramework\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
   </ItemGroup>

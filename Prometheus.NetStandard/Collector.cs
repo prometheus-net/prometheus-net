@@ -25,7 +25,7 @@ namespace Prometheus
         public string Help { get; }
 
         /// <summary>
-        /// Names of the labels (name-value pairs) that apply to this metric.
+        /// Names of the instance-specific labels (name-value pairs) that apply to this metric.
         /// When the values are added to the names, you get a <see cref="ChildBase"/> instance.
         /// </summary>
         public string[] LabelNames { get; }
@@ -119,7 +119,8 @@ namespace Prometheus
         }
 
         /// <summary>
-        /// Gets the label values of all labelled instances of the collector.
+        /// Gets the instance-specific label values of all labelled instances of the collector.
+        /// Values of any inherited static labels are not returned in the result.
         /// 
         /// Note that during concurrent operation, the set of values returned here
         /// may diverge from the latest set of values used by the collector.
@@ -136,9 +137,14 @@ namespace Prometheus
             }
         }
 
+        /// <summary>
+        /// Set of static labels obtained from any hierarchy level (either defined in metric configuration or in registry).
+        /// </summary>
+        private readonly Labels _staticLabels;
+
         private TChild GetOrAddLabelled(Labels key)
         {
-            return _labelledMetrics.GetOrAdd(key, k => NewChild(k, publish: !_suppressInitialValue));
+            return _labelledMetrics.GetOrAdd(key, k => NewChild(k, k.Concat(_staticLabels), publish: !_suppressInitialValue));
         }
 
         /// <summary>
@@ -146,11 +152,17 @@ namespace Prometheus
         /// </summary>
         internal Labels[] GetAllLabels() => _labelledMetrics.Select(p => p.Key).ToArray();
 
-        protected Collector(string name, string help, string[]? labelNames, bool suppressInitialValue)
+        internal Collector(string name, string help, string[]? labelNames, Labels staticLabels, bool suppressInitialValue)
             : base(name, help, labelNames)
         {
+            _staticLabels = staticLabels;
             _suppressInitialValue = suppressInitialValue;
             _unlabelledLazy = new Lazy<TChild>(() => GetOrAddLabelled(Prometheus.Labels.Empty));
+
+            // Check for label name collisions.
+            var allLabelNames = (labelNames ?? new string[0]).Concat(staticLabels.Names).ToList();
+            if (allLabelNames.Count() != allLabelNames.Distinct(StringComparer.Ordinal).Count())
+                throw new InvalidOperationException("The set of label names includes duplicates: " + string.Join(", ", allLabelNames));
 
             _familyHeaderLines = new byte[][]
             {
@@ -162,7 +174,7 @@ namespace Prometheus
         /// <summary>
         /// Creates a new instance of the child collector type.
         /// </summary>
-        private protected abstract TChild NewChild(Labels labels, bool publish);
+        private protected abstract TChild NewChild(Labels labels, Labels flattenedLabels, bool publish);
 
         private protected abstract MetricType Type { get; }
 

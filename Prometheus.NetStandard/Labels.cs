@@ -45,8 +45,18 @@ namespace Prometheus
 
         public Labels Concat(params (string, string)[] more)
         {
-            var allNames = Names.Concat(more.Select(m => m.Item1)).ToArray();
-            var allValues = Values.Concat(more.Select(m => m.Item2)).ToArray();
+            var moreLabels = new Labels(more.Select(pair => pair.Item1).ToArray(), more.Select(pair => pair.Item2).ToArray());
+
+            return Concat(moreLabels);
+        }
+
+        public Labels Concat(Labels more)
+        {
+            var allNames = Names.Concat(more.Names).ToArray();
+            var allValues = Values.Concat(more.Values).ToArray();
+
+            if (allNames.Length != allNames.Distinct(StringComparer.Ordinal).Count())
+                throw new InvalidOperationException("The metric instance received multiple copies of the same label.");
 
             return new Labels(allNames, allValues);
         }

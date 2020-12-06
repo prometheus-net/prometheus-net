@@ -9,10 +9,11 @@ namespace Prometheus
     /// </summary>
     public abstract class ChildBase : ICollectorChild, IDisposable
     {
-        internal ChildBase(Collector parent, Labels labels, bool publish)
+        internal ChildBase(Collector parent, Labels labels, Labels flattenedLabels, bool publish)
         {
             _parent = parent;
             Labels = labels;
+            FlattenedLabels = flattenedLabels;
             _publish = publish;
         }
 
@@ -52,9 +53,16 @@ namespace Prometheus
         public void Dispose() => Remove();
 
         /// <summary>
+        /// Labels specific to this metric instance, without any inherited static labels.
         /// Internal for testing purposes only.
         /// </summary>
         internal Labels Labels { get; }
+
+        /// <summary>
+        /// All labels that materialize on this metric instance, including inherited static labels.
+        /// Internal for testing purposes only.
+        /// </summary>
+        internal Labels FlattenedLabels { get; }
 
         private readonly Collector _parent;
 
@@ -85,9 +93,9 @@ namespace Prometheus
         {
             var fullName = postfix != null ? $"{_parent.Name}_{postfix}" : _parent.Name;
 
-            var labels = Labels;
+            var labels = FlattenedLabels;
             if (extraLabels?.Length > 0)
-                labels = Labels.Concat(extraLabels);
+                labels = FlattenedLabels.Concat(extraLabels);
 
             if (labels.Count != 0)
                 return PrometheusConstants.ExportEncoding.GetBytes($"{fullName}{{{labels.Serialize()}}}");

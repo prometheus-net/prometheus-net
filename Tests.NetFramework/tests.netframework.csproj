@@ -103,6 +103,7 @@
     <Compile Include="MetricsTests.cs" />
     <Compile Include="QuantileStreamTests.cs" />
     <Compile Include="RandomExtensions.cs" />
+    <Compile Include="StaticLabelTests.cs" />
     <Compile Include="ThreadSafeDoubleTests.cs" />
     <Compile Include="ThreadSafeLongTests.cs" />
   </ItemGroup>
