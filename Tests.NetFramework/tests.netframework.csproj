@@ -99,6 +99,7 @@
     <Compile Include="GaugeExtensionTests.cs" />
     <Compile Include="HistogramTests.cs" />
     <Compile Include="MetricInitializationTests.cs" />
+    <Compile Include="MetricPusherTests.cs" />
     <Compile Include="MetricsTests.cs" />
     <Compile Include="QuantileStreamTests.cs" />
     <Compile Include="RandomExtensions.cs" />

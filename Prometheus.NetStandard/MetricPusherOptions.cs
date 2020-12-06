@@ -16,6 +16,11 @@ namespace Prometheus
         public CollectorRegistry? Registry { get; set; }
 
         /// <summary>
+        /// Callback for when a metric push fails.
+        /// </summary>
+        public Action<Exception>? OnError { get; set; }
+
+        /// <summary>
         /// If null, a singleton HttpClient will be used.
         /// </summary>
         public Func<HttpClient>? HttpClientProvider { get; set; }

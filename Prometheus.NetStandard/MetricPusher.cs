@@ -64,11 +64,14 @@ namespace Prometheus
             }
 
             _pushInterval = TimeSpan.FromMilliseconds(options.IntervalMilliseconds);
+            _onError = options.OnError;
         }
 
         private static readonly MediaTypeHeaderValue ContentTypeHeaderValue = new MediaTypeHeaderValue(PrometheusConstants.ExporterContentTypeMinimal);
 
         private static readonly HttpClient _singletonHttpClient = new HttpClient();
+
+        private readonly Action<Exception>? _onError;
 
         protected override Task StartServer(CancellationToken cancel)
         {
@@ -104,11 +107,12 @@ namespace Prometheus
                     }
                     catch (ScrapeFailedException ex)
                     {
+                        // We do not consider failed scrapes a reportable error since the user code that raises the failure should be the one logging it.
                         Trace.WriteLine($"Skipping metrics push due to failed scrape: {ex.Message}");
                     }
                     catch (Exception ex) when (!(ex is OperationCanceledException))
                     {
-                        Trace.WriteLine(string.Format("Error in MetricPusher: {0}", ex));
+                        HandleFailedPush(ex);
                     }
 
                     // We stop only after pushing metrics, to ensure that the latest state is flushed when told to stop.
@@ -133,6 +137,20 @@ namespace Prometheus
                     }
                 }
             });
+        }
+
+        private void HandleFailedPush(Exception ex)
+        {
+            if (_onError != null)
+            {
+                // Asynchronous because we don't trust the callee to be fast.
+                Task.Run(() => _onError(ex));
+            }
+            else
+            {
+                // If there is no error handler registered, we write to trace to at least hopefully get some attention to the problem.
+                Trace.WriteLine(string.Format("Error in MetricPusher: {0}", ex));
+            }
         }
     }
 }

@@ -31,6 +31,7 @@
     <Compile Include="..\Tests.NetFramework\CounterExtensionTests.cs" Link="CounterExtensionTests.cs" />
     <Compile Include="..\Tests.NetFramework\GaugeExtensionTests.cs" Link="GaugeExtensionTests.cs" />
     <Compile Include="..\Tests.NetFramework\MetricInitializationTests.cs" Link="MetricInitializationTests.cs" />
+    <Compile Include="..\Tests.NetFramework\MetricPusherTests.cs" Link="MetricPusherTests.cs" />
     <Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
     <Compile Include="..\Tests.NetFramework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
     <Compile Include="..\Tests.NetFramework\RandomExtensions.cs" Link="RandomExtensions.cs" />
