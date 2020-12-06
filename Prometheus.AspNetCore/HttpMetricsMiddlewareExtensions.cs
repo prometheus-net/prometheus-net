@@ -31,7 +31,7 @@ namespace Prometheus
         public static IApplicationBuilder UseHttpMetrics(this IApplicationBuilder app,
             HttpMiddlewareExporterOptions? options = null)
         {
-            options = options ?? new HttpMiddlewareExporterOptions();
+            options ??= new HttpMiddlewareExporterOptions();
 
             app.UseMiddleware<CaptureRouteDataMiddleware>();
 

@@ -55,6 +55,21 @@ namespace Prometheus.Tests.HttpExporter
                 TestController
             }, child.Labels.Values);
         }
+        
+        [TestMethod]
+        public void DefaultMetric_IgnoreCondition()
+        {
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                IgnoreCondition = c => true,
+                Registry = _registry
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            Assert.IsNull(child);
+        }
 
         [TestMethod]
         public void CustomMetric_WithNoLabels_AppliesNoLabels()

@@ -1,3 +1,6 @@
+using System;
+using Microsoft.AspNetCore.Http;
+
 namespace Prometheus.HttpMetrics
 {
     public sealed class HttpMiddlewareExporterOptions
@@ -16,6 +19,13 @@ namespace Prometheus.HttpMetrics
             InProgress.AdditionalRouteParameters.Add(mapping);
             RequestCount.AdditionalRouteParameters.Add(mapping);
             RequestDuration.AdditionalRouteParameters.Add(mapping);
+        }
+
+        public void SetIgnoreCondition(Func<HttpContext, bool> ignoreCondition)
+        {
+            InProgress.IgnoreCondition = ignoreCondition;
+            RequestCount.IgnoreCondition = ignoreCondition;
+            RequestDuration.IgnoreCondition = ignoreCondition;
         }
     }
 }

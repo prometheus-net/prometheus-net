@@ -9,9 +9,9 @@ namespace Benchmark.NetCore
             //BenchmarkRunner.Run<MetricCreationBenchmarks>();
             //BenchmarkRunner.Run<SerializationBenchmarks>();
             //BenchmarkRunner.Run<LabelBenchmarks>();
-            //BenchmarkRunner.Run<HttpExporterBenchmarks>();
+            BenchmarkRunner.Run<HttpExporterBenchmarks>();
             //BenchmarkRunner.Run<SummaryBenchmarks>();
-            BenchmarkRunner.Run<MetricPusherBenchmarks>();
+            //BenchmarkRunner.Run<MetricPusherBenchmarks>();
         }
     }
 }

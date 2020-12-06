@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace Prometheus.HttpMetrics
 {
@@ -21,5 +23,7 @@ namespace Prometheus.HttpMetrics
         /// Value is ignored if you specify a custom metric instance in the options.
         /// </summary>
         public CollectorRegistry? Registry { get; set; }
+
+        public Func<HttpContext, bool> IgnoreCondition { get; set; } = ctx => false;
     }
 }

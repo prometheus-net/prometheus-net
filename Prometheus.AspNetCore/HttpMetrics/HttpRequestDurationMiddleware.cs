@@ -30,7 +30,7 @@ namespace Prometheus.HttpMetrics
             {
                 stopWatch.Stop();
 
-                CreateChild(context).Observe(stopWatch.Elapsed.TotalSeconds);
+                CreateChild(context)?.Observe(stopWatch.Elapsed.TotalSeconds);
             }
         }
 
