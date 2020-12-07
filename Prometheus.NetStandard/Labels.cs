@@ -9,8 +9,12 @@ namespace Prometheus
     /// <remarks>
     /// Only the values are considered for equality purposes - the caller must ensure that
     /// LabelValues objects with different sets of names are never compared to each other.
+    /// 
+    /// Always use the explicit constructor when creating an instance. This is a struct in order
+    /// to reduce heap allocations when dealing with labelled metrics, which has the consequence of
+    /// adding a default parameterless constructor. It should not be used.
     /// </remarks>
-    internal sealed class Labels : IEquatable<Labels>
+    internal struct Labels : IEquatable<Labels>
     {
         public static readonly Labels Empty = new Labels(new string[0], new string[0]);
 
@@ -32,8 +36,11 @@ namespace Prometheus
             if (names.Length != values.Length)
                 throw new ArgumentException("The list of label values must have the same number of elements as the list of label names.");
 
-            if (values.Any(lv => lv == null))
-                throw new ArgumentNullException("A label value cannot be null.");
+            foreach (var lv in values)
+            {
+                if (lv == null)
+                    throw new ArgumentNullException("A label value cannot be null.");
+            }
 
             Values = values;
             Names = names;
