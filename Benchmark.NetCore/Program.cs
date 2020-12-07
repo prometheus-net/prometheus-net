@@ -6,12 +6,9 @@ namespace Benchmark.NetCore
     {
         private static void Main(string[] args)
         {
-            //BenchmarkRunner.Run<MetricCreationBenchmarks>();
-            //BenchmarkRunner.Run<SerializationBenchmarks>();
-            //BenchmarkRunner.Run<LabelBenchmarks>();
-            //BenchmarkRunner.Run<HttpExporterBenchmarks>();
-            //BenchmarkRunner.Run<SummaryBenchmarks>();
-            BenchmarkRunner.Run<MetricPusherBenchmarks>();
+            // Give user possibility to choose which benchmark to run.
+            // Can be overridden from the command line with the --filter option.
+            new BenchmarkSwitcher(typeof(Program).Assembly).Run(args);
         }
     }
 }
