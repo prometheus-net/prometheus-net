@@ -144,6 +144,10 @@ namespace Prometheus
 
         private TChild GetOrAddLabelled(Labels key)
         {
+            // Don't allocate lambda for GetOrAdd in the common case that the labeled metrics exist.
+            if (_labelledMetrics.TryGetValue(key, out var metric))
+                return metric;
+
             return _labelledMetrics.GetOrAdd(key, k => NewChild(k, k.Concat(_staticLabels), publish: !_suppressInitialValue));
         }
 
