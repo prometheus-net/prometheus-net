@@ -17,7 +17,7 @@ namespace Prometheus.HttpMetrics
 
         public async Task Invoke(HttpContext context)
         {
-            var stopWatch = Stopwatch.StartNew();
+            var stopWatch = ValueStopwatch.StartNew();
 
             // We need to write this out in long form instead of using a timer because routing data in
             // ASP.NET Core 2 is only available *after* executing the next request delegate.
@@ -28,9 +28,7 @@ namespace Prometheus.HttpMetrics
             }
             finally
             {
-                stopWatch.Stop();
-
-                CreateChild(context).Observe(stopWatch.Elapsed.TotalSeconds);
+                CreateChild(context).Observe(stopWatch.GetElapsedTime().TotalSeconds);
             }
         }
 
