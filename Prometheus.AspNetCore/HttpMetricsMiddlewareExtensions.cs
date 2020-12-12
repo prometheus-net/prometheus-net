@@ -33,14 +33,22 @@ namespace Prometheus
         {
             options = options ?? new HttpMiddlewareExporterOptions();
 
-            app.UseMiddleware<CaptureRouteDataMiddleware>();
+            void ApplyConfiguration(IApplicationBuilder builder)
+            {
+                builder.UseMiddleware<CaptureRouteDataMiddleware>();
 
-            if (options.InProgress.Enabled)
-                app.UseMiddleware<HttpInProgressMiddleware>(options.InProgress);
-            if (options.RequestCount.Enabled)
-                app.UseMiddleware<HttpRequestCountMiddleware>(options.RequestCount);
-            if (options.RequestDuration.Enabled)
-                app.UseMiddleware<HttpRequestDurationMiddleware>(options.RequestDuration);
+                if (options.InProgress.Enabled)
+                    builder.UseMiddleware<HttpInProgressMiddleware>(options.InProgress);
+                if (options.RequestCount.Enabled)
+                    builder.UseMiddleware<HttpRequestCountMiddleware>(options.RequestCount);
+                if (options.RequestDuration.Enabled)
+                    builder.UseMiddleware<HttpRequestDurationMiddleware>(options.RequestDuration);
+            }
+
+            if (options.CaptureMetricsUrl)
+                ApplyConfiguration(app);
+            else
+                app.UseWhen(context => context.Request.Path == "/metrics", ApplyConfiguration);
 
             return app;
         }
