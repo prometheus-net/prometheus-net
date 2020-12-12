@@ -171,7 +171,7 @@ namespace Prometheus
             private IReadOnlyList<QuantileEpsilonPair> _objectives = new List<QuantileEpsilonPair>();
             private double[] _sortedObjectives;
             private double _sum;
-            private uint _count;
+            private ulong _count;
             private SampleBuffer _hotBuf;
             private SampleBuffer _coldBuf;
             private QuantileStream[] _streams;

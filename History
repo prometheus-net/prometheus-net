@@ -5,6 +5,7 @@
 - Added support for defining static labels on registry or metric level. #256
 - Added ICollectorRegistry and IMetricFactory for mocking in test code. #268
 - Ignore /metrics URL by default in HTTP request metrics.
+- Fix overflow in Summary after observing more than uint.MaxValue events. #277
 * 4.0.0
 - Allow arbitrary ASP.NET Core route parameters to be exposed as HTTP metric labels. #225
 - Breaking change: some HTTP metrics implementation classes were changed from public to internal. They were never supposed to be public and hopefully nobody ever used them directly. Public documented API did not change.
