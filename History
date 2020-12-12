@@ -1,3 +1,5 @@
+* 4.1.1
+- Bugfix: HTTP request metrics in 4.1.0 got broken due to typo in middleware helper.
 * 4.1.0
 - Fixed HttpClient metrics duration that was incorrectly measured. #265
 - prometheus-net.NetFramework.AspNet is now strong named, just like all the other assemblies. #273
