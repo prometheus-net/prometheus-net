@@ -13,9 +13,15 @@ namespace Prometheus.HttpClientMetrics
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            using (CreateChild(request).NewTimer())
+            var stopWatch = ValueStopwatch.StartNew();
+
+            try
             {
                 return await base.SendAsync(request, cancellationToken);
+            }
+            finally
+            {
+                CreateChild(request).Observe(stopWatch.GetElapsedTime().TotalSeconds);
             }
         }
 

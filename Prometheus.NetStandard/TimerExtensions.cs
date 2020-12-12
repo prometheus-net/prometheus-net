@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace Prometheus
 {
@@ -7,7 +6,7 @@ namespace Prometheus
     {
         private sealed class Timer : ITimer
         {
-            private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
+            private readonly ValueStopwatch _stopwatch = ValueStopwatch.StartNew();
             private readonly Action<double> _observeDurationAction;
 
             public Timer(IObserver observer)
@@ -27,7 +26,7 @@ namespace Prometheus
 
             public TimeSpan ObserveDuration()
             {
-                var duration = _stopwatch.Elapsed;
+                var duration = _stopwatch.GetElapsedTime();
                 _observeDurationAction.Invoke(duration.TotalSeconds);
 
                 return duration;

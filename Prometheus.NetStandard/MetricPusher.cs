@@ -82,7 +82,7 @@ namespace Prometheus
                 {
                     // We schedule approximately at the configured interval. There may be some small accumulation for the
                     // part of the loop we do not measure but it is close enough to be acceptable for all practical scenarios.
-                    var duration = Stopwatch.StartNew();
+                    var duration = ValueStopwatch.StartNew();
 
                     try
                     {
@@ -119,7 +119,7 @@ namespace Prometheus
                     if (cancel.IsCancellationRequested)
                         break;
 
-                    var sleepTime = _pushInterval - duration.Elapsed;
+                    var sleepTime = _pushInterval - duration.GetElapsedTime();
 
                     // Sleep until the interval elapses or the pusher is asked to shut down.
                     if (sleepTime > TimeSpan.Zero)
