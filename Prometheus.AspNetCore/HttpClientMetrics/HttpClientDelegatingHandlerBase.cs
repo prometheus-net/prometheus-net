@@ -68,7 +68,7 @@ namespace Prometheus.HttpClientMetrics
                         labelValues[i] = request.Method.Method;
                         break;
                     case HttpClientRequestLabelNames.Host:
-                        labelValues[i] = request.RequestUri.Host;
+                        labelValues[i] = request.RequestUri?.Host ?? string.Empty;
                         break;
                     default:
                         // We validate the label set on initialization, so this is impossible.

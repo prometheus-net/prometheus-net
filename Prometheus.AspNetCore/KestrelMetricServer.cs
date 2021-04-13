@@ -56,7 +56,7 @@ namespace Prometheus
                     // If there is any URL prefix, we just redirect people going to root URL to our prefix.
                     if (!string.IsNullOrWhiteSpace(_url.Trim('/')))
                     {
-                        app.MapWhen(context => context.Request.Path.Value.Trim('/') == "",
+                        app.MapWhen(context => context.Request.Path.Value?.Trim('/') == "",
                             configuration =>
                             {
                                 configuration.Use((context, next) =>
