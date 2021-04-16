@@ -2,6 +2,7 @@
 {
     internal enum MetricType
     {
+        Unknown,
         Counter,
         Gauge,
         Summary,

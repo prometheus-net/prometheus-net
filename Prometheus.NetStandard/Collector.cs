@@ -173,6 +173,30 @@ namespace Prometheus
                 PrometheusConstants.ExportEncoding.GetBytes($"# HELP {name} {help}"),
                 PrometheusConstants.ExportEncoding.GetBytes($"# TYPE {name} {Type.ToString().ToLowerInvariant()}")
             };
+
+            // OpenMetrics counters differ from the original Prometheus format in that they have a child
+            // metric with the _total suffix, instead of _total being part of the metric name itself.
+            //
+            // Unfortunately, this means that we have to decide what to do for existing counters created
+            // by this library that do not end in _total. In order to avoid breaking existing metric
+            // names, we use the same technique proposed in the Go client: counters without valid names
+            // are treated as if they are of type Unknown.
+            if (Type == MetricType.Counter)
+            {
+                bool validName = name.EndsWith("_total");
+                var omName = validName ? name.Replace("_total", "") : name;
+                var omType = (validName ? MetricType.Counter : MetricType.Unknown).ToString().ToLowerInvariant();
+                _omFamilyHeaderLines = new byte[][]
+                {
+                    PrometheusConstants.ExportEncoding.GetBytes($"# HELP {omName} {help}"),
+                    PrometheusConstants.ExportEncoding.GetBytes($"# TYPE {omName} {omType}")
+                };
+            }
+            else
+            {
+                // OpenMetrics headers can differ in various ways from the original Prometheus format.
+                _omFamilyHeaderLines = _familyHeaderLines;
+            }
         }
 
         /// <summary>
@@ -183,12 +207,20 @@ namespace Prometheus
         private protected abstract MetricType Type { get; }
 
         private readonly byte[][] _familyHeaderLines;
+        private readonly byte[][] _omFamilyHeaderLines;
 
         internal override async Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
             EnsureUnlabelledMetricCreatedIfNoLabels();
 
-            await serializer.WriteFamilyDeclarationAsync(_familyHeaderLines, cancel);
+            if (serializer.ContentType() == PrometheusConstants.ExporterContentTypeOpenMetrics)
+            {
+                await serializer.WriteFamilyDeclarationAsync(_omFamilyHeaderLines, cancel);
+            }
+            else
+            {
+                await serializer.WriteFamilyDeclarationAsync(_familyHeaderLines, cancel);
+            }
 
             foreach (var child in _labelledMetrics.Values)
                 await child.CollectAndSerializeAsync(serializer, cancel);

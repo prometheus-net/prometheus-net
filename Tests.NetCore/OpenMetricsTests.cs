@@ -47,5 +47,39 @@ namespace Prometheus.Tests
                 StringAssert.EndsWith(text, "# EOF");
             }
         }
+
+        [TestMethod]
+        public async Task Serializer_StripsCounterSuffix()
+        {
+            var registry = Metrics.NewCustomRegistry();
+            var metrics = Metrics.WithCustomRegistry(registry);
+            var counter = metrics.CreateCounter("requests_processed_total", "help");
+
+            using(var stream = new MemoryStream())
+            {
+                var serializer = new TextSerializer(stream, PrometheusConstants.ExporterContentTypeOpenMetrics);
+                await registry.CollectAndSerializeAsync(serializer, default);
+                stream.Position = 0;
+                string text = new StreamReader(stream).ReadToEnd();
+                StringAssert.StartsWith(text, "# HELP requests_processed help\n# TYPE requests_processed counter\nrequests_processed_total 0");
+            }
+        }
+
+        [TestMethod]
+        public async Task Serializer_MarksNonTotalCountersAsUnknown()
+        {
+            var registry = Metrics.NewCustomRegistry();
+            var metrics = Metrics.WithCustomRegistry(registry);
+            var counter = metrics.CreateCounter("requests_processed", "help"); // No "_total".
+
+            using(var stream = new MemoryStream())
+            {
+                var serializer = new TextSerializer(stream, PrometheusConstants.ExporterContentTypeOpenMetrics);
+                await registry.CollectAndSerializeAsync(serializer, default);
+                stream.Position = 0;
+                string text = new StreamReader(stream).ReadToEnd();
+                StringAssert.StartsWith(text, "# HELP requests_processed help\n# TYPE requests_processed unknown\nrequests_processed 0");
+            }
+        }
     }
 }
