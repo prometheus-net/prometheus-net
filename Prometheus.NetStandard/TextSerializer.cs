@@ -13,6 +13,7 @@ namespace Prometheus
     {
         private static readonly byte[] NewLine = new[] { (byte)'\n' };
         private static readonly byte[] Space = new[] { (byte)' ' };
+        private static readonly byte[] Eof = new[] { (byte)'#', (byte)' ', (byte)'E', (byte)'O', (byte)'F' };
 
         public TextSerializer(Stream stream, string contentType = PrometheusConstants.ExporterContentType)
         {
@@ -29,6 +30,12 @@ namespace Prometheus
 
         public async Task FlushAsync(CancellationToken cancel)
         {
+            if (_contentType == PrometheusConstants.ExporterContentTypeOpenMetrics)
+            {
+                // The OpenMetrics format requires that the stream end with "# EOF".
+                await _stream.Value.WriteAsync(Eof, 0, Eof.Length, cancel);
+            }
+
             // If we never opened the stream, we don't touch it on flush.
             if (!_stream.IsValueCreated)
                 return;
