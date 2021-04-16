@@ -67,16 +67,19 @@ namespace Prometheus
                                     return;
                                 }
 
+                                var contentType = request.Headers["Accept"].ToString().Contains("application/openmetrics-text") ?
+                                    PrometheusConstants.ExporterContentTypeOpenMetrics : PrometheusConstants.ExporterContentType;
+
                                 try
                                 {
                                     // We first touch the response.OutputStream only in the callback because touching
                                     // it means we can no longer send headers (the status code).
                                     var serializer = new TextSerializer(delegate
                                     {
-                                        response.ContentType = PrometheusConstants.ExporterContentType;
+                                        response.ContentType = contentType;
                                         response.StatusCode = 200;
                                         return response.OutputStream;
-                                    });
+                                    }, contentType);
 
                                     await _registry.CollectAndSerializeAsync(serializer, cancel);
                                     response.OutputStream.Dispose();

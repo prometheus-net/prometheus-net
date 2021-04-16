@@ -27,6 +27,8 @@ namespace Prometheus
         public async Task Invoke(HttpContext context)
         {
             var response = context.Response;
+            var contentType = context.Request.Headers["Accept"].ToString().Contains("application/openmetrics-text") ?
+                PrometheusConstants.ExporterContentTypeOpenMetrics : PrometheusConstants.ExporterContentType;
 
             try
             {
@@ -34,10 +36,10 @@ namespace Prometheus
                 // it means we can no longer send headers (the status code).
                 var serializer = new TextSerializer(delegate
                 {
-                    response.ContentType = PrometheusConstants.ExporterContentType;
+                    response.ContentType = contentType;
                     response.StatusCode = StatusCodes.Status200OK;
                     return response.Body;
-                });
+                }, contentType);
 
                 await _registry.CollectAndSerializeAsync(serializer, context.RequestAborted);
             }
