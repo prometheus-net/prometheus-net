@@ -14,15 +14,17 @@ namespace Prometheus
         private static readonly byte[] NewLine = new[] { (byte)'\n' };
         private static readonly byte[] Space = new[] { (byte)' ' };
 
-        public TextSerializer(Stream stream)
+        public TextSerializer(Stream stream, string contentType = PrometheusConstants.ExporterContentType)
         {
             _stream = new Lazy<Stream>(() => stream);
+            _contentType = contentType;
         }
 
         // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
-        public TextSerializer(Func<Stream> streamFactory)
+        public TextSerializer(Func<Stream> streamFactory, string contentType = PrometheusConstants.ExporterContentType)
         {
             _stream = new Lazy<Stream>(streamFactory);
+            _contentType = contentType;
         }
 
         public async Task FlushAsync(CancellationToken cancel)
@@ -35,6 +37,7 @@ namespace Prometheus
         }
 
         private readonly Lazy<Stream> _stream;
+        private readonly string _contentType;
 
         // # HELP name help
         // # TYPE name type
@@ -67,5 +70,7 @@ namespace Prometheus
             await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
             await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
         }
+
+        public string ContentType() => _contentType;
     }
 }

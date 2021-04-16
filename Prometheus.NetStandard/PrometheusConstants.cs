@@ -5,6 +5,7 @@ namespace Prometheus
     public static class PrometheusConstants
     {
         public const string ExporterContentType = "text/plain; version=0.0.4; charset=utf-8";
+        public const string ExporterContentTypeOpenMetrics = "application/openmetrics-text; version=0.0.1; charset=utf-8";
 
         // ASP.NET does not want to accept the parameters in PushStreamContent for whatever reason...
         public const string ExporterContentTypeMinimal = "text/plain";

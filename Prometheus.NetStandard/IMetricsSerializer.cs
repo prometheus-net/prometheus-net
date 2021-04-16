@@ -24,5 +24,11 @@ namespace Prometheus
         /// Flushes any pending buffers. Always call this after all your write calls.
         /// </summary>
         Task FlushAsync(CancellationToken cancel);
+
+        /// <summary>
+        /// The content type of the serializer. Serialization for some metric families depends on the
+        /// nature of the output format.
+        /// </summary>
+        string ContentType();
     }
 }
