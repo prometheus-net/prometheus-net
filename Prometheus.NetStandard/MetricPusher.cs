@@ -110,7 +110,7 @@ namespace Prometheus
                         // We do not consider failed scrapes a reportable error since the user code that raises the failure should be the one logging it.
                         Trace.WriteLine($"Skipping metrics push due to failed scrape: {ex.Message}");
                     }
-                    catch (Exception ex) when (!(ex is OperationCanceledException))
+                    catch (Exception ex)
                     {
                         HandleFailedPush(ex);
                     }
