@@ -15,17 +15,19 @@ namespace Prometheus
     public class MetricPusher : MetricHandler
     {
         private readonly TimeSpan _pushInterval;
+        private readonly HttpMethod _method;
         private readonly Uri _targetUrl;
         private readonly Func<HttpClient> _httpClientProvider;
 
-        public MetricPusher(string endpoint, string job, string? instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>>? additionalLabels = null, CollectorRegistry? registry = null) : this(new MetricPusherOptions
+        public MetricPusher(string endpoint, string job, string? instance = null, long intervalMilliseconds = 1000, IEnumerable<Tuple<string, string>>? additionalLabels = null, CollectorRegistry? registry = null, bool pushReplace = false) : this(new MetricPusherOptions
         {
             Endpoint = endpoint,
             Job = job,
             Instance = instance,
             IntervalMilliseconds = intervalMilliseconds,
             AdditionalLabels = additionalLabels,
-            Registry = registry
+            Registry = registry,
+            PushReplace = pushReplace,
         })
         {
         }
@@ -65,6 +67,8 @@ namespace Prometheus
 
             _pushInterval = TimeSpan.FromMilliseconds(options.IntervalMilliseconds);
             _onError = options.OnError;
+
+            _method = options.PushReplace ? HttpMethod.Put : HttpMethod.Post;
         }
 
         private static readonly MediaTypeHeaderValue ContentTypeHeaderValue = new MediaTypeHeaderValue(PrometheusConstants.ExporterContentTypeMinimal);
@@ -88,19 +92,25 @@ namespace Prometheus
                     {
                         var httpClient = _httpClientProvider();
 
-                        // We use a copy-pasted implementation of PushStreamContent here to avoid taking a dependency on the old ASP.NET Web API where it lives.
-                        var response = await httpClient.PostAsync(_targetUrl, new PushStreamContentInternal(async (stream, content, context) =>
+                        var request = new HttpRequestMessage
                         {
-                            try
-                            {
-                                // Do not pass CT because we only want to cancel after pushing, so a flush is always performed.
-                                await _registry.CollectAndExportAsTextAsync(stream, default);
-                            }
-                            finally
-                            {
-                                stream.Close();
-                            }
-                        }, ContentTypeHeaderValue));
+                            Method = _method,
+                            RequestUri = _targetUrl,
+                            // We use a copy-pasted implementation of PushStreamContent here to avoid taking a dependency on the old ASP.NET Web API where it lives.
+                            Content = new PushStreamContentInternal(async (stream, content, context) => {
+                                try
+                                {
+                                    // Do not pass CT because we only want to cancel after pushing, so a flush is always performed.
+                                    await _registry.CollectAndExportAsTextAsync(stream, default);
+                                }
+                                finally
+                                {
+                                    stream.Close();
+                                }
+                            }, ContentTypeHeaderValue),
+                        };
+
+                        var response = await httpClient.SendAsync(request);
 
                         // If anything goes wrong, we want to get at least an entry in the trace log.
                         response.EnsureSuccessStatusCode();
