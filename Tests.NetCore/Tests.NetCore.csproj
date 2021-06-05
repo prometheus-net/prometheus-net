@@ -10,19 +10,13 @@
     <SignAssembly>true</SignAssembly>
 
     <AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <LangVersion>latest</LangVersion>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-  </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
+
     <LangVersion>latest</LangVersion>
+
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
   </PropertyGroup>
 

@@ -11,13 +11,13 @@ namespace Prometheus
     {
         public sealed class Settings
         {
-            public CollectorRegistry Registry { get; set; }
+            public CollectorRegistry? Registry { get; set; }
         }
 
         /// <summary>
         /// Registers an anonymous instance of the controller to be published on the /metrics URL.
         /// </summary>
-        public static void RegisterRoutes(HttpConfiguration configuration, Settings settings = null)
+        public static void RegisterRoutes(HttpConfiguration configuration, Settings? settings = null)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
