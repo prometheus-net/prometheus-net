@@ -152,12 +152,17 @@ namespace Prometheus
             if (start <= 0) throw new ArgumentException($"{nameof(ExponentialBuckets)} needs a positive {nameof(start)}");
             if (factor <= 1) throw new ArgumentException($"{nameof(ExponentialBuckets)} needs a {nameof(factor)} greater than 1");
 
+            // The math we do can make it incur some tiny avoidable error due to floating point gremlins.
+            // We use decimal for the path to preserve as much accuracy as we can, before finally converting to double.
+            // It will not fix 100% of the cases where we end up with 0.0000000000000000000000000000001 offset but it helps a lot.
+
+            var next = (decimal)start;
             var buckets = new double[count];
 
             for (var i = 0; i < buckets.Length; i++)
             {
-                buckets[i] = start;
-                start *= factor;
+                buckets[i] = (double)next;
+                next *= (decimal)factor;
             }
 
             return buckets;
@@ -178,12 +183,17 @@ namespace Prometheus
         {
             if (count <= 0) throw new ArgumentException($"{nameof(LinearBuckets)} needs a positive {nameof(count)}");
 
+            // The math we do can make it incur some tiny avoidable error due to floating point gremlins.
+            // We use decimal for the path to preserve as much accuracy as we can, before finally converting to double.
+            // It will not fix 100% of the cases where we end up with 0.0000000000000000000000000000001 offset but it helps a lot.
+
+            var next = (decimal)start;
             var buckets = new double[count];
 
             for (var i = 0; i < buckets.Length; i++)
             {
-                buckets[i] = start;
-                start += width;
+                buckets[i] = (double)next;
+                next += (decimal)width;
             }
 
             return buckets;

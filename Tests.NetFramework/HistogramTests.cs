@@ -56,5 +56,69 @@ namespace Prometheus.Tests
             for (var i = 0; i < expected.Length; i++)
                 Assert.AreEqual(expected[i], actual[i]);
         }
+
+        [TestMethod]
+        public void LinearBuckets_CreatesExpectedBuckets()
+        {
+            var expected = new[]
+            {
+                0.025, 0.050, 0.075, 0.1,
+                0.125, 0.150, 0.175, 0.2,
+                0.225, 0.250, 0.275, 0.3,
+            };
+
+            var actual = Histogram.LinearBuckets(0.025, 0.025, 12);
+
+            Assert.AreEqual(expected.Length, actual.Length);
+
+            for (var i = 0; i < expected.Length; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
+
+        [TestMethod]
+        public void ExponentialBuckets_CreatesExpectedBuckets()
+        {
+            var expected = new[]
+            {
+                0.0078125,
+                0.01171875,
+                0.017578125,
+                0.0263671875,
+                0.03955078125,
+                0.059326171875,
+                0.0889892578125,
+                0.13348388671875
+            };
+
+            var actual = Histogram.ExponentialBuckets(0.0078125, 1.5, 8);
+
+            Assert.AreEqual(expected.Length, actual.Length);
+
+            for (var i = 0; i < expected.Length; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
+
+        [TestMethod]
+        public void ExponentialBuckets_CreatesExpectedBuckets2()
+        {
+            var expected = new[]
+            {
+                0.0078125,
+                0.0140625,
+                0.0253125,
+                0.0455625,
+                0.0820125,
+                0.1476225,
+                0.2657205,
+                0.4782969
+            };
+
+            var actual = Histogram.ExponentialBuckets(0.0078125, 1.8, 8);
+
+            Assert.AreEqual(expected.Length, actual.Length);
+
+            for (var i = 0; i < expected.Length; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
     }
 }

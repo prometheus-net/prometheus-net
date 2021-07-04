@@ -1,5 +1,6 @@
 * 4.2.0
 - Added Histogram.PowersOfTenDividedBuckets()
+- Improved accuracy of histogram bucket calculations to reduce the likelyhood of seeing 0.00000000000000000001 offsets from expected value due to floating point math.
 * 4.1.1
 - Bugfix: HTTP request metrics in 4.1.0 got broken due to typo in middleware helper.
 * 4.1.0
