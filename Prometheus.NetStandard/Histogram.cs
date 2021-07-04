@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -186,6 +187,51 @@ namespace Prometheus
             }
 
             return buckets;
+        }
+
+        /// <summary>
+        /// Divides each power of 10 into N divisions.
+        /// </summary>
+        /// <param name="startPower">The starting range includes 10 raised to this power.</param>
+        /// <param name="endPower">The ranges end with 10 raised to this power (this no longer starts a new range).</param>
+        /// <param name="divisions">How many divisions to divide each range into.</param>
+        /// <remarks>
+        /// For example, with startPower=-1, endPower=2, divisions=4 we would get:
+        /// 10^-1 == 0.1 which defines our starting range, giving buckets: 0.25, 0.5, 0.75, 1.0
+        /// 10^0 == 1 which is the next range, giving buckets: 2.5, 5, 7.5, 10
+        /// 10^1 == 10 which is the next range, giving buckets: 25, 50, 75, 100
+        /// 10^2 == 100 which is the end and the top level of the preceding range.
+        /// Giving total buckets: 0.25, 0.5, 0.75, 1.0, 2.5, 5, 7.5, 10, 25, 50, 75, 100
+        /// </remarks>
+        public static double[] PowersOfTenDividedBuckets(int startPower, int endPower, int divisions)
+        {
+            if (startPower >= endPower)
+                throw new ArgumentException($"{nameof(startPower)} must be less than {nameof(endPower)}.", nameof(startPower));
+
+            if (divisions <= 0)
+                throw new ArgumentOutOfRangeException($"{nameof(divisions)} must be a positive integer.", nameof(divisions));
+
+            var buckets = new List<double>();
+
+            for (var powerOfTen = startPower; powerOfTen < endPower; powerOfTen++)
+            {
+                // This gives us the upper bound (the start of the next range).
+                var max = (decimal)Math.Pow(10, powerOfTen + 1);
+
+                // Then we just divide it into N divisions and we are done!
+                for (var division = 0; division < divisions; division++)
+                {
+                    var bucket = max / divisions * (division + 1);
+
+                    // The math we do can make it incur some tiny avoidable error due to floating point gremlins.
+                    // We use decimal for the path to preserve as much accuracy as we can, before finally converting to double.
+                    // It will not fix 100% of the cases where we end up with 0.0000000000000000000000000000001 offset but it helps a lot.
+
+                    buckets.Add((double)bucket);
+                }
+            }
+
+            return buckets.ToArray();
         }
     }
 }

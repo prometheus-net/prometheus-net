@@ -1,3 +1,5 @@
+* 4.2.0
+- Added Histogram.PowersOfTenDividedBuckets()
 * 4.1.1
 - Bugfix: HTTP request metrics in 4.1.0 got broken due to typo in middleware helper.
 * 4.1.0

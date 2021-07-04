@@ -37,5 +37,24 @@ namespace Prometheus.Tests
             await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[2], 2, default);
             await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[3], 2, default);
         }
+
+        [TestMethod]
+        public void PowersOfTenDividedBuckets_CreatesExpectedBuckets()
+        {
+            var expected = new[]
+            {
+                0.025, 0.050, 0.075, 0.1,
+                0.25, 0.5, 0.75, 1,
+                2.5, 5.0, 7.5, 10,
+                25, 50, 75, 100
+            };
+
+            var actual = Histogram.PowersOfTenDividedBuckets(-2, 2, 4);
+
+            Assert.AreEqual(expected.Length, actual.Length);
+
+            for (var i = 0; i < expected.Length; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
     }
 }
