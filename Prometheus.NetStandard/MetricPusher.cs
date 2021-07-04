@@ -75,7 +75,7 @@ namespace Prometheus
 
         protected override Task StartServer(CancellationToken cancel)
         {
-            // Kick off the actual processing to a new thread and return a Task for the processing thread.
+            // Start the server processing loop asynchronously in the background.
             return Task.Run(async delegate
             {
                 while (true)
