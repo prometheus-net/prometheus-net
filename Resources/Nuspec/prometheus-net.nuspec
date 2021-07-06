@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata minClientVersion="2.8">
+  <metadata minClientVersion="5.1">
     <id>prometheus-net</id>
     <authors>andrasm,qed-,lakario,sandersaares</authors>
     <description>.NET client library for the Prometheus monitoring and alerting system</description>

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata minClientVersion="2.8">
+  <metadata minClientVersion="5.1">
     <id>prometheus-net.AspNetCore</id>
     <authors>andrasm,qed-,lakario,sandersaares</authors>
     <description>ASP.NET Core middleware and stand-alone Kestrel server for exporting metrics to Prometheus</description>
@@ -28,6 +28,13 @@
         <dependency id="Microsoft.Extensions.Http" version="3.1.9" />
       </group>
     </dependencies>
+
+    <frameworkReferences>
+      <group targetFramework="netcoreapp3.1">
+        <frameworkReference name="Microsoft.AspNetCore.App" />
+      </group>
+    </frameworkReferences>
+
   </metadata>
   <files>
     <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->

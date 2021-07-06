@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata minClientVersion="2.8">
+  <metadata minClientVersion="5.1">
     <id>prometheus-net.AspNetCore.HealthChecks</id>
     <authors>sandersaares</authors>
     <description>ASP.NET Core Health Checks integration with Prometheus</description>
@@ -16,7 +16,6 @@
 
     <dependencies>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.AspNetCore" version="2.1.7" />
         <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
       </group>
 
