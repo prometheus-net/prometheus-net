@@ -547,12 +547,6 @@ var metricServer = new KestrelMetricServer(port: 1234);
 metricServer.Start();
 ```
 
-Even when you integrate prometheus-net Kestrel server into a stand-alone console app, the project file must be using the ASP.NET Core SDK. In other words, you must have the `.Web` at the end of the `Sdk` attribute value in the project file:
-
-```
-<Project Sdk="Microsoft.NET.Sdk.Web">
-```
-
 The default configuration will publish metrics on the `/metrics` URL.
 
 # Publishing to Pushgateway
