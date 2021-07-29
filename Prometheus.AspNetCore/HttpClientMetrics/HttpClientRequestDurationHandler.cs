@@ -17,6 +17,8 @@ namespace Prometheus.HttpClientMetrics
 
             try
             {
+                // We measure until SendAsync returns - which is when the response HEADERS are seen.
+                // The response body may continue streaming for a long time afterwards, which this does not measure.
                 return await base.SendAsync(request, cancellationToken);
             }
             finally

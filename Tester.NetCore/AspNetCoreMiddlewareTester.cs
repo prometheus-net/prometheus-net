@@ -9,6 +9,8 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Options;
+using System.Net.Http;
 
 namespace tester
 {
@@ -22,6 +24,8 @@ namespace tester
 
         private Task _webserverTask;
 
+        private IHttpClientFactory _httpClientFactory;
+
         public override void OnStart()
         {
             _webserverTask =
@@ -29,12 +33,16 @@ namespace tester
                 .UseUrls($"http://localhost:{TesterConstants.TesterPort}")
                 .ConfigureServices(services =>
                 {
+                    services.AddHttpClient(Options.DefaultName).UseHttpClientMetrics();
                 })
                 .Configure(app =>
                 {
+                    _httpClientFactory = app.ApplicationServices.GetRequiredService<IHttpClientFactory>();
+
                     app.UseMetricServer();
 
                     app.UseRouting();
+
                     // We capture metrics URL just for test data.
                     app.UseHttpMetrics(options => options.CaptureMetricsUrl = true);
                 })
@@ -60,12 +68,10 @@ namespace tester
 
         private void StartDummyRequest()
         {
-            Task.Run(delegate
+            Task.Run(async delegate
             {
-                var httpRequest = (HttpWebRequest)WebRequest.Create($"http://localhost:{TesterConstants.TesterPort}/api/Dummy");
-                httpRequest.Method = "GET";
-
-                httpRequest.GetResponse().Dispose();
+                using var client = _httpClientFactory.CreateClient();
+                await client.GetAsync($"http://localhost:{TesterConstants.TesterPort}/api/Dummy");
             });
         }
 

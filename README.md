@@ -21,7 +21,7 @@ Some specialized subsets of functionality require more modern runtimes:
 Related projects:
 
 * [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) instruments .NET Core apps to export metrics on .NET Core performance.
-* [prometheus-net.AspNet](https://github.com/rocklan/prometheus-net.AspNet) instruments ASP.NET full framework apps to export metrics on performance. 
+* [prometheus-net.AspNet](https://github.com/rocklan/prometheus-net.AspNet) instruments ASP.NET full framework apps to export metrics on performance.
 * [prometheus-net.SystemMetrics](https://github.com/Daniel15/prometheus-net.SystemMetrics) exports various system metrics such as CPU usage, disk usage, etc.
 * [prometheus-net/docker_exporter](https://github.com/prometheus-net/docker_exporter) exports metrics about a Docker installation.
 * [prometheus-net/tzsp_packetstream_exporter](https://github.com/prometheus-net/tzsp_packetstream_exporter) exports metrics about the data flows found in a stream of IPv4 packets.
@@ -468,7 +468,8 @@ The exposed metrics include:
 
 * Number of HTTP requests in progress.
 * Total number of started HTTP requests.
-* Duration of HTTP requests.
+* Duration of HTTP client requests (from start of request to end of reading response headers).
+* Duration of HTTP client responses (from start of request to end of reading response body).
 
 Example `Startup.cs` modification to enable these metrics:
 
@@ -477,7 +478,7 @@ public void ConfigureServices(IServiceCollection services)
 {
     // ...
 
-    services.AddHttpClient()
+    services.AddHttpClient(Options.DefaultName)
         .UseHttpClientMetrics();
 
     // ...
@@ -529,7 +530,7 @@ The easiest way to export metrics from an ASP.NET Web API app on the full .NET F
 protected void Application_Start(object sender, EventArgs e)
 {
     AspNetMetricServer.RegisterRoutes(GlobalConfiguration.Configuration);
-    
+
     // Other code follows.
 }
 ```

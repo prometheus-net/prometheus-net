@@ -30,6 +30,7 @@ namespace Prometheus
             builder.Services.AddScoped<HttpClientInProgressHandler>();
             builder.Services.AddScoped<HttpClientRequestCountHandler>();
             builder.Services.AddScoped<HttpClientRequestDurationHandler>();
+            builder.Services.AddScoped<HttpClientResponseDurationHandler>();
 
             if (options.InProgress.Enabled)
             {
@@ -47,6 +48,12 @@ namespace Prometheus
             {
                 builder.Services.AddScoped(o => options.RequestDuration);
                 builder = builder.AddHttpMessageHandler<HttpClientRequestDurationHandler>();
+            }
+
+            if (options.ResponseDuration.Enabled)
+            {
+                builder.Services.AddScoped(o => options.ResponseDuration);
+                builder = builder.AddHttpMessageHandler<HttpClientResponseDurationHandler>();
             }
 
             return builder;

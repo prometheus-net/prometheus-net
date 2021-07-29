@@ -1,3 +1,5 @@
+* 4.3.0
+- Added HTTP client metric that measures the response duration (time until response content reading is finished).
 * 4.2.0
 - Added Histogram.PowersOfTenDividedBuckets()
 - Improved accuracy of histogram bucket calculations to reduce the likelyhood of seeing 0.00000000000000000001 offsets from expected value due to floating point math.
