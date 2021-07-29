@@ -6,6 +6,26 @@ namespace Prometheus
     public static class CounterExtensions
     {
         /// <summary>
+        /// Increments the value of the counter to the current UTC time as a Unix timestamp in seconds.
+        /// Value does not include any elapsed leap seconds because Unix timestamps do not include leap seconds.
+        /// Operation is ignored if the current value is already greater.
+        /// </summary>
+        public static void IncToCurrentTimeUtc(this ICounter counter)
+        {
+            counter.IncTo(TimestampHelpers.ToUnixTimeSecondsAsDouble(DateTimeOffset.UtcNow));
+        }
+
+        /// <summary>
+        /// Increments the value of the counter to a specific moment as the UTC Unix timestamp in seconds.
+        /// Value does not include any elapsed leap seconds because Unix timestamps do not include leap seconds.
+        /// Operation is ignored if the current value is already greater.
+        /// </summary>
+        public static void IncToTimeUtc(this ICounter counter, DateTimeOffset timestamp)
+        {
+            counter.IncTo(TimestampHelpers.ToUnixTimeSecondsAsDouble(timestamp));
+        }
+
+        /// <summary>
         /// Executes the provided operation and increments the counter if an exception occurs. The exception is re-thrown.
         /// If an exception filter is specified, only counts exceptions for which the filter returns true.
         /// </summary>
