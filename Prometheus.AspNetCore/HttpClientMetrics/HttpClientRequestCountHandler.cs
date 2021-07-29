@@ -6,8 +6,8 @@ namespace Prometheus.HttpClientMetrics
 {
     internal sealed class HttpClientRequestCountHandler : HttpClientDelegatingHandlerBase<ICollector<ICounter>, ICounter>
     {
-        public HttpClientRequestCountHandler(HttpClientRequestCountOptions? options)
-            : base(options, options?.Counter)
+        public HttpClientRequestCountHandler(HttpClientRequestCountOptions? options, HttpClientIdentity identity)
+            : base(options, options?.Counter, identity)
         {
         }
 

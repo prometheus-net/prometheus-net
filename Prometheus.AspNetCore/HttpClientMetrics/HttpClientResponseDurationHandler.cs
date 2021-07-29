@@ -9,8 +9,8 @@ namespace Prometheus.HttpClientMetrics
 {
     internal sealed class HttpClientResponseDurationHandler : HttpClientDelegatingHandlerBase<ICollector<IHistogram>, IHistogram>
     {
-        public HttpClientResponseDurationHandler(HttpClientResponseDurationOptions? options)
-            : base(options, options?.Histogram)
+        public HttpClientResponseDurationHandler(HttpClientResponseDurationOptions? options, HttpClientIdentity identity)
+            : base(options, options?.Histogram, identity)
         {
         }
 

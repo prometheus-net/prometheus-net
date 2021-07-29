@@ -19,7 +19,7 @@ namespace Prometheus.Tests.HttpClientMetrics
                 Registry = registry
             };
 
-            var handler = new HttpClientInProgressHandler(options);
+            var handler = new HttpClientInProgressHandler(options, HttpClientIdentity.Default);
 
             var gaugeInspectionHandler = new CaptureGaugeValueHttpHandler();
             gaugeInspectionHandler.Gauge = (Gauge)handler._metric;

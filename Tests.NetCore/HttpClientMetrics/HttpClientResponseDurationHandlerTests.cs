@@ -19,7 +19,7 @@ namespace Prometheus.Tests.HttpClientMetrics
                 Registry = registry
             };
 
-            var handler = new HttpClientResponseDurationHandler(options);
+            var handler = new HttpClientResponseDurationHandler(options, HttpClientIdentity.Default);
 
             // As we are not using the HttpClientProvider for constructing our pipeline, we need to do this manually.
             handler.InnerHandler = new HttpClientHandler();
@@ -41,7 +41,7 @@ namespace Prometheus.Tests.HttpClientMetrics
                 Registry = registry
             };
 
-            var handler = new HttpClientResponseDurationHandler(options);
+            var handler = new HttpClientResponseDurationHandler(options, HttpClientIdentity.Default);
 
             // Use a mock client handler so we can control when the task completes
             var mockHttpClientHandler = new MockHttpClientHandler();
@@ -76,7 +76,7 @@ namespace Prometheus.Tests.HttpClientMetrics
                 Registry = registry
             };
 
-            var handler = new HttpClientResponseDurationHandler(options);
+            var handler = new HttpClientResponseDurationHandler(options, HttpClientIdentity.Default);
 
             // Use a mock client handler so we can control when the task completes
             var mockHttpClientHandler = new MockHttpClientHandler();

@@ -34,6 +34,8 @@ namespace tester
                 .ConfigureServices(services =>
                 {
                     services.AddHttpClient(Options.DefaultName).UseHttpClientMetrics();
+                    services.AddHttpClient("client2").UseHttpClientMetrics();
+                    services.AddHttpClient("client3").UseHttpClientMetrics();
                 })
                 .Configure(app =>
                 {
@@ -72,6 +74,12 @@ namespace tester
             {
                 using var client = _httpClientFactory.CreateClient();
                 await client.GetAsync($"http://localhost:{TesterConstants.TesterPort}/api/Dummy");
+
+                using var client2 = _httpClientFactory.CreateClient("client2");
+                await client2.GetAsync($"http://localhost:{TesterConstants.TesterPort}/api/Dummy");
+
+                using var client3 = _httpClientFactory.CreateClient("client3");
+                await client3.GetAsync($"http://localhost:{TesterConstants.TesterPort}/api/Dummy");
             });
         }
 

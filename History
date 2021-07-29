@@ -1,5 +1,6 @@
 * 4.3.0
 - Added HTTP client metric that measures the response duration (time until response content reading is finished).
+- Added "client" label containing the name of HTTP client to HTTP client metrics.
 * 4.2.0
 - Added Histogram.PowersOfTenDividedBuckets()
 - Improved accuracy of histogram bucket calculations to reduce the likelyhood of seeing 0.00000000000000000001 offsets from expected value due to floating point math.

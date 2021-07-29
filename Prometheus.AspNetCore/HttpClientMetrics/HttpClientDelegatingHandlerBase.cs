@@ -11,6 +11,7 @@ namespace Prometheus.HttpClientMetrics
     /// The following labels are supported:
     /// 'method' (HTTP request method)
     /// 'host' (The host name of  HTTP request)
+    /// 'client' (The name of the HttpClient)
     /// </summary>
     internal abstract class HttpClientDelegatingHandlerBase<TCollector, TChild> : DelegatingHandler
         where TCollector : class, ICollector<TChild>
@@ -31,8 +32,10 @@ namespace Prometheus.HttpClientMetrics
         // Internal only for tests.
         internal readonly TCollector _metric;
 
-        protected HttpClientDelegatingHandlerBase(HttpClientMetricsOptionsBase? options, TCollector? customMetric)
+        protected HttpClientDelegatingHandlerBase(HttpClientMetricsOptionsBase? options, TCollector? customMetric, HttpClientIdentity identity)
         {
+            _identity = identity;
+
             MetricFactory = Metrics.WithCustomRegistry(options?.Registry ?? Metrics.DefaultRegistry);
 
             if (customMetric != null)
@@ -46,6 +49,8 @@ namespace Prometheus.HttpClientMetrics
                 _metric = CreateMetricInstance(HttpClientRequestLabelNames.All);
             }
         }
+
+        private readonly HttpClientIdentity _identity;
 
         /// <summary>
         /// Creates the metric child instance to use for measurements.
@@ -69,6 +74,9 @@ namespace Prometheus.HttpClientMetrics
                         break;
                     case HttpClientRequestLabelNames.Host:
                         labelValues[i] = request.RequestUri.Host;
+                        break;
+                    case HttpClientRequestLabelNames.Client:
+                        labelValues[i] = _identity.Name;
                         break;
                     default:
                         // We validate the label set on initialization, so this is impossible.

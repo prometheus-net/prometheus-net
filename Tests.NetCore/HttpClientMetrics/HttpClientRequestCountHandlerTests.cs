@@ -18,7 +18,7 @@ namespace Prometheus.Tests.HttpClientMetrics
                 Registry = registry
             };
 
-            var handler = new HttpClientRequestCountHandler(options);
+            var handler = new HttpClientRequestCountHandler(options, HttpClientIdentity.Default);
 
             // As we are not using the HttpClientProvider for constructing our pipeline, we need to do this manually.
             handler.InnerHandler = new HttpClientHandler();

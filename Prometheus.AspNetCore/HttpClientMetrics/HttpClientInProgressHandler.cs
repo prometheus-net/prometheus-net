@@ -6,8 +6,8 @@ namespace Prometheus.HttpClientMetrics
 {
     internal sealed class HttpClientInProgressHandler : HttpClientDelegatingHandlerBase<ICollector<IGauge>, IGauge>
     {
-        public HttpClientInProgressHandler(HttpClientInProgressOptions? options)
-            : base(options, options?.Gauge)
+        public HttpClientInProgressHandler(HttpClientInProgressOptions? options, HttpClientIdentity identity)
+            : base(options, options?.Gauge, identity)
         {
         }
 

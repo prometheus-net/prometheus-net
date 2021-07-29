@@ -27,33 +27,26 @@ namespace Prometheus
         {
             options ??= new HttpClientExporterOptions();
 
-            builder.Services.AddScoped<HttpClientInProgressHandler>();
-            builder.Services.AddScoped<HttpClientRequestCountHandler>();
-            builder.Services.AddScoped<HttpClientRequestDurationHandler>();
-            builder.Services.AddScoped<HttpClientResponseDurationHandler>();
+            var identity = new HttpClientIdentity(builder.Name);
 
             if (options.InProgress.Enabled)
             {
-                builder.Services.AddScoped(o => options.InProgress);
-                builder = builder.AddHttpMessageHandler<HttpClientInProgressHandler>();
+                builder = builder.AddHttpMessageHandler(x => new HttpClientInProgressHandler(options.InProgress, identity));
             }
 
             if (options.RequestCount.Enabled)
             {
-                builder.Services.AddScoped(o => options.RequestCount);
-                builder = builder.AddHttpMessageHandler<HttpClientRequestCountHandler>();
+                builder = builder.AddHttpMessageHandler(x => new HttpClientRequestCountHandler(options.RequestCount, identity));
             }
 
             if (options.RequestDuration.Enabled)
             {
-                builder.Services.AddScoped(o => options.RequestDuration);
-                builder = builder.AddHttpMessageHandler<HttpClientRequestDurationHandler>();
+                builder = builder.AddHttpMessageHandler(x => new HttpClientRequestDurationHandler(options.RequestDuration, identity));
             }
 
             if (options.ResponseDuration.Enabled)
             {
-                builder.Services.AddScoped(o => options.ResponseDuration);
-                builder = builder.AddHttpMessageHandler<HttpClientResponseDurationHandler>();
+                builder = builder.AddHttpMessageHandler(x => new HttpClientResponseDurationHandler(options.ResponseDuration, identity));
             }
 
             return builder;

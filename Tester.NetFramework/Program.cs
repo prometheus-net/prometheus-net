@@ -17,10 +17,10 @@ namespace tester
             // Replace the first line with an appropriate type of tester to run different manual tests.
             //var tester = new MetricPusherTester();
             //var tester = new KestrelMetricServerTester();
-            //var tester = new AspNetCoreMiddlewareTester();
+            var tester = new AspNetCoreMiddlewareTester();
             //var tester = new GrpcMiddlewareTester();
-            var tester = new MetricServerTester();
-
+            //var tester = new MetricServerTester();
+            
             // For testing Kestrel metric server with HTTPS, you need at least a self-signed certificate (one included here)
             // and the matching domain pointed to 127.0.0.1 (e.g. hardcoded in the PCs hosts file) and you also need to
             // import this certificate into your Trusted Root Certification Authorities certificate store to trust it.
