@@ -27,8 +27,8 @@ namespace Prometheus.Tests.HttpClientMetrics
             var client = new HttpClient(handler);
             await client.GetAsync("http://www.google.com");
 
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com").Count);
-            Assert.IsTrue(handler._metric.WithLabels("GET", "www.google.com").Sum > 0);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
+            Assert.IsTrue(handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Sum > 0);
         }
         
         [TestMethod]
@@ -51,10 +51,10 @@ namespace Prometheus.Tests.HttpClientMetrics
             client.GetAsync("http://www.google.com");
 
             // There should be no duration metric recorded unless the task is completed
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
             
             mockHttpClientHandler.Complete();
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
         }
 
         private class MockHttpClientHandler : HttpClientHandler

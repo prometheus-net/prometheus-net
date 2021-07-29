@@ -26,7 +26,7 @@ namespace Prometheus.Tests.HttpClientMetrics
             var client = new HttpClient(handler);
             await client.GetAsync("http://www.google.com");
 
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com").Value);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Value);
         }
     }
 }

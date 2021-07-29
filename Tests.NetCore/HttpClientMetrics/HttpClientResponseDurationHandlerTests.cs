@@ -27,8 +27,8 @@ namespace Prometheus.Tests.HttpClientMetrics
             var client = new HttpClient(handler);
             await client.GetAsync("http://www.google.com");
 
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com").Count);
-            Assert.IsTrue(handler._metric.WithLabels("GET", "www.google.com").Sum > 0);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
+            Assert.IsTrue(handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Sum > 0);
         }
         
         [TestMethod]
@@ -51,19 +51,19 @@ namespace Prometheus.Tests.HttpClientMetrics
             var requestTask = client.GetAsync("http://www.google.com", HttpCompletionOption.ResponseHeadersRead);
 
             // There should be no duration metric recorded unless the task is completed.
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
             
             mockHttpClientHandler.Complete();
 
             // There should be no duration metric recorded unless the response is actually read or disposed.
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
 
             var response = await requestTask;
 
             await response.Content.ReadAsStringAsync();
 
             // Now that we have finished reading it, it should show up.
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
         }
 
         [TestMethod]
@@ -86,19 +86,19 @@ namespace Prometheus.Tests.HttpClientMetrics
             var requestTask = client.GetAsync("http://www.google.com", HttpCompletionOption.ResponseHeadersRead);
 
             // There should be no duration metric recorded unless the task is completed.
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
 
             mockHttpClientHandler.Complete();
 
             // There should be no duration metric recorded unless the response is actually read or disposed.
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
 
             var response = await requestTask;
 
             response.Dispose();
 
             // Now that we have disposed it, it should show up.
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com").Count);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Count);
         }
 
         private class MockHttpClientHandler : HttpClientHandler
