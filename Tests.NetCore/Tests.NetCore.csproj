@@ -31,6 +31,10 @@
     <Compile Include="..\Tests.NetFramework\CounterExtensionTests.cs" Link="CounterExtensionTests.cs" />
     <Compile Include="..\Tests.NetFramework\GaugeExtensionTests.cs" Link="GaugeExtensionTests.cs" />
     <Compile Include="..\Tests.NetFramework\HistogramTests.cs" Link="HistogramTests.cs" />
+    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientInProgressHandlerTests.cs" Link="HttpClientMetrics\HttpClientInProgressHandlerTests.cs" />
+    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientRequestCountHandlerTests.cs" Link="HttpClientMetrics\HttpClientRequestCountHandlerTests.cs" />
+    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs" Link="HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs" />
+    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs" Link="HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs" />
     <Compile Include="..\Tests.NetFramework\MetricInitializationTests.cs" Link="MetricInitializationTests.cs" />
     <Compile Include="..\Tests.NetFramework\MetricPusherTests.cs" Link="MetricPusherTests.cs" />
     <Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
@@ -53,6 +57,10 @@
     <ProjectReference Include="..\Prometheus.AspNetCore.Grpc\Prometheus.AspNetCore.Grpc.csproj" />
     <ProjectReference Include="..\Prometheus.NetCore\Prometheus.NetCore.csproj" />
     <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="HttpClientMetrics\" />
   </ItemGroup>
 
 </Project>

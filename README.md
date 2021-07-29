@@ -46,7 +46,7 @@ Related projects:
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
 * [ASP.NET Core gRPC request metrics](#aspnet-core-grpc-request-metrics)
-* [ASP.NET Core IHttpClientFactory metrics](#aspnet-core-ihttpclientfactory-metrics)
+* [IHttpClientFactory metrics](#ihttpclientfactory-metrics)
 * [ASP.NET Core health check status metrics](#aspnet-core-health-check-status-metrics)
 * [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
 * [ASP.NET Web API exporter](#aspnet-web-api-exporter)
@@ -460,7 +460,7 @@ public void Configure(IApplicationBuilder app, ...)
 
 The gRPC functionality is delivered in the `prometheus-net.AspNetCore.Grpc` NuGet package.
 
-# ASP.NET Core IHttpClientFactory metrics
+# IHttpClientFactory metrics
 
 This library allows you to expose metrics about HttpClient instances created using [IHttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests).
 

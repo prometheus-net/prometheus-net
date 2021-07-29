@@ -17,9 +17,16 @@
     <dependencies>
       <group targetFramework="net461">
         <dependency id="System.ValueTuple" version="4.5.0" />
+        <dependency id="Microsoft.Extensions.Http" version="3.1.9" />
       </group>
-      <group targetFramework="netstandard2.0" />
-      <group targetFramework="netcoreapp2.1" />
+      
+      <group targetFramework="netstandard2.0">
+        <dependency id="Microsoft.Extensions.Http" version="3.1.9" />
+      </group>
+      
+      <group targetFramework="netcoreapp2.1">
+        <dependency id="Microsoft.Extensions.Http" version="3.1.9" />
+      </group>
     </dependencies>
   </metadata>
   <files>
