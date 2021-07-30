@@ -30,7 +30,7 @@ namespace Prometheus.Tests.HttpClientMetrics
             gaugeInspectionHandler.InnerHandler = new HttpClientHandler();
 
             var client = new HttpClient(handler);
-            await client.GetAsync("http://www.google.com");
+            await client.GetAsync(ConnectivityCheck.Url);
 
             Assert.AreEqual(1, gaugeInspectionHandler.CapturedValue);
             Assert.AreEqual(0, ((Gauge)handler._metric).Value);
@@ -43,7 +43,7 @@ namespace Prometheus.Tests.HttpClientMetrics
 
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
-                CapturedValue = Gauge.WithLabels("GET", "www.google.com", HttpClientIdentity.Default.Name).Value;
+                CapturedValue = Gauge.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, "").Value;
                 return base.SendAsync(request, cancellationToken);
             }
         }

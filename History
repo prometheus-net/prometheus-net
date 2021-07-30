@@ -1,6 +1,8 @@
-* 4.3.0
+* 5.0.0
 - Added HTTP client metric that measures the response duration (time until response content reading is finished).
 - Added "client" label containing the name of HTTP client to HTTP client metrics.
+- Added "code" label with HTTP response code to HTTP client metrics. #299
+- HTTP client metrics now count responses when they are completed, not when started, to match with HTTP server metrics. Also renamed metric to httpclient_requests_sent_total since it said "received" previously (due to copy-paste error from HTTP server metrics).
 - HTTP client metrics are now published via the netstandard package, without requiring ASP.NET Core. #314
 - Added Counter.IncTo[Current]TimeUtc().
 * 4.2.0

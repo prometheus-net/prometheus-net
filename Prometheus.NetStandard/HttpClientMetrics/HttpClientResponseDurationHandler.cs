@@ -23,11 +23,13 @@ namespace Prometheus.HttpClientMetrics
             // Replace the Content with an implementation that observes when it has been read.
             response.Content = new InterceptingHttpContent(response.Content, delegate
             {
-                CreateChild(request).Observe(stopWatch.GetElapsedTime().TotalSeconds);
+                CreateChild(request, response).Observe(stopWatch.GetElapsedTime().TotalSeconds);
             });
 
             return response;
         }
+
+        protected override string[] DefaultLabels => HttpClientRequestLabelNames.All;
 
         protected override ICollector<IHistogram> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateHistogram(
             "httpclient_response_duration_seconds",

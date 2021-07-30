@@ -11,15 +11,26 @@ namespace Prometheus.HttpClientMetrics
         {
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            CreateChild(request).Inc();
-            return base.SendAsync(request, cancellationToken);
+            HttpResponseMessage? response = null;
+
+            try
+            {
+                response = await base.SendAsync(request, cancellationToken);
+                return response;
+            }
+            finally
+            {
+                CreateChild(request, response).Inc();
+            }
         }
 
+        protected override string[] DefaultLabels => HttpClientRequestLabelNames.All;
+
         protected override ICollector<ICounter> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateCounter(
-            "httpclient_requests_received_total",
-            "Count of HTTP requests that have been started by an HttpClient.",
+            "httpclient_requests_sent_total",
+            "Count of HTTP requests that have been completed by an HttpClient.",
             new CounterConfiguration
             {
                 LabelNames = labelNames

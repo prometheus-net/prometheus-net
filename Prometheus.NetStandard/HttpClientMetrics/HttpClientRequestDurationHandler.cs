@@ -15,17 +15,22 @@ namespace Prometheus.HttpClientMetrics
         {
             var stopWatch = ValueStopwatch.StartNew();
 
+            HttpResponseMessage? response = null;
+
             try
             {
                 // We measure until SendAsync returns - which is when the response HEADERS are seen.
                 // The response body may continue streaming for a long time afterwards, which this does not measure.
-                return await base.SendAsync(request, cancellationToken);
+                response = await base.SendAsync(request, cancellationToken);
+                return response;
             }
             finally
             {
-                CreateChild(request).Observe(stopWatch.GetElapsedTime().TotalSeconds);
+                CreateChild(request, response).Observe(stopWatch.GetElapsedTime().TotalSeconds);
             }
         }
+
+        protected override string[] DefaultLabels => HttpClientRequestLabelNames.All;
 
         protected override ICollector<IHistogram> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateHistogram(
             "httpclient_request_duration_seconds",

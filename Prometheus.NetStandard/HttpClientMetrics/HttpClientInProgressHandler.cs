@@ -11,13 +11,15 @@ namespace Prometheus.HttpClientMetrics
         {
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            using (CreateChild(request).TrackInProgress())
+            using (CreateChild(request, null).TrackInProgress())
             {
-                return base.SendAsync(request, cancellationToken);
+                return await base.SendAsync(request, cancellationToken);
             }
         }
+
+        protected override string[] DefaultLabels => HttpClientRequestLabelNames.KnownInAdvance;
 
         protected override ICollector<IGauge> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateGauge(
             "httpclient_requests_in_progress",

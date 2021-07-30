@@ -98,6 +98,7 @@
     <Compile Include="CounterExtensionTests.cs" />
     <Compile Include="GaugeExtensionTests.cs" />
     <Compile Include="HistogramTests.cs" />
+    <Compile Include="HttpClientMetrics\ConnectivityCheck.cs" />
     <Compile Include="HttpClientMetrics\HttpClientInProgressHandlerTests.cs" />
     <Compile Include="HttpClientMetrics\HttpClientRequestCountHandlerTests.cs" />
     <Compile Include="HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs" />

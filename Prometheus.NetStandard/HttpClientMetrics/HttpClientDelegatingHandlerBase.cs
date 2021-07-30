@@ -12,11 +12,17 @@ namespace Prometheus.HttpClientMetrics
     /// 'method' (HTTP request method)
     /// 'host' (The host name of  HTTP request)
     /// 'client' (The name of the HttpClient)
+    /// 'code' (HTTP response status code)
     /// </summary>
     internal abstract class HttpClientDelegatingHandlerBase<TCollector, TChild> : DelegatingHandler
         where TCollector : class, ICollector<TChild>
         where TChild : class, ICollectorChild
     {
+        /// <summary>
+        /// The set of labels from among the defaults that this metric supports.
+        /// </summary>
+        protected abstract string[] DefaultLabels { get; }
+
         /// <summary>
         /// The factory to use for creating the default metric for this middleware.
         /// Not used if a custom metric is already provided in options.
@@ -58,7 +64,7 @@ namespace Prometheus.HttpClientMetrics
         /// <remarks>
         /// Internal for testing purposes.
         /// </remarks>
-        protected internal TChild CreateChild(HttpRequestMessage request)
+        protected internal TChild CreateChild(HttpRequestMessage request, HttpResponseMessage? response)
         {
             if (!_metric.LabelNames.Any())
                 return _metric.Unlabelled;
@@ -77,6 +83,9 @@ namespace Prometheus.HttpClientMetrics
                         break;
                     case HttpClientRequestLabelNames.Client:
                         labelValues[i] = _identity.Name;
+                        break;
+                    case HttpClientRequestLabelNames.Code:
+                        labelValues[i] = response != null ? ((int)response.StatusCode).ToString() : "";
                         break;
                     default:
                         // We validate the label set on initialization, so this is impossible.
