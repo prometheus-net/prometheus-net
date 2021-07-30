@@ -112,7 +112,10 @@ namespace Prometheus.Tests.HttpClientMetrics
 
             public void Complete()
             {
-                _taskCompletionSource.SetResult(new HttpResponseMessage());
+                _taskCompletionSource.SetResult(new HttpResponseMessage
+                {
+                    Content = new StringContent("test content")
+                });
             }
             
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

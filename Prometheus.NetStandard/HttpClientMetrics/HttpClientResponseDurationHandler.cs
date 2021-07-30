@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,12 +18,20 @@ namespace Prometheus.HttpClientMetrics
             var stopWatch = ValueStopwatch.StartNew();
 
             var response = await base.SendAsync(request, cancellationToken);
+            var responseStream = await response.Content.ReadAsStreamAsync();
 
-            // Replace the Content with an implementation that observes when it has been read.
-            response.Content = new InterceptingHttpContent(response.Content, delegate
+            var wrapper = new EndOfStreamDetectingStream(responseStream, delegate
             {
                 CreateChild(request, response).Observe(stopWatch.GetElapsedTime().TotalSeconds);
             });
+
+            // Replace the Content with an implementation that observes when it has been fully read.
+            var oldContent = response.Content;
+            response.Content = new StreamContent(wrapper);
+
+            // Copy headers.
+            foreach (var header in oldContent.Headers)
+                response.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
             return response;
         }
@@ -41,75 +48,63 @@ namespace Prometheus.HttpClientMetrics
                 LabelNames = labelNames
             });
 
-        // Not quite super-functional but... perhaps good enough?
-        private sealed class InterceptingHttpContent : HttpContent
+        private sealed class EndOfStreamDetectingStream : Stream
         {
-            public InterceptingHttpContent(HttpContent inner, Action onSerialized)
+            public EndOfStreamDetectingStream(Stream inner, Action onEndOfStream)
             {
                 _inner = inner;
-                _onSerialized = onSerialized;
-
-                if (inner != null)
-                {
-                    foreach (var header in inner.Headers)
-                        Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
+                _onEndOfStream = onEndOfStream;
             }
 
-            private readonly HttpContent _inner;
-            private readonly Action _onSerialized;
+            private readonly Stream _inner;
+            private readonly Action _onEndOfStream;
 
-            protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context)
+            public override int Read(byte[] buffer, int offset, int count)
             {
-                if (_inner != null)
-                {
-                    var innerStream = await _inner.ReadAsStreamAsync();
-                    await innerStream.CopyToAsync(stream);
-                }
+                var bytesRead = _inner.Read(buffer, offset, count);
 
-                TriggerCallback();
+                if (bytesRead == 0)
+                    SignalCompletion();
+
+                return bytesRead;
             }
 
-            protected override bool TryComputeLength(out long length)
+            public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
-                length = default;
-                return false;
-            }
+                var bytesRead = await base.ReadAsync(buffer, offset, count, cancellationToken);
 
-            private bool _disposed;
-            private readonly object _disposedLock = new object();
+                if (bytesRead == 0)
+                    SignalCompletion();
+
+                return bytesRead;
+            }
 
             protected override void Dispose(bool disposing)
             {
-                if (!disposing)
-                    return;
+                base.Dispose(disposing);
 
-                lock (_disposedLock)
-                {
-                    if (_disposed)
-                        return;
-
-                    _disposed = true;
-                }
-
-                TriggerCallback();
-                _inner?.Dispose();
+                SignalCompletion();
             }
 
-            private bool _callbackTriggered;
-            private readonly object _callbackTriggeredLock = new object();
+            public override bool CanRead => _inner.CanRead;
+            public override bool CanSeek => _inner.CanSeek;
+            public override bool CanWrite => _inner.CanWrite;
+            public override long Length => _inner.Length;
+            public override long Position { get => _inner.Position; set => _inner.Position = value; }
+            public override void Flush() => _inner.Flush();
+            public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
+            public override void SetLength(long value) => _inner.SetLength(value);
+            public override void Write(byte[] buffer, int offset, int count) => _inner.Write(buffer, offset, count);
 
-            private void TriggerCallback()
+            private volatile bool _completed;
+
+            private void SignalCompletion()
             {
-                lock (_callbackTriggeredLock)
-                {
-                    if (_callbackTriggered)
-                        return;
+                if (_completed)
+                    return;
 
-                    _callbackTriggered = true;
-                }
-
-                _onSerialized();
+                _completed = true;
+                _onEndOfStream();
             }
         }
     }
