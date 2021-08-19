@@ -1,3 +1,5 @@
+* 5.0.1
+- Bugfix: PowersOfTenDividedBuckets did not work with >= 10 buckets due to overlap. Now skips overlapping region of generated series.
 * 5.0.0
 - Added HTTP client metric that measures the response duration (time until response content reading is finished).
 - Added "client" label containing the name of HTTP client to HTTP client metrics.

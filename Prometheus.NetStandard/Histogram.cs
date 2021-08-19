@@ -236,8 +236,17 @@ namespace Prometheus
                     // The math we do can make it incur some tiny avoidable error due to floating point gremlins.
                     // We use decimal for the path to preserve as much accuracy as we can, before finally converting to double.
                     // It will not fix 100% of the cases where we end up with 0.0000000000000000000000000000001 offset but it helps a lot.
+                    var candidate = (double)bucket;
 
-                    buckets.Add((double)bucket);
+                    // Depending on the number of divisions, it may be that divisions from different powers overlap.
+                    // For example, a division into 20 would include:
+                    // 19th value in the 0th power: 9.5 (10/20*19=9.5)
+                    // 1st value in the 1st power: 5 (100/20*1 = 5)
+                    // To avoid this being a problem, we simply constrain all values to be increasing.
+                    if (buckets.Any() && buckets.Last() >= candidate)
+                        continue; // Skip this one, it is not greater.
+
+                    buckets.Add(candidate);
                 }
             }
 

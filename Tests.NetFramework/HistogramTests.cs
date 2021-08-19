@@ -58,6 +58,25 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
+        public void PowersOfTenDividedBuckets_WithOverlappingEdges_CreatesExpectedBuckets()
+        {
+            var expected = new[]
+            {
+                // 10 should be in both power=1 and power=2 series
+                // But we expect it only to be emitted once.
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                20, 30, 40, 50, 60, 70, 80, 90, 100
+            };
+
+            var actual = Histogram.PowersOfTenDividedBuckets(0, 2, 10);
+
+            Assert.AreEqual(expected.Length, actual.Length);
+
+            for (var i = 0; i < expected.Length; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
+
+        [TestMethod]
         public void LinearBuckets_CreatesExpectedBuckets()
         {
             var expected = new[]
