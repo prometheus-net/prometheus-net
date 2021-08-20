@@ -1,3 +1,6 @@
+using System;
+using Microsoft.AspNetCore.Http;
+
 namespace Prometheus.HttpMetrics
 {
     public sealed class HttpMiddlewareExporterOptions
@@ -22,6 +25,14 @@ namespace Prometheus.HttpMetrics
             InProgress.AdditionalRouteParameters.Add(mapping);
             RequestCount.AdditionalRouteParameters.Add(mapping);
             RequestDuration.AdditionalRouteParameters.Add(mapping);
+        }
+
+        public void AddRequestLabel(string labelName, Func<HttpContext, string> getValue)
+        {
+            var mapping = new HttpRequestMapping(labelName, getValue);
+            InProgress.AdditionalRequestLabels.Add(mapping);
+            RequestCount.AdditionalRequestLabels.Add(mapping);
+            RequestDuration.AdditionalRequestLabels.Add(mapping);
         }
     }
 }
