@@ -522,6 +522,18 @@ app.Map("/metrics", metricsApp =>
 });
 ```
 
+# ASP.NET Core with OAuth
+
+Restricting access to the metrics endpoint using OAuth can be achieved as follows:
+
+```csharp
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapMetrics().RequireAuthorization("MetricsRead");
+        // ...
+    });
+```
+
 # ASP.NET Web API exporter
 
 The easiest way to export metrics from an ASP.NET Web API app on the full .NET Framework is to use `AspNetMetricServer` in your `Global.asax.cs` file. Insert the following line to the top of the `Application_Start` method:
