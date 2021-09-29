@@ -7,6 +7,13 @@ namespace Prometheus.HttpMetrics
         public bool Enabled { get; set; } = true;
 
         /// <summary>
+        /// Transforms the <see cref="HttpRequestLabelNames.Code"/> label value from it's raw value (e.g. 200, 404) into a compressed
+        /// alternative (e.g. 2xx, 4xx). Setting this to true can be used to reduce the cardinality of metrics produced while still clearly communicating
+        /// success and error conditions (client vs server error). Defaults to false.
+        /// </summary>
+        public bool ReduceStatusCodeCardinality { get; set; } = false;
+
+        /// <summary>
         /// Additional route parameters to include beyond the defaults (controller/action).
         /// This may be useful if you have, for example, a "version" parameter for API versioning.
         /// </summary>
