@@ -67,8 +67,6 @@ namespace Prometheus
             _onError = options.OnError;
         }
 
-        private static readonly MediaTypeHeaderValue ContentTypeHeaderValue = new MediaTypeHeaderValue(PrometheusConstants.ExporterContentTypeMinimal);
-
         private static readonly HttpClient _singletonHttpClient = new HttpClient();
 
         private readonly Action<Exception>? _onError;
@@ -100,7 +98,7 @@ namespace Prometheus
                             {
                                 stream.Close();
                             }
-                        }, ContentTypeHeaderValue));
+                        }, PrometheusConstants.ExporterContentTypeValue));
 
                         // If anything goes wrong, we want to get at least an entry in the trace log.
                         response.EnsureSuccessStatusCode();
