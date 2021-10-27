@@ -32,7 +32,7 @@ namespace Prometheus
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
-            
+
             configuration.Routes.MapHttpRoute(
                 name: $"{RouteNamePrefix}{routeName}",
                 routeTemplate: routePath,
