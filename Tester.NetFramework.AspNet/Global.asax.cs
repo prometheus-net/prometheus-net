@@ -9,6 +9,7 @@ namespace Tester.NetFramework.AspNet
         protected void Application_Start(object sender, EventArgs e)
         {
             AspNetMetricServer.RegisterRoutes(GlobalConfiguration.Configuration);
+            AspNetMetricServer.RegisterCustomRoutes(GlobalConfiguration.Configuration, "metrics/alternate");
         }
     }
 }
