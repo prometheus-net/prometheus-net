@@ -1,3 +1,5 @@
+* 5.0.2
+- Bugfix: HttpClientMetrics under concurrent load with long-running requests were leading to broken response streams. #336
 * 5.0.1
 - Bugfix: PowersOfTenDividedBuckets did not work with >= 10 buckets due to overlap. Now skips overlapping region of generated series.
 * 5.0.0
@@ -128,7 +130,7 @@
 - Fixed label values escaping for ASCII formatter
 * 1.2.2:
 - PushGateway support
-- Various internal improvements (replaced locks with Interlocked operations)    
+- Various internal improvements (replaced locks with Interlocked operations)
 * 1.1.4:
 - Fixed some metrics not updating, added process ID metric
 - Replaced lock statements in Counter and Gauge with CAS
