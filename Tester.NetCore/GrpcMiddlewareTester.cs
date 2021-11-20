@@ -37,7 +37,7 @@ namespace tester
         {
             _webserverTask =
                 WebHost.CreateDefaultBuilder()
-                .UseUrls($"http://localhost:{TesterConstants.TesterPort}")
+                .UseUrls($"https://localhost:{TesterConstants.TesterPort}")
                 .ConfigureServices(services =>
                 {
                     services.AddGrpc();
@@ -64,7 +64,7 @@ namespace tester
             // Every time we observe metrics, we also asynchronously perform a dummy request for test data.
             StartDummyRequest();
 
-            var httpRequest = (HttpWebRequest)WebRequest.Create($"http://localhost:{TesterConstants.TesterPort}/metrics");
+            var httpRequest = (HttpWebRequest)WebRequest.Create($"https://localhost:{TesterConstants.TesterPort}/metrics");
             httpRequest.Method = "GET";
 
             using (var httpResponse = (HttpWebResponse)httpRequest.GetResponse())
@@ -78,10 +78,17 @@ namespace tester
         {
             Task.Run(async delegate
             {
-                using var channel = GrpcChannel.ForAddress($"http://localhost:{TesterConstants.TesterPort}");
-                var client = new Greeter.GreeterClient(channel);
+                try
+                {
+                    using var channel = GrpcChannel.ForAddress($"https://localhost:{TesterConstants.TesterPort}");
+                    var client = new Greeter.GreeterClient(channel);
 
-                await client.SayHelloAsync(new HelloRequest { Name = "Anonymous" });
+                    await client.SayHelloAsync(new HelloRequest { Name = "Anonymous" });
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             });
         }
 

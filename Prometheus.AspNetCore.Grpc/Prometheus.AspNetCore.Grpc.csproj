@@ -3,7 +3,8 @@
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     <RootNamespace>Prometheus</RootNamespace>
-
+    <PackageVersion>5.0.1</PackageVersion>
+    <Version>5.0.1</Version>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 
     <SignAssembly>true</SignAssembly>
@@ -16,6 +17,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <NoWarn>1701;1702;1705;1591</NoWarn>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -26,12 +28,19 @@
     <DocumentationFile>bin\Debug\netstandard2.0\Prometheus.Grpc.xml</DocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp3.1|AnyCPU'">
+    <WarningLevel>5</WarningLevel>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\Resources\SolutionAssemblyInfo.cs" Link="SolutionAssemblyInfo.cs" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Grpc.AspNetCore.Server">
       <Version>2.28.0</Version>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
   </ItemGroup>
 
