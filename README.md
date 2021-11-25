@@ -27,7 +27,6 @@ Related projects:
 * [prometheus-net/tzsp_packetstream_exporter](https://github.com/prometheus-net/tzsp_packetstream_exporter) exports metrics about the data flows found in a stream of IPv4 packets.
 * [prometheus-net Grafana dashboards](https://github.com/prometheus-net/grafana-dashboards) provides example dashboards for visualizing prometheus-net metrics in [Grafana](https://grafana.com/).
 
-
 # Table of contents
 
 * [Best practices and usage](#best-practices-and-usage)
@@ -58,6 +57,7 @@ Related projects:
 * [Just-in-time updates](#just-in-time-updates)
 * [Suppressing default metrics](#suppressing-default-metrics)
 * [DiagnosticSource integration](#diagnosticsource-integration)
+* [Publishing community NuGet packages that use prometheus-net](#publishing-community-nuget-packages-that-use-prometheus-net)
 
 # Best practices and usage
 
@@ -653,3 +653,7 @@ diagnostic_events_total{source="HttpHandlerDiagnosticListener",event="System.Net
 ```
 
 The level of detail obtained from this is rather low - only the total count for each event is exported. For more fine-grained analytics, you need to listen to DiagnosticSource events on your own and create custom metrics that can understand the meaning of each particular type of event that is of interest to you.
+
+# Publishing community NuGet packages that use prometheus-net
+
+To avoid confusion between "official" prometheus-net and community maintained packages, the `prometheus-net` namespace is protected on nuget.org. However, the `prometheus-net.Contrib.*` namespace allows package publishing by all authors.
