@@ -9,7 +9,8 @@
 
   <PropertyGroup>
     <RootNamespace>Prometheus</RootNamespace>
-
+    <PackageVersion>5.0.1</PackageVersion>
+    <Version>5.0.1</Version>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 
     <SignAssembly>true</SignAssembly>
