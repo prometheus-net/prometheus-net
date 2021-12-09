@@ -297,7 +297,7 @@ private static readonly Counter RequestCountByMethod = Metrics
 ...
 
 // You can specify the values for the labels later, once you know the right values (e.g in your request handler code).
-counter.WithLabels("GET").Inc();
+RequestCountByMethod.WithLabels("GET").Inc();
 ```
 
 NB! Best practices of metric design is to **minimize the number of different label values**. For example:
