@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using System;
+
 namespace Prometheus.HttpMetrics
 {
     public sealed class HttpMiddlewareExporterOptions
@@ -6,6 +10,7 @@ namespace Prometheus.HttpMetrics
         public HttpRequestCountOptions RequestCount { get; set; } = new HttpRequestCountOptions();
         public HttpRequestDurationOptions RequestDuration { get; set; } = new HttpRequestDurationOptions();
 
+        public Func<RouteValueDictionary, HttpContext, int>? CustomizeRouteValueDictionaryFunc = null;
         /// <summary>
         /// Whether to capture metrics for queries to the /metrics endpoint (where metrics are exported by default). Defaults to false.
         /// This matches against URLs starting with the /metrics string specifically - if you use a custom metrics endpoint, this will not match.

@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Prometheus.HttpMetrics
@@ -17,8 +19,11 @@ namespace Prometheus.HttpMetrics
     {
         private readonly RequestDelegate _next;
 
-        public CaptureRouteDataMiddleware(RequestDelegate next)
+        private static Func<RouteValueDictionary, HttpContext, int>? CustomizeRouteValueDictionaryFunc;
+
+        public CaptureRouteDataMiddleware(RequestDelegate next, HttpMiddlewareExporterOptions? options)
         {
+            CustomizeRouteValueDictionaryFunc = options?.CustomizeRouteValueDictionaryFunc;
             _next = next;
         }
 
@@ -31,15 +36,20 @@ namespace Prometheus.HttpMetrics
 
         private static void TryCaptureRouteData(HttpContext context)
         {
-            var routeData = context.GetRouteData();
-
-            if (routeData == null || routeData.Values.Count <= 0)
-                return;
-
             var capturedRouteData = new CapturedRouteDataFeature();
 
-            foreach (var pair in routeData.Values)
-                capturedRouteData.Values.Add(pair.Key, pair.Value);
+            var routeData = context.GetRouteData();
+
+            if (routeData != null && routeData.Values.Count >  0)
+            {
+                foreach (var pair in routeData.Values)
+                    capturedRouteData.Values.Add(pair.Key, pair.Value);
+            }
+
+            if (CustomizeRouteValueDictionaryFunc != null)
+            {
+                CustomizeRouteValueDictionaryFunc.Invoke(capturedRouteData.Values,context);
+            }
 
             context.Features.Set<ICapturedRouteDataFeature>(capturedRouteData);
         }

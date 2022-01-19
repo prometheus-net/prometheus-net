@@ -35,7 +35,7 @@ namespace Prometheus
 
             void ApplyConfiguration(IApplicationBuilder builder)
             {
-                builder.UseMiddleware<CaptureRouteDataMiddleware>();
+                builder.UseMiddleware<CaptureRouteDataMiddleware>(options);
 
                 if (options.InProgress.Enabled)
                     builder.UseMiddleware<HttpInProgressMiddleware>(options.InProgress);
