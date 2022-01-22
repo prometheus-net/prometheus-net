@@ -437,6 +437,15 @@ app.UseHttpMetrics(options =>
 });
 ```
 
+You can also extract arbitrary data from the HttpContext into label values as follows:
+
+```csharp
+app.UseHttpMetrics(options =>
+{
+    options.AddCustomLabel("host", context => context.Request.Host.Host);
+});
+```
+
 # ASP.NET Core gRPC request metrics
 
 The library allows you to expose some metrics from ASP.NET Core gRPC services. These metrics include labels for service and method name.

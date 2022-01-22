@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Http;
+using System;
+
 namespace Prometheus.HttpMetrics
 {
     public sealed class HttpMiddlewareExporterOptions
@@ -22,6 +25,32 @@ namespace Prometheus.HttpMetrics
             InProgress.AdditionalRouteParameters.Add(mapping);
             RequestCount.AdditionalRouteParameters.Add(mapping);
             RequestDuration.AdditionalRouteParameters.Add(mapping);
+        }
+
+        /// <summary>
+        /// Adds a custom label to all the HTTP metrics.
+        /// 
+        /// Helper method to avoid manually adding it to each one.
+        /// </summary>
+        public void AddCustomLabel(HttpCustomLabel mapping)
+        {
+            InProgress.CustomLabels.Add(mapping);
+            RequestCount.CustomLabels.Add(mapping);
+            RequestDuration.CustomLabels.Add(mapping);
+        }
+
+        /// <summary>
+        /// Adds a custom label to all the HTTP metrics.
+        /// 
+        /// Helper method to avoid manually adding it to each one.
+        /// </summary>
+        public void AddCustomLabel(string labelName, Func<HttpContext, string> valueProvider)
+        {
+            var mapping = new HttpCustomLabel(labelName, valueProvider);
+
+            InProgress.CustomLabels.Add(mapping);
+            RequestCount.CustomLabels.Add(mapping);
+            RequestDuration.CustomLabels.Add(mapping);
         }
     }
 }

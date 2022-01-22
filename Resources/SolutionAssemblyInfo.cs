@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 
 // This is the real version number, used in NuGet packages and for display purposes.
-[assembly: AssemblyFileVersion("5.0.2")]
+[assembly: AssemblyFileVersion("5.1.0")]
 
 // Only use major version here, with others kept at zero, for correct assembly binding logic.
 [assembly: AssemblyVersion("5.0.0")]

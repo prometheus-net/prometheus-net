@@ -11,10 +11,19 @@ namespace Prometheus.HttpMetrics
         /// This may be useful if you have, for example, a "version" parameter for API versioning.
         /// </summary>
         /// <remarks>
-        /// Metric labels are automatically added for these parameters, unless you provide your
+        /// Metric labels are automatically defined for these parameters, unless you provide your
         /// own metric instance in the options (in which case you must add the required labels).
         /// </remarks>
         public List<HttpRouteParameterMapping> AdditionalRouteParameters { get; set; } = new List<HttpRouteParameterMapping>();
+
+        /// <summary>
+        /// Additional custom labels to add to the metrics, with values extracted from the HttpContext of incoming requests.
+        /// </summary>
+        /// <remarks>
+        /// Metric labels are automatically defined for these, unless you provide your
+        /// own metric instance in the options (in which case you must add the required labels).
+        /// </remarks>
+        public List<HttpCustomLabel> CustomLabels { get; set; } = new List<HttpCustomLabel>();
 
         /// <summary>
         /// Allows you to override the registry used to create the default metric instance.

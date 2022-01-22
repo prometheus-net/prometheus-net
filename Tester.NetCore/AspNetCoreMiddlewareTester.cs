@@ -46,7 +46,12 @@ namespace tester
                     app.UseRouting();
 
                     // We capture metrics URL just for test data.
-                    app.UseHttpMetrics(options => options.CaptureMetricsUrl = true);
+                    app.UseHttpMetrics(options =>
+                    {
+                        options.CaptureMetricsUrl = true;
+
+                        options.AddCustomLabel("host", context => context.Request.Host.Host);
+                    });
                 })
                 .ConfigureLogging(logging => logging.ClearProviders())
                 .Build()
