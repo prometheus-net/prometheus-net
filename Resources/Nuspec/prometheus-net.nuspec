@@ -15,7 +15,7 @@
 		<releaseNotes></releaseNotes>
 
 		<dependencies>
-			<group targetFramework="net461">
+			<group targetFramework="net462">
 				<dependency id="System.ValueTuple" version="4.5.0" />
 				<dependency id="Microsoft.Extensions.Http" version="3.1.9" />
 			</group>
@@ -43,7 +43,7 @@
 		<file src="..\Prometheus.NetCore60\**" target="lib\net6.0" />
 		<file src="..\Prometheus.NetStandard\**" target="lib\net6.0" />
 		
-		<file src="..\Prometheus.Net461\**" target="lib\net461" />
+		<file src="..\Prometheus.Net462\**" target="lib\net462" />
 
 		<file src="prometheus-net-logo.png" target="images\" />
 	</files>
