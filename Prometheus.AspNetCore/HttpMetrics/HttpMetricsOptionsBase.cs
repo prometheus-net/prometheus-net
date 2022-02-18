@@ -30,5 +30,14 @@ namespace Prometheus.HttpMetrics
         /// Value is ignored if you specify a custom metric instance in the options.
         /// </summary>
         public CollectorRegistry? Registry { get; set; }
+
+        /// <summary>
+        /// If set, the "page" label will be considered one of the built-in default labels.
+        /// This is only enabled if Razor Pages is detected at the middleware setup stage.
+        /// 
+        /// The value is ignored if a custom metric is provided (though the user may still add
+        /// the "page" label themselves via AdditionalRouteParameters and it will work).
+        /// </summary>
+        internal bool IncludePageLabelInDefaultsInternal { get; set; }
     }
 }

@@ -427,13 +427,15 @@ public void Configure(IApplicationBuilder app, ...)
 
 NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
 
-The `action` and `controller` route parameters are captured by default. You can include additional route parameters as follows:
+The `action` and `controller` route parameters are always captured by default. If Razor Pages is in use, the `page` label will be captured to show the path to the page.
+
+You can include additional route parameters as follows:
 
 ```csharp
 app.UseHttpMetrics(options =>
 {
-    // This identifies the page when using Razor Pages.
-    options.AddRouteParameter("page");
+    // Assume there exists a custom route parameter with this name.
+    options.AddRouteParameter("api-version");
 });
 ```
 

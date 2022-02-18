@@ -1,5 +1,7 @@
-* 5.2.0
+* 6.0.0
 - Dropped library support for unsupported .NET runtime versions (.NET 2.1).
+- If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics. Manually adding a conflicting "page" route parameter will silently no-op to preserve backward compatibility.
+- HttpRequestLabelNames.All is now HttpRequestLabelNames.Default to better reflect the meaning of the property.
 * 5.1.0
 - Add support for adding custom label value providers to HTTP server metrics. #347
 * 5.0.2

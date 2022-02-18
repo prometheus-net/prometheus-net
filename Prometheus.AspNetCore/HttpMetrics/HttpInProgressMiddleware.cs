@@ -8,7 +8,7 @@ namespace Prometheus.HttpMetrics
     {
         private readonly RequestDelegate _next;
 
-        public HttpInProgressMiddleware(RequestDelegate next, HttpInProgressOptions? options)
+        public HttpInProgressMiddleware(RequestDelegate next, HttpInProgressOptions options)
             : base(options, options?.Gauge)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
@@ -25,7 +25,7 @@ namespace Prometheus.HttpMetrics
             }
         }
 
-        protected override string[] DefaultLabels => HttpRequestLabelNames.PotentiallyAvailableBeforeExecutingFinalHandler;
+        protected override string[] DefaultLabels => HttpRequestLabelNames.AvailableBeforeExecutingFinalHandler;
 
         protected override ICollector<IGauge> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateGauge(
             "http_requests_in_progress",

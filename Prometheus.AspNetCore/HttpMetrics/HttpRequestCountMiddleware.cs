@@ -8,7 +8,7 @@ namespace Prometheus.HttpMetrics
     {
         private readonly RequestDelegate _next;
 
-        public HttpRequestCountMiddleware(RequestDelegate next, HttpRequestCountOptions? options)
+        public HttpRequestCountMiddleware(RequestDelegate next, HttpRequestCountOptions options)
             : base(options, options?.Counter)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
@@ -29,7 +29,7 @@ namespace Prometheus.HttpMetrics
             }
         }
 
-        protected override string[] DefaultLabels => HttpRequestLabelNames.All;
+        protected override string[] DefaultLabels => HttpRequestLabelNames.Default;
 
         protected override ICollector<ICounter> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateCounter(
             "http_requests_received_total",

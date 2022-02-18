@@ -1,7 +1,7 @@
 namespace Prometheus.HttpMetrics
 {
     /// <summary>
-    /// Label names reserved for the use by the HTTP request metrics.
+    /// Label names used by the HTTP request handler metrics system.
     /// </summary>
     public static class HttpRequestLabelNames
     {
@@ -10,7 +10,12 @@ namespace Prometheus.HttpMetrics
         public const string Controller = "controller";
         public const string Action = "action";
 
-        public static readonly string[] All =
+        // Not reserved for background-compatibility, as it used to be optional and user-supplied.
+        // Conditionally, it may also be automatically added to metrics.
+        public const string Page = "page";
+
+        // These are reserved and may only be used with the default logic.
+        public static readonly string[] Default =
         {
             Code,
             Method,
@@ -18,11 +23,9 @@ namespace Prometheus.HttpMetrics
             Action
         };
 
-        internal static readonly string[] PotentiallyAvailableBeforeExecutingFinalHandler =
+        internal static readonly string[] AvailableBeforeExecutingFinalHandler =
         {
-            // Always available, part of request.
             Method,
-            // These two are available only in ASP.NET Core 3.
             Controller,
             Action
         };

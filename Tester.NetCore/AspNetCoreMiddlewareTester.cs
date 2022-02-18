@@ -36,6 +36,9 @@ namespace tester
                     services.AddHttpClient(Options.DefaultName).UseHttpClientMetrics();
                     services.AddHttpClient("client2").UseHttpClientMetrics();
                     services.AddHttpClient("client3").UseHttpClientMetrics();
+
+                    // Depending on whether this is here or not, the "page" label is added to default HTTP request metrics.
+                    services.AddRazorPages();
                 })
                 .Configure(app =>
                 {
