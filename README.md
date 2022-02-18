@@ -118,7 +118,10 @@ class Program
 
     static void Main()
     {
+        // NB! On .NET Core and .NET 5+ you should use KestrelMetricServer instead, to benefit from latest runtime improvements.
+        // MetricServer is the .NET Standard implementation designed for maximum compatibility across frameworks.
         var server = new MetricServer(hostname: "localhost", port: 1234);
+
         server.Start();
 
         while (true)
