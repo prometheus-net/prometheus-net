@@ -571,6 +571,8 @@ var pusher = new MetricPusher(new MetricPusherOptions
 pusher.Start();
 ```
 
+Note that the default behavior of the metric pusher is to append metrics. You can use `MetricPusherOptions.ReplaceOnPush` to make it replace existing metrics in the same group, removing any that are no longer pushed.
+
 # Publishing to Pushgateway with basic authentication
 
 You can use a custom HttpClient to supply credentials for the Pushgateway.
