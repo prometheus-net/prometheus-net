@@ -643,8 +643,7 @@ The library provides some sample metrics about the current process out of the bo
 // An optional "options" parameter is available to customize adapter behavior.
 var diagnosticSourceRegistration = DiagnosticSourceAdapter.StartListening();
 
-...
-
+...csharp
 // Stops listening for DiagnosticSource events.
 diagnosticSourceRegistration.Dispose();
 ```
@@ -657,6 +656,30 @@ diagnostic_events_total{source="HttpHandlerDiagnosticListener",event="System.Net
 ```
 
 The level of detail obtained from this is rather low - only the total count for each event is exported. For more fine-grained analytics, you need to listen to DiagnosticSource events on your own and create custom metrics that can understand the meaning of each particular type of event that is of interest to you.
+
+# EventCounter integration
+
+[.NET Core provides the EventCounter mechanism for reporting diagnostic events](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/event-counters), used used widely by .NET and ASP.NET Core classes. To expose these counters as Prometheus metrics, you can use the `EventCounterAdapter` class:
+
+```csharp
+// An optional "options" parameter is available to customize adapter behavior.
+var eventCounterRegistration = EventCounterAdapter.StartListening();
+
+...csharp
+// Stops listening for EventCounter events.
+eventCounterRegistration.Dispose();
+```
+
+.NET event counters are exported as Prometheus metrics, indicating the name of the event source and both names of the event counter itself:
+
+```
+dotnet_gauge{source="System.Runtime",name="active-timer-count",display_name="Number of Active Timers"} 11
+dotnet_gauge{source="System.Runtime",name="threadpool-thread-count",display_name="ThreadPool Thread Count"} 13
+dotnet_counter{source="System.Runtime",name="threadpool-completed-items-count",display_name="ThreadPool Completed Work Item Count"} 117
+dotnet_counter{source="System.Runtime",name="gen-0-gc-count",display_name="Gen 0 GC Count"} 2
+```
+
+Aggregrating EventCounters are exposed as Prometheus gauges representing the mean rate per second. Incrementing EventCounters are exposed as Prometheus counters representing the total (sum of all increments).
 
 # Publishing community NuGet packages that use prometheus-net
 

@@ -95,6 +95,7 @@ namespace tester
 
 #if NETCOREAPP
             var diagnosticSourceRegistration = DiagnosticSourceAdapter.StartListening();
+            var eventCounterRegistration = EventCounterAdapter.StartListening();
 #endif
 
             var cts = new CancellationTokenSource();

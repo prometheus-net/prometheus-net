@@ -3,6 +3,7 @@
 - If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics, unless there is a user-defined label already present with this name.
 - The "endpoint" label is now automatically added to the default HTTP server metrics, containing this endpoint routing route pattern of the request, unless there is a user-defined label already present with this name.
 - HttpRequestLabelNames.All is now HttpRequestLabelNames.Default to better reflect the meaning of the property.
+- Added integration with .NET EventCounters, which can now be easily exposed as Promtheus metrics (see EventCounterAdapter class).
 * 5.1.0
 - Add support for adding custom label value providers to HTTP server metrics. #347
 * 5.0.2
