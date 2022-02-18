@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
 
     <RootNamespace>Prometheus</RootNamespace>
 
@@ -20,11 +20,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netcoreapp3.1\Prometheus.NetCore.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\net6.0\Prometheus.NetCore.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netcoreapp3.1\Prometheus.NetCore.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\net6.0\Prometheus.NetCore.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
