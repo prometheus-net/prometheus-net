@@ -14,8 +14,8 @@ The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/
 
 Some specialized subsets of functionality require more modern runtimes:
 
-* The ASP.NET Core specific functionality requires ASP.NET Core 2.1 or newer.
-* The .NET Core specific functionality requires .NET Core 2.1 or newer.
+* The ASP.NET Core specific functionality requires ASP.NET Core 3.1 or newer.
+* The .NET Core specific functionality requires .NET Core 3.1 or newer.
 * The gRPC specific functionality requires .NET Core 3.1 or newer.
 
 Related projects:

@@ -24,7 +24,7 @@
         <dependency id="Microsoft.Extensions.Http" version="3.1.9" />
       </group>
       
-      <group targetFramework="netcoreapp2.1">
+      <group targetFramework="netcoreapp3.1">
         <dependency id="Microsoft.Extensions.Http" version="3.1.9" />
       </group>
     </dependencies>
@@ -32,8 +32,8 @@
   <files>
     <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
     <file src="..\Prometheus.NetStandard\**" target="lib\netstandard2.0" />
-    <file src="..\Prometheus.NetCore\**" target="lib\netcoreapp2.1" />
-    <file src="..\Prometheus.NetStandard\**" target="lib\netcoreapp2.1" />
+    <file src="..\Prometheus.NetCore\**" target="lib\netcoreapp3.1" />
+    <file src="..\Prometheus.NetStandard\**" target="lib\netcoreapp3.1" />
     <file src="..\Prometheus.Net461\**" target="lib\net461" />
 
     <file src="prometheus-net-logo.png" target="images\" />

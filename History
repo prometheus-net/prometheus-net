@@ -1,3 +1,5 @@
+* 5.2.0
+- Dropped library support for unsupported .NET runtime versions (.NET 2.1).
 * 5.1.0
 - Add support for adding custom label value providers to HTTP server metrics. #347
 * 5.0.2
