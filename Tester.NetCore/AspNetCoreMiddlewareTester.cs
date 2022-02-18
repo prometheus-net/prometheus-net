@@ -44,7 +44,8 @@ namespace tester
                 {
                     _httpClientFactory = app.ApplicationServices.GetRequiredService<IHttpClientFactory>();
 
-                    app.UseMetricServer();
+                    // Legacy approach. Still works but we prefer endpoints mapping.
+                    //app.UseMetricServer();
 
                     app.UseRouting();
 
@@ -54,6 +55,11 @@ namespace tester
                         options.CaptureMetricsUrl = true;
 
                         options.AddCustomLabel("host", context => context.Request.Host.Host);
+                    });
+
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapMetrics();
                     });
                 })
                 .ConfigureLogging(logging => logging.ClearProviders())

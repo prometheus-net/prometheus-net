@@ -72,6 +72,8 @@ namespace Prometheus.HttpMetrics
             if (options.IncludePageLabelInDefaultsInternal)
                 AddPageLabelIfNoConflict(customMetric);
 
+            AddEndpointLabelIfNoConflict(customMetric);
+
             ValidateMappings();
             _labelToRouteParameterMap = CreateLabelToRouteParameterMap();
             _labelToValueProviderMap = CreateLabelToValueProviderMap();
@@ -101,7 +103,6 @@ namespace Prometheus.HttpMetrics
             // The possible conflicts are:
             // * an existing route parameter mapping (which works out the same as our logic, so fine)
             // * custom logic that defines a "page" label (in which case we allow it to win, for backward compatibility).
-            //
 
             if (_additionalRouteParameters.Any(x => x.LabelName == HttpRequestLabelNames.Page))
                 return;
@@ -114,6 +115,34 @@ namespace Prometheus.HttpMetrics
 
             // If we got so far, we are good - all preconditions for adding "page" label exist.
             _additionalRouteParameters.Add(new HttpRouteParameterMapping("page"));
+        }
+
+        private void AddEndpointLabelIfNoConflict(TCollector? customMetric)
+        {
+            // We always try to add an "endpoint" label with the endpoint routing route pattern.
+            // We will only do this if nothing else has already occupied the "endpoint" label.
+            // If a custom metric is used, we also skip this if it has no "endpoint" label name defined.
+            //
+            // The possible conflicts are:
+            // * an existing route parameter mapping
+            // * custom logic that defines an "endpoint" label
+            //
+            // In case of conflict, we let the user-defined item win.
+
+            if (_additionalRouteParameters.Any(x => x.LabelName == HttpRequestLabelNames.Endpoint))
+                return;
+
+            if (_customLabels.Any(x => x.LabelName == HttpRequestLabelNames.Endpoint))
+                return;
+
+            if (customMetric != null && !customMetric.LabelNames.Contains(HttpRequestLabelNames.Endpoint))
+                return;
+
+            _customLabels.Add(new HttpCustomLabel(HttpRequestLabelNames.Endpoint, context =>
+            {
+                var endpoint = context.GetEndpoint() as RouteEndpoint;
+                return endpoint?.RoutePattern.RawText ?? "";
+            }));
         }
 
         /// <summary>

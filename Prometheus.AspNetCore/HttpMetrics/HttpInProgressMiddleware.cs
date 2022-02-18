@@ -25,7 +25,7 @@ namespace Prometheus.HttpMetrics
             }
         }
 
-        protected override string[] DefaultLabels => HttpRequestLabelNames.AvailableBeforeExecutingFinalHandler;
+        protected override string[] DefaultLabels => HttpRequestLabelNames.DefaultsAvailableBeforeExecutingFinalHandler;
 
         protected override ICollector<IGauge> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateGauge(
             "http_requests_in_progress",

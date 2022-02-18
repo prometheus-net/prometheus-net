@@ -14,6 +14,9 @@ namespace Prometheus.HttpMetrics
         // Conditionally, it may also be automatically added to metrics.
         public const string Page = "page";
 
+        // Not reserved for background-compatibility, as it used to be optional and user-supplied.
+        public const string Endpoint = "endpoint";
+
         // These are reserved and may only be used with the default logic.
         public static readonly string[] Default =
         {
@@ -23,7 +26,7 @@ namespace Prometheus.HttpMetrics
             Action
         };
 
-        internal static readonly string[] AvailableBeforeExecutingFinalHandler =
+        internal static readonly string[] DefaultsAvailableBeforeExecutingFinalHandler =
         {
             Method,
             Controller,

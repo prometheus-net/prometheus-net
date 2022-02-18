@@ -27,6 +27,9 @@ namespace Prometheus.Tests.HttpExporter
         private const string TestController = "controllerAbcde";
         private const string TestAction = "action1234";
 
+        // We do not set up endpoint routing in tests, so this will always be empty string.
+        private const string TestEndpoint = "";
+
         public RouteParameterMappingTests()
         {
             _registry = Metrics.NewCustomRegistry();
@@ -35,6 +38,9 @@ namespace Prometheus.Tests.HttpExporter
             _next = context => Task.CompletedTask;
             _context = new DefaultHttpContext();
         }
+
+        private static readonly string[] DefaultLabelNamesPlusEndpoint = HttpRequestLabelNames.Default.Concat(new[] { HttpRequestLabelNames.Endpoint }).ToArray();
+        private static readonly string[] DefaultLabelNamesPlusEndpointAndPage = HttpRequestLabelNames.Default.Concat(new[] { HttpRequestLabelNames.Endpoint, HttpRequestLabelNames.Page }).ToArray();
 
         [TestMethod]
         public void DefaultMetric_AppliesStandardLabels()
@@ -47,13 +53,14 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.Default, child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpoint, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
-                TestController
+                TestController,
+                TestEndpoint
             }, child.Labels.Values);
         }
 
@@ -147,7 +154,7 @@ namespace Prometheus.Tests.HttpExporter
                     ("method", "excellent")
                 });
 
-            var allLabelNames = HttpRequestLabelNames.Default.Concat(new[] { "foo", "bar", "route_method" }).ToArray();
+            var allLabelNames = DefaultLabelNamesPlusEndpoint.Concat(new[] { "foo", "bar", "route_method" }).ToArray();
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -168,6 +175,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestMethod,
                 TestAction,
                 TestController,
+                TestEndpoint,
                 "123", // foo
                 "", // bar
                 "excellent" // route_method
@@ -264,13 +272,14 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.Default.Concat(new[] { HttpRequestLabelNames.Page }).ToList(), child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
                 TestController,
+                TestEndpoint,
                 "page_name"
             }, child.Labels.Values);
         }
@@ -293,13 +302,14 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.Default.Concat(new[] { HttpRequestLabelNames.Page }).ToList(), child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
                 TestController,
+                TestEndpoint,
                 "page_name"
             }, child.Labels.Values);
         }
@@ -327,13 +337,14 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.Default.Concat(new[] { HttpRequestLabelNames.Page }).ToList(), child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
                 TestController,
+                TestEndpoint,
                 canary
             }, child.Labels.Values);
         }
