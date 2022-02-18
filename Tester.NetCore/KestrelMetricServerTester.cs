@@ -1,7 +1,7 @@
 ﻿using Prometheus;
 using System;
-using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 
 namespace tester
@@ -19,6 +19,8 @@ namespace tester
         private readonly string _hostname;
         private readonly X509Certificate2 _certificate;
 
+        private static readonly HttpClient _httpClient = new();
+
         public override void OnTimeToObserveMetrics()
         {
             var url = $"http://{_hostname}:{TesterConstants.TesterPort}/metrics";
@@ -26,20 +28,16 @@ namespace tester
             if (_certificate != null)
                 url = url.Replace("http://", "https://");
 
-            var httpRequest = (HttpWebRequest)WebRequest.Create(url);
-            httpRequest.Method = "GET";
+            var response = _httpClient.GetAsync($"http://localhost:{TesterConstants.TesterPort}/metrics").Result;
 
-            using (var httpResponse = (HttpWebResponse)httpRequest.GetResponse())
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                if (httpResponse.StatusCode != HttpStatusCode.OK)
-                {
-                    Console.WriteLine($"Response status code: {(int)httpResponse.StatusCode} {httpResponse.StatusCode} {httpResponse.StatusDescription}");
-                    return;
-                }
-
-                var text = new StreamReader(httpResponse.GetResponseStream()).ReadToEnd();
-                Console.WriteLine(text);
+                Console.WriteLine($"Response status code: {(int)response.StatusCode} {response.StatusCode}");
+                return;
             }
+
+            var text = response.Content.ReadAsStringAsync().Result;
+            Console.WriteLine(text);
         }
 
         public override IMetricServer InitializeMetricServer()

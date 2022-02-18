@@ -17,6 +17,7 @@ Some specialized subsets of functionality require more modern runtimes:
 * The ASP.NET Core specific functionality requires ASP.NET Core 3.1 or newer.
 * The .NET Core specific functionality requires .NET Core 3.1 or newer.
 * The gRPC specific functionality requires .NET Core 3.1 or newer.
+* The .NET Meters API integrations requires .NET 6.0 or newer.
 
 Related projects:
 
@@ -57,6 +58,8 @@ Related projects:
 * [Just-in-time updates](#just-in-time-updates)
 * [Suppressing default metrics](#suppressing-default-metrics)
 * [DiagnosticSource integration](#diagnosticsource-integration)
+* [EventCounter integration](#eventcounter-integration)
+* [.NET 6 Meters integration](#net-6-meters-integration)
 * [Publishing community NuGet packages that use prometheus-net](#publishing-community-nuget-packages-that-use-prometheus-net)
 
 # Best practices and usage
@@ -641,11 +644,12 @@ The library provides some sample metrics about the current process out of the bo
 
 ```csharp
 // An optional "options" parameter is available to customize adapter behavior.
-var diagnosticSourceRegistration = DiagnosticSourceAdapter.StartListening();
+var registration = DiagnosticSourceAdapter.StartListening();
 
-...csharp
+...
+
 // Stops listening for DiagnosticSource events.
-diagnosticSourceRegistration.Dispose();
+registration.Dispose();
 ```
 
 Any events that occur are exported as Prometheus metrics, indicating the name of the event source and the name of the event:
@@ -663,11 +667,12 @@ The level of detail obtained from this is rather low - only the total count for 
 
 ```csharp
 // An optional "options" parameter is available to customize adapter behavior.
-var eventCounterRegistration = EventCounterAdapter.StartListening();
+var registration = EventCounterAdapter.StartListening();
 
-...csharp
+...
+
 // Stops listening for EventCounter events.
-eventCounterRegistration.Dispose();
+registration.Dispose();
 ```
 
 .NET event counters are exported as Prometheus metrics, indicating the name of the event source and both names of the event counter itself:
@@ -680,6 +685,27 @@ dotnet_counter{source="System.Runtime",name="gen-0-gc-count",display_name="Gen 0
 ```
 
 Aggregrating EventCounters are exposed as Prometheus gauges representing the mean rate per second. Incrementing EventCounters are exposed as Prometheus counters representing the total (sum of all increments).
+
+# .NET 6 Meters integration
+
+[.NET 6 provides the Meters mechanism for reporting diagnostic metrics](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/metrics). To expose these meters as Prometheus metrics, you can use the `MeterAdapter` class:
+
+```csharp
+// An optional "options" parameter is available to customize adapter behavior.
+var registration = MeterAdapter.StartListening();
+
+...
+
+// Stops listening for Meter updates.
+registration.Dispose();
+```
+
+.NET metering instruments are exported as Prometheus metrics carrying metadata that connects them back to their originating Meters:
+
+```
+dotnet_meters_gauge{meter="sample.dotnet.meter",instrument="sample_gauge",unit="Buckets",description="How much cheese is loaded"} 92
+dotnet_meters_counter{meter="sample.dotnet.meter",instrument="sample_counter",unit="",description=""} 4
+```
 
 # Publishing community NuGet packages that use prometheus-net
 

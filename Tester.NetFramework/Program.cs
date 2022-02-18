@@ -5,6 +5,10 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.Metrics;
+#endif
+
 namespace tester
 {
     internal class Program
@@ -98,6 +102,14 @@ namespace tester
             var eventCounterRegistration = EventCounterAdapter.StartListening();
 #endif
 
+#if NET6_0_OR_GREATER
+            var meter = new Meter("sample.dotnet.meter", "1.2.3");
+            var meterCounter = meter.CreateCounter<double>("sample_counter");
+            var meterGauge = meter.CreateObservableGauge<byte>("sample_gauge", () => 92, "Buckets", "How much cheese is loaded");
+
+            var meterRegistration = MeterAdapter.StartListening();
+#endif
+
             var cts = new CancellationTokenSource();
 
             var random = new Random();
@@ -113,12 +125,16 @@ namespace tester
                     {
                         var duration = Stopwatch.StartNew();
 
+
                         counter.Inc();
                         counter.Labels("GET", "/").Inc(2);
                         gauge.Set(random.NextDouble() + 2);
                         hist.Observe(random.NextDouble());
                         summary.Observe(random.NextDouble());
 
+#if NET6_0_OR_GREATER
+                        meterCounter.Add(1);
+#endif
                         try
                         {
                             tester.OnTimeToObserveMetrics();

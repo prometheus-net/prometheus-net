@@ -1,16 +1,14 @@
 ﻿using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 using Prometheus;
 using System;
-using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Options;
-using System.Net.Http;
 
 namespace tester
 {
@@ -72,14 +70,8 @@ namespace tester
             // Every time we observe metrics, we also asynchronously perform a dummy request for test data.
             StartDummyRequest();
 
-            var httpRequest = (HttpWebRequest)WebRequest.Create($"http://localhost:{TesterConstants.TesterPort}/metrics");
-            httpRequest.Method = "GET";
-
-            using (var httpResponse = (HttpWebResponse)httpRequest.GetResponse())
-            {
-                var text = new StreamReader(httpResponse.GetResponseStream()).ReadToEnd();
-                Console.WriteLine(text);
-            }
+            var text = _httpClientFactory.CreateClient().GetStringAsync($"http://localhost:{TesterConstants.TesterPort}/metrics").Result;
+            Console.WriteLine(text);
         }
 
         private void StartDummyRequest()
