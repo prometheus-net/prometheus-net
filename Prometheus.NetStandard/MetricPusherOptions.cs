@@ -32,6 +32,6 @@ namespace Prometheus
         ///
         /// Note: Other implementations of the pushgateway client default to replace, however to preserve backwards compatibility this implementation defaults to add.
         /// </summary>
-        public bool PushReplace { get; set; } = false;
+        public bool ReplaceOnPush { get; set; } = false;
     }
 }

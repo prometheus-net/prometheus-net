@@ -27,7 +27,7 @@ namespace Prometheus
             IntervalMilliseconds = intervalMilliseconds,
             AdditionalLabels = additionalLabels,
             Registry = registry,
-            PushReplace = pushReplace,
+            ReplaceOnPush = pushReplace,
         })
         {
         }
@@ -68,7 +68,7 @@ namespace Prometheus
             _pushInterval = TimeSpan.FromMilliseconds(options.IntervalMilliseconds);
             _onError = options.OnError;
 
-            _method = options.PushReplace ? HttpMethod.Put : HttpMethod.Post;
+            _method = options.ReplaceOnPush ? HttpMethod.Put : HttpMethod.Post;
         }
 
         private static readonly MediaTypeHeaderValue ContentTypeHeaderValue = new MediaTypeHeaderValue(PrometheusConstants.ExporterContentTypeMinimal);
