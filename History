@@ -5,7 +5,7 @@
 - HttpRequestLabelNames.All is now HttpRequestLabelNames.Default to better reflect the meaning of the property.
 - Added integration with .NET EventCounters, which can now be easily exposed as Promtheus metrics (see EventCounterAdapter class).
 - Added integration with .NET Meters, which can now be easily exposed as Promtheus metrics (see MeterAdapter class).
-- Added ReplaceOnPush option to MetricPusher #305.
+- Added ReplaceOnPush option to MetricPusher #305 #322.
 * 5.1.0
 - Add support for adding custom label value providers to HTTP server metrics. #347
 * 5.0.2
