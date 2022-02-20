@@ -23,7 +23,7 @@ namespace Prometheus
             MapRoute(configuration, "Default", "metrics", settings);
         
         /// <summary>
-        /// Registers an anonymous instance of the controller to be published on a given URL path (e.g. "/custom/metrics").
+        /// Registers an anonymous instance of the controller to be published on a given URL path (e.g. "custom/metrics").
         /// </summary>
         public static void RegisterRoutes(HttpConfiguration configuration, string path, Settings settings = null) =>
             MapRoute(configuration, path, path, settings);
