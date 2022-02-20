@@ -48,7 +48,7 @@ Related projects:
 * [ASP.NET Core gRPC request metrics](#aspnet-core-grpc-request-metrics)
 * [IHttpClientFactory metrics](#ihttpclientfactory-metrics)
 * [ASP.NET Core health check status metrics](#aspnet-core-health-check-status-metrics)
-* [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
+* [Protecting the metrics endpoint from unauthorized access](#protecting-the-metrics-endpoint-from-unauthorized-access)
 * [ASP.NET Web API exporter](#aspnet-web-api-exporter)
 * [Kestrel stand-alone server](#kestrel-stand-alone-server)
 * [Publishing to Pushgateway](#publishing-to-pushgateway)
@@ -513,21 +513,21 @@ public void ConfigureServices(IServiceCollection services, ...)
 
 The ASP.NET Core health check integration is delivered in the `prometheus-net.AspNetCore.HealthChecks` NuGet package.
 
-# ASP.NET Core with basic authentication
+# Protecting the metrics endpoint from unauthorized access
 
-You may wish to restrict access to the metrics export URL. This can be accomplished using any ASP.NET Core authentication mechanism, as prometheus-net integrates directly into the composable ASP.NET Core request processing pipeline.
-
-For a simple example we can take [BasicAuthMiddleware by Johan Boström](https://www.johanbostrom.se/blog/adding-basic-auth-to-your-mvc-application-in-dotnet-core) which can be integrated by replacing the `app.UseMetricServer()` line with the following code block:
+You may wish to restrict access to the metrics export URL. Documentation on how to apply ASP.NET Core security mechanisms is beyond the scope of this readme file but a good starting point may be to [require an authorization policy to be satisfied for accessing the endpoint](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-6.0#apply-policies-to-endpoints)
 
 ```csharp
-app.Map("/metrics", metricsApp =>
+app.UseEndpoints(endpoints =>
 {
-    metricsApp.UseMiddleware<BasicAuthMiddleware>("Contoso Corporation");
+    // ...
 
-    // We already specified URL prefix in .Map() above, no need to specify it again here.
-    metricsApp.UseMetricServer("");
+    // Assumes that you have previously configured the "ReadMetrics" policy (not shown).
+    endpoints.MapMetrics().RequireAuthorization("ReadMetrics");
 });
 ```
+
+Another commonly used option is to expose a separate web server endpoint (e.g. a new `KestrelMetricServer` instance) on a different port, with firewall rules limiting access to only certain IP addresses.
 
 # ASP.NET Web API exporter
 
