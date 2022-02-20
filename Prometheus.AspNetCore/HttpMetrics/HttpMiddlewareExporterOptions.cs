@@ -16,6 +16,16 @@ namespace Prometheus.HttpMetrics
         public bool CaptureMetricsUrl { get; set; }
 
         /// <summary>
+        /// Configures all the different types of metrics to use reduced status code cardinality (using 2xx instead of 200, 201 etc).
+        /// </summary>
+        public void ReduceStatusCodeCardinality()
+        {
+            InProgress.ReduceStatusCodeCardinality = true;
+            RequestCount.ReduceStatusCodeCardinality = true;
+            RequestDuration.ReduceStatusCodeCardinality = true;
+        }
+
+        /// <summary>
         /// Adds an additional route parameter to all the HTTP metrics.
         /// 
         /// Helper method to avoid manually adding it to each one.

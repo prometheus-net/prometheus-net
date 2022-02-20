@@ -421,6 +421,17 @@ public void Configure(IApplicationBuilder app, ...)
 }
 ```
 
+By default, metrics are collected separately for each response status code (200, 201, 202, 203, ...). You can considerably reduce the size of the data set by only preserving information about the first digit of the status code:
+
+```
+app.UseHttpMetrics(options =>
+{
+    // This will preserve only the first digit of the status code.
+    // For example: 200, 201, 203 -> 2xx
+    options.ReduceStatusCodeCardinality();
+});
+```
+
 NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
 
 The `action`, `controller` and `endpoint` route parameters are always captured by default. If Razor Pages is in use, the `page` label will be captured to show the path to the page.
