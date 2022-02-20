@@ -19,16 +19,6 @@ Some specialized subsets of functionality require more modern runtimes:
 * The gRPC specific functionality requires .NET Core 3.1 or newer.
 * The .NET Meters API integrations requires .NET 6.0 or newer.
 
-Related projects:
-
-* [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) instruments .NET Core apps to export metrics on .NET Core performance.
-* [prometheus-net.AspNet](https://github.com/rocklan/prometheus-net.AspNet) instruments ASP.NET full framework apps to export metrics on performance.
-* [prometheus-net.SystemMetrics](https://github.com/Daniel15/prometheus-net.SystemMetrics) exports various system metrics such as CPU usage, disk usage, etc.
-* [prometheus-net/docker_exporter](https://github.com/prometheus-net/docker_exporter) exports metrics about a Docker installation.
-* [prometheus-net/tzsp_packetstream_exporter](https://github.com/prometheus-net/tzsp_packetstream_exporter) exports metrics about the data flows found in a stream of IPv4 packets.
-* [prometheus-net Grafana dashboards](https://github.com/prometheus-net/grafana-dashboards) provides example dashboards for visualizing prometheus-net metrics in [Grafana](https://grafana.com/).
-* [PromQL.Parser](https://github.com/djluck/PromQL.Parser) enables you to parse and create Prometheus queries in C#.
-
 # Table of contents
 
 * [Best practices and usage](#best-practices-and-usage)
@@ -61,7 +51,7 @@ Related projects:
 * [DiagnosticSource integration](#diagnosticsource-integration)
 * [EventCounter integration](#eventcounter-integration)
 * [.NET 6 Meters integration](#net-6-meters-integration)
-* [Publishing community NuGet packages that use prometheus-net](#publishing-community-nuget-packages-that-use-prometheus-net)
+* [Community projects](#community-projects)
 
 # Best practices and usage
 
@@ -96,7 +86,6 @@ Nuget package for ASP.NET Core gRPC integration: [prometheus-net.AspNetCore.Grpc
 Nuget package for ASP.NET Web API middleware on .NET Framework: [prometheus-net.NetFramework.AspNet](https://www.nuget.org/packages/prometheus-net.NetFramework.AspNet)
 
 >Install-Package prometheus-net.NetFramework.AspNet
-
 
 # Quick start
 
@@ -721,6 +710,14 @@ dotnet_meters_gauge{meter="sample.dotnet.meter",instrument="sample_gauge",unit="
 dotnet_meters_counter{meter="sample.dotnet.meter",instrument="sample_counter",unit="",description=""} 4
 ```
 
-# Publishing community NuGet packages that use prometheus-net
+# Community projects
 
-To avoid confusion between "official" prometheus-net and community maintained packages, the `prometheus-net` namespace is protected on nuget.org. However, the `prometheus-net.Contrib.*` namespace allows package publishing by all authors.
+Some useful related projects are:
+
+* [prometheus-net.DotNetRuntime](https://github.com/djluck/prometheus-net.DotNetRuntime) instruments .NET Core apps to export metrics on .NET Core performance.
+* [prometheus-net.AspNet](https://github.com/rocklan/prometheus-net.AspNet) instruments ASP.NET full framework apps to export metrics on performance.
+* [prometheus-net.SystemMetrics](https://github.com/Daniel15/prometheus-net.SystemMetrics) exports various system metrics such as CPU usage, disk usage, etc.
+* [prometheus-net Grafana dashboards](https://github.com/prometheus-net/grafana-dashboards) provides example dashboards for visualizing prometheus-net metrics in [Grafana](https://grafana.com/).
+* [PromQL.Parser](https://github.com/djluck/PromQL.Parser) enables you to parse and create Prometheus queries in C#.
+
+Note: to avoid confusion between "official" prometheus-net and community maintained packages, the `prometheus-net` namespace is protected on nuget.org. However, the `prometheus-net.Contrib.*` namespace allows package publishing by all authors.
