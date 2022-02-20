@@ -71,8 +71,6 @@ namespace Prometheus
             _method = options.ReplaceOnPush ? HttpMethod.Put : HttpMethod.Post;
         }
 
-        private static readonly MediaTypeHeaderValue ContentTypeHeaderValue = new MediaTypeHeaderValue(PrometheusConstants.ExporterContentTypeMinimal);
-
         private static readonly HttpClient _singletonHttpClient = new HttpClient();
 
         private readonly Action<Exception>? _onError;
@@ -107,7 +105,7 @@ namespace Prometheus
                                 {
                                     stream.Close();
                                 }
-                            }, ContentTypeHeaderValue),
+                            }, PrometheusConstants.ExporterContentTypeValue),
                         };
 
                         var response = await httpClient.SendAsync(request);

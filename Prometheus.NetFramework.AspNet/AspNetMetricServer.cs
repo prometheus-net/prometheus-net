@@ -57,7 +57,7 @@ namespace Prometheus
                         {
                             stream.Close();
                         }
-                    }, PrometheusConstants.ExporterContentTypeMinimal)
+                    }, PrometheusConstants.ExporterContentTypeValue)
                 };
 
                 return Task.FromResult(response);
