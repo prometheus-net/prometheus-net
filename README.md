@@ -27,6 +27,7 @@ Related projects:
 * [prometheus-net/docker_exporter](https://github.com/prometheus-net/docker_exporter) exports metrics about a Docker installation.
 * [prometheus-net/tzsp_packetstream_exporter](https://github.com/prometheus-net/tzsp_packetstream_exporter) exports metrics about the data flows found in a stream of IPv4 packets.
 * [prometheus-net Grafana dashboards](https://github.com/prometheus-net/grafana-dashboards) provides example dashboards for visualizing prometheus-net metrics in [Grafana](https://grafana.com/).
+* [PromQL.Parser](https://github.com/djluck/PromQL.Parser) enables you to parse and create Prometheus queries in C#.
 
 # Table of contents
 
