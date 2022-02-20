@@ -256,6 +256,32 @@ namespace Prometheus.Tests.HttpExporter
                 });
             });
         }
+        
+        [TestMethod]
+        [DataRow(200, "2xx")]
+        [DataRow(404, "4xx")]
+        // Made up status code to verify we don't ever round status code values up
+        [DataRow(599, "5xx")]
+        public void DefaultMetric_WithReducedStatusCodeCardinality_ReducesStatusCodeCardinality(int statusCode, string expectedStatusLabel)
+        {
+            SetupHttpContext(_context, statusCode, TestMethod, TestAction, TestController);
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry,
+                ReduceStatusCodeCardinality = true
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.Labels.Names);
+            CollectionAssert.AreEquivalent(new[]
+            {
+                expectedStatusLabel,
+                TestMethod,
+                TestAction,
+                TestController
+            }, child.Labels.Values);
+        }
 
         [TestMethod]
         public void DefaultMetric_WithPageFeatureEnabled_CreatesPageLabel()

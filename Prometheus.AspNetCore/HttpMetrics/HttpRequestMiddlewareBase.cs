@@ -61,6 +61,7 @@ namespace Prometheus.HttpMetrics
         private readonly Dictionary<string, Func<HttpContext, string>> _labelToValueProviderMap;
 
         private readonly bool _labelsRequireRouteData;
+        private readonly bool _reduceStatusCodeCardinality;
 
         protected HttpRequestMiddlewareBase(HttpMetricsOptionsBase options, TCollector? customMetric)
         {
@@ -76,6 +77,7 @@ namespace Prometheus.HttpMetrics
 
             ValidateMappings();
             _labelToRouteParameterMap = CreateLabelToRouteParameterMap();
+            _reduceStatusCodeCardinality = options?.ReduceStatusCodeCardinality ?? false;
             _labelToValueProviderMap = CreateLabelToValueProviderMap();
 
             if (customMetric != null)
@@ -181,7 +183,7 @@ namespace Prometheus.HttpMetrics
                         labelValues[i] = context.Request.Method;
                         break;
                     case HttpRequestLabelNames.Code:
-                        labelValues[i] = context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
+                        labelValues[i] = _reduceStatusCodeCardinality ? Math.Floor(context.Response.StatusCode / 100.0).ToString("#xx") : context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
                         break;
                     default:
                         // We validate the label set on initialization, so if we get to this point it must be either:
