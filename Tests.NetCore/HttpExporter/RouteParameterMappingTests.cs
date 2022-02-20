@@ -79,6 +79,34 @@ namespace Prometheus.Tests.HttpExporter
         }
 
         [TestMethod]
+        public void CustomMetric_WithAllBuiltinLabels_AppliesLabels()
+        {
+            // Note that we do not configure Razor Pages, so there is no automatic "page" label.
+            // However, we still expect it to be fine for custom metrics to include any builtin label at any time.
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Counter = _metrics.CreateCounter("xxx", "", new CounterConfiguration
+                {
+                    LabelNames = HttpRequestLabelNames.All
+                })
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.Labels.Names);
+            CollectionAssert.AreEquivalent(new[]
+            {
+                TestStatusCode.ToString(),
+                TestMethod,
+                TestAction,
+                TestController,
+                TestEndpoint,
+                "" // page
+            }, child.Labels.Values);
+        }
+
+        [TestMethod]
         public void CustomMetric_WithStandardLabels_AppliesStandardLabels()
         {
             SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
@@ -273,13 +301,14 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpoint, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
                 expectedStatusLabel,
                 TestMethod,
                 TestAction,
-                TestController
+                TestController,
+                TestEndpoint
             }, child.Labels.Values);
         }
 

@@ -32,7 +32,7 @@ namespace Prometheus.HttpMetrics
             }
         }
 
-        protected override string[] DefaultLabels => HttpRequestLabelNames.Default;
+        protected override string[] BaselineLabels => HttpRequestLabelNames.Default;
 
         protected override ICollector<IHistogram> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateHistogram(
             "http_request_duration_seconds",

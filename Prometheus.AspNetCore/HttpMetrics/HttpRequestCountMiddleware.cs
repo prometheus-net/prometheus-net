@@ -29,7 +29,7 @@ namespace Prometheus.HttpMetrics
             }
         }
 
-        protected override string[] DefaultLabels => HttpRequestLabelNames.Default;
+        protected override string[] BaselineLabels => HttpRequestLabelNames.Default;
 
         protected override ICollector<ICounter> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateCounter(
             "http_requests_received_total",

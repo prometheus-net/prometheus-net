@@ -35,8 +35,10 @@ namespace Prometheus.HttpMetrics
         /// 
         /// This set will be automatically extended with labels for additional
         /// route parameters and custom labels when creating the default metric instance.
+        /// 
+        /// It will also be extended by additional built-in logic (page, endpoint).
         /// </summary>
-        protected abstract string[] DefaultLabels { get; }
+        protected abstract string[] BaselineLabels { get; }
 
         /// <summary>
         /// Creates the default metric instance with the specified set of labels.
@@ -186,17 +188,24 @@ namespace Prometheus.HttpMetrics
                         labelValues[i] = _reduceStatusCodeCardinality ? Math.Floor(context.Response.StatusCode / 100.0).ToString("#xx") : context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
                         break;
                     default:
-                        // We validate the label set on initialization, so if we get to this point it must be either:
-                        // 1) a mapped route parameter.
-                        // 2) a custom label.
-
+                        // If we get to this point it must be either:
                         if (_labelToRouteParameterMap.TryGetValue(_metric.LabelNames[i], out var parameterName))
                         {
+                            // A mapped route parameter.
                             labelValues[i] = routeData?[parameterName] as string ?? string.Empty;
+                        }
+                        else if (_labelToValueProviderMap.TryGetValue(_metric.LabelNames[i], out var valueProvider))
+                        {
+                            // A custom label value provider.
+                            labelValues[i] = valueProvider(context) ?? string.Empty;
                         }
                         else
                         {
-                            labelValues[i] = _labelToValueProviderMap[_metric.LabelNames[i]](context) ?? string.Empty;
+                            // Something we do not have data for.
+                            // This can happen if, for example, a custom metric inherits "all" the labels without reimplementing the "when do we add which label"
+                            // logic that prometheus-net implements (which is an entirely reasonable design). So it might just add a "page" label when we have no
+                            // page information. Instead of rejecting such custom metrics, we just leave the label value empty and carry on.
+                            labelValues[i] = "";
                         }
                         break;
                 }
@@ -207,15 +216,26 @@ namespace Prometheus.HttpMetrics
 
 
         /// <summary>
-        /// Creates the full set of labels supported for the current metric.
-        /// 
-        /// This merges (in unspecified order) the defaults from prometheus-net with any in options.AdditionalRouteParameters.
+        /// Creates the set of labels defined on the automatically created metric.
         /// </summary>
         private string[] CreateDefaultLabelSet()
         {
-            return DefaultLabels
+            return BaselineLabels
                 .Concat(_additionalRouteParameters.Select(x => x.LabelName))
                 .Concat(_customLabels.Select(x => x.LabelName))
+                .ToArray();
+        }
+
+        /// <summary>
+        /// Creates the full set of labels ALLOWED for the current metric.
+        /// This may be a greater set than the labels automatically added to the default metric.
+        /// </summary>
+        private string[] CreateAllowedLabelSet()
+        {
+            return HttpRequestLabelNames.All
+                .Concat(_additionalRouteParameters.Select(x => x.LabelName))
+                .Concat(_customLabels.Select(x => x.LabelName))
+                .Distinct() // Some builtins may also exist in the customs, with customs overwriting. That's fine.
                 .ToArray();
         }
 
@@ -303,7 +323,7 @@ namespace Prometheus.HttpMetrics
         /// </summary>
         private void ValidateNoUnexpectedLabelNames()
         {
-            var allowedLabels = CreateDefaultLabelSet();
+            var allowedLabels = CreateAllowedLabelSet();
             var unexpected = _metric.LabelNames.Except(allowedLabels);
 
             if (unexpected.Any())

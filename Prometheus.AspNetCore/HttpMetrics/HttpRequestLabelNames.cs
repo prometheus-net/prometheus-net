@@ -17,8 +17,20 @@ namespace Prometheus.HttpMetrics
         // Not reserved for background-compatibility, as it used to be optional and user-supplied.
         public const string Endpoint = "endpoint";
 
+        // All labels that are supported by prometheus-net default logic.
+        // Useful if you want to define a custom metric that extends the default logic, without hardcoding the built-in label names.
+        public static readonly string[] All =
+        {
+            Code,
+            Method,
+            Controller,
+            Action,
+            Page,
+            Endpoint
+        };
+
         // These are reserved and may only be used with the default logic.
-        public static readonly string[] Default =
+        internal static readonly string[] Default =
         {
             Code,
             Method,
