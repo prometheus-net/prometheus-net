@@ -71,7 +71,7 @@ namespace Prometheus
             }
         }
 
-        private void OnEvent(string listenerName, string eventName, object payload)
+        private void OnEvent(string listenerName, string eventName, object? payload)
         {
             _metric.WithLabels(listenerName, eventName).Inc();
         }
@@ -99,11 +99,11 @@ namespace Prometheus
             }
         }
 
-        private sealed class NewEventObserver : IObserver<KeyValuePair<string, object>>
+        private sealed class NewEventObserver : IObserver<KeyValuePair<string, object?>>
         {
-            private readonly Action<KeyValuePair<string, object>> _onEvent;
+            private readonly Action<KeyValuePair<string, object?>> _onEvent;
 
-            public NewEventObserver(Action<KeyValuePair<string, object>> onEvent)
+            public NewEventObserver(Action<KeyValuePair<string, object?>> onEvent)
             {
                 _onEvent = onEvent;
             }
@@ -116,7 +116,7 @@ namespace Prometheus
             {
             }
 
-            public void OnNext(KeyValuePair<string, object> receivedEvent)
+            public void OnNext(KeyValuePair<string, object?> receivedEvent)
             {
                 _onEvent(receivedEvent);
             }

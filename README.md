@@ -14,9 +14,10 @@ The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/
 
 Some specialized subsets of functionality require more modern runtimes:
 
-* The ASP.NET Core specific functionality requires ASP.NET Core 2.1 or newer.
-* The .NET Core specific functionality requires .NET Core 2.1 or newer.
+* The ASP.NET Core specific functionality requires ASP.NET Core 3.1 or newer.
+* The .NET Core specific functionality requires .NET Core 3.1 or newer.
 * The gRPC specific functionality requires .NET Core 3.1 or newer.
+* The .NET Meters API integrations requires .NET 6.0 or newer.
 
 Related projects:
 
@@ -26,7 +27,6 @@ Related projects:
 * [prometheus-net/docker_exporter](https://github.com/prometheus-net/docker_exporter) exports metrics about a Docker installation.
 * [prometheus-net/tzsp_packetstream_exporter](https://github.com/prometheus-net/tzsp_packetstream_exporter) exports metrics about the data flows found in a stream of IPv4 packets.
 * [prometheus-net Grafana dashboards](https://github.com/prometheus-net/grafana-dashboards) provides example dashboards for visualizing prometheus-net metrics in [Grafana](https://grafana.com/).
-
 
 # Table of contents
 
@@ -48,7 +48,7 @@ Related projects:
 * [ASP.NET Core gRPC request metrics](#aspnet-core-grpc-request-metrics)
 * [IHttpClientFactory metrics](#ihttpclientfactory-metrics)
 * [ASP.NET Core health check status metrics](#aspnet-core-health-check-status-metrics)
-* [ASP.NET Core with basic authentication](#aspnet-core-with-basic-authentication)
+* [Protecting the metrics endpoint from unauthorized access](#protecting-the-metrics-endpoint-from-unauthorized-access)
 * [ASP.NET Web API exporter](#aspnet-web-api-exporter)
 * [Kestrel stand-alone server](#kestrel-stand-alone-server)
 * [Publishing to Pushgateway](#publishing-to-pushgateway)
@@ -58,6 +58,9 @@ Related projects:
 * [Just-in-time updates](#just-in-time-updates)
 * [Suppressing default metrics](#suppressing-default-metrics)
 * [DiagnosticSource integration](#diagnosticsource-integration)
+* [EventCounter integration](#eventcounter-integration)
+* [.NET 6 Meters integration](#net-6-meters-integration)
+* [Publishing community NuGet packages that use prometheus-net](#publishing-community-nuget-packages-that-use-prometheus-net)
 
 # Best practices and usage
 
@@ -118,7 +121,10 @@ class Program
 
     static void Main()
     {
+        // NB! On .NET Core and .NET 5+ you should use KestrelMetricServer instead, to benefit from latest runtime improvements.
+        // MetricServer is the .NET Standard implementation designed for maximum compatibility across frameworks.
         var server = new MetricServer(hostname: "localhost", port: 1234);
+
         server.Start();
 
         while (true)
@@ -297,7 +303,7 @@ private static readonly Counter RequestCountByMethod = Metrics
 ...
 
 // You can specify the values for the labels later, once you know the right values (e.g in your request handler code).
-counter.WithLabels("GET").Inc();
+RequestCountByMethod.WithLabels("GET").Inc();
 ```
 
 NB! Best practices of metric design is to **minimize the number of different label values**. For example:
@@ -365,22 +371,15 @@ You can also use `.Publish()` on a metric to mark it as ready to be published wi
 
 For projects built with ASP.NET Core, a middleware plugin is provided.
 
-If you use the default Visual Studio project template, modify `Startup.cs` as follows:
+If you use the default Visual Studio project templates, modify the `UseEndpoints` call as follows:
 
-* ASP.NET Core 3 or newer
-    * Add `endpoints.MapMetrics()` to the endpoint configuration under `app.UseEndpoints`.
-* ASP.NET Core 2
-    * Add `app.UseMetricServer()` to the top of the `Configure` method.
+* Add `endpoints.MapMetrics()` anywhere in the delegate body.
 
 ```csharp
 public void Configure(IApplicationBuilder app, ...)
 {
-    // ASP.NET Core 2
-    app.UseMetricServer();
-
     // ...
 
-    // ASP.NET Core 3.1 or newer
     app.UseEndpoints(endpoints =>
     {
         // ...
@@ -406,12 +405,9 @@ The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` N
 
 You can expose HTTP metrics by modifying your `Startup.Configure()` method:
 
-* ASP.NET Core 3 or newer
-    * After `app.UseRouting()` add `app.UseHttpMetrics()`.
-* ASP.NET Core 2
-    * After `app.UseMetricServer()` add `app.UseHttpMetrics()`.
+* After `app.UseRouting()` add `app.UseHttpMetrics()`.
 
-Example `Startup.cs` (ASP.NET Core 3):
+Example `Startup.cs`:
 
 ```csharp
 public void Configure(IApplicationBuilder app, ...)
@@ -427,13 +423,24 @@ public void Configure(IApplicationBuilder app, ...)
 
 NB! Exception handler middleware that changes HTTP response codes must be registered **after** `UseHttpMetrics()` in order to ensure that prometheus-net reports the correct HTTP response status code.
 
-The `action` and `controller` route parameters are captured by default. You can include additional route parameters as follows:
+The `action`, `controller` and `endpoint` route parameters are always captured by default. If Razor Pages is in use, the `page` label will be captured to show the path to the page.
+
+You can include additional route parameters as follows:
 
 ```csharp
 app.UseHttpMetrics(options =>
 {
-    // This identifies the page when using Razor Pages.
-    options.AddRouteParameter("page");
+    // Assume there exists a custom route parameter with this name.
+    options.AddRouteParameter("api-version");
+});
+```
+
+You can also extract arbitrary data from the HttpContext into label values as follows:
+
+```csharp
+app.UseHttpMetrics(options =>
+{
+    options.AddCustomLabel("host", context => context.Request.Host.Host);
 });
 ```
 
@@ -506,21 +513,21 @@ public void ConfigureServices(IServiceCollection services, ...)
 
 The ASP.NET Core health check integration is delivered in the `prometheus-net.AspNetCore.HealthChecks` NuGet package.
 
-# ASP.NET Core with basic authentication
+# Protecting the metrics endpoint from unauthorized access
 
-You may wish to restrict access to the metrics export URL. This can be accomplished using any ASP.NET Core authentication mechanism, as prometheus-net integrates directly into the composable ASP.NET Core request processing pipeline.
-
-For a simple example we can take [BasicAuthMiddleware by Johan Boström](https://www.johanbostrom.se/blog/adding-basic-auth-to-your-mvc-application-in-dotnet-core) which can be integrated by replacing the `app.UseMetricServer()` line with the following code block:
+You may wish to restrict access to the metrics export URL. Documentation on how to apply ASP.NET Core security mechanisms is beyond the scope of this readme file but a good starting point may be to [require an authorization policy to be satisfied for accessing the endpoint](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-6.0#apply-policies-to-endpoints)
 
 ```csharp
-app.Map("/metrics", metricsApp =>
+app.UseEndpoints(endpoints =>
 {
-    metricsApp.UseMiddleware<BasicAuthMiddleware>("Contoso Corporation");
+    // ...
 
-    // We already specified URL prefix in .Map() above, no need to specify it again here.
-    metricsApp.UseMetricServer("");
+    // Assumes that you have previously configured the "ReadMetrics" policy (not shown).
+    endpoints.MapMetrics().RequireAuthorization("ReadMetrics");
 });
 ```
+
+Another commonly used option is to expose a separate web server endpoint (e.g. a new `KestrelMetricServer` instance) on a different port, with firewall rules limiting access to only certain IP addresses.
 
 # ASP.NET Web API exporter
 
@@ -563,6 +570,8 @@ var pusher = new MetricPusher(new MetricPusherOptions
 
 pusher.Start();
 ```
+
+Note that the default behavior of the metric pusher is to append metrics. You can use `MetricPusherOptions.ReplaceOnPush` to make it replace existing metrics in the same group, removing any that are no longer pushed.
 
 # Publishing to Pushgateway with basic authentication
 
@@ -637,12 +646,12 @@ The library provides some sample metrics about the current process out of the bo
 
 ```csharp
 // An optional "options" parameter is available to customize adapter behavior.
-var diagnosticSourceRegistration = DiagnosticSourceAdapter.StartListening();
+var registration = DiagnosticSourceAdapter.StartListening();
 
 ...
 
 // Stops listening for DiagnosticSource events.
-diagnosticSourceRegistration.Dispose();
+registration.Dispose();
 ```
 
 Any events that occur are exported as Prometheus metrics, indicating the name of the event source and the name of the event:
@@ -653,3 +662,53 @@ diagnostic_events_total{source="HttpHandlerDiagnosticListener",event="System.Net
 ```
 
 The level of detail obtained from this is rather low - only the total count for each event is exported. For more fine-grained analytics, you need to listen to DiagnosticSource events on your own and create custom metrics that can understand the meaning of each particular type of event that is of interest to you.
+
+# EventCounter integration
+
+[.NET Core provides the EventCounter mechanism for reporting diagnostic events](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/event-counters), used used widely by .NET and ASP.NET Core classes. To expose these counters as Prometheus metrics, you can use the `EventCounterAdapter` class:
+
+```csharp
+// An optional "options" parameter is available to customize adapter behavior.
+var registration = EventCounterAdapter.StartListening();
+
+...
+
+// Stops listening for EventCounter events.
+registration.Dispose();
+```
+
+.NET event counters are exported as Prometheus metrics, indicating the name of the event source and both names of the event counter itself:
+
+```
+dotnet_gauge{source="System.Runtime",name="active-timer-count",display_name="Number of Active Timers"} 11
+dotnet_gauge{source="System.Runtime",name="threadpool-thread-count",display_name="ThreadPool Thread Count"} 13
+dotnet_counter{source="System.Runtime",name="threadpool-completed-items-count",display_name="ThreadPool Completed Work Item Count"} 117
+dotnet_counter{source="System.Runtime",name="gen-0-gc-count",display_name="Gen 0 GC Count"} 2
+```
+
+Aggregrating EventCounters are exposed as Prometheus gauges representing the mean rate per second. Incrementing EventCounters are exposed as Prometheus counters representing the total (sum of all increments).
+
+# .NET 6 Meters integration
+
+[.NET 6 provides the Meters mechanism for reporting diagnostic metrics](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/metrics). To expose these meters as Prometheus metrics, you can use the `MeterAdapter` class:
+
+```csharp
+// An optional "options" parameter is available to customize adapter behavior.
+var registration = MeterAdapter.StartListening();
+
+...
+
+// Stops listening for Meter updates.
+registration.Dispose();
+```
+
+.NET metering instruments are exported as Prometheus metrics carrying metadata that connects them back to their originating Meters:
+
+```
+dotnet_meters_gauge{meter="sample.dotnet.meter",instrument="sample_gauge",unit="Buckets",description="How much cheese is loaded"} 92
+dotnet_meters_counter{meter="sample.dotnet.meter",instrument="sample_counter",unit="",description=""} 4
+```
+
+# Publishing community NuGet packages that use prometheus-net
+
+To avoid confusion between "official" prometheus-net and community maintained packages, the `prometheus-net` namespace is protected on nuget.org. However, the `prometheus-net.Contrib.*` namespace allows package publishing by all authors.

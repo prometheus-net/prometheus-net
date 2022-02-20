@@ -24,5 +24,14 @@ namespace Prometheus
         /// If null, a singleton HttpClient will be used.
         /// </summary>
         public Func<HttpClient>? HttpClientProvider { get; set; }
+
+        /// <summary>
+        /// If true, replace the metrics in the group (identified by Job, Instance, AdditionalLabels).
+        ///
+        /// Replace means a HTTP PUT request will be made, otherwise a HTTP POST request will be made (which means add metrics to the group, if it already exists).
+        ///
+        /// Note: Other implementations of the pushgateway client default to replace, however to preserve backwards compatibility this implementation defaults to add.
+        /// </summary>
+        public bool ReplaceOnPush { get; set; } = false;
     }
 }

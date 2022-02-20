@@ -18,20 +18,13 @@ namespace Prometheus.HttpClientMetrics
             var stopWatch = ValueStopwatch.StartNew();
 
             var response = await base.SendAsync(request, cancellationToken);
-            var responseStream = await response.Content.ReadAsStreamAsync();
 
-            var wrapper = new EndOfStreamDetectingStream(responseStream, delegate
+            Stream oldStream = await response.Content.ReadAsStreamAsync();
+
+            Wrap(response, oldStream, delegate
             {
                 CreateChild(request, response).Observe(stopWatch.GetElapsedTime().TotalSeconds);
             });
-
-            // Replace the Content with an implementation that observes when it has been fully read.
-            var oldContent = response.Content;
-            response.Content = new StreamContent(wrapper);
-
-            // Copy headers.
-            foreach (var header in oldContent.Headers)
-                response.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
             return response;
         }
@@ -48,6 +41,35 @@ namespace Prometheus.HttpClientMetrics
                 LabelNames = labelNames
             });
 
+        private void Wrap(HttpResponseMessage response, Stream oldStream, Action onEndOfStream)
+        {
+            var newContent = new StreamContent(new EndOfStreamDetectingStream(oldStream, onEndOfStream));
+
+            var oldHeaders = response.Content.Headers;
+            var newHeaders = newContent.Headers;
+
+#if NET6_0_OR_GREATER
+        foreach (KeyValuePair<string, HeaderStringValues> header in oldHeaders.NonValidated)
+        {
+            if (header.Value.Count > 1)
+            {
+                newHeaders.TryAddWithoutValidation(header.Key, header.Value);
+            }
+            else
+            {
+                newHeaders.TryAddWithoutValidation(header.Key, header.Value.ToString());
+            }
+        }
+#else
+            foreach (var header in oldHeaders)
+            {
+                newHeaders.TryAddWithoutValidation(header.Key, header.Value);
+            }
+#endif
+
+            response.Content = newContent;
+        }
+
         private sealed class EndOfStreamDetectingStream : Stream
         {
             public EndOfStreamDetectingStream(Stream inner, Action onEndOfStream)
@@ -58,54 +80,67 @@ namespace Prometheus.HttpClientMetrics
 
             private readonly Stream _inner;
             private readonly Action _onEndOfStream;
+            private int _sawEndOfStream = 0;
+
+            public override void Flush() => _inner.Flush();
 
             public override int Read(byte[] buffer, int offset, int count)
             {
-                var bytesRead = _inner.Read(buffer, offset, count);
+                var read = _inner.Read(buffer, offset, count);
 
-                if (bytesRead == 0)
+                if (read == 0 && buffer.Length != 0)
+                {
                     SignalCompletion();
+                }
 
-                return bytesRead;
+                return read;
             }
 
-            public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
-                var bytesRead = await base.ReadAsync(buffer, offset, count, cancellationToken);
+                return buffer.Length == 0
+                    ? _inner.ReadAsync(buffer, offset, count, cancellationToken)
+                    : ReadAsyncCore(this, _inner.ReadAsync(buffer, offset, count, cancellationToken));
 
-                if (bytesRead == 0)
-                    SignalCompletion();
+                static async Task<int> ReadAsyncCore(EndOfStreamDetectingStream stream, Task<int> readTask)
+                {
+                    int read = await readTask;
 
-                return bytesRead;
+                    if (read == 0)
+                    {
+                        stream.SignalCompletion();
+                    }
+
+                    return read;
+                }
             }
 
             protected override void Dispose(bool disposing)
             {
-                base.Dispose(disposing);
+                if (disposing)
+                {
+                    SignalCompletion();
 
-                SignalCompletion();
+                    _inner.Dispose();
+                }
             }
 
+            private void SignalCompletion()
+            {
+                if (Interlocked.Exchange(ref _sawEndOfStream, 1) == 0)
+                {
+                    _onEndOfStream();
+                }
+            }
+
+            public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
+            public override void SetLength(long value) => _inner.SetLength(value);
+            public override void Write(byte[] buffer, int offset, int count) => _inner.Write(buffer, offset, count);
             public override bool CanRead => _inner.CanRead;
             public override bool CanSeek => _inner.CanSeek;
             public override bool CanWrite => _inner.CanWrite;
             public override long Length => _inner.Length;
             public override long Position { get => _inner.Position; set => _inner.Position = value; }
-            public override void Flush() => _inner.Flush();
-            public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
-            public override void SetLength(long value) => _inner.SetLength(value);
-            public override void Write(byte[] buffer, int offset, int count) => _inner.Write(buffer, offset, count);
-
-            private volatile bool _completed;
-
-            private void SignalCompletion()
-            {
-                if (_completed)
-                    return;
-
-                _completed = true;
-                _onEndOfStream();
-            }
         }
     }
 }

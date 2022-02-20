@@ -1,7 +1,6 @@
 ﻿using Prometheus;
 using System;
-using System.IO;
-using System.Net;
+using System.Net.Http;
 
 namespace tester
 {
@@ -12,16 +11,12 @@ namespace tester
             return new MetricServer(hostname: "localhost", port: TesterConstants.TesterPort);
         }
 
+        private static readonly HttpClient _httpClient = new();
+
         public override void OnTimeToObserveMetrics()
         {
-            var httpRequest = (HttpWebRequest)WebRequest.Create($"http://localhost:{TesterConstants.TesterPort}/metrics");
-            httpRequest.Method = "GET";
-
-            using (var httpResponse = (HttpWebResponse)httpRequest.GetResponse())
-            {
-                var text = new StreamReader(httpResponse.GetResponseStream()).ReadToEnd();
-                Console.WriteLine(text);
-            }
+            var text = _httpClient.GetStringAsync($"http://localhost:{TesterConstants.TesterPort}/metrics").Result;
+            Console.WriteLine(text);
         }
     }
 }

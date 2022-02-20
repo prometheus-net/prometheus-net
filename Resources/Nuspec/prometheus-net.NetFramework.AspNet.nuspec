@@ -15,7 +15,7 @@
     <releaseNotes></releaseNotes>
 
     <dependencies>
-        <group targetFramework="net4.6.1">
+        <group targetFramework="net462">
             <dependency id="Microsoft.AspNet.WebApi.Client" version="5.2.7"/>
             <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.7" />
 
@@ -25,7 +25,7 @@
   </metadata>
   <files>
     <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
-    <file src="..\Prometheus.NetFramework.AspNet\**" target="lib\net461" />
+    <file src="..\Prometheus.NetFramework.AspNet\**" target="lib\net462" />
 
     <file src="prometheus-net-logo.png" target="images\" />
   </files>

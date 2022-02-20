@@ -16,10 +16,12 @@ namespace Prometheus.HttpMetrics
     /// 'method' (HTTP request method)
     /// 'controller' (The Controller used to fulfill the HTTP request)
     /// 'action' (The Action used to fulfill the HTTP request)
-    /// Any other label - custom HTTP route parameter (if specified in options).
+    /// Any other label - from one of:
+    /// * HTTP route parameter (if name/mapping specified in options; name need not match).
+    /// * custom logic (callback decides value for each request)
     /// 
     /// The 'code' and 'method' data are taken from the current HTTP context.
-    /// Other labels will be taken from the request routing information.
+    /// 'controller', 'action' and route parameter labels will be taken from the request routing information.
     /// 
     /// If a custom metric is provided in the options, it must not be missing any labels for explicitly defined
     /// custom route parameters. However, it is permitted to lack any of the default labels (code/method/...).
@@ -32,7 +34,7 @@ namespace Prometheus.HttpMetrics
         /// The set of labels from among the defaults that this metric supports.
         /// 
         /// This set will be automatically extended with labels for additional
-        /// route parameters when creating the default metric instance.
+        /// route parameters and custom labels when creating the default metric instance.
         /// </summary>
         protected abstract string[] DefaultLabels { get; }
 
@@ -48,23 +50,35 @@ namespace Prometheus.HttpMetrics
         /// </summary>
         protected MetricFactory MetricFactory { get; }
 
-        private readonly ICollection<HttpRouteParameterMapping> _additionalRouteParameters;
+        private readonly List<HttpRouteParameterMapping> _additionalRouteParameters;
+        private readonly List<HttpCustomLabel> _customLabels;
         private readonly TCollector _metric;
 
+        // For labels that are route parameter mappings.
         private readonly Dictionary<string, string> _labelToRouteParameterMap;
+
+        // For labels that use a custom value provider.
+        private readonly Dictionary<string, Func<HttpContext, string>> _labelToValueProviderMap;
 
         private readonly bool _labelsRequireRouteData;
         private readonly bool _reduceStatusCodeCardinality;
 
-        protected HttpRequestMiddlewareBase(HttpMetricsOptionsBase? options, TCollector? customMetric)
+        protected HttpRequestMiddlewareBase(HttpMetricsOptionsBase options, TCollector? customMetric)
         {
-            MetricFactory = Metrics.WithCustomRegistry(options?.Registry ?? Metrics.DefaultRegistry);
+            MetricFactory = Metrics.WithCustomRegistry(options.Registry ?? Metrics.DefaultRegistry);
 
-            _additionalRouteParameters = options?.AdditionalRouteParameters ?? new List<HttpRouteParameterMapping>(0);
+            _additionalRouteParameters = options.AdditionalRouteParameters ?? new List<HttpRouteParameterMapping>(0);
+            _customLabels = options.CustomLabels ?? new List<HttpCustomLabel>(0);
 
-            ValidateAdditionalRouteParameterSet();
+            if (options.IncludePageLabelInDefaultsInternal)
+                AddPageLabelIfNoConflict(customMetric);
+
+            AddEndpointLabelIfNoConflict(customMetric);
+
+            ValidateMappings();
             _labelToRouteParameterMap = CreateLabelToRouteParameterMap();
             _reduceStatusCodeCardinality = options?.ReduceStatusCodeCardinality ?? false;
+            _labelToValueProviderMap = CreateLabelToValueProviderMap();
 
             if (customMetric != null)
             {
@@ -72,6 +86,7 @@ namespace Prometheus.HttpMetrics
 
                 ValidateNoUnexpectedLabelNames();
                 ValidateAdditionalRouteParametersPresentInMetricLabelNames();
+                ValidateCustomLabelsPresentInMetricLabelNames();
             }
             else
             {
@@ -79,6 +94,57 @@ namespace Prometheus.HttpMetrics
             }
 
             _labelsRequireRouteData = _metric.LabelNames.Except(HttpRequestLabelNames.NonRouteSpecific).Any();
+        }
+
+        private void AddPageLabelIfNoConflict(TCollector? customMetric)
+        {
+            // We were asked to add the "page" label because Razor Pages was detected.
+            // We will only do this if nothing else has already occupied the "page" label.
+            // If a custom metric is used, we also skip this if it has no "page" label name defined.
+            //
+            // The possible conflicts are:
+            // * an existing route parameter mapping (which works out the same as our logic, so fine)
+            // * custom logic that defines a "page" label (in which case we allow it to win, for backward compatibility).
+
+            if (_additionalRouteParameters.Any(x => x.LabelName == HttpRequestLabelNames.Page))
+                return;
+
+            if (_customLabels.Any(x => x.LabelName == HttpRequestLabelNames.Page))
+                return;
+
+            if (customMetric != null && !customMetric.LabelNames.Contains(HttpRequestLabelNames.Page))
+                return;
+
+            // If we got so far, we are good - all preconditions for adding "page" label exist.
+            _additionalRouteParameters.Add(new HttpRouteParameterMapping("page"));
+        }
+
+        private void AddEndpointLabelIfNoConflict(TCollector? customMetric)
+        {
+            // We always try to add an "endpoint" label with the endpoint routing route pattern.
+            // We will only do this if nothing else has already occupied the "endpoint" label.
+            // If a custom metric is used, we also skip this if it has no "endpoint" label name defined.
+            //
+            // The possible conflicts are:
+            // * an existing route parameter mapping
+            // * custom logic that defines an "endpoint" label
+            //
+            // In case of conflict, we let the user-defined item win.
+
+            if (_additionalRouteParameters.Any(x => x.LabelName == HttpRequestLabelNames.Endpoint))
+                return;
+
+            if (_customLabels.Any(x => x.LabelName == HttpRequestLabelNames.Endpoint))
+                return;
+
+            if (customMetric != null && !customMetric.LabelNames.Contains(HttpRequestLabelNames.Endpoint))
+                return;
+
+            _customLabels.Add(new HttpCustomLabel(HttpRequestLabelNames.Endpoint, context =>
+            {
+                var endpoint = context.GetEndpoint() as RouteEndpoint;
+                return endpoint?.RoutePattern.RawText ?? "";
+            }));
         }
 
         /// <summary>
@@ -120,9 +186,18 @@ namespace Prometheus.HttpMetrics
                         labelValues[i] = _reduceStatusCodeCardinality ? Math.Floor(context.Response.StatusCode / 100.0).ToString("#xx") : context.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
                         break;
                     default:
-                        // We validate the label set on initialization, so it must be a route parameter if we get to this point.
-                        var parameterName = _labelToRouteParameterMap[_metric.LabelNames[i]];
-                        labelValues[i] = routeData?[parameterName] as string ?? string.Empty;
+                        // We validate the label set on initialization, so if we get to this point it must be either:
+                        // 1) a mapped route parameter.
+                        // 2) a custom label.
+
+                        if (_labelToRouteParameterMap.TryGetValue(_metric.LabelNames[i], out var parameterName))
+                        {
+                            labelValues[i] = routeData?[parameterName] as string ?? string.Empty;
+                        }
+                        else
+                        {
+                            labelValues[i] = _labelToValueProviderMap[_metric.LabelNames[i]](context) ?? string.Empty;
+                        }
                         break;
                 }
             }
@@ -138,28 +213,32 @@ namespace Prometheus.HttpMetrics
         /// </summary>
         private string[] CreateDefaultLabelSet()
         {
-            return DefaultLabels.Concat(_additionalRouteParameters.Select(x => x.LabelName)).ToArray();
+            return DefaultLabels
+                .Concat(_additionalRouteParameters.Select(x => x.LabelName))
+                .Concat(_customLabels.Select(x => x.LabelName))
+                .ToArray();
         }
 
-        private void ValidateAdditionalRouteParameterSet()
+        private void ValidateMappings()
         {
-            var parameterNames = _additionalRouteParameters.Select(x => x.ParameterName).ToList();
+            var routeParameterLabelNames = _additionalRouteParameters.Select(x => x.LabelName).ToList();
 
-            if (parameterNames.Distinct(StringComparer.InvariantCultureIgnoreCase).Count() != parameterNames.Count)
-                throw new ArgumentException("The set of additional route parameters to track contains multiple entries with the same parameter name.", nameof(HttpMetricsOptionsBase.AdditionalRouteParameters));
-
-            var labelNames = _additionalRouteParameters.Select(x => x.LabelName).ToList();
-
-            if (labelNames.Distinct(StringComparer.InvariantCultureIgnoreCase).Count() != labelNames.Count)
+            if (routeParameterLabelNames.Distinct(StringComparer.InvariantCultureIgnoreCase).Count() != routeParameterLabelNames.Count)
                 throw new ArgumentException("The set of additional route parameters to track contains multiple entries with the same label name.", nameof(HttpMetricsOptionsBase.AdditionalRouteParameters));
 
-            if (HttpRequestLabelNames.All.Except(labelNames, StringComparer.InvariantCultureIgnoreCase).Count() != HttpRequestLabelNames.All.Length)
-                throw new ArgumentException($"The set of additional route parameters to track contains an entry with a reserved label name. Reserved label names are: {string.Join(", ", HttpRequestLabelNames.All)}");
+            if (HttpRequestLabelNames.Default.Except(routeParameterLabelNames, StringComparer.InvariantCultureIgnoreCase).Count() != HttpRequestLabelNames.Default.Length)
+                throw new ArgumentException($"The set of additional route parameters to track contains an entry with a reserved label name. Reserved label names are: {string.Join(", ", HttpRequestLabelNames.Default)}");
 
-            var reservedParameterNames = new[] { "action", "controller" };
+            var customLabelNames = _customLabels.Select(x => x.LabelName).ToList();
 
-            if (reservedParameterNames.Except(parameterNames, StringComparer.InvariantCultureIgnoreCase).Count() != reservedParameterNames.Length)
-                throw new ArgumentException($"The set of additional route parameters to track contains an entry with a reserved route parameter name. Reserved route parameter names are: {string.Join(", ", reservedParameterNames)}");
+            if (customLabelNames.Distinct(StringComparer.InvariantCultureIgnoreCase).Count() != customLabelNames.Count)
+                throw new ArgumentException("The set of custom labels contains multiple entries with the same label name.", nameof(HttpMetricsOptionsBase.CustomLabels));
+
+            if (HttpRequestLabelNames.Default.Except(customLabelNames, StringComparer.InvariantCultureIgnoreCase).Count() != HttpRequestLabelNames.Default.Length)
+                throw new ArgumentException($"The set of custom labels contains an entry with a reserved label name. Reserved label names are: {string.Join(", ", HttpRequestLabelNames.Default)}");
+
+            if (customLabelNames.Intersect(routeParameterLabelNames).Any())
+                throw new ArgumentException("The set of custom labels and the set of additional route parameters contain conflicting label names.", nameof(HttpMetricsOptionsBase.CustomLabels));
         }
 
         private Dictionary<string, string> CreateLabelToRouteParameterMap()
@@ -177,6 +256,16 @@ namespace Prometheus.HttpMetrics
             return map;
         }
 
+        private Dictionary<string, Func<HttpContext, string>> CreateLabelToValueProviderMap()
+        {
+            var map = new Dictionary<string, Func<HttpContext, string>>(_customLabels.Count);
+
+            foreach (var entry in _customLabels)
+                map[entry.LabelName] = entry.LabelValueProvider;
+
+            return map;
+        }
+
         /// <summary>
         /// Inspects the metric instance to ensure that all required labels are present.
         /// </summary>
@@ -187,6 +276,22 @@ namespace Prometheus.HttpMetrics
         private void ValidateAdditionalRouteParametersPresentInMetricLabelNames()
         {
             var labelNames = _additionalRouteParameters.Select(x => x.LabelName).ToList();
+            var missing = labelNames.Except(_metric.LabelNames);
+
+            if (missing.Any())
+                throw new ArgumentException($"Provided custom HTTP request metric instance for {GetType().Name} is missing required labels: {string.Join(", ", missing)}.");
+        }
+
+        /// <summary>
+        /// Inspects the metric instance to ensure that all required labels are present.
+        /// </summary>
+        /// <remarks>
+        /// If there are mappings to include custom labels, there must be label names defined for each such parameter.
+        /// We do this automatically if we use the default metric instance but if a custom one is provided, this must be done by the caller.
+        /// </remarks>
+        private void ValidateCustomLabelsPresentInMetricLabelNames()
+        {
+            var labelNames = _customLabels.Select(x => x.LabelName).ToList();
             var missing = labelNames.Except(_metric.LabelNames);
 
             if (missing.Any())

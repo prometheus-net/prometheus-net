@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.HttpMetrics;
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Prometheus.Tests.HttpExporter
@@ -26,6 +27,9 @@ namespace Prometheus.Tests.HttpExporter
         private const string TestController = "controllerAbcde";
         private const string TestAction = "action1234";
 
+        // We do not set up endpoint routing in tests, so this will always be empty string.
+        private const string TestEndpoint = "";
+
         public RouteParameterMappingTests()
         {
             _registry = Metrics.NewCustomRegistry();
@@ -34,6 +38,9 @@ namespace Prometheus.Tests.HttpExporter
             _next = context => Task.CompletedTask;
             _context = new DefaultHttpContext();
         }
+
+        private static readonly string[] DefaultLabelNamesPlusEndpoint = HttpRequestLabelNames.Default.Concat(new[] { HttpRequestLabelNames.Endpoint }).ToArray();
+        private static readonly string[] DefaultLabelNamesPlusEndpointAndPage = HttpRequestLabelNames.Default.Concat(new[] { HttpRequestLabelNames.Endpoint, HttpRequestLabelNames.Page }).ToArray();
 
         [TestMethod]
         public void DefaultMetric_AppliesStandardLabels()
@@ -46,13 +53,14 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpoint, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
-                TestController
+                TestController,
+                TestEndpoint
             }, child.Labels.Values);
         }
 
@@ -77,11 +85,11 @@ namespace Prometheus.Tests.HttpExporter
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
-                Counter = _metrics.CreateCounter("xxx", "", HttpRequestLabelNames.All)
+                Counter = _metrics.CreateCounter("xxx", "", HttpRequestLabelNames.Default)
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.Labels.Names);
+            CollectionAssert.AreEquivalent(HttpRequestLabelNames.Default, child.Labels.Names);
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
@@ -105,7 +113,7 @@ namespace Prometheus.Tests.HttpExporter
                     ("method", "excellent")
                 });
 
-            var allLabelNames = HttpRequestLabelNames.All.Concat(new[] { "foo", "bar", "route_method" }).ToArray();
+            var allLabelNames = HttpRequestLabelNames.Default.Concat(new[] { "foo", "bar", "route_method" }).ToArray();
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -146,7 +154,7 @@ namespace Prometheus.Tests.HttpExporter
                     ("method", "excellent")
                 });
 
-            var allLabelNames = HttpRequestLabelNames.All.Concat(new[] { "foo", "bar", "route_method" }).ToArray();
+            var allLabelNames = DefaultLabelNamesPlusEndpoint.Concat(new[] { "foo", "bar", "route_method" }).ToArray();
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
@@ -167,6 +175,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestMethod,
                 TestAction,
                 TestController,
+                TestEndpoint,
                 "123", // foo
                 "", // bar
                 "excellent" // route_method
@@ -186,18 +195,16 @@ namespace Prometheus.Tests.HttpExporter
         }
 
         [TestMethod]
-        public void DefaultMetric_WithExtendedLabels_WithStandardParameterNameConflict_Throws()
+        public void DefaultMetric_WithExtendedLabels_WithStandardParameterNameConflict_DoesNotThrow()
         {
-            Assert.ThrowsException<ArgumentException>(delegate
+            // It is fine to re-map one of the builtint parameters to something else. Sure, why not.
+            new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
-                new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+                Registry = _registry,
+                AdditionalRouteParameters =
                 {
-                    Registry = _registry,
-                    AdditionalRouteParameters =
-                    {
-                        new HttpRouteParameterMapping("controller", "xxxxx")
-                    }
-                });
+                    new HttpRouteParameterMapping("controller", "xxxxx")
+                }
             });
         }
 
@@ -218,19 +225,18 @@ namespace Prometheus.Tests.HttpExporter
         }
 
         [TestMethod]
-        public void DefaultMetric_WithExtendedLabels_WithDuplicateParameterName_Throws()
+        public void DefaultMetric_WithExtendedLabels_WithDuplicateParameterName_DoesNotThrow()
         {
-            Assert.ThrowsException<ArgumentException>(delegate
+            // It is fine to have multiple mappings for the same parameter. Perhaps a bit useless in 99% of cases but perhaps useful in 1%.
+
+            new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
-                new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+                Registry = _registry,
+                AdditionalRouteParameters =
                 {
-                    Registry = _registry,
-                    AdditionalRouteParameters =
-                    {
-                        new HttpRouteParameterMapping("foo", "bar"),
-                        new HttpRouteParameterMapping("foo", "bang")
-                    }
-                });
+                    new HttpRouteParameterMapping("foo", "bar"),
+                    new HttpRouteParameterMapping("foo", "bang")
+                }
             });
         }
 
@@ -275,6 +281,145 @@ namespace Prometheus.Tests.HttpExporter
                 TestAction,
                 TestController
             }, child.Labels.Values);
+        }
+
+        [TestMethod]
+        public void DefaultMetric_WithPageFeatureEnabled_CreatesPageLabel()
+        {
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, new[]
+            {
+                (HttpRequestLabelNames.Page, "page_name")
+            });
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry,
+                IncludePageLabelInDefaultsInternal = true
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
+            CollectionAssert.AreEquivalent(new[]
+            {
+                TestStatusCode.ToString(),
+                TestMethod,
+                TestAction,
+                TestController,
+                TestEndpoint,
+                "page_name"
+            }, child.Labels.Values);
+        }
+
+        [TestMethod]
+        public void DefaultMetric_WithPageFeatureEnabled_WithPageAsMappedRouteParameter_CreatesPageLabel()
+        {
+            // If it is both enabled by default logic and explicitly mapped as a route parameter, the two equivalent ways to add the label merge and we operate "normally".
+
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, new[]
+            {
+                (HttpRequestLabelNames.Page, "page_name")
+            });
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry,
+                IncludePageLabelInDefaultsInternal = true,
+                AdditionalRouteParameters = { HttpRequestLabelNames.Page }
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
+            CollectionAssert.AreEquivalent(new[]
+            {
+                TestStatusCode.ToString(),
+                TestMethod,
+                TestAction,
+                TestController,
+                TestEndpoint,
+                "page_name"
+            }, child.Labels.Values);
+        }
+
+        [TestMethod]
+        public void DefaultMetric_WithPageFeatureEnabled_WithCustomPageLabel_CustomLabelWins()
+        {
+            // If it is both enabled by default logic and explicitly mapped as a custom label, the custom label is used instead of the builtin logic.
+
+            var canary = "Will the real page name stand up";
+
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, new[]
+            {
+                (HttpRequestLabelNames.Page, "page_name")
+            });
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry,
+                IncludePageLabelInDefaultsInternal = true,
+                CustomLabels =
+                {
+                    new HttpCustomLabel(HttpRequestLabelNames.Page, x => canary)
+                }
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
+            CollectionAssert.AreEquivalent(new[]
+            {
+                TestStatusCode.ToString(),
+                TestMethod,
+                TestAction,
+                TestController,
+                TestEndpoint,
+                canary
+            }, child.Labels.Values);
+        }
+
+        [TestMethod]
+        public void CustomMetric_WithPageFeatureEnabled_WithoutPageLabel_OperatesWithoutPageLabel()
+        {
+            // "page" feature is optional - if possible, it is actioned. But if custom metric, it is a no-op.
+
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, new[]
+            {
+                (HttpRequestLabelNames.Page, "page_name")
+            });
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry,
+                IncludePageLabelInDefaultsInternal = true,
+                Counter = _metrics.CreateCounter("xxx", "")
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            Assert.AreEqual(0, child.Labels.Names.Length);
+        }
+
+        [TestMethod]
+        public void CustomMetric_WithPageFeatureEnabled_WithPageLabel_OperatesWithPageLabel()
+        {
+            // If "page" label is present, it needs to be filled no matter whether it came from custom or default metric.
+
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController, new[]
+            {
+                (HttpRequestLabelNames.Page, "page_name")
+            });
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry,
+                IncludePageLabelInDefaultsInternal = true,
+                Counter = _metrics.CreateCounter("xxx", "", new CounterConfiguration
+                {
+                    LabelNames = new[] { HttpRequestLabelNames.Page }
+                })
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            Assert.AreEqual(1, child.Labels.Names.Length);
+            Assert.AreEqual(HttpRequestLabelNames.Page, child.Labels.Names[0]);
+            Assert.AreEqual("page_name", child.Labels.Values[0]);
         }
 
         private static void SetupHttpContext(DefaultHttpContext context, int statusCode, string httpMethod, string action, string controller, (string name, string value)[] routeParameters = null)

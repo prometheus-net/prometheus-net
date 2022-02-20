@@ -9,7 +9,7 @@ namespace Prometheus.HttpMetrics
     {
         private readonly RequestDelegate _next;
 
-        public HttpRequestDurationMiddleware(RequestDelegate next, HttpRequestDurationOptions? options)
+        public HttpRequestDurationMiddleware(RequestDelegate next, HttpRequestDurationOptions options)
             : base(options, options?.Histogram)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
@@ -32,7 +32,7 @@ namespace Prometheus.HttpMetrics
             }
         }
 
-        protected override string[] DefaultLabels => HttpRequestLabelNames.All;
+        protected override string[] DefaultLabels => HttpRequestLabelNames.Default;
 
         protected override ICollector<IHistogram> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateHistogram(
             "http_request_duration_seconds",

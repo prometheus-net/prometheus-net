@@ -1,3 +1,16 @@
+* 6.0.0
+- Dropped library support for unsupported .NET runtime versions (.NET 2.1).
+- If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics, unless there is a user-defined label already present with this name.
+- The "endpoint" label is now automatically added to the default HTTP server metrics, containing this endpoint routing route pattern of the request, unless there is a user-defined label already present with this name.
+- HttpRequestLabelNames.All is now HttpRequestLabelNames.Default to better reflect the meaning of the property.
+- Added integration with .NET EventCounters, which can now be easily exposed as Promtheus metrics (see EventCounterAdapter class).
+- Added integration with .NET Meters, which can now be easily exposed as Promtheus metrics (see MeterAdapter class).
+- Added ReplaceOnPush option to MetricPusher #305 #322.
+- Minimum .NET Framework version is now 4.6.2.
+* 5.1.0
+- Add support for adding custom label value providers to HTTP server metrics. #347
+* 5.0.2
+- Bugfix: HttpClientMetrics under concurrent load with long-running requests were leading to broken response streams. #336
 * 5.0.1
 - Bugfix: PowersOfTenDividedBuckets did not work with >= 10 buckets due to overlap. Now skips overlapping region of generated series.
 * 5.0.0
@@ -128,7 +141,7 @@
 - Fixed label values escaping for ASCII formatter
 * 1.2.2:
 - PushGateway support
-- Various internal improvements (replaced locks with Interlocked operations)    
+- Various internal improvements (replaced locks with Interlocked operations)
 * 1.1.4:
 - Fixed some metrics not updating, added process ID metric
 - Replaced lock statements in Counter and Gauge with CAS
