@@ -6,17 +6,13 @@ This is a .NET library for instrumenting your applications and exporting metrics
 
 ![](Screenshot.png)
 
-The library targets [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard) which supports the following runtimes (and newer):
+The library targets the following runtimes (and newer):
 
-* .NET Framework 4.6.1
-* .NET Core 2.0
-* Mono 5.4
+* .NET Framework 4.6.2
+* .NET Core 3.1
 
 Some specialized subsets of functionality require more modern runtimes:
 
-* The ASP.NET Core specific functionality requires ASP.NET Core 3.1 or newer.
-* The .NET Core specific functionality requires .NET Core 3.1 or newer.
-* The gRPC specific functionality requires .NET Core 3.1 or newer.
 * The .NET Meters API integration requires .NET 6.0 or newer.
 
 # Table of contents
