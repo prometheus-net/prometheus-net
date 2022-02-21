@@ -17,7 +17,7 @@ Some specialized subsets of functionality require more modern runtimes:
 * The ASP.NET Core specific functionality requires ASP.NET Core 3.1 or newer.
 * The .NET Core specific functionality requires .NET Core 3.1 or newer.
 * The gRPC specific functionality requires .NET Core 3.1 or newer.
-* The .NET Meters API integrations requires .NET 6.0 or newer.
+* The .NET Meters API integration requires .NET 6.0 or newer.
 
 # Table of contents
 
