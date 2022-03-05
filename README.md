@@ -508,6 +508,8 @@ public void ConfigureServices(IServiceCollection services, ...)
 }
 ```
 
+The status of each health check will be published in the `aspnetcore_healthcheck_status` metric.
+
 The ASP.NET Core health check integration is delivered in the `prometheus-net.AspNetCore.HealthChecks` NuGet package.
 
 # Protecting the metrics endpoint from unauthorized access
