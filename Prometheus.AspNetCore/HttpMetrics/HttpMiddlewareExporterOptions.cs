@@ -10,10 +10,15 @@ namespace Prometheus.HttpMetrics
         public HttpRequestDurationOptions RequestDuration { get; set; } = new HttpRequestDurationOptions();
 
         /// <summary>
-        /// Whether to capture metrics for queries to the /metrics endpoint (where metrics are exported by default). Defaults to false.
-        /// This matches against URLs starting with the /metrics string specifically - if you use a custom metrics endpoint, this will not match.
+        /// Whether to capture metrics for queries to the MetricsUrl endpoint. Defaults to false.
         /// </summary>
         public bool CaptureMetricsUrl { get; set; }
+
+        /// <summary>
+        /// The Url used for the CaptureMetricsUrl property.
+        /// This defaults to /metrics where metrics are exported by default
+        /// </summary>
+        public string MetricsUrl { get; set; } = "/metrics";
 
         /// <summary>
         /// Configures all the different types of metrics to use reduced status code cardinality (using 2xx instead of 200, 201 etc).

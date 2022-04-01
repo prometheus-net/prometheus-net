@@ -62,7 +62,7 @@ namespace Prometheus
             if (options.CaptureMetricsUrl)
                 ApplyConfiguration(app);
             else
-                app.UseWhen(context => context.Request.Path != "/metrics", ApplyConfiguration);
+                app.UseWhen(context => context.Request.Path != options.MetricsUrl, ApplyConfiguration);
 
             return app;
         }
