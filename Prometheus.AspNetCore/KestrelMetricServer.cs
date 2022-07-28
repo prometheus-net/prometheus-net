@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
-using Prometheus.Advanced;
 using System;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
@@ -15,17 +14,13 @@ namespace Prometheus
     /// A stand-alone Kestrel based metric server that saves you the effort of setting up the ASP.NET Core pipeline.
     /// For all practical purposes, this is just a regular ASP.NET Core server that only serves Prometheus requests.
     /// </summary>
-    /// <remarks>
-    /// The overall utility of this class is somewhat suspect, considering HttpListener is available everywhere.
-    /// If you are not sure you need this, use MetricServer instead.
-    /// </remarks>
     public sealed class KestrelMetricServer : MetricHandler
     {
-        public KestrelMetricServer(int port, string url = "/metrics", ICollectorRegistry registry = null, X509Certificate2 certificate = null) : this("+", port, url, registry, certificate)
+        public KestrelMetricServer(int port, string url = "/metrics", CollectorRegistry? registry = null, X509Certificate2? certificate = null) : this("+", port, url, registry, certificate)
         {
         }
 
-        public KestrelMetricServer(string hostname, int port, string url = "/metrics", ICollectorRegistry registry = null, X509Certificate2 certificate = null) : base(registry)
+        public KestrelMetricServer(string hostname, int port, string url = "/metrics", CollectorRegistry? registry = null, X509Certificate2? certificate = null) : base(registry)
         {
             _hostname = hostname;
             _port = port;
@@ -38,7 +33,7 @@ namespace Prometheus
         private readonly int _port;
         private readonly string _url;
 
-        private readonly X509Certificate2 _certificate;
+        private readonly X509Certificate2? _certificate;
 
         protected override Task StartServer(CancellationToken cancel)
         {

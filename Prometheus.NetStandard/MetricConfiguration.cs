@@ -1,4 +1,6 @@
-﻿namespace Prometheus
+﻿using System.Collections.Generic;
+
+namespace Prometheus
 {
     /// <summary>
     /// This class packages the options for creating metrics into a single class (with subclasses per metric type)
@@ -7,12 +9,17 @@
     public abstract class MetricConfiguration
     {
         /// <summary>
-        /// Names of all the label fields that are defined for the metric.
-        /// If not set, the metric will be created without any labels.
+        /// Names of all the label fields that are defined for each instance of the metric.
+        /// If null, the metric will be created without any instance-specific labels.
         /// 
-        /// Before using a metric that uses labels, .WithLabels() must be called to provide values for the labels.
+        /// Before using a metric that uses instance-specific labels, .WithLabels() must be called to provide values for the labels.
         /// </summary>
-        public string[] LabelNames { get; set; }
+        public string[]? LabelNames { get; set; }
+
+        /// <summary>
+        /// The static labels to apply to all instances of this metric. These labels cannot be later overwritten.
+        /// </summary>
+        public Dictionary<string, string>? StaticLabels { get; set; }
 
         /// <summary>
         /// If true, the metric will not be published until its value is first modified (regardless of the specific value).

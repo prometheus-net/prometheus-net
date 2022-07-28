@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2024
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29318.209
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.NetStandard", "Prometheus.NetStandard\Prometheus.NetStandard.csproj", "{BA482927-F0BC-462C-8BA0-C476D93621BC}"
 EndProject
@@ -23,7 +23,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark.NetFramework", "Benchmark.NetFramework\Benchmark.NetFramework.csproj", "{CC15F858-BDFC-4995-97C4-D0C565BAB162}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark.NetCore", "Benchmark.NetCore\Benchmark.NetCore.csproj", "{074E91E7-37BE-459E-B42F-96F315586418}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.NetCore", "Prometheus.NetCore\Prometheus.NetCore.csproj", "{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.NetFramework.AspNet", "Prometheus.NetFramework.AspNet\Prometheus.NetFramework.AspNet.csproj", "{25C05E15-A8F8-4F36-A35C-4004C0948305}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester.NetFramework.AspNet", "Tester.NetFramework.AspNet\Tester.NetFramework.AspNet.csproj", "{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.AspNetCore.HealthChecks", "Prometheus.AspNetCore.HealthChecks\Prometheus.AspNetCore.HealthChecks.csproj", "{4B630AF4-71AD-4CF1-AD4E-D0608B426109}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tester.AspNetCore.HealthChecks", "Tester.AspNetCore.HealthChecks\Tester.AspNetCore.HealthChecks.csproj", "{7A0E037C-501E-4FF5-BEEC-0132C809AF67}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.AspNetCore.Grpc", "Prometheus.AspNetCore.Grpc\Prometheus.AspNetCore.Grpc.csproj", "{86943076-6025-49F3-AC6D-6D63142364F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,10 +69,34 @@ Global
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D0A36BB-5606-4D8F-B048-621C76B22881}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CC15F858-BDFC-4995-97C4-D0C565BAB162}.Release|Any CPU.Build.0 = Release|Any CPU
+		{074E91E7-37BE-459E-B42F-96F315586418}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{074E91E7-37BE-459E-B42F-96F315586418}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{074E91E7-37BE-459E-B42F-96F315586418}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{074E91E7-37BE-459E-B42F-96F315586418}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25C05E15-A8F8-4F36-A35C-4004C0948305}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25C05E15-A8F8-4F36-A35C-4004C0948305}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25C05E15-A8F8-4F36-A35C-4004C0948305}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25C05E15-A8F8-4F36-A35C-4004C0948305}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C13A89A-563E-4C4C-83F9-0DCCCFFDFA86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B630AF4-71AD-4CF1-AD4E-D0608B426109}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B630AF4-71AD-4CF1-AD4E-D0608B426109}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B630AF4-71AD-4CF1-AD4E-D0608B426109}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B630AF4-71AD-4CF1-AD4E-D0608B426109}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A0E037C-501E-4FF5-BEEC-0132C809AF67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A0E037C-501E-4FF5-BEEC-0132C809AF67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A0E037C-501E-4FF5-BEEC-0132C809AF67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A0E037C-501E-4FF5-BEEC-0132C809AF67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86943076-6025-49F3-AC6D-6D63142364F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86943076-6025-49F3-AC6D-6D63142364F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86943076-6025-49F3-AC6D-6D63142364F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86943076-6025-49F3-AC6D-6D63142364F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

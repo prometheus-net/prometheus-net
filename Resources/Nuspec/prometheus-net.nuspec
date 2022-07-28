@@ -1,24 +1,50 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata minClientVersion="2.8">
-    <id>prometheus-net</id>
-    <authors>andrasm,qed-,lakario,sandersaares</authors>
-    <description>.NET metrics exporter for the Prometheus monitoring and alerting system</description>
-    <projectUrl>https://github.com/prometheus-net/prometheus-net</projectUrl>
-    <licenseUrl>https://raw.githubusercontent.com/prometheus-net/prometheus-net/master/LICENSE</licenseUrl>
-    <tags>metrics prometheus</tags>
-    <copyright>Copyright © 2015 andrasm</copyright>
+	<metadata minClientVersion="5.1">
+		<id>prometheus-net</id>
+		<authors>andrasm,qed-,lakario,sandersaares</authors>
+		<description>.NET client library for the Prometheus monitoring and alerting system</description>
+		<projectUrl>https://github.com/prometheus-net/prometheus-net</projectUrl>
+		<license type="expression">MIT</license>
+		<tags>metrics prometheus</tags>
+		<copyright>Copyright © prometheus-net developers</copyright>
+		<icon>images/prometheus-net-logo.png</icon>
 
-    <!-- Automatically set by release automation. -->
-    <version>__NUGETPACKAGEVERSION__</version>
-    <releaseNotes></releaseNotes>
+		<!-- Automatically set by release automation. -->
+		<version>__NUGETPACKAGEVERSION__</version>
+		<releaseNotes></releaseNotes>
 
-    <dependencies>
-      <dependency id="protobuf-net" version="2.3.4" />
-    </dependencies>
-  </metadata>
-  <files>
-    <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
-    <file src="..\Prometheus.NetStandard\**" target="lib\netstandard2.0" />
-  </files>
+		<dependencies>
+			<group targetFramework="net462">
+				<dependency id="System.ValueTuple" version="4.5.0" />
+				<dependency id="Microsoft.Extensions.Http" version="3.1.9" />
+			</group>
+
+			<group targetFramework="netstandard2.0">
+				<dependency id="Microsoft.Extensions.Http" version="3.1.9" />
+			</group>
+
+			<group targetFramework="netcoreapp3.1">
+				<dependency id="Microsoft.Extensions.Http" version="3.1.9" />
+			</group>
+
+			<group targetFramework="net6.0">
+				<dependency id="Microsoft.Extensions.Http" version="3.1.9" />
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
+		<file src="..\Prometheus.NetStandard\**" target="lib\netstandard2.0" />
+		
+		<file src="..\Prometheus.NetCore31\**" target="lib\netcoreapp3.1" />
+		<file src="..\Prometheus.NetStandard\**" target="lib\netcoreapp3.1" />
+		
+		<file src="..\Prometheus.NetCore60\**" target="lib\net6.0" />
+		<file src="..\Prometheus.NetStandard\**" target="lib\net6.0" />
+		
+		<file src="..\Prometheus.Net462\**" target="lib\net462" />
+
+		<file src="prometheus-net-logo.png" target="images\" />
+	</files>
 </package>

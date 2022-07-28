@@ -19,15 +19,15 @@ namespace Prometheus.SummaryImpl
     //
     // http://www.cs.rutgers.edu/~muthu/bquant.pdf
 
-    delegate double Invariant(SampleStream stream, double r);
+    internal delegate double Invariant(SampleStream stream, double r);
 
-    class QuantileStream
+    internal class QuantileStream
     {
-        readonly SampleStream _sampleStream;
-        readonly List<Sample> _samples;
-        bool _sorted;
+        private readonly SampleStream _sampleStream;
+        private readonly List<Sample> _samples;
+        private bool _sorted;
 
-        QuantileStream(SampleStream sampleStream, List<Sample> samples, bool sorted)
+        private QuantileStream(SampleStream sampleStream, List<Sample> samples, bool sorted)
         {
             _sampleStream = sampleStream;
             _samples = samples;
@@ -105,7 +105,7 @@ namespace Prometheus.SummaryImpl
             Insert(new Sample { Value = value, Width = 1 });
         }
 
-        void Insert(Sample sample)
+        private void Insert(Sample sample)
         {
             _samples.Add(sample);
             _sorted = false;
@@ -113,14 +113,14 @@ namespace Prometheus.SummaryImpl
                 Flush();
         }
 
-        void Flush()
+        private void Flush()
         {
             MaybeSort();
             _sampleStream.Merge(_samples);
             _samples.Clear();
         }
 
-        void MaybeSort()
+        private void MaybeSort()
         {
             if (!_sorted)
             {
@@ -128,7 +128,8 @@ namespace Prometheus.SummaryImpl
                 _samples.Sort(SampleComparison);
             }
         }
-        static int SampleComparison(Sample lhs, Sample rhs)
+
+        private static int SampleComparison(Sample lhs, Sample rhs)
         {
             return lhs.Value.CompareTo(rhs.Value);
         }

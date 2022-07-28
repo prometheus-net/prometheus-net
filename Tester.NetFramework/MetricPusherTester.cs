@@ -1,15 +1,16 @@
 ﻿using Prometheus;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace tester
 {
-    class MetricPusherTester : Tester
+    internal class MetricPusherTester : Tester
     {
         private HttpListener _httpListener;
 
@@ -18,7 +19,19 @@ namespace tester
 
         public override IMetricServer InitializeMetricServer()
         {
-            return new MetricPusher(endpoint: $"http://localhost:{TesterConstants.TesterPort}/metrics", job: "some_job");
+            // We add the username/password (even though it is not used) just to verify the extensibility logic works.
+            var headerValue = Convert.ToBase64String(Encoding.UTF8.GetBytes("username:password"));
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", headerValue);
+
+            var pusher = new MetricPusher(new MetricPusherOptions
+            {
+                Endpoint = $"http://localhost:{TesterConstants.TesterPort}/metrics",
+                Job = "some_job",
+                HttpClientProvider = () => httpClient
+            });
+
+            return pusher;
         }
 
         public override void OnStart()
@@ -45,17 +58,25 @@ namespace tester
                         {
                             PrintRequestDetails(request.Url);
 
+                            if (request.InputStream == null) // No data (e.g. GET)
+                                continue; // This is fine - for example the benchmark code does this to probe that tester is running.
+
                             string body;
                             using (var reader = new StreamReader(request.InputStream))
                             {
                                 body = reader.ReadToEnd();
                             }
-                            Console.WriteLine(body);
+
+                            if (string.IsNullOrEmpty(body))
+                                Console.WriteLine("Got empty document from pusher. This can be normal if nothing is pushed yet.");
+                            else
+                                Console.WriteLine(body);
+
                             response.StatusCode = 204;
                         }
                         catch (Exception ex) when (!(ex is OperationCanceledException))
                         {
-                            Trace.WriteLine(string.Format("Error in fake PushGateway: {0}", ex));
+                            Console.WriteLine(string.Format("Error in fake PushGateway: {0}", ex));
                         }
                         finally
                         {

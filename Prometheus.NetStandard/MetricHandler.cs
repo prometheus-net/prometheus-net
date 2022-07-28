@@ -1,5 +1,4 @@
-﻿using Prometheus.Advanced;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,23 +12,26 @@ namespace Prometheus
     {
         // The registry that contains the collectors to export metrics from.
         // Subclasses are expected to use this variable to obtain the correct registry.
-        protected readonly ICollectorRegistry _registry;
+        protected readonly CollectorRegistry _registry;
 
         // The token is cancelled when the handler is instructed to stop.
-        private CancellationTokenSource _cts = new CancellationTokenSource();
+        private CancellationTokenSource? _cts = new CancellationTokenSource();
 
         // This is the task started for the purpose of exporting metrics.
-        private Task _task;
+        private Task? _task;
 
-        protected MetricHandler(ICollectorRegistry registry = null)
+        protected MetricHandler(CollectorRegistry? registry = null)
         {
-            _registry = registry ?? DefaultCollectorRegistry.Instance;
+            _registry = registry ?? Metrics.DefaultRegistry;
         }
 
         public IMetricServer Start()
         {
             if (_task != null)
                 throw new InvalidOperationException("The metric server has already been started.");
+
+            if (_cts == null)
+                throw new InvalidOperationException("The metric server has already been started and stopped. Create a new server if you want to start it again.");
 
             _task = StartServer(_cts.Token);
             return this;
@@ -48,7 +50,7 @@ namespace Prometheus
                 // This will re-throw any exception that was caught on the StartServerAsync thread.
                 // Perhaps not ideal behavior but hey, if the implementation does not want this to happen
                 // it should have caught it itself in the background processing thread.
-                await _task;
+                await _task.ConfigureAwait(false); // Issue #308
             }
             catch (OperationCanceledException)
             {

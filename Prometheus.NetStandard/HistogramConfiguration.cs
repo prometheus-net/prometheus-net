@@ -4,6 +4,9 @@
     {
         internal static readonly HistogramConfiguration Default = new HistogramConfiguration();
 
-        public double[] Buckets { get; set; }
+        /// <summary>
+        /// Custom histogram buckets to use. If null, will use Histogram.DefaultBuckets.
+        /// </summary>
+        public double[]? Buckets { get; set; }
     }
 }

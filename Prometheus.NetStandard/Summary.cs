@@ -1,29 +1,23 @@
-﻿using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
-using Prometheus.Internal;
-using Prometheus.SummaryImpl;
+﻿using Prometheus.SummaryImpl;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
-    public interface ISummary
-    {
-        void Observe(double val);
-    }
-
-    public class Summary : Collector<Summary.Child>, ISummary
+    public sealed class Summary : Collector<Summary.Child>, ISummary
     {
         // Label that defines the quantile in a summary.
-        const string QuantileLabel = "quantile";
+        private const string QuantileLabel = "quantile";
 
-        internal static readonly QuantileEpsilonPair[] DefObjectivesArray = new[]
-        {
-            new QuantileEpsilonPair(0.5, 0.05),
-            new QuantileEpsilonPair(0.9, 0.01),
-            new QuantileEpsilonPair(0.99, 0.001)
-        };
+        /// <summary>
+        /// Client library guidelines say that the summary should default to not measuring quantiles.
+        /// https://prometheus.io/docs/instrumenting/writing_clientlibs/#summary
+        /// </summary>
+        internal static readonly QuantileEpsilonPair[] DefObjectivesArray = new QuantileEpsilonPair[0];
 
         // Default Summary quantile values.
         public static readonly IList<QuantileEpsilonPair> DefObjectives = new List<QuantileEpsilonPair>(DefObjectivesArray);
@@ -37,21 +31,22 @@ namespace Prometheus
         // Standard buffer size for collecting Summary observations
         public static readonly int DefBufCap = 500;
 
-        readonly IReadOnlyList<QuantileEpsilonPair> _objectives;
-        readonly TimeSpan _maxAge;
-        readonly int _ageBuckets;
-        readonly int _bufCap;
+        private readonly IReadOnlyList<QuantileEpsilonPair> _objectives;
+        private readonly TimeSpan _maxAge;
+        private readonly int _ageBuckets;
+        private readonly int _bufCap;
 
         internal Summary(
             string name,
             string help,
-            string[] labelNames,
+            string[]? labelNames,
+            Labels staticLabels,
             bool suppressInitialValue = false,
-            IReadOnlyList<QuantileEpsilonPair> objectives = null,
+            IReadOnlyList<QuantileEpsilonPair>? objectives = null,
             TimeSpan? maxAge = null,
             int? ageBuckets = null,
             int? bufCap = null)
-            : base(name, help, labelNames, suppressInitialValue)
+            : base(name, help, labelNames, staticLabels, suppressInitialValue)
         {
             _objectives = objectives ?? DefObjectivesArray;
             _maxAge = maxAge ?? DefMaxAge;
@@ -74,74 +69,28 @@ namespace Prometheus
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
-        protected override MetricType Type => MetricType.SUMMARY;
-
-        public class Child : Advanced.Child, ISummary
+        private protected override Child NewChild(Labels labels, Labels flattenedLabels, bool publish)
         {
-            // Objectives defines the quantile rank estimates with their respective
-            // absolute error. If Objectives[q] = e, then the value reported
-            // for q will be the φ-quantile value for some φ between q-e and q+e.
-            // The default value is DefObjectives.
-            IReadOnlyList<QuantileEpsilonPair> _objectives = new List<QuantileEpsilonPair>();
-            double[] _sortedObjectives;
-            double _sum;
-            uint _count;
-            SampleBuffer _hotBuf;
-            SampleBuffer _coldBuf;
-            QuantileStream[] _streams;
-            TimeSpan _streamDuration;
-            QuantileStream _headStream;
-            int _headStreamIdx;
-            DateTime _headStreamExpTime;
-            DateTime _hotBufExpTime;
-            // Protects hotBuf and hotBufExpTime.
-            readonly object _bufLock = new object();
-            // Protects every other moving part.
-            // Lock bufMtx before mtx if both are needed.
-            readonly object _lock = new object();
-            readonly QuantileComparer _quantileComparer = new QuantileComparer();
+            return new Child(this, labels, flattenedLabels, publish);
+        }
 
-            // MaxAge defines the duration for which an observation stays relevant
-            // for the summary. Must be positive. The default value is DefMaxAge.
-            TimeSpan _maxAge;
+        private protected override MetricType Type => MetricType.Summary;
 
-            // AgeBuckets is the number of buckets used to exclude observations that
-            // are older than MaxAge from the summary. A higher number has a
-            // resource penalty, so only increase it if the higher resolution is
-            // really required. For very high observation rates, you might want to
-            // reduce the number of age buckets. With only one age bucket, you will
-            // effectively see a complete reset of the summary each time MaxAge has
-            // passed. The default value is DefAgeBuckets.
-            int _ageBuckets;
-
-            // BufCap defines the default sample stream buffer size.  The default
-            // value of DefBufCap should suffice for most uses. If there is a need
-            // to increase the value, a multiple of 500 is recommended (because that
-            // is the internal buffer size of the underlying package
-            // "github.com/bmizerany/perks/quantile").      
-            int _bufCap;
-
-            Advanced.DataContracts.Summary _wireMetric;
-
-            internal override void Init(ICollector parent, LabelValues labelValues, bool publish)
+        public sealed class Child : ChildBase, ISummary
+        {
+            internal Child(Summary parent, Labels labels, Labels flattenedLabels, bool publish)
+                : base(parent, labels, flattenedLabels, publish)
             {
-                Init(parent, labelValues, DateTime.UtcNow, publish);
-            }
-
-            internal void Init(ICollector parent, LabelValues labelValues, DateTime now, bool publish)
-            {
-                base.Init(parent, labelValues, publish);
-
-                _objectives = ((Summary)parent)._objectives;
-                _maxAge = ((Summary)parent)._maxAge;
-                _ageBuckets = ((Summary)parent)._ageBuckets;
-                _bufCap = ((Summary)parent)._bufCap;
+                _objectives = parent._objectives;
+                _maxAge = parent._maxAge;
+                _ageBuckets = parent._ageBuckets;
+                _bufCap = parent._bufCap;
 
                 _sortedObjectives = new double[_objectives.Count];
                 _hotBuf = new SampleBuffer(_bufCap);
                 _coldBuf = new SampleBuffer(_bufCap);
                 _streamDuration = new TimeSpan(_maxAge.Ticks / _ageBuckets);
-                _headStreamExpTime = now.Add(_streamDuration);
+                _headStreamExpTime = DateTime.UtcNow.Add(_streamDuration);
                 _hotBufExpTime = _headStreamExpTime;
 
                 _streams = new QuantileStream[_ageBuckets];
@@ -159,26 +108,33 @@ namespace Prometheus
 
                 Array.Sort(_sortedObjectives);
 
-                _wireMetric = new Advanced.DataContracts.Summary();
+                _sumIdentifier = CreateIdentifier("sum");
+                _countIdentifier = CreateIdentifier("count");
 
+                _quantileIdentifiers = new byte[_objectives.Count][];
                 for (var i = 0; i < _objectives.Count; i++)
                 {
-                    _wireMetric.quantile.Add(new Quantile
-                    {
-                        quantile = _objectives[i].Quantile
-                    });
+                    var value = double.IsPositiveInfinity(_objectives[i].Quantile) ? "+Inf" : _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
+
+                    _quantileIdentifiers[i] = CreateIdentifier(null, ("quantile", value));
                 }
             }
 
-            protected override void Populate(Metric metric)
-            {
-                Populate(metric, DateTime.UtcNow);
-            }
+            private readonly byte[] _sumIdentifier;
+            private readonly byte[] _countIdentifier;
+            private readonly byte[][] _quantileIdentifiers;
 
-            internal void Populate(Metric metric, DateTime now)
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                var summary = new Advanced.DataContracts.Summary();
-                var quantiles = new Quantile[_objectives.Count];
+                // We output sum.
+                // We output count.
+                // We output quantiles.
+
+                var now = DateTime.UtcNow;
+
+                double count;
+                double sum;
+                var values = new List<(double quantile, double value)>(_objectives.Count);
 
                 lock (_bufLock)
                 {
@@ -187,33 +143,70 @@ namespace Prometheus
                         // Swap bufs even if hotBuf is empty to set new hotBufExpTime.
                         SwapBufs(now);
                         FlushColdBuf();
-                        summary.sample_count = _count;
-                        summary.sample_sum = _sum;
 
-                        for (var idx = 0; idx < _sortedObjectives.Length; idx++)
+                        count = _count;
+                        sum = _sum;
+
+                        for (var i = 0; i < _sortedObjectives.Length; i++)
                         {
-                            var rank = _sortedObjectives[idx];
-                            var q = _headStream.Count == 0 ? double.NaN : _headStream.Query(rank);
+                            var quantile = _sortedObjectives[i];
+                            var value = _headStream.Count == 0 ? double.NaN : _headStream.Query(quantile);
 
-                            quantiles[idx] = new Quantile
-                            {
-                                quantile = rank,
-                                value = q
-                            };
+                            values.Add((quantile, value));
                         }
                     }
                 }
 
-                if (quantiles.Length > 0)
-                    Array.Sort(quantiles, _quantileComparer);
+                await serializer.WriteMetricAsync(_sumIdentifier, sum, cancel);
+                await serializer.WriteMetricAsync(_countIdentifier, count, cancel);
 
-                for (var i = 0; i < quantiles.Length; i++)
-                {
-                    summary.quantile.Add(quantiles[i]);
-                }
-
-                metric.summary = summary;
+                for (var i = 0; i < values.Count; i++)
+                    await serializer.WriteMetricAsync(_quantileIdentifiers[i], values[i].value, cancel);
             }
+
+            // Objectives defines the quantile rank estimates with their respective
+            // absolute error. If Objectives[q] = e, then the value reported
+            // for q will be the φ-quantile value for some φ between q-e and q+e.
+            // The default value is DefObjectives.
+            private IReadOnlyList<QuantileEpsilonPair> _objectives = new List<QuantileEpsilonPair>();
+            private double[] _sortedObjectives;
+            private double _sum;
+            private ulong _count;
+            private SampleBuffer _hotBuf;
+            private SampleBuffer _coldBuf;
+            private QuantileStream[] _streams;
+            private TimeSpan _streamDuration;
+            private QuantileStream _headStream;
+            private int _headStreamIdx;
+            private DateTime _headStreamExpTime;
+            private DateTime _hotBufExpTime;
+
+            // Protects hotBuf and hotBufExpTime.
+            private readonly object _bufLock = new object();
+
+            // Protects every other moving part.
+            // Lock bufMtx before mtx if both are needed.
+            private readonly object _lock = new object();
+
+            // MaxAge defines the duration for which an observation stays relevant
+            // for the summary. Must be positive. The default value is DefMaxAge.
+            private TimeSpan _maxAge;
+
+            // AgeBuckets is the number of buckets used to exclude observations that
+            // are older than MaxAge from the summary. A higher number has a
+            // resource penalty, so only increase it if the higher resolution is
+            // really required. For very high observation rates, you might want to
+            // reduce the number of age buckets. With only one age bucket, you will
+            // effectively see a complete reset of the summary each time MaxAge has
+            // passed. The default value is DefAgeBuckets.
+            private int _ageBuckets;
+
+            // BufCap defines the default sample stream buffer size.  The default
+            // value of DefBufCap should suffice for most uses. If there is a need
+            // to increase the value, a multiple of 500 is recommended (because that
+            // is the internal buffer size of the underlying package
+            // "github.com/bmizerany/perks/quantile").      
+            private int _bufCap;
 
             public void Observe(double val)
             {
@@ -239,11 +232,11 @@ namespace Prometheus
                         Flush(now);
                 }
 
-                _publish = true;
+                Publish();
             }
 
             // Flush needs bufMtx locked.
-            void Flush(DateTime now)
+            private void Flush(DateTime now)
             {
                 lock (_lock)
                 {
@@ -256,7 +249,7 @@ namespace Prometheus
             }
 
             // SwapBufs needs mtx AND bufMtx locked, coldBuf must be empty.
-            void SwapBufs(DateTime now)
+            private void SwapBufs(DateTime now)
             {
                 if (!_coldBuf.IsEmpty)
                     throw new InvalidOperationException("coldBuf is not empty");
@@ -273,7 +266,7 @@ namespace Prometheus
             }
 
             // FlushColdBuf needs mtx locked. 
-            void FlushColdBuf()
+            private void FlushColdBuf()
             {
                 for (var bufIdx = 0; bufIdx < _coldBuf.Position; bufIdx++)
                 {
@@ -293,7 +286,7 @@ namespace Prometheus
             }
 
             // MaybeRotateStreams needs mtx AND bufMtx locked.
-            void MaybeRotateStreams()
+            private void MaybeRotateStreams()
             {
                 while (!_hotBufExpTime.Equals(_headStreamExpTime))
                 {
@@ -315,5 +308,6 @@ namespace Prometheus
         }
 
         public void Publish() => Unlabelled.Publish();
+        public void Unpublish() => Unlabelled.Unpublish();
     }
 }

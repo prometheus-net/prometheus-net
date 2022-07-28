@@ -1,19 +1,30 @@
 ﻿using Prometheus;
-using Prometheus.Advanced;
 using System;
 using System.Diagnostics;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics.Metrics;
+#endif
+
 namespace tester
 {
-    class Program
+    internal class Program
     {
-        static void Main()
+        private static void Main()
         {
-            // Replace the first line with an appropriate type of tester to run different manual tests.
-            var tester = new MetricPusherTester();
+            // Uncomment this to suppress the default sample metrics.
+            //Metrics.SuppressDefaultMetrics();
 
+            // Replace the first line with an appropriate type of tester to run different manual tests.
+            //var tester = new MetricPusherTester();
+            //var tester = new KestrelMetricServerTester();
+            var tester = new AspNetCoreMiddlewareTester();
+            //var tester = new GrpcMiddlewareTester();
+            //var tester = new MetricServerTester();
+            
             // For testing Kestrel metric server with HTTPS, you need at least a self-signed certificate (one included here)
             // and the matching domain pointed to 127.0.0.1 (e.g. hardcoded in the PCs hosts file) and you also need to
             // import this certificate into your Trusted Root Certification Authorities certificate store to trust it.
@@ -51,18 +62,53 @@ namespace tester
             });
             hist.Observe(0.4);
 
+            var timedHistogram = Metrics.CreateHistogram("myTimedHistogram", "help text", new HistogramConfiguration
+            {
+                Buckets = new[] { 0, 0.2, 0.4, 0.6, 0.8, 0.9 }
+            });
+
+            var latestGauge = Metrics.CreateGauge("latestGauge", "Reports the latest cycle time");
+
             var summary = Metrics.CreateSummary("mySummary", "help text");
             summary.Observe(5.3);
 
-            // Exmaple implementation of a custom collector.
-            DefaultCollectorRegistry.Instance.GetOrAdd(new ExternalDataCollector());
+            // Example implementation of updating values before every collection.
+            var collectionCount = Metrics.CreateCounter("beforecollect_example", "This counter is incremented before every data collection.");
 
-            // Example implementation of on-demand collection.
-            DefaultCollectorRegistry.Instance.RegisterOnDemandCollector<OnDemandCollection>();
+            // Synchronous callbacks should be instantaneous, to avoid causing delays in the pipeline.
+            Metrics.DefaultRegistry.AddBeforeCollectCallback(() => collectionCount.Inc());
+
+            var googlePageBytes = Metrics.CreateCounter("beforecollect_async_example", "This counter is incremented before every data collection, but asynchronously.");
+
+            // Callbacks can also be asynchronous. It is fine for these to take a bit more time.
+            // For example, you can make an asynchronous HTTP request to a remote system in such a callback.
+            var httpClient = new HttpClient();
+
+            Metrics.DefaultRegistry.AddBeforeCollectCallback(async (cancel) =>
+            {
+                // Probe a remote system.
+                var response = await httpClient.GetAsync("https://google.com", cancel);
+
+                // Increase a counter by however many bytes we loaded.
+                googlePageBytes.Inc(response.Content.Headers.ContentLength ?? 0);
+            });
 
             // Uncomment this to test deliberately causing collections to fail. This should result in 503 responses.
             // With MetricPusherTester you might get a 1st push already before it fails but after that it should stop pushing.
-            //DefaultCollectorRegistry.Instance.RegisterOnDemandCollectors(new AlwaysFailingOnDemandCollector());
+            //Metrics.DefaultRegistry.AddBeforeCollectCallback(() => throw new ScrapeFailedException());
+
+#if NETCOREAPP
+            var diagnosticSourceRegistration = DiagnosticSourceAdapter.StartListening();
+            var eventCounterRegistration = EventCounterAdapter.StartListening();
+#endif
+
+#if NET6_0_OR_GREATER
+            var meter = new Meter("sample.dotnet.meter", "1.2.3");
+            var meterCounter = meter.CreateCounter<double>("sample_counter");
+            var meterGauge = meter.CreateObservableGauge<byte>("sample_gauge", () => 92, "Buckets", "How much cheese is loaded");
+
+            var meterRegistration = MeterAdapter.StartListening();
+#endif
 
             var cts = new CancellationTokenSource();
 
@@ -74,27 +120,35 @@ namespace tester
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    var duration = Stopwatch.StartNew();
-
-                    counter.Inc();
-                    counter.Labels("GET", "/").Inc(2);
-                    gauge.Set(random.NextDouble() + 2);
-                    hist.Observe(random.NextDouble());
-                    summary.Observe(random.NextDouble());
-
-                    try
+                    using (latestGauge.NewTimer())
+                    using (timedHistogram.NewTimer())
                     {
-                        tester.OnTimeToObserveMetrics();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine(ex);
-                    }
+                        var duration = Stopwatch.StartNew();
 
-                    var sleepTime = updateInterval - duration.Elapsed;
 
-                    if (sleepTime > TimeSpan.Zero)
-                        await Task.Delay(sleepTime, cts.Token);
+                        counter.Inc();
+                        counter.Labels("GET", "/").Inc(2);
+                        gauge.Set(random.NextDouble() + 2);
+                        hist.Observe(random.NextDouble());
+                        summary.Observe(random.NextDouble());
+
+#if NET6_0_OR_GREATER
+                        meterCounter.Add(1);
+#endif
+                        try
+                        {
+                            tester.OnTimeToObserveMetrics();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.Error.WriteLine(ex);
+                        }
+
+                        var sleepTime = updateInterval - duration.Elapsed;
+
+                        if (sleepTime > TimeSpan.Zero)
+                            await Task.Delay(sleepTime, cts.Token);
+                    }
                 }
             }).Result;
 

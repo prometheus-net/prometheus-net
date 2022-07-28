@@ -1,7 +1,7 @@
-﻿namespace Prometheus
+﻿namespace Prometheus.SummaryImpl
 {
     // Sample holds an observed value and meta information for compression. 
-    struct Sample
+    internal struct Sample
     {
         public double Value;
         public double Width;

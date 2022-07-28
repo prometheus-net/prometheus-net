@@ -1,61 +1,63 @@
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Prometheus
 {
-    public interface ICounter
+    public sealed class Counter : Collector<Counter.Child>, ICounter
     {
-        void Inc(double increment = 1);
-        double Value { get; }
-    }
-
-    public class Counter : Collector<Counter.Child>, ICounter
-    {
-        internal Counter(string name, string help, string[] labelNames, bool suppressInitialValue)
-            : base(name, help, labelNames, suppressInitialValue)
+        public sealed class Child : ChildBase, ICounter
         {
-        }
-
-        public void Inc(double increment = 1)
-        {
-            Unlabelled.Inc(increment);
-        }
-
-        public class Child : Advanced.Child, ICounter
-        {
-            private ThreadSafeDouble _value;
-
-            protected override void Populate(Metric metric)
+            internal Child(Collector parent, Labels labels, Labels flattenedLabels, bool publish)
+                : base(parent, labels, flattenedLabels, publish)
             {
-                metric.counter = new Advanced.DataContracts.Counter();
-                metric.counter.value = Value;
+                _identifier = CreateIdentifier();
             }
 
-            public void Inc(double increment = 1.0D)
+            private readonly byte[] _identifier;
+
+            private ThreadSafeDouble _value;
+
+            private protected override Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                // Note: Prometheus recommendations are that this assert > 0. However, there are times your
-                // measurement results in a zero and it's easier to have the counter handle this elegantly.
-                if (increment < 0.0D)
-                    throw new ArgumentOutOfRangeException("increment", "Counter cannot go down");
+                return serializer.WriteMetricAsync(_identifier, Value, cancel);
+            }
+
+            public void Inc(double increment = 1.0)
+            {
+                if (increment < 0.0)
+                    throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
 
                 _value.Add(increment);
-                _publish = true;
+                Publish();
+            }
+
+            public void IncTo(double targetValue)
+            {
+                _value.IncrementTo(targetValue);
+                Publish();
             }
 
             public double Value => _value.Value;
         }
 
-        public double Value
+        private protected override Child NewChild(Labels labels, Labels flattenedLabels, bool publish)
         {
-            get { return Unlabelled.Value; }
+            return new Child(this, labels, flattenedLabels, publish);
         }
 
-        protected override MetricType Type
+        internal Counter(string name, string help, string[]? labelNames, Labels staticLabels, bool suppressInitialValue)
+            : base(name, help, labelNames, staticLabels, suppressInitialValue)
         {
-            get { return MetricType.COUNTER; }
         }
+
+        public void Inc(double increment = 1) => Unlabelled.Inc(increment);
+        public void IncTo(double targetValue) => Unlabelled.IncTo(targetValue);
+        public double Value => Unlabelled.Value;
 
         public void Publish() => Unlabelled.Publish();
+        public void Unpublish() => Unlabelled.Unpublish();
+
+        private protected override MetricType Type => MetricType.Counter;
     }
 }

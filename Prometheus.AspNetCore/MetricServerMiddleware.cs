@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Prometheus.Advanced;
-using Prometheus.Advanced.DataContracts;
-using System.Collections.Generic;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -16,59 +14,50 @@ namespace Prometheus
     {
         public MetricServerMiddleware(RequestDelegate next, Settings settings)
         {
-            _next = next;
-
-            _registry = settings.Registry ?? DefaultCollectorRegistry.Instance;
+            _registry = settings.Registry ?? Metrics.DefaultRegistry;
         }
 
         public sealed class Settings
         {
-            public ICollectorRegistry Registry { get; set; }
+            public CollectorRegistry? Registry { get; set; }
         }
 
-        private readonly RequestDelegate _next;
-
-        private readonly ICollectorRegistry _registry;
+        private readonly CollectorRegistry _registry;
 
         public async Task Invoke(HttpContext context)
         {
-            // We just handle the root URL (/metrics or whatnot).
-            if (!string.IsNullOrWhiteSpace(context.Request.Path.Value.Trim('/')))
-            {
-                await _next(context);
-                return;
-            }
-
-            var request = context.Request;
             var response = context.Response;
-
-            var acceptHeaders = request.Headers["Accept"];
-            var contentType = ScrapeHandler.GetContentType(acceptHeaders);
-            response.ContentType = contentType;
-
-            IEnumerable<MetricFamily> metrics;
 
             try
             {
-                metrics = _registry.CollectAll();
+                // We first touch the response.Body only in the callback because touching
+                // it means we can no longer send headers (the status code).
+                var serializer = new TextSerializer(delegate
+                {
+                    response.ContentType = PrometheusConstants.ExporterContentType;
+                    response.StatusCode = StatusCodes.Status200OK;
+                    return response.Body;
+                });
+
+                await _registry.CollectAndSerializeAsync(serializer, context.RequestAborted);
+            }
+            catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+            {
+                // The scrape was cancalled by the client. This is fine. Just swallow the exception to not generate pointless spam.
             }
             catch (ScrapeFailedException ex)
             {
-                response.StatusCode = 503;
+                // This can only happen before any serialization occurs, in the pre-collect callbacks.
+                // So it should still be safe to update the status code and write an error message.
+                response.StatusCode = StatusCodes.Status503ServiceUnavailable;
 
                 if (!string.IsNullOrWhiteSpace(ex.Message))
                 {
-                    using (var writer = new StreamWriter(response.Body))
+                    using (var writer = new StreamWriter(response.Body, PrometheusConstants.ExportEncoding,
+                        bufferSize: -1, leaveOpen: true))
                         await writer.WriteAsync(ex.Message);
                 }
-
-                return;
             }
-
-            response.StatusCode = 200;
-
-            using (var outputStream = response.Body)
-                ScrapeHandler.ProcessScrapeRequest(metrics, contentType, outputStream);
         }
     }
 }
