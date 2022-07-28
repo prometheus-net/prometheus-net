@@ -20,7 +20,7 @@ namespace Prometheus
         }
 
         private readonly Process _process;
-        private readonly List<Counter.Child> _collectionCounts = new List<Counter.Child>();
+        private readonly List<(int gen, Counter.Child counter)> _collectionCounts = new();
         private Gauge _totalMemory;
         private Gauge _virtualMemorySize;
         private Gauge _workingSet;
@@ -36,10 +36,9 @@ namespace Prometheus
             var metrics = Metrics.WithCustomRegistry(registry);
 
             var collectionCountsParent = metrics.CreateCounter("dotnet_collection_count_total", "GC collection count", new[] { "generation" });
-
             for (var gen = 0; gen <= GC.MaxGeneration; gen++)
             {
-                _collectionCounts.Add(collectionCountsParent.Labels(gen.ToString()));
+                _collectionCounts.Add((gen, collectionCountsParent.Labels(gen.ToString())));
             }
 
             // Metrics that make sense to compare between all operating systems
@@ -73,18 +72,12 @@ namespace Prometheus
                 lock (_updateLock)
                 {
                     _process.Refresh();
-
-                    for (var gen = 0; gen <= GC.MaxGeneration; gen++)
-                    {
-                        var collectionCount = _collectionCounts[gen];
-                        collectionCount.Inc(GC.CollectionCount(gen) - collectionCount.Value);
-                    }
-
+                    _collectionCounts.ForEach(x => x.counter.IncTo(GC.CollectionCount(x.gen)));
                     _totalMemory.Set(GC.GetTotalMemory(false));
                     _virtualMemorySize.Set(_process.VirtualMemorySize64);
                     _workingSet.Set(_process.WorkingSet64);
                     _privateMemorySize.Set(_process.PrivateMemorySize64);
-                    _cpuTotal.Inc(Math.Max(0, _process.TotalProcessorTime.TotalSeconds - _cpuTotal.Value));
+                    _cpuTotal.IncTo(_process.TotalProcessorTime.TotalSeconds);
                     _openHandles.Set(_process.HandleCount);
                     _numThreads.Set(_process.Threads.Count);
                 }
