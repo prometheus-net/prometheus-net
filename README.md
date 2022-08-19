@@ -47,6 +47,7 @@ Some specialized subsets of functionality require more modern runtimes:
 * [DiagnosticSource integration](#diagnosticsource-integration)
 * [EventCounter integration](#eventcounter-integration)
 * [.NET 6 Meters integration](#net-6-meters-integration)
+* [Benchmarks](#net-6-meters-integration)
 * [Community projects](#community-projects)
 
 # Best practices and usage
@@ -707,6 +708,8 @@ registration.Dispose();
 dotnet_meters_gauge{meter="sample.dotnet.meter",instrument="sample_gauge",unit="Buckets",description="How much cheese is loaded"} 92
 dotnet_meters_counter{meter="sample.dotnet.meter",instrument="sample_counter",unit="",description=""} 4
 ```
+# Benchmarks
+A simple benchmark is available [here](https://github.com/kaffarell/prometheus-net-benchmarks).
 
 # Community projects
 
