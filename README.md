@@ -9,11 +9,7 @@ This is a .NET library for instrumenting your applications and exporting metrics
 The library targets the following runtimes (and newer):
 
 * .NET Framework 4.6.2
-* .NET Core 3.1
-
-Some specialized subsets of functionality require more modern runtimes:
-
-* The .NET Meters API integration requires .NET 6.0 or newer.
+* .NET 6.0
 
 # Table of contents
 

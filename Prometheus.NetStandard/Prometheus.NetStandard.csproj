@@ -1,42 +1,42 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
-  </PropertyGroup>
+	<PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
+		<TargetFrameworks>netstandard2.0</TargetFrameworks>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
+		<TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <RootNamespace>Prometheus</RootNamespace>
+	<PropertyGroup>
+		<RootNamespace>Prometheus</RootNamespace>
 
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 
-    <SignAssembly>true</SignAssembly>
+		<SignAssembly>true</SignAssembly>
+		<AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
 
-    <AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
+		<Nullable>enable</Nullable>
+		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<NoWarn>1591</NoWarn>
 
-    <LangVersion>preview</LangVersion>
-    <Nullable>enable</Nullable>
-    <WarningsAsErrors />
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>1701;1702;1705;1591</NoWarn>
-  </PropertyGroup>
+		<LangVersion>latest</LangVersion>
+		<WarningLevel>9999</WarningLevel>
 
-  <ItemGroup>
-    <Compile Include="..\Resources\SolutionAssemblyInfo.cs" Link="SolutionAssemblyInfo.cs" />
-  </ItemGroup>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.9" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\Resources\SolutionAssemblyInfo.cs" Link="SolutionAssemblyInfo.cs" />
+	</ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <Reference Include="System.Net.Http" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
+		<Reference Include="System.Net.Http" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+	</ItemGroup>
 
 </Project>

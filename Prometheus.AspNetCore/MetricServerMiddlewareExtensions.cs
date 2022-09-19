@@ -8,7 +8,7 @@ namespace Prometheus
     public static class MetricServerMiddlewareExtensions
     {
 
-#if NETCOREAPP3_1
+#if NET6_0_OR_GREATER
 
         private const string DefaultDisplayName = "Prometheus metrics";
 
@@ -49,6 +49,9 @@ namespace Prometheus
         /// </summary>
         public static IApplicationBuilder UseMetricServer(this IApplicationBuilder builder, int port, string? url = "/metrics", CollectorRegistry? registry = null)
         {
+            // If no URL, use root URL.
+            url ??= "/";
+
             return builder
                 .Map(url, b => b.MapWhen(PortMatches(), b1 => b1.InternalUseMiddleware(registry)));
 

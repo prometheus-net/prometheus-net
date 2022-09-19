@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata minClientVersion="2.8">
+  <metadata minClientVersion="5.1">
     <id>prometheus-net.AspNetCore.Grpc</id>
     <authors>sandersaares</authors>
     <description>ASP.NET Core gRPC integration with Prometheus</description>
@@ -15,15 +15,15 @@
     <releaseNotes></releaseNotes>
 
     <dependencies>
-      <group targetFramework="netcoreapp3.1">
+      <group targetFramework="net6.0">
         <dependency id="prometheus-net" version="__NUGETPACKAGEVERSION__" />
-        <dependency id="Grpc.AspNetCore.Server" version="2.28.0" />
+        <dependency id="Grpc.AspNetCore.Server" version="2.48.0" />
       </group>
     </dependencies>
   </metadata>
   <files>
     <!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
-    <file src="..\Prometheus.AspNetCore.Grpc\netcoreapp3.1\**" target="lib\netcoreapp3.1" />
+    <file src="..\Prometheus.AspNetCore.Grpc\net6.0\**" target="lib\net6.0" />
 
     <file src="prometheus-net-logo.png" target="images\" />
   </files>

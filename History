@@ -1,3 +1,5 @@
+* 7.0.0
+- .NET Core specific functionality now targeting .NET 6.0 or greater (all previous versions will be end of life by December 2022).
 * 6.0.0
 - Dropped library support for unsupported .NET runtime versions (.NET 2.1).
 - If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics, unless there is a user-defined label already present with this name.

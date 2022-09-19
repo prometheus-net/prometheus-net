@@ -1,63 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
 
-    <IsPackable>false</IsPackable>
+		<IsPackable>false</IsPackable>
 
-    <RootNamespace>Prometheus.Tests</RootNamespace>
+		<RootNamespace>Prometheus.Tests</RootNamespace>
 
-    <SignAssembly>true</SignAssembly>
+		<SignAssembly>true</SignAssembly>
+		<AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
 
-    <AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+	<ItemGroup>
+		<Compile Include="..\Tests.NetFramework\CollectorRegistryTests.cs" Link="CollectorRegistryTests.cs" />
+		<Compile Include="..\Tests.NetFramework\CounterExtensionTests.cs" Link="CounterExtensionTests.cs" />
+		<Compile Include="..\Tests.NetFramework\GaugeExtensionTests.cs" Link="GaugeExtensionTests.cs" />
+		<Compile Include="..\Tests.NetFramework\HistogramTests.cs" Link="HistogramTests.cs" />
+		<Compile Include="..\Tests.NetFramework\HttpClientMetrics\ConnectivityCheck.cs" Link="HttpClientMetrics\ConnectivityCheck.cs" />
+		<Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientInProgressHandlerTests.cs" Link="HttpClientMetrics\HttpClientInProgressHandlerTests.cs" />
+		<Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientRequestCountHandlerTests.cs" Link="HttpClientMetrics\HttpClientRequestCountHandlerTests.cs" />
+		<Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs" Link="HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs" />
+		<Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs" Link="HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs" />
+		<Compile Include="..\Tests.NetFramework\MetricInitializationTests.cs" Link="MetricInitializationTests.cs" />
+		<Compile Include="..\Tests.NetFramework\MetricPusherTests.cs" Link="MetricPusherTests.cs" />
+		<Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
+		<Compile Include="..\Tests.NetFramework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
+		<Compile Include="..\Tests.NetFramework\RandomExtensions.cs" Link="RandomExtensions.cs" />
+		<Compile Include="..\Tests.NetFramework\StaticLabelTests.cs" Link="StaticLabelTests.cs" />
+		<Compile Include="..\Tests.NetFramework\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
+		<Compile Include="..\Tests.NetFramework\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
+	</ItemGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <LangVersion>latest</LangVersion>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-  </PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.1" />
+		<PackageReference Include="MSTest.TestAdapter" Version="2.2.10" />
+		<PackageReference Include="MSTest.TestFramework" Version="2.2.10" />
+		<PackageReference Include="NSubstitute" Version="4.4.0" />
+	</ItemGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <LangVersion>latest</LangVersion>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Include="..\Tests.NetFramework\CollectorRegistryTests.cs" Link="CollectorRegistryTests.cs" />
-    <Compile Include="..\Tests.NetFramework\CounterExtensionTests.cs" Link="CounterExtensionTests.cs" />
-    <Compile Include="..\Tests.NetFramework\GaugeExtensionTests.cs" Link="GaugeExtensionTests.cs" />
-    <Compile Include="..\Tests.NetFramework\HistogramTests.cs" Link="HistogramTests.cs" />
-    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\ConnectivityCheck.cs" Link="HttpClientMetrics\ConnectivityCheck.cs" />
-    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientInProgressHandlerTests.cs" Link="HttpClientMetrics\HttpClientInProgressHandlerTests.cs" />
-    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientRequestCountHandlerTests.cs" Link="HttpClientMetrics\HttpClientRequestCountHandlerTests.cs" />
-    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs" Link="HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs" />
-    <Compile Include="..\Tests.NetFramework\HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs" Link="HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs" />
-    <Compile Include="..\Tests.NetFramework\MetricInitializationTests.cs" Link="MetricInitializationTests.cs" />
-    <Compile Include="..\Tests.NetFramework\MetricPusherTests.cs" Link="MetricPusherTests.cs" />
-    <Compile Include="..\Tests.NetFramework\MetricsTests.cs" Link="MetricsTests.cs" />
-    <Compile Include="..\Tests.NetFramework\QuantileStreamTests.cs" Link="QuantileStreamTests.cs" />
-    <Compile Include="..\Tests.NetFramework\RandomExtensions.cs" Link="RandomExtensions.cs" />
-    <Compile Include="..\Tests.NetFramework\StaticLabelTests.cs" Link="StaticLabelTests.cs" />
-    <Compile Include="..\Tests.NetFramework\ThreadSafeDoubleTests.cs" Link="ThreadSafeDoubleTests.cs" />
-    <Compile Include="..\Tests.NetFramework\ThreadSafeLongTests.cs" Link="ThreadSafeLongTests.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="2.0.0" />
-    <PackageReference Include="MSTest.TestFramework" Version="2.0.0" />
-    <PackageReference Include="NSubstitute" Version="4.2.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
-    <ProjectReference Include="..\Prometheus.AspNetCore.Grpc\Prometheus.AspNetCore.Grpc.csproj" />
-    <ProjectReference Include="..\Prometheus.NetCore\Prometheus.NetCore.csproj" />
-    <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
+		<ProjectReference Include="..\Prometheus.AspNetCore.Grpc\Prometheus.AspNetCore.Grpc.csproj" />
+		<ProjectReference Include="..\Prometheus.NetCore\Prometheus.NetCore.csproj" />
+		<ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
+	</ItemGroup>
 
 </Project>

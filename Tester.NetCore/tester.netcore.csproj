@@ -1,61 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>tester</RootNamespace>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>prometheus-net.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<RootNamespace>tester</RootNamespace>
+		<SignAssembly>false</SignAssembly>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <LangVersion>latest</LangVersion>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-  </PropertyGroup>
+		<Nullable>disable</Nullable>
+		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<!-- 8981 for gRPC generated code error (should be fixed in future version of gRPC - try remove and if build does not break, all is well) -->
+		<NoWarn>1591;8981</NoWarn>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <LangVersion>latest</LangVersion>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-  </PropertyGroup>
+		<LangVersion>latest</LangVersion>
+		<WarningLevel>9999</WarningLevel>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Controllers\**" />
-    <EmbeddedResource Remove="Controllers\**" />
-    <None Remove="Controllers\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\Tester.NetFramework\MetricPusherTester.cs" Link="MetricPusherTester.cs" />
+		<Compile Include="..\Tester.NetFramework\MetricServerTester.cs" Link="MetricServerTester.cs" />
+		<Compile Include="..\Tester.NetFramework\Program.cs" Link="Program.cs" />
+		<Compile Include="..\Tester.NetFramework\Tester.cs" Link="Tester.cs" />
+		<Compile Include="..\Tester.NetFramework\TesterConstants.cs" Link="TesterConstants.cs" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="..\Tester.NetFramework\MetricPusherTester.cs" Link="MetricPusherTester.cs" />
-    <Compile Include="..\Tester.NetFramework\MetricServerTester.cs" Link="MetricServerTester.cs" />
-    <Compile Include="..\Tester.NetFramework\Program.cs" Link="Program.cs" />
-    <Compile Include="..\Tester.NetFramework\Tester.cs" Link="Tester.cs" />
-    <Compile Include="..\Tester.NetFramework\TesterConstants.cs" Link="TesterConstants.cs" />
-    <Compile Include="Controllers\DummyController.cs" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Grpc.AspNetCore" Version="2.48.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore" Version="2.29.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
-    <ProjectReference Include="..\Prometheus.AspNetCore.Grpc\Prometheus.AspNetCore.Grpc.csproj" />
-    <ProjectReference Include="..\Prometheus.NetCore\Prometheus.NetCore.csproj" />
-    <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
+		<ProjectReference Include="..\Prometheus.AspNetCore.Grpc\Prometheus.AspNetCore.Grpc.csproj" />
+		<ProjectReference Include="..\Prometheus.NetCore\Prometheus.NetCore.csproj" />
+		<ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Protobuf Include="Protos\greet.proto" GrpcServices="Both" />
 	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="prometheus-net.test.pfx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="prometheus-net.test.pfx">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>

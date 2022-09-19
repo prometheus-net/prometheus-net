@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -52,10 +53,10 @@ namespace Prometheus
                     // If there is any URL prefix, we just redirect people going to root URL to our prefix.
                     if (!string.IsNullOrWhiteSpace(_url.Trim('/')))
                     {
-                        app.MapWhen(context => context.Request.Path.Value.Trim('/') == "",
+                        app.MapWhen(context => context.Request.Path.Value?.Trim('/') == "",
                             configuration =>
                             {
-                                configuration.Use((context, next) =>
+                                configuration.Use((HttpContext context, RequestDelegate next) =>
                                 {
                                     context.Response.Redirect(_url);
                                     return Task.CompletedTask;
@@ -67,17 +68,17 @@ namespace Prometheus
             if (_certificate != null)
             {
                 builder = builder.ConfigureServices(services =>
+                {
+                    Action<ListenOptions> configureEndpoint = options =>
                     {
-                        Action<ListenOptions> configureEndpoint = options =>
-                        {
-                            options.UseHttps(_certificate);
-                        };
+                        options.UseHttps(_certificate);
+                    };
 
-                        services.Configure<KestrelServerOptions>(options =>
-                        {
-                            options.Listen(IPAddress.Any, _port, configureEndpoint);
-                        });
+                    services.Configure<KestrelServerOptions>(options =>
+                    {
+                        options.Listen(IPAddress.Any, _port, configureEndpoint);
                     });
+                });
             }
             else
             {
