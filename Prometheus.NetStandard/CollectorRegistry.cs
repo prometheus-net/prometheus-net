@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 
 namespace Prometheus
 {
@@ -178,7 +172,7 @@ namespace Prometheus
                 _configuration = configuration;
             }
 
-            public TCollector CreateInstance(string _) => _createInstance(_name, _help, _configuration);
+            public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _configuration);
         }
 
         /// <summary>
@@ -188,19 +182,52 @@ namespace Prometheus
             where TCollector : Collector
             where TConfiguration : MetricConfiguration
         {
-            var collectorToUse = _collectors.GetOrAdd(initializer.Name, initializer.CreateInstance);
+            var identity = new CollectorIdentity(initializer.Name, initializer.Configuration.LabelNames ?? Array.Empty<string>());
 
-            if (!(collectorToUse is TCollector))
-                throw new InvalidOperationException("Collector of a different type with the same name is already registered.");
+            var collector = _collectors.GetOrAdd(identity, initializer.CreateInstance);
 
-            if ((initializer.Configuration.LabelNames?.Length ?? 0) != collectorToUse.LabelNames.Length
-                || (!initializer.Configuration.LabelNames?.SequenceEqual(collectorToUse.LabelNames) ?? false))
-                throw new InvalidOperationException("Collector matches a previous registration but has a different set of label names.");
+            // We either created a new collector or found one with a matching identity.
+            // We do some basic validation here to avoid silly API usage mistakes.
 
-            return (TCollector)collectorToUse;
+            if (!(collector is TCollector))
+                throw new InvalidOperationException("Collector of a different type with the same identity is already registered.");
+
+            return (TCollector)collector;
         }
 
-        private readonly ConcurrentDictionary<string, Collector> _collectors = new ConcurrentDictionary<string, Collector>();
+        /// <summary>
+        /// Represents the values that make up a single collector's unique identity, used during collector registration.
+        /// If these values match an existing collector, we will reuse it (or throw if metadata mismatches).
+        /// If these values do not match any existing collector, we will create a new collector.
+        /// </summary>
+        internal struct CollectorIdentity : IEquatable<CollectorIdentity>
+        {
+            public readonly string Name;
+            public readonly string[] LabelNames;
+
+            public CollectorIdentity(string name, string[] labelNames)
+            {
+                Name = name;
+                LabelNames = labelNames;
+            }
+
+            public bool Equals(CollectorIdentity other)
+            {
+                if (!string.Equals(Name, other.Name, StringComparison.InvariantCulture))
+                    return false;
+
+                if (LabelNames.Length != other.LabelNames.Length)
+                    return false;
+
+                for (var i = 0; i < LabelNames.Length; i++)
+                    if (!string.Equals(LabelNames[i], other.LabelNames[i], StringComparison.InvariantCulture))
+                        return false;
+
+                return true;
+            }
+        }
+
+        private readonly ConcurrentDictionary<CollectorIdentity, Collector> _collectors = new ConcurrentDictionary<CollectorIdentity, Collector>();
 
         internal void SetBeforeFirstCollectCallback(Action a)
         {

@@ -1,13 +1,15 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using System;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Prometheus.Tests
 {
     [TestClass]
-    public class MetricsTests
+    public sealed class MetricsTests
     {
         private CollectorRegistry _registry;
         private MetricFactory _metrics;
@@ -33,7 +35,7 @@ namespace Prometheus.Tests
 
             Assert.ThrowsException<ArgumentException>(() => gauge.Labels("1"));
 
-            var counter = Metrics.CreateCounter("name2", "help2", "label1");
+            var counter = _metrics.CreateCounter("name2", "help2", "label1");
             counter.Inc();
             counter.Inc(3.2);
             counter.Inc(0);
@@ -279,18 +281,54 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
-        public void cannot_create_metrics_with_the_same_name_but_different_labels()
+        public async Task CreateMetric_WithSameMetadataButDifferentLabels_CreatesMetric()
         {
-            _metrics.CreateGauge("name1", "h");
-            try
-            {
-                _metrics.CreateGauge("name1", "h", "label1");
-                Assert.Fail("should have thrown");
-            }
-            catch (InvalidOperationException e)
-            {
-                Assert.AreEqual("Collector matches a previous registration but has a different set of label names.", e.Message);
-            }
+            // This is a deviation from standard Prometheus practices, where you can only use a metric name with a single set of label names.
+            // Instead, this library allows the same metric name to be used with different sets of label names, as long as all other metadata exists.
+            // The reason for this is that we want to support using prometheus-net as a bridge to report data originating from metrics systems
+            // that do not have such limitations (such as the .NET 6 Meters API). Such scenarios can create any combinations of label names.
+            // This is permissible by OpenMetrics, though violates the Prometheus client authoring requirements (which is OK - what can you do).
+
+            var gauge1 = _metrics.CreateGauge("name1", "h");
+            var gauge2 = _metrics.CreateGauge("name1", "h", "label1");
+            var gauge3 = _metrics.CreateGauge("name1", "h", "label2");
+            var gauge4 = _metrics.CreateGauge("name1", "h", "label1", "label3");
+
+            // We expect all the metrics registered to be unique instances.
+            Assert.AreNotSame(gauge1, gauge2);
+            Assert.AreNotSame(gauge2, gauge3);
+            Assert.AreNotSame(gauge3, gauge4);
+
+            var gauge1Again = _metrics.CreateGauge("name1", "h");
+            var gauge2Again = _metrics.CreateGauge("name1", "h", "label1");
+            var gauge3Again = _metrics.CreateGauge("name1", "h", "label2");
+            var gauge4Again = _metrics.CreateGauge("name1", "h", "label1", "label3");
+
+            // We expect the instances to be sticky to the specific set of label names.
+            Assert.AreSame(gauge1, gauge1Again);
+            Assert.AreSame(gauge2, gauge2Again);
+            Assert.AreSame(gauge3, gauge3Again);
+            Assert.AreSame(gauge4, gauge4Again);
+
+            var canary1 = 543289;
+            var canary2 = 735467;
+            var canary3 = 627864;
+            var canary4 = 837855;
+
+            gauge1.Set(canary1);
+            gauge2.Set(canary2);
+            gauge3.Set(canary3);
+            gauge4.Set(canary4);
+
+            var buffer = new MemoryStream();
+            await _registry.CollectAndExportAsTextAsync(buffer);
+            var serialized = Encoding.UTF8.GetString(buffer.ToArray());
+
+            // We expect all of them to work (to publish data) and to work independently.
+            StringAssert.Contains(serialized, canary1.ToString());
+            StringAssert.Contains(serialized, canary2.ToString());
+            StringAssert.Contains(serialized, canary3.ToString());
+            StringAssert.Contains(serialized, canary4.ToString());
         }
 
         [TestMethod]
@@ -304,7 +342,7 @@ namespace Prometheus.Tests
             }
             catch (InvalidOperationException e)
             {
-                Assert.AreEqual("Collector of a different type with the same name is already registered.", e.Message);
+                Assert.AreEqual("Collector of a different type with the same identity is already registered.", e.Message);
             }
         }
 
