@@ -105,6 +105,9 @@
     <Compile Include="..\Tests.NetCore\CounterTests.cs">
       <Link>CounterTests.cs</Link>
     </Compile>
+    <Compile Include="..\Tests.NetCore\FactoryLabelTests.cs">
+      <Link>FactoryLabelTests.cs</Link>
+    </Compile>
     <Compile Include="..\Tests.NetCore\GaugeExtensionTests.cs">
       <Link>GaugeExtensionTests.cs</Link>
     </Compile>
@@ -146,6 +149,9 @@
     </Compile>
     <Compile Include="..\Tests.NetCore\StaticLabelTests.cs">
       <Link>StaticLabelTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\TestExtensions.cs">
+      <Link>TestExtensions.cs</Link>
     </Compile>
     <Compile Include="..\Tests.NetCore\ThreadSafeDoubleTests.cs">
       <Link>ThreadSafeDoubleTests.cs</Link>

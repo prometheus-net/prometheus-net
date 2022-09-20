@@ -50,6 +50,14 @@ namespace Prometheus
             _hashCode = CalculateHashCode(Values);
         }
 
+        public Labels(IDictionary<string, string> labels) : this(labels.Keys.ToArray(), labels.Values.ToArray())
+        {
+        }
+
+        public Labels(IEnumerable<KeyValuePair<string, string>> labels) : this(labels.ToDictionary(x => x.Key, x => x.Value))
+        {
+        }
+
         public Labels Concat(params (string, string)[] more)
         {
             var moreLabels = new Labels(more.Select(pair => pair.Item1).ToArray(), more.Select(pair => pair.Item2).ToArray());
@@ -63,7 +71,12 @@ namespace Prometheus
             var allValues = Values.Concat(more.Values).ToArray();
 
             if (allNames.Length != allNames.Distinct(StringComparer.Ordinal).Count())
-                throw new InvalidOperationException("The metric instance received multiple copies of the same label.");
+            {
+                var duplicates = allNames.Where(n => allNames.Count(x => x.Equals(n)) > 1).ToArray();
+                var duplicatesString = string.Join(", ", duplicates);
+
+                throw new InvalidOperationException($"The metric instance received multiple copies of the same label: {duplicatesString}."); 
+            }
 
             return new Labels(allNames, allValues);
         }

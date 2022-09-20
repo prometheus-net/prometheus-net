@@ -320,9 +320,7 @@ namespace Prometheus.Tests
             gauge3.Set(canary3);
             gauge4.Set(canary4);
 
-            var buffer = new MemoryStream();
-            await _registry.CollectAndExportAsTextAsync(buffer);
-            var serialized = Encoding.UTF8.GetString(buffer.ToArray());
+            var serialized = await _registry.CollectAndSerializeToStringAsync();
 
             // We expect all of them to work (to publish data) and to work independently.
             StringAssert.Contains(serialized, canary1.ToString());

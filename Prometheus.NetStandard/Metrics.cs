@@ -29,6 +29,12 @@
             new MetricFactory(registry);
 
         /// <summary>
+        /// Adds the specified static labels to all metrics created using the returned factory.
+        /// </summary>
+        public static IMetricFactory WithLabels(IDictionary<string, string> labels) =>
+            new MetricFactory(DefaultRegistry, new Labels(labels));
+
+        /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
         public static Counter CreateCounter(string name, string help, CounterConfiguration? configuration = null) =>

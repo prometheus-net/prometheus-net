@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     /// <summary>
     /// Adds metrics to a registry.
@@ -10,21 +7,35 @@ namespace Prometheus
     {
         private readonly CollectorRegistry _registry;
 
+        // If set, these labels will be applied to all created metrics, acting as additional static labels scoped to this factory.
+        private readonly Labels? _factoryLabels;
+
         internal MetricFactory(CollectorRegistry registry)
         {
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        }
+
+        internal MetricFactory(CollectorRegistry registry, Labels? withLabels)
+        {
+            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+            _factoryLabels = withLabels;
         }
 
         private Labels CreateStaticLabels(MetricConfiguration metricConfiguration)
         {
             return _registry.WhileReadingStaticLabels(registryLabels =>
             {
-                if (metricConfiguration.StaticLabels == null)
-                    return registryLabels;
+                var labels = Labels.Empty;
 
-                var metricLabels = new Labels(metricConfiguration.StaticLabels.Keys.ToArray(), metricConfiguration.StaticLabels.Values.ToArray());
+                if (metricConfiguration.StaticLabels != null)
+                    labels = labels.Concat(new Labels(metricConfiguration.StaticLabels));
 
-                return metricLabels.Concat(registryLabels);
+                if (_factoryLabels.HasValue)
+                    labels = labels.Concat(_factoryLabels.Value);
+
+                labels = labels.Concat(registryLabels);
+
+                return labels;
             });
         }
 
@@ -103,5 +114,24 @@ namespace Prometheus
             {
                 LabelNames = labelNames
             });
+
+        public IMetricFactory WithLabels(IDictionary<string, string> labels)
+        {
+            if (labels.Count == 0)
+                return this;
+
+            var newLabels = new Labels(labels);
+
+            // This may be a Nth-level labeling.
+            var newFactoryLabels = _factoryLabels ?? Labels.Empty;
+
+            // Add the current labels.
+            newFactoryLabels = newFactoryLabels.Concat(newLabels);
+
+            // Try to merge with the registry labels, just to detect conflicts early (we throw away the result).
+            newFactoryLabels.Concat(new Labels(_registry.StaticLabels));
+
+            return new MetricFactory(_registry, newFactoryLabels);
+        }
     }
 }

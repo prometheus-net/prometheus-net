@@ -148,7 +148,6 @@ namespace Prometheus
             return CollectAndSerializeAsync(new TextSerializer(to), cancel);
         }
 
-
         // We pass this thing to GetOrAdd to avoid allocating a collector or a closure.
         // This reduces memory usage in situations where the collector is already registered.
         internal readonly struct CollectorInitializer<TCollector, TConfiguration>

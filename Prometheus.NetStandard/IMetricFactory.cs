@@ -10,5 +10,10 @@
         Gauge CreateGauge(string name, string help, GaugeConfiguration? configuration = null);
         Histogram CreateHistogram(string name, string help, HistogramConfiguration? configuration = null);
         Summary CreateSummary(string name, string help, SummaryConfiguration? configuration = null);
+
+        /// <summary>
+        /// Returns a new metric factory that will add the specified labels to any metrics created using it.
+        /// </summary>
+        IMetricFactory WithLabels(IDictionary<string, string> labels);
     }
 }
