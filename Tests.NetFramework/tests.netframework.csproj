@@ -96,23 +96,63 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CollectorRegistryTests.cs" />
-    <Compile Include="CounterExtensionTests.cs" />
-    <Compile Include="GaugeExtensionTests.cs" />
-    <Compile Include="HistogramTests.cs" />
-    <Compile Include="HttpClientMetrics\ConnectivityCheck.cs" />
-    <Compile Include="HttpClientMetrics\HttpClientInProgressHandlerTests.cs" />
-    <Compile Include="HttpClientMetrics\HttpClientRequestCountHandlerTests.cs" />
-    <Compile Include="HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs" />
-    <Compile Include="HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs" />
-    <Compile Include="MetricInitializationTests.cs" />
-    <Compile Include="MetricPusherTests.cs" />
-    <Compile Include="MetricsTests.cs" />
-    <Compile Include="QuantileStreamTests.cs" />
-    <Compile Include="RandomExtensions.cs" />
-    <Compile Include="StaticLabelTests.cs" />
-    <Compile Include="ThreadSafeDoubleTests.cs" />
-    <Compile Include="ThreadSafeLongTests.cs" />
+    <Compile Include="..\Tests.NetCore\CollectorRegistryTests.cs">
+      <Link>CollectorRegistryTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\CounterExtensionTests.cs">
+      <Link>CounterExtensionTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\CounterTests.cs">
+      <Link>CounterTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\GaugeExtensionTests.cs">
+      <Link>GaugeExtensionTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\GaugeTests.cs">
+      <Link>GaugeTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\HistogramTests.cs">
+      <Link>HistogramTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\HttpClientMetrics\ConnectivityCheck.cs">
+      <Link>HttpClientMetrics\ConnectivityCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\HttpClientMetrics\HttpClientInProgressHandlerTests.cs">
+      <Link>HttpClientMetrics\HttpClientInProgressHandlerTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\HttpClientMetrics\HttpClientRequestCountHandlerTests.cs">
+      <Link>HttpClientMetrics\HttpClientRequestCountHandlerTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs">
+      <Link>HttpClientMetrics\HttpClientRequestDurationHandlerTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs">
+      <Link>HttpClientMetrics\HttpClientResponseDurationHandlerTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\MetricInitializationTests.cs">
+      <Link>MetricInitializationTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\MetricPusherTests.cs">
+      <Link>MetricPusherTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\MetricsTests.cs">
+      <Link>MetricsTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\QuantileStreamTests.cs">
+      <Link>QuantileStreamTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\RandomExtensions.cs">
+      <Link>RandomExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\StaticLabelTests.cs">
+      <Link>StaticLabelTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\ThreadSafeDoubleTests.cs">
+      <Link>ThreadSafeDoubleTests.cs</Link>
+    </Compile>
+    <Compile Include="..\Tests.NetCore\ThreadSafeLongTests.cs">
+      <Link>ThreadSafeLongTests.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
