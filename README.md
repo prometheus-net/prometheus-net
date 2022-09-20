@@ -89,15 +89,15 @@ After installing the library, you should:
 
 Refer to the sample projects for quick start instructions:
 
-| Name                        | Description                                                                                                           |
-|-----------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| Sample.Web                  | ASP.NET Core application that produces custom metrics and uses multiple integrations to publish built-in metrics      |
-| Sample.Console              | .NET console application that exports custom metrics.                                                                 |
-| Sample.Console.NetFramework | Same as above but targeting .NET Framework.                                                                           |
-| Sample.Grpc                 | ASP.NET Core application that publishes a gRPC service                                                                |
-| Sample.Grpc.Client          | Client app for the above                                                                                              |
-| Sample.Web.DifferentPort    | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
-| Sample.Web.NetFramework     | .NET Framework web app that publishes custom metrics                                                                  |
+| Name                                                                  | Description                                                                                                           |
+|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| [Sample.Web](Sample.Web/Program.cs)                                   | ASP.NET Core application that produces custom metrics and uses multiple integrations to publish built-in metrics      |
+| [Sample.Console](Sample.Console/Program.cs)                           | .NET console application that exports custom metrics.                                                                 |
+| [Sample.Console.NetFramework](Sample.Console.NetFramework/Program.cs) | Same as above but targeting .NET Framework.                                                                           |
+| [Sample.Grpc](Sample.Grpc/Program.cs)                                 | ASP.NET Core application that publishes a gRPC service                                                                |
+| [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                   | Client app for the above                                                                                              |
+| [Sample.Web.DifferentPort](Sample.Web.DifferentPort/Program.cs)       | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
+| [Sample.Web.NetFramework](Sample.Web.NetFramework/Global.asax.cs)     | .NET Framework web app that publishes custom metrics                                                                  |
 
 The rest of this document describes how to use individual features of the library.
 
@@ -356,6 +356,8 @@ The default configuration will publish metrics on the `/metrics` URL.
 
 The ASP.NET Core functionality is delivered in the `prometheus-net.AspNetCore` NuGet package.
 
+See also, [Sample.Web](Sample.Web/Program.cs).
+
 # ASP.NET Core HTTP request metrics
 
 The library exposes some metrics from ASP.NET Core applications:
@@ -418,6 +420,8 @@ app.UseHttpMetrics(options =>
 });
 ```
 
+See also, [Sample.Web](Sample.Web/Program.cs).
+
 # ASP.NET Core gRPC request metrics
 
 The library allows you to expose some metrics from ASP.NET Core gRPC services. These metrics include labels for service and method name.
@@ -440,6 +444,8 @@ public void Configure(IApplicationBuilder app, ...)
 ```
 
 The gRPC functionality is delivered in the `prometheus-net.AspNetCore.Grpc` NuGet package.
+
+See also, [Sample.Grpc](Sample.Grpc/Program.cs).
 
 # IHttpClientFactory metrics
 
@@ -466,6 +472,8 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
+See also, [Sample.Web](Sample.Web/Program.cs).
+
 # ASP.NET Core health check status metrics
 
 You can expose the current status of [ASP.NET Core health checks](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks) as Prometheus metrics by extending your `IHealthChecksBuilder` in the `Startup.ConfigureServices()` method:
@@ -489,6 +497,8 @@ The status of each health check will be published in the `aspnetcore_healthcheck
 
 The ASP.NET Core health check integration is delivered in the `prometheus-net.AspNetCore.HealthChecks` NuGet package.
 
+See also, [Sample.Web](Sample.Web/Program.cs).
+
 # Protecting the metrics endpoint from unauthorized access
 
 You may wish to restrict access to the metrics export URL. Documentation on how to apply ASP.NET Core security mechanisms is beyond the scope of this readme file but a good starting point may be to [require an authorization policy to be satisfied for accessing the endpoint](https://docs.microsoft.com/en-us/aspnet/core/security/authorization/policies?view=aspnetcore-6.0#apply-policies-to-endpoints)
@@ -503,7 +513,7 @@ app.UseEndpoints(endpoints =>
 });
 ```
 
-Another commonly used option is to expose a separate web server endpoint (e.g. a new `KestrelMetricServer` instance) on a different port, with firewall rules limiting access to only certain IP addresses. Refer to the sample project `Sample.Web.DifferentPort`.
+Another commonly used option is to expose a separate web server endpoint (e.g. a new `KestrelMetricServer` instance) on a different port, with firewall rules limiting access to only certain IP addresses. Refer to the sample project [Sample.Web.DifferentPort](Sample.Web.DifferentPort/Program.cs).
 
 # ASP.NET Web API exporter
 
