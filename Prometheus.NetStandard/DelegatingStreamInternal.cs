@@ -4,12 +4,13 @@
 // Modified for prometheus-net to reduce dependencies.
 
 #nullable enable
+using Prometheus;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace System.Net.Http
+namespace Prometheus
 {
     // Forwards all calls to an inner stream except where overridden in a derived class.
     internal abstract class DelegatingStreamInternal : Stream

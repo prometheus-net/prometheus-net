@@ -83,42 +83,23 @@ Nuget package for ASP.NET Web API middleware on .NET Framework: [prometheus-net.
 
 After installing the library, you should:
 
-1. Initialize some metrics and start updating their values.
-1. Publish the collected metrics over HTTP.
-1. Configure the Prometheus server to poll your app for metrics on regular intervals.
+1. Collect some metrics, either by using built-in integrations or publishing your own custom metrics.
+1. Export the collected metrics over an HTTP endpoint (typically `/metrics`).
+1. Configure a Prometheus server to poll this endpoint for metrics on a regular interval.
 
-The chapters below describe the various ways you can initialize or update metrics and the ways in which they can be published.
+Refer to the sample projects for quick start instructions:
 
-The following is a minimal implementation that simply increments a counter once a second, publishing the metrics on http://localhost:1234/metrics
+| Name                        | Description                                                                                                           |
+|-----------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| Sample.Web                  | ASP.NET Core application that produces custom metrics and uses multiple integrations to publish built-in metrics      |
+| Sample.Console              | .NET console application that exports custom metrics.                                                                 |
+| Sample.Console.NetFramework | Same as above but targeting .NET Framework.                                                                           |
+| Sample.Grpc                 | ASP.NET Core application that publishes a gRPC service                                                                |
+| Sample.Grpc.Client          | Client app for the above                                                                                              |
+| Sample.Web.DifferentPort    | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
+| Sample.Web.NetFramework     | .NET Framework web app that publishes custom metrics                                                                  |
 
-```csharp
-using Prometheus;
-using System;
-using System.Threading;
-
-class Program
-{
-    private static readonly Counter TickTock =
-        Metrics.CreateCounter("sampleapp_ticks_total", "Just keeps on ticking");
-
-    static void Main()
-    {
-        // NB! On .NET Core and .NET 5+ you should use KestrelMetricServer instead, to benefit from latest runtime improvements.
-        // MetricServer is the .NET Standard implementation designed for maximum compatibility across frameworks.
-        var server = new MetricServer(hostname: "localhost", port: 1234);
-
-        server.Start();
-
-        while (true)
-        {
-            TickTock.Inc();
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-        }
-    }
-}
-```
-
-**NB!** The quick start example only exposes metrics on the `http://localhost` URL. To access the metrics endpoint from other systems you need to remove the `hostname` argument and, on Windows, configure HTTP listener permissions. For more information, see [Publishing via standalone HTTP handler](#publishing-via-standalone-http-handler) for configuration instructions or consider using [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware) which requires no extra configuration.
+The rest of this document describes how to use individual features of the library.
 
 # Counters
 
@@ -522,7 +503,7 @@ app.UseEndpoints(endpoints =>
 });
 ```
 
-Another commonly used option is to expose a separate web server endpoint (e.g. a new `KestrelMetricServer` instance) on a different port, with firewall rules limiting access to only certain IP addresses.
+Another commonly used option is to expose a separate web server endpoint (e.g. a new `KestrelMetricServer` instance) on a different port, with firewall rules limiting access to only certain IP addresses. Refer to the sample project `Sample.Web.DifferentPort`.
 
 # ASP.NET Web API exporter
 

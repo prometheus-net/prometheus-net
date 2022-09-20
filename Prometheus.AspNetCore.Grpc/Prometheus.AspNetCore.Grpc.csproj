@@ -9,6 +9,7 @@
 		<SignAssembly>true</SignAssembly>
 		<AssemblyOriginatorKeyFile>..\Resources\prometheus-net.snk</AssemblyOriginatorKeyFile>
 
+		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>

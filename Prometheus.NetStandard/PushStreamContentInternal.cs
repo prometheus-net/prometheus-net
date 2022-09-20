@@ -5,10 +5,11 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
-namespace System.Net.Http
+namespace Prometheus
 {
     /// <summary>
     /// Provides an <see cref="HttpContent"/> implementation that exposes an output <see cref="Stream"/>

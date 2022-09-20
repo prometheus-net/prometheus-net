@@ -6,6 +6,7 @@
 		<RootNamespace>tester</RootNamespace>
 		<SignAssembly>false</SignAssembly>
 
+		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>disable</Nullable>
 		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
