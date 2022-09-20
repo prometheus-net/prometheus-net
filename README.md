@@ -87,6 +87,17 @@ After installing the library, you should:
 1. Export the collected metrics over an HTTP endpoint (typically `/metrics`).
 1. Configure a Prometheus server to poll this endpoint for metrics on a regular interval.
 
+Minimal sample app (based on .NET 6 Console app template):
+
+```csharp
+using var server = new Prometheus.KestrelMetricServer(port: 1234);
+server.Start();
+
+Console.WriteLine("Open http://localhost:1234/metrics in a web browser.");
+Console.WriteLine("Press enter to exit.");
+Console.ReadLine();
+```
+
 Refer to the sample projects for quick start instructions:
 
 | Name                                                                  | Description                                                                                                           |
