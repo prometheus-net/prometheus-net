@@ -93,23 +93,20 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 
                     var cancel = _cts!.Token;
 
-                    _ = Task.Run(async delegate
-                    {
-                        try
+                    // We want to avoid throwing exceptions here, so let's try be smart.
+                    _ = _delayer.Delay(_expiresAfter, cancel)
+                        .ContinueWith(task =>
                         {
-                            await _delayer.Delay(_expiresAfter, cancel);
-
+                            // Unpublish after the timer expires.
                             lock (_lock)
                             {
                                 _unpublished = true;
                             }
 
                             _unpublish(_labels);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                        }
-                    });
+
+                            // Only execute the above block if we did not get canceled.
+                        }, TaskContinuationOptions.NotOnCanceled);
                 }
             }
         }
