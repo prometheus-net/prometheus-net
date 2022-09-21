@@ -27,7 +27,30 @@ app.UseRouting();
 // Use an auto-expiring variant for all the demo metrics here - they get automatically unpublished if not used in the last 60 seconds.
 var expiringMetricFactory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
 
-// SCENARIO 1: metrics can auto-extend lifetime whenever their values are updated.
+// OPTION 1: metric lifetime can be managed by leases, to ensure they do not go away during potentially
+// long-running operations but go away quickly when the operation is not running anymore (e.g. "in progress" type metrics).
+_ = Task.Run(async delegate
+{
+    var inProgress = expiringMetricFactory.CreateGauge("long_running_operations_in_progress", "Number of long running operations in progress.",
+        new GaugeConfiguration
+        {
+            LabelNames = new[] { "operation_type" }
+        });
+
+    // The metric will not be unpublished as long as this lease is kept.
+    using var lease = inProgress.AcquireLease(out var inProgressInstance, "VeryLongOperation");
+
+    // Long-running 3 minute operation, which we track via the "in progress" gauge.
+    using (inProgressInstance.TrackInProgress())
+        await Task.Delay(TimeSpan.FromMinutes(3));
+
+    // Just to let you know when to look at it.
+    Console.WriteLine("Long-running operation has finished.");
+
+    // Done! Now the metric lease will be released and soon, the metric will expire and be removed.
+});
+
+// OPTION 2: metrics can auto-extend lifetime whenever their values are updated.
 app.UseHttpMetrics(options =>
 {
     // Here we do something that is typically a no-no in terms of best practices (and GDPR?): we record every unique URL!
@@ -75,29 +98,6 @@ app.UseHttpMetrics(options =>
                     .Concat(new[] { "url" })
                     .ToArray()
             }).WithExtendLifetimeOnUse();
-});
-
-// SCENARIO 2: metric lifetime can be managed by leases, to ensure they do not go away during potentially
-// long-running operations but go away quickly when the operation is not running anymore (e.g. "in progress" type metrics).
-_ = Task.Run(async delegate
-{
-    var inProgress = expiringMetricFactory.CreateGauge("long_running_operations_in_progress", "Number of long running operations in progress.",
-        new GaugeConfiguration
-        {
-            LabelNames = new[] { "operation_type" }
-        });
-
-    // The metric will not be unpublished as long as this lease is kept.
-    using var lease = inProgress.AcquireLease(out var inProgressInstance, "VeryLongOperation");
-
-    // Long-running 3 minute operation, which we track via the "in progress" gauge.
-    using (inProgressInstance.TrackInProgress())
-        await Task.Delay(TimeSpan.FromMinutes(3));
-
-    // Just to let you know when to look at it.
-    Console.WriteLine("Long-running operation has finished.");
-
-    // Done! Now the metric lease will be released and soon, the metric will expire and be removed.
 });
 
 app.UseAuthorization();
