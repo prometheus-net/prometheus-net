@@ -50,10 +50,21 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
-        public void ManagedLifetimeMetric_InDifferentInstances_IsSameMetric()
+        public void ManagedLifetimeMetric_MultipleHandlesFromSameFactory_AreSameHandle()
         {
             var handle1 = _expiringMetrics.CreateCounter(MetricName, "");
             var handle2 = _expiringMetrics.CreateCounter(MetricName, "");
+
+            Assert.AreSame(handle1, handle2);
+        }
+
+        [TestMethod]
+        public void ManagedLifetimeMetric_ViaDifferentFactories_IsSameMetric()
+        {
+            var handle1 = _expiringMetrics.CreateCounter(MetricName, "");
+
+            var expiringMetrics2 = _metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromHours(24));
+            var handle2 = expiringMetrics2.CreateCounter(MetricName, "");
 
             using (var lease = handle1.AcquireLease(out var instance))
                 instance.Inc();

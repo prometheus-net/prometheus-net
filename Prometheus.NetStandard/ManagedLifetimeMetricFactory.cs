@@ -1,4 +1,6 @@
-﻿namespace Prometheus
+﻿using System.Collections.Concurrent;
+
+namespace Prometheus
 {
     internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFactory
     {
@@ -18,26 +20,126 @@
 
         public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, CounterConfiguration? configuration = null)
         {
-            var metric = _inner.CreateCounter(name, help, configuration);
-            return new ManagedLifetimeCounter(metric, _expiresAfter);
+            var identity = new CollectorIdentity(name, configuration?.LabelNames ?? Array.Empty<string>());
+            var initializer = new CounterInitializer(_inner, _expiresAfter, help, configuration);
+            return _counters.GetOrAdd(identity, initializer.CreateInstance);
         }
 
         public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, GaugeConfiguration? configuration = null)
         {
-            var metric = _inner.CreateGauge(name, help, configuration);
-            return new ManagedLifetimeGauge(metric, _expiresAfter);
+            var identity = new CollectorIdentity(name, configuration?.LabelNames ?? Array.Empty<string>());
+            var initializer = new GaugeInitializer(_inner, _expiresAfter, help, configuration);
+            return _gauges.GetOrAdd(identity, initializer.CreateInstance);
         }
 
         public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, HistogramConfiguration? configuration = null)
         {
-            var metric = _inner.CreateHistogram(name, help, configuration);
-            return new ManagedLifetimeHistogram(metric, _expiresAfter);
+            var identity = new CollectorIdentity(name, configuration?.LabelNames ?? Array.Empty<string>());
+            var initializer = new HistogramInitializer(_inner, _expiresAfter, help, configuration);
+            return _histograms.GetOrAdd(identity, initializer.CreateInstance);
         }
 
         public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, SummaryConfiguration? configuration = null)
         {
-            var metric = _inner.CreateSummary(name, help, configuration);
-            return new ManaggedLifetimeSummary(metric, _expiresAfter);
+            var identity = new CollectorIdentity(name, configuration?.LabelNames ?? Array.Empty<string>());
+            var initializer = new SummaryInitializer(_inner, _expiresAfter, help, configuration);
+            return _summaries.GetOrAdd(identity, initializer.CreateInstance);
+        }
+
+        // We need to reuse existing instances of lifetime-managed metrics because the user might not want to cache it.
+        // This somewhat duplicates the metric identity tracking logic in CollectorRegistry but this is intentional, as we really do need to do this work on two layers.
+        // We never remove collectors from here as long as the factory is alive. The expectation is that there is not an unbounded set of label names, so this set is non-gigantic.
+        private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeCounter> _counters = new();
+        private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeGauge> _gauges = new();
+        private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeHistogram> _histograms = new();
+        private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeSummary> _summaries = new();
+
+        private struct CounterInitializer
+        {
+            public readonly IMetricFactory Inner;
+            public readonly TimeSpan ExpiresAfter;
+            public readonly string Help;
+            public readonly CounterConfiguration? Configuration;
+
+            public CounterInitializer(IMetricFactory inner, TimeSpan expiresAfter, string help, CounterConfiguration? configuration)
+            {
+                Inner = inner;
+                ExpiresAfter = expiresAfter;
+                Help = help;
+                Configuration = configuration;
+            }
+
+            public ManagedLifetimeCounter CreateInstance(CollectorIdentity identity)
+            {
+                var metric = Inner.CreateCounter(identity.Name, Help, Configuration);
+                return new ManagedLifetimeCounter(metric, ExpiresAfter);
+            }
+        }
+
+        private struct GaugeInitializer
+        {
+            public readonly IMetricFactory Inner;
+            public readonly TimeSpan ExpiresAfter;
+            public readonly string Help;
+            public readonly GaugeConfiguration? Configuration;
+
+            public GaugeInitializer(IMetricFactory inner, TimeSpan expiresAfter, string help, GaugeConfiguration? configuration)
+            {
+                Inner = inner;
+                ExpiresAfter = expiresAfter;
+                Help = help;
+                Configuration = configuration;
+            }
+
+            public ManagedLifetimeGauge CreateInstance(CollectorIdentity identity)
+            {
+                var metric = Inner.CreateGauge(identity.Name, Help, Configuration);
+                return new ManagedLifetimeGauge(metric, ExpiresAfter);
+            }
+        }
+
+        private struct HistogramInitializer
+        {
+            public readonly IMetricFactory Inner;
+            public readonly TimeSpan ExpiresAfter;
+            public readonly string Help;
+            public readonly HistogramConfiguration? Configuration;
+
+            public HistogramInitializer(IMetricFactory inner, TimeSpan expiresAfter, string help, HistogramConfiguration? configuration)
+            {
+                Inner = inner;
+                ExpiresAfter = expiresAfter;
+                Help = help;
+                Configuration = configuration;
+            }
+
+            public ManagedLifetimeHistogram CreateInstance(CollectorIdentity identity)
+            {
+                var metric = Inner.CreateHistogram(identity.Name, Help, Configuration);
+                return new ManagedLifetimeHistogram(metric, ExpiresAfter);
+            }
+        }
+
+        private struct SummaryInitializer
+        {
+            public readonly IMetricFactory Inner;
+            public readonly TimeSpan ExpiresAfter;
+            public readonly string Help;
+            public readonly SummaryConfiguration? Configuration;
+
+            public SummaryInitializer(IMetricFactory inner, TimeSpan expiresAfter, string help, SummaryConfiguration? configuration)
+            {
+                Inner = inner;
+                ExpiresAfter = expiresAfter;
+                Help = help;
+                Configuration = configuration;
+            }
+
+            public ManagedLifetimeSummary CreateInstance(CollectorIdentity identity)
+            {
+                var metric = Inner.CreateSummary(identity.Name, Help, Configuration);
+                return new ManagedLifetimeSummary(metric, ExpiresAfter);
+            }
         }
     }
 }

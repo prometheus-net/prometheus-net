@@ -4,6 +4,10 @@
     /// A metric factory for creating metrics that use a managed lifetime, whereby the metric may
     /// be unpublished based on logic other than disposal or similar explicit unpublishing.
     /// </summary>
+    /// <remarks>
+    /// The lifetime management logic is associated with a metric handle. Calling CreateXyz() with equivalent identity parameters will return
+    /// the same handle. However, using multiple factories will create independent handles (which will unpublish the same metric independently).
+    /// </remarks>
     public interface IManagedLifetimeMetricFactory
     {
         /// <summary>

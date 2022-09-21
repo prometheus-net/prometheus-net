@@ -419,7 +419,7 @@ public void ProcessDocument(string documentProvider)
 }
 ```
 
-The expiration logic is governed by the handles - if you obtain multiple expiring metric handles, they will each trigger expiration independently.
+The expiration logic is scoped to the factory. Multiple handles for the same metric from the same factory will share their expiration logic. However, handles for the same metric from different factories will have independent expiration logic.
 
 See also, [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs).
 
