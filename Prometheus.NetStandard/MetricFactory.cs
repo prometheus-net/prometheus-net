@@ -133,5 +133,8 @@
 
             return new MetricFactory(_registry, newFactoryLabels);
         }
+
+        public IManagedLifetimeMetricFactory WithManagedLifetime(TimeSpan expiresAfter) =>
+            new ManagedLifetimeMetricFactory(this, expiresAfter);
     }
 }

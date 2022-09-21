@@ -84,7 +84,8 @@ namespace Prometheus
         private readonly ConcurrentDictionary<Labels, TChild> _labelledMetrics = new ConcurrentDictionary<Labels, TChild>();
 
         // Lazy-initialized since not every collector will use a child with no labels.
-        private readonly Lazy<TChild> _unlabelledLazy;
+        // Lazy instance will be replaced if the unlabelled timeseries is unpublished.
+        private Lazy<TChild> _unlabelledLazy;
 
         /// <summary>
         /// Gets the child instance that has no labels.
@@ -110,12 +111,24 @@ namespace Prometheus
         public void RemoveLabelled(params string[] labelValues)
         {
             var key = new Labels(LabelNames, labelValues);
-            _labelledMetrics.TryRemove(key, out _);
+            RemoveLabelled(key);
         }
 
         internal override void RemoveLabelled(Labels labels)
         {
             _labelledMetrics.TryRemove(labels, out _);
+
+            if (labels.Count == 0)
+            {
+                // If we remove the unlabeled instance (technically legitimate, to unpublish it) then
+                // we need to also ensure that the special-casing used for it gets properly wired up the next time.
+                _unlabelledLazy = GetUnlabelledLazyInitializer();
+            }
+        }
+
+        private Lazy<TChild> GetUnlabelledLazyInitializer()
+        {
+            return new Lazy<TChild>(() => GetOrAddLabelled(Prometheus.Labels.Empty));
         }
 
         /// <summary>
@@ -161,7 +174,8 @@ namespace Prometheus
         {
             _staticLabels = staticLabels;
             _suppressInitialValue = suppressInitialValue;
-            _unlabelledLazy = new Lazy<TChild>(() => GetOrAddLabelled(Prometheus.Labels.Empty));
+
+            _unlabelledLazy = GetUnlabelledLazyInitializer();
 
             // Check for label name collisions.
             var allLabelNames = (labelNames ?? new string[0]).Concat(staticLabels.Names).ToList();
@@ -200,7 +214,7 @@ namespace Prometheus
         {
             // We want metrics to exist even with 0 values if they are supposed to be used without labels.
             // Labelled metrics are created when label values are assigned. However, as unlabelled metrics are lazy-created
-            // (they might are optional if labels are used) we might lose them for cases where they really are desired.
+            // (they are optional if labels are used) we might lose them for cases where they really are desired.
 
             // If there are no label names then clearly this metric is supposed to be used unlabelled, so create it.
             // Otherwise, we allow unlabelled metrics to be used if the user explicitly does it but omit them by default.

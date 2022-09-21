@@ -37,19 +37,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tester.AspNetCore.HealthChe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.AspNetCore.Grpc", "Prometheus.AspNetCore.Grpc\Prometheus.AspNetCore.Grpc.csproj", "{86943076-6025-49F3-AC6D-6D63142364F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console", "Sample.Console\Sample.Console.csproj", "{28CA7A01-3D00-4988-8A9A-46F26ED476A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Console", "Sample.Console\Sample.Console.csproj", "{28CA7A01-3D00-4988-8A9A-46F26ED476A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web", "Sample.Web\Sample.Web.csproj", "{60562020-7CC1-494A-837E-30550EE4E811}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web", "Sample.Web\Sample.Web.csproj", "{60562020-7CC1-494A-837E-30550EE4E811}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Grpc", "Sample.Grpc\Sample.Grpc.csproj", "{0A53812C-89AD-40E7-9A8C-52C82DD433AC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Grpc", "Sample.Grpc\Sample.Grpc.csproj", "{0A53812C-89AD-40E7-9A8C-52C82DD433AC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web.NetFramework", "Sample.Web.NetFramework\Sample.Web.NetFramework.csproj", "{98245C82-F328-48F9-9EB5-504DD80C3782}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.NetFramework", "Sample.Console.NetFramework\Sample.Console.NetFramework.csproj", "{E4D772AF-BFA0-4EA9-AE3C-C7326A42F1E5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web.DifferentPort", "Sample.Web.DifferentPort\Sample.Web.DifferentPort.csproj", "{1E0B26AD-3CA0-495A-9F47-C8497D641F7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web.DifferentPort", "Sample.Web.DifferentPort\Sample.Web.DifferentPort.csproj", "{1E0B26AD-3CA0-495A-9F47-C8497D641F7D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Grpc.Client", "Sample.Grpc.Client\Sample.Grpc.Client.csproj", "{74B81DD3-FC37-4760-ABC9-667265B28237}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Grpc.Client", "Sample.Grpc.Client\Sample.Grpc.Client.csproj", "{74B81DD3-FC37-4760-ABC9-667265B28237}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web.MetricExpiration", "Sample.Web.MetricExpiration\Sample.Web.MetricExpiration.csproj", "{AE70A38C-C136-4507-98CA-4851F2958A56}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -139,6 +141,10 @@ Global
 		{74B81DD3-FC37-4760-ABC9-667265B28237}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74B81DD3-FC37-4760-ABC9-667265B28237}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74B81DD3-FC37-4760-ABC9-667265B28237}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE70A38C-C136-4507-98CA-4851F2958A56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE70A38C-C136-4507-98CA-4851F2958A56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE70A38C-C136-4507-98CA-4851F2958A56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE70A38C-C136-4507-98CA-4851F2958A56}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

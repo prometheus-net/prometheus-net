@@ -26,6 +26,7 @@ The library targets the following runtimes (and newer):
 * [Labels](#labels)
 * [Static labels](#static-labels)
 * [When are metrics published?](#when-are-metrics-published)
+* [Unpublishing metrics](#unpublishing-metrics)
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
 * [ASP.NET Core gRPC request metrics](#aspnet-core-grpc-request-metrics)
@@ -108,6 +109,7 @@ Refer to the sample projects for quick start instructions:
 | [Sample.Grpc](Sample.Grpc/Program.cs)                                 | ASP.NET Core application that publishes a gRPC service                                                                |
 | [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                   | Client app for the above                                                                                              |
 | [Sample.Web.DifferentPort](Sample.Web.DifferentPort/Program.cs)       | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
+| [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs) | Demonstrates how to use [automatic metric unpublishing](#unpublishing-metrics)                                        |
 | [Sample.Web.NetFramework](Sample.Web.NetFramework/Global.asax.cs)     | .NET Framework web app that publishes custom metrics                                                                  |
 
 The rest of this document describes how to use individual features of the library.
@@ -348,6 +350,71 @@ UsersLoggedIn.Set(LoadSessions().Count);
 ```
 
 You can also use `.Publish()` on a metric to mark it as ready to be published without modifying the initial value (e.g. to publish a zero).
+
+# Unpublishing metrics
+
+You can use `.Dispose()` or `.RemoveLabelled()` methods on the metric classes to manually unpublish metrics at any time.
+
+In some situations, it can be hard to determine when a metric with a specific set of labels becomes irrelevant and needs to be unpublished. The library provides some assistance here by enabling automatic expiration of metrics when they are no longer used.
+
+To enable automatic expiration, create the metrics via the metric factory returned by `Metrics.WithManagedLifetime()`. All such metrics will have a fixed expiration time, with the expiration restarting based on certain conditions that indicate the metric is in use.
+
+Option 1: metric lifetime can be controlled by leases - the metric expiration timer starts when the last lease is released (and will be reset when a new lease is taken again).
+
+```csharp
+var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
+var inProgress = expiringMetricFactory
+  .CreateGauge("documents_in_progress", "Number of documents currently being processed.",
+    new GaugeConfiguration
+    {
+      // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
+      // so here is a sample label for each "document provider", whoever that may be.
+      LabelNames = new[] { "document_provider" }
+    });
+
+...
+
+public void ProcessDocument(string documentProvider)
+{
+  // Automatic unpublishing will not occur while this lease is held.
+  // This will also reset any existing expiration timer for this document provider.
+  using var lease = inProgress.AcquireLease(out var metric, documentProvider);
+
+  using (metric.TrackInProgress())
+      DoDocumentProcessingWork();
+
+  // Lease is released here.
+  // If this was the last lease for this document provider, the expiration timer will now start.
+}
+```
+
+Scenario 2: sometimes managing the leases is not required because you simply want the metric lifetime to be extended whenever the value is updated.
+
+```csharp
+var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
+var processingStarted = expiringMetricFactory
+  .CreateGauge("documents_started_processing_total", "Number of documents for which processing has started.",
+    new GaugeConfiguration
+    {
+      // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
+      // so here is a sample label for each "document provider", whoever that may be.
+      LabelNames = new[] { "document_provider" }
+    })
+  // This returns an instance that will reset the expiration timer whenever the metric value is updated.
+  .WithExtendLifetimeOnUse();
+
+...
+
+public void ProcessDocument(string documentProvider)
+{
+  // This will reset the expiration timer for this document provider.
+  processingStarted.WithLabels(documentProvider).Inc();
+
+  DoDocumentProcessingWork();
+}
+```
+
+See also, [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs).
 
 # ASP.NET Core exporter middleware
 

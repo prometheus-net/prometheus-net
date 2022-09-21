@@ -35,6 +35,16 @@
             new MetricFactory(DefaultRegistry, new Labels(labels));
 
         /// <summary>
+        /// Returns a factory that creates metrics with a managed lifetime.
+        /// </summary>
+        /// <param name="expiresAfter">
+        /// Metrics created from this factory will expire after this time span elapses, enabling automatic unpublishing of unused metrics.
+        /// The expiration timer is reset to zero for the duration of any active lifetime-extension lease that is taken on a specific metric.
+        /// </param>
+        public static IManagedLifetimeMetricFactory WithManagedLifetime(TimeSpan expiresAfter) =>
+            _defaultFactory.WithManagedLifetime(expiresAfter);
+
+        /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
         public static Counter CreateCounter(string name, string help, CounterConfiguration? configuration = null) =>

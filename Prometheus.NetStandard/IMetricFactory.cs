@@ -15,5 +15,14 @@
         /// Returns a new metric factory that will add the specified labels to any metrics created using it.
         /// </summary>
         IMetricFactory WithLabels(IDictionary<string, string> labels);
+
+        /// <summary>
+        /// Returns a factory that creates metrics with a managed lifetime.
+        /// </summary>
+        /// <param name="expiresAfter">
+        /// Metrics created from this factory will expire after this time span elapses, enabling automatic unpublishing of unused metrics.
+        /// The expiration timer is reset to zero for the duration of any active lifetime-extension lease that is taken on a specific metric.
+        /// </param>
+        IManagedLifetimeMetricFactory WithManagedLifetime(TimeSpan expiresAfter);
     }
 }
