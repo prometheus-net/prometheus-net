@@ -55,6 +55,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web.MetricExpiration
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.DotNetMeters", "Sample.Console.DotNetMeters\Sample.Console.DotNetMeters.csproj", "{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.EventCounters", "Sample.Console.EventCounters\Sample.Console.EventCounters.csproj", "{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -151,6 +153,10 @@ Global
 		{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
