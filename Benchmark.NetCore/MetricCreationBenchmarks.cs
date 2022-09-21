@@ -13,12 +13,18 @@ namespace Benchmark.NetCore
         /// <summary>
         /// Just to ensure that a benchmark iteration has enough to do for stable and meaningful results.
         /// </summary>
-        private const int _metricCount = 10000;
+        private const int _metricCount = 1000;
 
         /// <summary>
         /// Some benchmarks try to register metrics that already exist.
         /// </summary>
         private const int _duplicateCount = 5;
+
+        /// <summary>
+        /// How many times we repeat acquiring and incrementing the same instance.
+        /// </summary>
+        [Params(1, 5)]
+        public int RepeatCount { get; set; }
 
         private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
 
@@ -42,46 +48,67 @@ namespace Benchmark.NetCore
             _factory = Metrics.WithCustomRegistry(_registry);
         }
 
-        private static readonly string[] _labelNames = new[] { "foo", "bar", "baz" };
+        // We use the same strings both for the names and the values.
+        private static readonly string[] _labels = new[] { "foo", "bar", "baz" };
 
         [Benchmark]
         public void Counter_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-                _factory.CreateCounter(_metricNames[i], _help, new CounterConfiguration
+            {
+                var metric = _factory.CreateCounter(_metricNames[i], _help, new CounterConfiguration
                 {
-                    LabelNames = _labelNames
-                }).Inc();
+                    LabelNames = _labels
+                });
+
+                for (var repeat = 0; repeat < RepeatCount; repeat++)
+                    metric.WithLabels(_labels).Inc();
+            }
         }
 
         [Benchmark]
         public void Gauge_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-                _factory.CreateGauge(_metricNames[i], _help, new GaugeConfiguration
+            {
+                var metric = _factory.CreateGauge(_metricNames[i], _help, new GaugeConfiguration
                 {
-                    LabelNames = _labelNames
-                }).Inc();
+                    LabelNames = _labels
+                });
+
+                for (var repeat = 0; repeat < RepeatCount; repeat++)
+                    metric.WithLabels(_labels).Inc();
+            }
         }
 
         [Benchmark]
         public void Summary_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-                _factory.CreateSummary(_metricNames[i], _help, new SummaryConfiguration
+            {
+                var metric = _factory.CreateSummary(_metricNames[i], _help, new SummaryConfiguration
                 {
-                    LabelNames = _labelNames
-                }).Observe(123);
+                    LabelNames = _labels
+                });
+
+                for (var repeat = 0; repeat < RepeatCount; repeat++)
+                    metric.WithLabels(_labels).Observe(123);
+            }
         }
 
         [Benchmark]
         public void Histogram_Many()
         {
             for (var i = 0; i < _metricCount; i++)
-                _factory.CreateHistogram(_metricNames[i], _help, new HistogramConfiguration
+            {
+                var metric = _factory.CreateHistogram(_metricNames[i], _help, new HistogramConfiguration
                 {
-                    LabelNames = _labelNames
-                }).Observe(123);
+                    LabelNames = _labels
+                });
+
+                for (var repeat = 0; repeat < RepeatCount; repeat++)
+                    metric.WithLabels(_labels).Observe(123);
+            }
         }
 
         [Benchmark]
@@ -89,10 +116,15 @@ namespace Benchmark.NetCore
         {
             for (var dupe = 0; dupe < _duplicateCount; dupe++)
                 for (var i = 0; i < _metricCount; i++)
-                    _factory.CreateCounter(_metricNames[i], _help, new CounterConfiguration
+                {
+                    var metric = _factory.CreateCounter(_metricNames[i], _help, new CounterConfiguration
                     {
-                        LabelNames = _labelNames
-                    }).Inc();
+                        LabelNames = _labels
+                    });
+
+                    for (var repeat = 0; repeat < RepeatCount; repeat++)
+                        metric.WithLabels(_labels).Inc();
+                }
         }
 
         [Benchmark]
@@ -100,10 +132,15 @@ namespace Benchmark.NetCore
         {
             for (var dupe = 0; dupe < _duplicateCount; dupe++)
                 for (var i = 0; i < _metricCount; i++)
-                    _factory.CreateGauge(_metricNames[i], _help, new GaugeConfiguration
+                {
+                    var metric = _factory.CreateGauge(_metricNames[i], _help, new GaugeConfiguration
                     {
-                        LabelNames = _labelNames
-                    }).Inc();
+                        LabelNames = _labels
+                    });
+
+                    for (var repeat = 0; repeat < RepeatCount; repeat++)
+                        metric.WithLabels(_labels).Inc();
+                }
         }
 
         [Benchmark]
@@ -111,10 +148,15 @@ namespace Benchmark.NetCore
         {
             for (var dupe = 0; dupe < _duplicateCount; dupe++)
                 for (var i = 0; i < _metricCount; i++)
-                    _factory.CreateSummary(_metricNames[i], _help, new SummaryConfiguration
+                {
+                    var metric = _factory.CreateSummary(_metricNames[i], _help, new SummaryConfiguration
                     {
-                        LabelNames = _labelNames
-                    }).Observe(123);
+                        LabelNames = _labels
+                    });
+
+                    for (var repeat = 0; repeat < RepeatCount; repeat++)
+                        metric.WithLabels(_labels).Observe(123);
+                }
         }
 
         [Benchmark]
@@ -122,86 +164,15 @@ namespace Benchmark.NetCore
         {
             for (var dupe = 0; dupe < _duplicateCount; dupe++)
                 for (var i = 0; i < _metricCount; i++)
-                    _factory.CreateHistogram(_metricNames[i], _help, new HistogramConfiguration
+                {
+                    var metric = _factory.CreateHistogram(_metricNames[i], _help, new HistogramConfiguration
                     {
-                        LabelNames = _labelNames
-                    }).Observe(123);
-        }
+                        LabelNames = _labels
+                    });
 
-        [Benchmark]
-        public void Counter()
-        {
-            _factory.CreateCounter(_metricNames[0], _help, new CounterConfiguration
-            {
-                LabelNames = _labelNames
-            }).Inc();
-        }
-
-        [Benchmark]
-        public void Gauge()
-        {
-            _factory.CreateGauge(_metricNames[0], _help, new GaugeConfiguration
-            {
-                LabelNames = _labelNames
-            }).Inc();
-        }
-
-        [Benchmark]
-        public void Summary()
-        {
-            _factory.CreateSummary(_metricNames[0], _help, new SummaryConfiguration
-            {
-                LabelNames = _labelNames
-            }).Observe(123);
-        }
-
-        [Benchmark]
-        public void Histogram()
-        {
-            _factory.CreateHistogram(_metricNames[0], _help, new HistogramConfiguration
-            {
-                LabelNames = _labelNames
-            }).Observe(123);
-        }
-
-        [Benchmark]
-        public void Counter_Duplicates()
-        {
-            for (var dupe = 0; dupe < _duplicateCount; dupe++)
-                _factory.CreateCounter(_metricNames[0], _help, new CounterConfiguration
-                {
-                    LabelNames = _labelNames
-                }).Inc();
-        }
-
-        [Benchmark]
-        public void Gauge_Duplicates()
-        {
-            for (var dupe = 0; dupe < _duplicateCount; dupe++)
-                _factory.CreateGauge(_metricNames[0], _help, new GaugeConfiguration
-                {
-                    LabelNames = _labelNames
-                }).Inc();
-        }
-
-        [Benchmark]
-        public void Summary_Duplicates()
-        {
-            for (var dupe = 0; dupe < _duplicateCount; dupe++)
-                _factory.CreateSummary(_metricNames[0], _help, new SummaryConfiguration
-                {
-                    LabelNames = _labelNames
-                }).Observe(123);
-        }
-
-        [Benchmark]
-        public void Histogram_Duplicates()
-        {
-            for (var dupe = 0; dupe < _duplicateCount; dupe++)
-                _factory.CreateHistogram(_metricNames[0], _help, new HistogramConfiguration
-                {
-                    LabelNames = _labelNames
-                }).Observe(123);
+                    for (var repeat = 0; repeat < RepeatCount; repeat++)
+                        metric.WithLabels(_labels).Observe(123);
+                }
         }
     }
 }
