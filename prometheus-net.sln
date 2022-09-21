@@ -51,7 +51,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web.DifferentPort", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Grpc.Client", "Sample.Grpc.Client\Sample.Grpc.Client.csproj", "{74B81DD3-FC37-4760-ABC9-667265B28237}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web.MetricExpiration", "Sample.Web.MetricExpiration\Sample.Web.MetricExpiration.csproj", "{AE70A38C-C136-4507-98CA-4851F2958A56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web.MetricExpiration", "Sample.Web.MetricExpiration\Sample.Web.MetricExpiration.csproj", "{AE70A38C-C136-4507-98CA-4851F2958A56}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.DotNetMeters", "Sample.Console.DotNetMeters\Sample.Console.DotNetMeters.csproj", "{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -145,6 +147,10 @@ Global
 		{AE70A38C-C136-4507-98CA-4851F2958A56}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AE70A38C-C136-4507-98CA-4851F2958A56}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AE70A38C-C136-4507-98CA-4851F2958A56}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

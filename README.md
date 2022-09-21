@@ -43,7 +43,7 @@ The library targets the following runtimes (and newer):
 * [Suppressing default metrics](#suppressing-default-metrics)
 * [DiagnosticSource integration](#diagnosticsource-integration)
 * [EventCounter integration](#eventcounter-integration)
-* [.NET 6 Meters integration](#net-6-meters-integration)
+* [.NET Meters integration](#net-meters-integration)
 * [Community projects](#community-projects)
 
 # Best practices and usage
@@ -105,6 +105,7 @@ Refer to the sample projects for quick start instructions:
 |-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | [Sample.Web](Sample.Web/Program.cs)                                   | ASP.NET Core application that produces custom metrics and uses multiple integrations to publish built-in metrics      |
 | [Sample.Console](Sample.Console/Program.cs)                           | .NET console application that exports custom metrics.                                                                 |
+| [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs) | Demonstrates how to [publish metrics exposed via the .NET Meters API](#net-meters-integration)
 | [Sample.Console.NetFramework](Sample.Console.NetFramework/Program.cs) | Same as above but targeting .NET Framework.                                                                           |
 | [Sample.Grpc](Sample.Grpc/Program.cs)                                 | ASP.NET Core application that publishes a gRPC service                                                                |
 | [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                   | Client app for the above                                                                                              |
@@ -767,26 +768,16 @@ dotnet_counter{source="System.Runtime",name="gen-0-gc-count",display_name="Gen 0
 
 Aggregrating EventCounters are exposed as Prometheus gauges representing the mean rate per second. Incrementing EventCounters are exposed as Prometheus counters representing the total (sum of all increments).
 
-# .NET 6 Meters integration
+# .NET Meters integration
 
-[.NET 6 provides the Meters mechanism for reporting diagnostic metrics](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/metrics). To expose these meters as Prometheus metrics, you can use the `MeterAdapter` class:
+[.NET provides the Meters mechanism for reporting diagnostic metrics](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/metrics). To expose these meters as Prometheus metrics, you can use the `MeterAdapter` class:
 
 ```csharp
 // An optional "options" parameter is available to customize adapter behavior.
-var registration = MeterAdapter.StartListening();
-
-...
-
-// Stops listening for Meter updates.
-registration.Dispose();
+MeterAdapter.StartListening();
 ```
 
-.NET metering instruments are exported as Prometheus metrics carrying metadata that connects them back to their originating Meters:
-
-```
-dotnet_meters_gauge{meter="sample.dotnet.meter",instrument="sample_gauge",unit="Buckets",description="How much cheese is loaded"} 92
-dotnet_meters_counter{meter="sample.dotnet.meter",instrument="sample_counter",unit="",description=""} 4
-```
+See also, [Samples.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs).
 
 # Community projects
 

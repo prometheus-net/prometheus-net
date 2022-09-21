@@ -1,18 +1,14 @@
-﻿#if NET6_0_OR_GREATER
-
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Prometheus;
 
 /// <summary>
-/// Monitors all .NET Meters and exposes them as Prometheus counters and gauges.
+/// Publishes .NET Meters as Prometheus metrics.
 /// </summary>
-/// <remarks>
-/// </remarks>
 public sealed class MeterAdapter : IDisposable
 {
     public static IDisposable StartListening() => new MeterAdapter(MeterAdapterOptions.Default);
@@ -22,188 +18,280 @@ public sealed class MeterAdapter : IDisposable
     private MeterAdapter(MeterAdapterOptions options)
     {
         _options = options;
-        _metricFactory = Metrics.WithCustomRegistry(_options.Registry);
 
-        _counter = _metricFactory.CreateCounter("dotnet_meters_counter", "Incrementing counters from the .NET Meters API.", new CounterConfiguration
+        _registry = options.Registry;
+        _factory = Metrics.WithCustomRegistry(_options.Registry)
+            .WithManagedLifetime(expiresAfter: options.MetricsExpireAfter);
+
+        _listener.InstrumentPublished = OnInstrumentPublished;
+        _listener.MeasurementsCompleted += OnMeasurementsCompleted;
+        _listener.SetMeasurementEventCallback<byte>(OnMeasurementRecorded);
+        _listener.SetMeasurementEventCallback<short>(OnMeasurementRecorded);
+        _listener.SetMeasurementEventCallback<int>(OnMeasurementRecorded);
+        _listener.SetMeasurementEventCallback<long>(OnMeasurementRecorded);
+        _listener.SetMeasurementEventCallback<float>(OnMeasurementRecorded);
+        _listener.SetMeasurementEventCallback<double>(OnMeasurementRecorded);
+        _listener.SetMeasurementEventCallback<decimal>(OnMeasurementRecorded);
+
+        _listener.Start();
+
+        _registry.AddBeforeCollectCallback(delegate
         {
-            LabelNames = new[] { "meter", "instrument", "unit", "description" }
+            // ICollectorRegistry does not support unregistering the callback, so we just no-op when disposed.
+            // The expected pattern is that any disposal of the pipeline also throws away the ICollectorRegistry.
+            if (_disposed)
+                return;
+
+            // Seems OK to call even when _listener has been disposed.
+            _listener.RecordObservableInstruments();
         });
-
-        _gauge = _metricFactory.CreateGauge("dotnet_meters_gauge", "Raw values from the .NET Meters API.", new GaugeConfiguration
-        {
-            LabelNames = new[] { "meter", "instrument", "unit", "description" }
-        });
-
-        _countersListener.InstrumentPublished += OnCounterInstrumentPublished;
-        _countersListener.SetMeasurementEventCallback<byte>(OnCounterMeasurement);
-        _countersListener.SetMeasurementEventCallback<short>(OnCounterMeasurement);
-        _countersListener.SetMeasurementEventCallback<int>(OnCounterMeasurement);
-        _countersListener.SetMeasurementEventCallback<long>(OnCounterMeasurement);
-        _countersListener.SetMeasurementEventCallback<float>(OnCounterMeasurement);
-        _countersListener.SetMeasurementEventCallback<double>(OnCounterMeasurement);
-        _countersListener.SetMeasurementEventCallback<decimal>(OnCounterMeasurement);
-
-        _countersListener.Start();
-
-        _gaugesListener.InstrumentPublished += OnGaugeInstrumentPublished;
-        _gaugesListener.SetMeasurementEventCallback<byte>(OnGaugeMeasurement);
-        _gaugesListener.SetMeasurementEventCallback<short>(OnGaugeMeasurement);
-        _gaugesListener.SetMeasurementEventCallback<int>(OnGaugeMeasurement);
-        _gaugesListener.SetMeasurementEventCallback<long>(OnGaugeMeasurement);
-        _gaugesListener.SetMeasurementEventCallback<float>(OnGaugeMeasurement);
-        _gaugesListener.SetMeasurementEventCallback<double>(OnGaugeMeasurement);
-        _gaugesListener.SetMeasurementEventCallback<decimal>(OnGaugeMeasurement);
-
-        _gaugesListener.Start();
-
-        Task.Run(TimerLoopAsync);
-    }
-
-    public void Dispose()
-    {
-        _timer.Dispose();
-        _countersListener.Dispose();
-        _gaugesListener.Dispose();
     }
 
     private readonly MeterAdapterOptions _options;
-    private readonly IMetricFactory _metricFactory;
 
-    private readonly Counter _counter;
-    private readonly Gauge _gauge;
+    private readonly CollectorRegistry _registry;
+    private readonly IManagedLifetimeMetricFactory _factory;
 
-    // We use this to poll observable metrics once per second.
-    private readonly PeriodicTimer _timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+    private readonly MeterListener _listener = new MeterListener();
 
-    private async Task TimerLoopAsync()
+    private volatile bool _disposed;
+    private readonly object _lock = new();
+
+    public void Dispose()
     {
-        while (await _timer.WaitForNextTickAsync())
+        lock (_lock)
         {
-            _countersListener.RecordObservableInstruments();
-            _gaugesListener.RecordObservableInstruments();
+            if (_disposed)
+                return;
+
+            _disposed = true;
         }
+
+        _listener.Dispose();
     }
 
-    // We use separate listeners for counter-style meters and gauge-style meters.
-    // This way we can easily predetermine the type at instrument creation time and not worry about it later.
-    private readonly MeterListener _countersListener = new();
-    private readonly MeterListener _gaugesListener = new();
-
-    private void OnCounterInstrumentPublished(Instrument instrument, MeterListener listener)
+    private void OnInstrumentPublished(Instrument instrument, MeterListener listener)
     {
-        if (!HasGenericAncestor(instrument.GetType(), typeof(Counter<>))
-            && !HasGenericAncestor(instrument.GetType(), typeof(ObservableCounter<>)))
-            return; // Not a type that we support on this listener.
-
         if (!_options.InstrumentFilterPredicate(instrument))
-            return;
+            return; // This instrument is not wanted.
 
+        _instrumentPrometheusNames.TryAdd(instrument, TranslateInstrumentNameToPrometheusName(instrument));
+        _instrumentPrometheusHelp.TryAdd(instrument, TranslateInstrumentDescriptionToPrometheusHelp(instrument));
+
+        // Always listen to everything - we want to adapt all input metrics to Prometheus metrics.
         listener.EnableMeasurementEvents(instrument);
     }
 
-    private void OnGaugeInstrumentPublished(Instrument instrument, MeterListener listener)
+    private void OnMeasurementRecorded<T>(Instrument instrument, T measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+        where T : struct
     {
-        // We support histograms, as they seem to produce regular events (although we do not treat them as histograms).
-        // They are histograms in name only, it seems, as the collection tool needs to actually do the calculations.
-        if (!HasGenericAncestor(instrument.GetType(), typeof(Histogram<>))
-            && !HasGenericAncestor(instrument.GetType(), typeof(ObservableGauge<>)))
-            return; // Not a type that we support on this listener.
+        // NOTE: If we throw an exception from this, it can lead to the instrument becoming inoperable (no longer measured). Let's not do that.
 
-        if (!_options.InstrumentFilterPredicate(instrument))
-            return;
+        // TODO: We can do some good here by reducing the constant memory allocation that is happening (options, leases, etc).
 
-        listener.EnableMeasurementEvents(instrument);
-    }
-
-    private static bool HasGenericAncestor(Type t, Type openGenericAncestor)
-    {
-        while (true)
+        try
         {
-            if (t.IsGenericType)
+            var labelNames = TagsToLabelNames(tags);
+            var labelValues = TagsToLabelValues(tags);
+
+            var value = Convert.ToDouble(measurement);
+
+            if (instrument is Counter<T>)
             {
-                // Maybe.
-                var gtd = t.GetGenericTypeDefinition();
+                var counterHandle = _factory.CreateCounter(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new CounterConfiguration
+                {
+                    LabelNames = labelNames
+                });
 
-                if (gtd == openGenericAncestor)
-                    return true;
+                using (counterHandle.AcquireLease(out var counter, labelValues))
+                {
+                    // A measurement is the increment.
+                    counter.Inc(value);
+                }
             }
+            else if (instrument is ObservableCounter<T>)
+            {
+                var counterHandle = _factory.CreateCounter(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new CounterConfiguration
+                {
+                    LabelNames = labelNames
+                });
 
-            if (t.BaseType == null)
-                return false;
+                using (counterHandle.AcquireLease(out var counter, labelValues))
+                {
+                    // A measurement is the current value.
+                    counter.IncTo(value);
+                }
+            }
+            /* .NET 7: else if (instrument is UpDownCounter<T>)
+            {
+                var gaugeHandle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new GaugeConfiguration
+                {
+                    LabelNames = labelNames
+                });
 
-            t = t.BaseType;
+                using (gaugeHandle.AcquireLease(out var gauge, labelValues))
+                {
+                    // A measurement is the increment.
+                    gauge.Inc(value);
+                }
+            }*/
+            else if (instrument is ObservableGauge<T> /* .NET 7: or ObservableUpDownCounter<T>*/)
+            {
+                var gaugeHandle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new GaugeConfiguration
+                {
+                    LabelNames = labelNames
+                });
+
+                using (gaugeHandle.AcquireLease(out var gauge, labelValues))
+                {
+                    // A measurement is the current value.
+                    gauge.Set(value);
+                }
+            }
+            else if (instrument is Histogram<T>)
+            {
+                var histogramHandle = _factory.CreateHistogram(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new HistogramConfiguration
+                {
+                    LabelNames = labelNames,
+                    // We oursource the bucket definition to the callback in options, as it might need to be different for different instruments.
+                    Buckets = _options.ResolveHistogramBuckets(instrument)
+                });
+
+                using (histogramHandle.AcquireLease(out var metric, labelValues))
+                {
+                    // A measurement is the observed value.
+                    metric.Observe(value);
+                }
+            }
+            else
+            {
+                Trace.WriteLine($"Instrument {instrument.Name} is of an unsupported type: {instrument.GetType().Name}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"{instrument.Name} collection failed: {ex.Message}");
         }
     }
 
-    private void OnCounterMeasurement(Instrument instrument, double measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+
+    private void OnMeasurementsCompleted(Instrument instrument, object? state)
     {
-        _counter.WithLabels(instrument.Meter.Name, instrument.Name, instrument.Unit ?? "", instrument.Description ?? "").Inc(measurement);
+        // Called when no more data is coming for an instrument. We do not do anything with the already published metrics because:
+        // 1) We operate on a pull model - just because the instrument goes away does not mean that the latest data from it has been pulled.
+        // 2) We already have a perfectly satisfactory expiration based lifetime control model, no need to complicate with a second logic alongside.
+        // 3) There is no 1:1 mapping between instrument and metric due to allowing flexible label name combinations, which may cause undesirable complexity.
+
+        // We know we will not need this data anymore, though, so we can throw it out.
+        _instrumentPrometheusNames.Remove(instrument, out _);
+        _instrumentPrometheusHelp.Remove(instrument, out _);
     }
 
-    private void OnCounterMeasurement(Instrument instrument, byte measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    private string[] TagsToLabelNames(ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        OnCounterMeasurement(instrument, (double)measurement, tags, state);
+        var labelNames = new string[tags.Length];
+
+        for (var i = 0; i < tags.Length; i++)
+        {
+            var prometheusLabelName = _tagPrometheusNames.GetOrAdd(tags[i].Key, TranslateTagNameToPrometheusName);
+            labelNames[i] = prometheusLabelName;
+        }
+
+        return labelNames;
     }
 
-    private void OnCounterMeasurement(Instrument instrument, short measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    private string[] TagsToLabelValues(ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
-        OnCounterMeasurement(instrument, (double)measurement, tags, state);
+        var labelValues = new string[tags.Length];
+
+        for (var i = 0; i < tags.Length; i++)
+        {
+            labelValues[i] = tags[i].Value?.ToString() ?? "";
+        }
+
+        return labelValues;
     }
 
-    private void OnCounterMeasurement(Instrument instrument, int measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    // We use these dictionaries to register Prometheus metrics on-demand for different tag sets.
+    private static readonly ConcurrentDictionary<Instrument, string> _instrumentPrometheusNames = new();
+    private static readonly ConcurrentDictionary<Instrument, string> _instrumentPrometheusHelp = new();
+
+    // We use this dictionary to translate tag names on-demand.
+    // Immortal set, we assume we do not get an infinite mix of tag names.
+    private static readonly ConcurrentDictionary<string, string> _tagPrometheusNames = new();
+
+    private static readonly Regex NameRegex = new Regex("^[a-zA-Z_][a-zA-Z0-9_]*$", RegexOptions.Compiled);
+    private const string FirstCharacterCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+    private const string NonFirstCharacterCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
+
+    private static string TranslateInstrumentNameToPrometheusName(Instrument instrument)
     {
-        OnCounterMeasurement(instrument, (double)measurement, tags, state);
+        // Example input: meter "Foo.Bar.Baz" with instrument "walla-walla"
+        // Example output: foo_bar_baz_walla_walla
+
+        return TranslateNameToPrometheusName($"{instrument.Meter.Name}_{instrument.Name}");
     }
 
-    private void OnCounterMeasurement(Instrument instrument, long measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    private static string TranslateTagNameToPrometheusName(string tagName)
     {
-        OnCounterMeasurement(instrument, (double)measurement, tags, state);
+        // Example input: hello-there
+        // Example output: hello_there
+
+        return TranslateNameToPrometheusName(tagName);
     }
 
-    private void OnCounterMeasurement(Instrument instrument, float measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    private static string TranslateNameToPrometheusName(string inputName)
     {
-        OnCounterMeasurement(instrument, (double)measurement, tags, state);
+        // Transformations done:
+        // * all lowercase
+        // * special characters to underscore
+        // * must match: [a-zA-Z_][a-zA-Z0-9_]*
+        //   * colon is "permitted" by spec but reserved for recording rules
+
+        var sb = new StringBuilder();
+
+        foreach (char inputCharacter in inputName)
+        {
+            // All lowercase.
+            var c = Char.ToLowerInvariant(inputCharacter);
+
+            if (sb.Length == 0)
+            {
+                // If first character is not from allowed charset, prefix it with underscore to minimize first character data loss.
+                if (!FirstCharacterCharset.Contains(c))
+                    sb.Append('_');
+
+                sb.Append(c);
+            }
+            else
+            {
+                // Standard rules.
+                // If character is not permitted, replace with underscore. Simple as that!
+                if (!NonFirstCharacterCharset.Contains(c))
+                    sb.Append('_');
+                else
+                    sb.Append(c);
+            }
+        }
+
+        var name = sb.ToString();
+
+        // Sanity check.
+        if (!NameRegex.IsMatch(name))
+            throw new Exception("Self-check failed: generated name did not match our own naming rules.");
+
+        return name;
     }
 
-    private void OnCounterMeasurement(Instrument instrument, decimal measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
+    private static string TranslateInstrumentDescriptionToPrometheusHelp(Instrument instrument)
     {
-        OnCounterMeasurement(instrument, unchecked((double)measurement), tags, state);
-    }
+        var sb = new StringBuilder();
 
-    private void OnGaugeMeasurement(Instrument instrument, double measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        _gauge.WithLabels(instrument.Meter.Name, instrument.Name, instrument.Unit ?? "", instrument.Description ?? "").Set(measurement);
-    }
+        if (!string.IsNullOrWhiteSpace(instrument.Unit))
+            sb.AppendFormat($"({instrument.Unit}) ");
 
-    private void OnGaugeMeasurement(Instrument instrument, byte measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        OnGaugeMeasurement(instrument, (double)measurement, tags, state);
-    }
+        sb.Append(instrument.Description);
 
-    private void OnGaugeMeasurement(Instrument instrument, short measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        OnGaugeMeasurement(instrument, (double)measurement, tags, state);
-    }
-
-    private void OnGaugeMeasurement(Instrument instrument, int measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        OnGaugeMeasurement(instrument, (double)measurement, tags, state);
-    }
-
-    private void OnGaugeMeasurement(Instrument instrument, long measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        OnGaugeMeasurement(instrument, (double)measurement, tags, state);
-    }
-
-    private void OnGaugeMeasurement(Instrument instrument, float measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        OnGaugeMeasurement(instrument, (double)measurement, tags, state);
-    }
-
-    private void OnGaugeMeasurement(Instrument instrument, decimal measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-    {
-        OnGaugeMeasurement(instrument, unchecked((double)measurement), tags, state);
+        return sb.ToString();
     }
 }
-
-#endif

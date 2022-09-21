@@ -3,6 +3,7 @@
 - Relaxed the API restriction that forbade you to create multiple metrics with the same name but different label names. While this is a Prometheus anti-pattern, it is a standard pattern in other metrics technologies and we will allow it in the name of interoperability.
 - Added IMetricFactory.WithLabels() to define static labels per-factory and reduce the effort needed by users when defining static labels in specific scopes.
 - Added automatic metric expiration feature, to remove timeseries when they are no longer used after a while. This improves interoperability with other metrics technologies such as .NET Meters.
+- (Breaking change) Rewrite of the MeterAdapter functionality to bridge .NET 6 metrics to Prometheus. API remains equivalent, though options class changed. Output format (what metrics are published) is completely different. Now it translates metric names (instead of putting them in labels) and preserves tags (labels) provided via the .NET Meters API. Added sample project to demonstrate functionality. Ref #359
 * 6.0.0
 - Dropped library support for unsupported .NET runtime versions (.NET 2.1).
 - If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics, unless there is a user-defined label already present with this name.
