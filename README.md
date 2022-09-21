@@ -362,7 +362,7 @@ To enable automatic expiration, create the metrics via the metric factory return
 Option 1: metric lifetime can be controlled by leases - the metric expiration timer starts when the last lease is released (and will be reset when a new lease is taken again).
 
 ```csharp
-var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
+var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromMinutes(5));
 
 // With expiring metrics, we get back handles to the metric, not the metric directly.
 var inProgressHandle = expiringMetricFactory
@@ -393,7 +393,7 @@ public void ProcessDocument(string documentProvider)
 Scenario 2: sometimes managing the leases is not required because you simply want the metric lifetime to be extended whenever the value is updated.
 
 ```csharp
-var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
+var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromMinutes(5));
 
 // With expiring metrics, we get back handles to the metric, not the metric directly.
 var processingStartedHandle = expiringMetricFactory
