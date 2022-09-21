@@ -419,6 +419,8 @@ public void ProcessDocument(string documentProvider)
 }
 ```
 
+The expiration logic is governed by the handles - if you obtain multiple expiring metric handles, they will each trigger expiration independently.
+
 See also, [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs).
 
 # ASP.NET Core exporter middleware
