@@ -5,13 +5,13 @@
     /// </summary>
     internal sealed class AutoLeasingCounter : ICollector<ICounter>
     {
-        public AutoLeasingCounter(ILeasedLifetimeMetric<ICounter> inner, ICollector<ICounter> root)
+        public AutoLeasingCounter(IManagedLifetimeMetricHandle<ICounter> inner, ICollector<ICounter> root)
         {
             _inner = inner;
             _root = root;
         }
 
-        private readonly ILeasedLifetimeMetric<ICounter> _inner;
+        private readonly IManagedLifetimeMetricHandle<ICounter> _inner;
         private readonly ICollector<ICounter> _root;
 
         public string Name => _root.Name;
@@ -27,14 +27,14 @@
 
         private sealed class Instance : ICounter
         {
-            public Instance(ILeasedLifetimeMetric<ICounter> inner, ICounter root, string[] labelValues)
+            public Instance(IManagedLifetimeMetricHandle<ICounter> inner, ICounter root, string[] labelValues)
             {
                 _inner = inner;
                 _root = root;
                 _labelValues = labelValues;
             }
 
-            private readonly ILeasedLifetimeMetric<ICounter> _inner;
+            private readonly IManagedLifetimeMetricHandle<ICounter> _inner;
             private readonly ICounter _root;
             private readonly string[] _labelValues;
 

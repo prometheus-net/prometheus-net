@@ -5,13 +5,13 @@
     /// </summary>
     internal sealed class AutoLeasingGauge : ICollector<IGauge>
     {
-        public AutoLeasingGauge(ILeasedLifetimeMetric<IGauge> inner, ICollector<IGauge> root)
+        public AutoLeasingGauge(IManagedLifetimeMetricHandle<IGauge> inner, ICollector<IGauge> root)
         {
             _inner = inner;
             _root = root;
         }
 
-        private readonly ILeasedLifetimeMetric<IGauge> _inner;
+        private readonly IManagedLifetimeMetricHandle<IGauge> _inner;
         private readonly ICollector<IGauge> _root;
 
         public string Name => _root.Name;
@@ -27,14 +27,14 @@
 
         private sealed class Instance : IGauge
         {
-            public Instance(ILeasedLifetimeMetric<IGauge> inner, IGauge root, string[] labelValues)
+            public Instance(IManagedLifetimeMetricHandle<IGauge> inner, IGauge root, string[] labelValues)
             {
                 _inner = inner;
                 _root = root;
                 _labelValues = labelValues;
             }
 
-            private readonly ILeasedLifetimeMetric<IGauge> _inner;
+            private readonly IManagedLifetimeMetricHandle<IGauge> _inner;
             private readonly IGauge _root;
             private readonly string[] _labelValues;
 

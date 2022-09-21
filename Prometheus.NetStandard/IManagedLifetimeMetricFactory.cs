@@ -10,24 +10,24 @@
         /// Creates a metric with a lease-extended lifetime.
         /// A timeseries will expire N seconds after the last lease is released, with N determined at factory create-time.
         /// </summary>
-        ILeasedLifetimeMetric<ICounter> CreateCounter(string name, string help, CounterConfiguration? configuration = null);
+        IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, CounterConfiguration? configuration = null);
 
         /// <summary>
         /// Creates a metric with a lease-extended lifetime.
         /// A timeseries will expire N seconds after the last lease is released, with N determined at factory create-time.
         /// </summary>
-        ILeasedLifetimeMetric<IGauge> CreateGauge(string name, string help, GaugeConfiguration? configuration = null);
+        IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, GaugeConfiguration? configuration = null);
 
         /// <summary>
         /// Creates a metric with a lease-extended lifetime.
         /// A timeseries will expire N seconds after the last lease is released, with N determined at factory create-time.
         /// </summary>
-        ILeasedLifetimeMetric<IHistogram> CreateHistogram(string name, string help, HistogramConfiguration? configuration = null);
+        IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, HistogramConfiguration? configuration = null);
 
         /// <summary>
         /// Creates a metric with a lease-extended lifetime.
         /// A timeseries will expire N seconds after the last lease is released, with N determined at factory create-time.
         /// </summary>
-        ILeasedLifetimeMetric<ISummary> CreateSummary(string name, string help, SummaryConfiguration? configuration = null);
+        IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, SummaryConfiguration? configuration = null);
     }
 }

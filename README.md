@@ -363,7 +363,9 @@ Option 1: metric lifetime can be controlled by leases - the metric expiration ti
 
 ```csharp
 var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
-var inProgress = expiringMetricFactory
+
+// With expiring metrics, we get back handles to the metric, not the metric directly.
+var inProgressHandle = expiringMetricFactory
   .CreateGauge("documents_in_progress", "Number of documents currently being processed.",
     new GaugeConfiguration
     {
@@ -378,7 +380,7 @@ public void ProcessDocument(string documentProvider)
 {
   // Automatic unpublishing will not occur while this lease is held.
   // This will also reset any existing expiration timer for this document provider.
-  using var lease = inProgress.AcquireLease(out var metric, documentProvider);
+  using var lease = inProgressHandle.AcquireLease(out var metric, documentProvider);
 
   using (metric.TrackInProgress())
       DoDocumentProcessingWork();
@@ -392,16 +394,19 @@ Scenario 2: sometimes managing the leases is not required because you simply wan
 
 ```csharp
 var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
-var processingStarted = expiringMetricFactory
+
+// With expiring metrics, we get back handles to the metric, not the metric directly.
+var processingStartedHandle = expiringMetricFactory
   .CreateGauge("documents_started_processing_total", "Number of documents for which processing has started.",
     new GaugeConfiguration
     {
       // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
       // so here is a sample label for each "document provider", whoever that may be.
       LabelNames = new[] { "document_provider" }
-    })
-  // This returns an instance that will reset the expiration timer whenever the metric value is updated.
-  .WithExtendLifetimeOnUse();
+    });
+
+// This returns a metric instance that will reset the expiration timer whenever the metric value is updated.
+var processingStarted = processingStartedHandle.WithExtendLifetimeOnUse();
 
 ...
 

@@ -5,13 +5,13 @@
     /// </summary>
     internal sealed class AutoLeasingSummary : ICollector<ISummary>
     {
-        public AutoLeasingSummary(ILeasedLifetimeMetric<ISummary> inner, ICollector<ISummary> root)
+        public AutoLeasingSummary(IManagedLifetimeMetricHandle<ISummary> inner, ICollector<ISummary> root)
         {
             _inner = inner;
             _root = root;
         }
 
-        private readonly ILeasedLifetimeMetric<ISummary> _inner;
+        private readonly IManagedLifetimeMetricHandle<ISummary> _inner;
         private readonly ICollector<ISummary> _root;
 
         public string Name => _root.Name;
@@ -27,13 +27,13 @@
 
         private sealed class Instance : ISummary
         {
-            public Instance(ILeasedLifetimeMetric<ISummary> inner, string[] labelValues)
+            public Instance(IManagedLifetimeMetricHandle<ISummary> inner, string[] labelValues)
             {
                 _inner = inner;
                 _labelValues = labelValues;
             }
 
-            private readonly ILeasedLifetimeMetric<ISummary> _inner;
+            private readonly IManagedLifetimeMetricHandle<ISummary> _inner;
             private readonly string[] _labelValues;
 
             public void Observe(double val)

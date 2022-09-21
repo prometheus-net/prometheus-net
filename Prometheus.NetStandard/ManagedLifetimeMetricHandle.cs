@@ -2,11 +2,11 @@
 
 namespace Prometheus;
 
-internal abstract class LeasedLifetimeMetric<TChild, TMetricInterface> : ILeasedLifetimeMetric<TMetricInterface>
+internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : IManagedLifetimeMetricHandle<TMetricInterface>
     where TChild : ChildBase, TMetricInterface
     where TMetricInterface : ICollectorChild
 {
-    internal LeasedLifetimeMetric(Collector<TChild> metric, TimeSpan expiresAfter)
+    internal ManagedLifetimeMetricHandle(Collector<TChild> metric, TimeSpan expiresAfter)
     {
         _metric = metric;
         _expiresAfter = expiresAfter;
@@ -26,6 +26,11 @@ internal abstract class LeasedLifetimeMetric<TChild, TMetricInterface> : ILeased
     public abstract ICollector<TMetricInterface> WithExtendLifetimeOnUse();
 
     /// <summary>
+    /// Internal to allow the delay logic to be replaced in test code, enabling (non-)expiration on demand.
+    /// </summary>
+    internal IDelayer Delayer = RealDelayer.Instance;
+
+    /// <summary>
     /// An instance of LifetimeManager takes care of the lifetime of a single child metric:
     /// * It maintains the count of active leases.
     /// * It schedules unpublishing after the last lease is released (and cancels unpublishing if a new lease is taken).
@@ -35,10 +40,11 @@ internal abstract class LeasedLifetimeMetric<TChild, TMetricInterface> : ILeased
     /// </summary>
     private sealed class LifetimeManager
     {
-        public LifetimeManager(Labels labels, TimeSpan expiresAfter, Action<Labels> unpublish)
+        public LifetimeManager(Labels labels, TimeSpan expiresAfter, IDelayer delayer, Action<Labels> unpublish)
         {
             _labels = labels;
             _expiresAfter = expiresAfter;
+            _delayer = delayer;
             _unpublish = unpublish;
 
             // NB! There may be optimistic copies made by the ConcurrentDictionary - this may be such a copy!
@@ -46,6 +52,7 @@ internal abstract class LeasedLifetimeMetric<TChild, TMetricInterface> : ILeased
 
         private readonly Labels _labels;
         private readonly TimeSpan _expiresAfter;
+        private readonly IDelayer _delayer;
         private readonly Action<Labels> _unpublish;
 
         private readonly object _lock = new();
@@ -90,7 +97,7 @@ internal abstract class LeasedLifetimeMetric<TChild, TMetricInterface> : ILeased
                     {
                         try
                         {
-                            await Task.Delay(_expiresAfter, cancel);
+                            await _delayer.Delay(_expiresAfter, cancel);
 
                             lock (_lock)
                             {
@@ -182,7 +189,7 @@ internal abstract class LeasedLifetimeMetric<TChild, TMetricInterface> : ILeased
 
     private LifetimeManager CreateLifetimeManager(Labels labels)
     {
-        return new LifetimeManager(labels, _expiresAfter, UnpublishOuter);
+        return new LifetimeManager(labels, _expiresAfter, Delayer, UnpublishOuter);
     }
 
     /// <summary>
