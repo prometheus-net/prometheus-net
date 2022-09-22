@@ -1,7 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     public sealed class Gauge : Collector<Gauge.Child>, IGauge
     {

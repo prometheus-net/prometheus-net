@@ -1,7 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Prometheus
 {
     public sealed class Counter : Collector<Counter.Child>, ICounter

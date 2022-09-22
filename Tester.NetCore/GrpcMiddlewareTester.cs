@@ -6,10 +6,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Prometheus;
-using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Tester;
 
 namespace tester

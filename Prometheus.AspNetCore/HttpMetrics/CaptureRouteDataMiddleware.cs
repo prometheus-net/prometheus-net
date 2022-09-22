@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using System.Threading.Tasks;
 
 namespace Prometheus.HttpMetrics
 {

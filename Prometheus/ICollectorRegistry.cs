@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     /// <summary>
     /// Allows for substitution of CollectorRegistry in tests.

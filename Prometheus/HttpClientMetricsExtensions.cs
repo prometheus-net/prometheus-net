@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Prometheus.HttpClientMetrics;
-using System;
 
 namespace Prometheus
 {

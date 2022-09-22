@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Prometheus.HttpMetrics
 {
     public abstract class HttpMetricsOptionsBase

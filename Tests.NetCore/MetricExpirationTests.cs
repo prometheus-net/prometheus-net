@@ -34,7 +34,7 @@ namespace Prometheus.Tests
             var counterHandle = _expiringMetrics.CreateCounter(MetricName, "");
 
             counter1.Inc();
-            
+
             using (var lease = counterHandle.AcquireLease(out var instance))
                 instance.Inc();
 
@@ -90,7 +90,7 @@ namespace Prometheus.Tests
             ((ManagedLifetimeCounter)handle).Delayer = delayer;
 
             // We detect expiration by the value having been reset when we try allocate the counter again.
-            
+
             using (handle.AcquireLease(out var instance1))
             {
                 instance1.Inc();

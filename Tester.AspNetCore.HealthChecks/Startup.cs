@@ -26,7 +26,7 @@ namespace Tester.AspNetCore.HealthChecks
             services.AddHealthChecks()
                 .AddCheck<RandomResultCheck>("random_check")
                 .ForwardToPrometheus();
-            
+
             services.Configure<HealthCheckPublisherOptions>(options =>
             {
                 options.Delay = TimeSpan.Zero;

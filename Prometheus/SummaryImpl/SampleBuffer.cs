@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Prometheus.SummaryImpl
+﻿namespace Prometheus.SummaryImpl
 {
     internal class SampleBuffer
     {

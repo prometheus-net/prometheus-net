@@ -1,8 +1,8 @@
-﻿using System.Net.Http;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Prometheus.HttpClientMetrics;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Prometheus.HttpClientMetrics;
 
 namespace Prometheus.Tests.HttpClientMetrics
 {
@@ -30,7 +30,7 @@ namespace Prometheus.Tests.HttpClientMetrics
             Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
             Assert.IsTrue(handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Sum > 0);
         }
-        
+
         [TestMethod]
         public void OnRequest_AwaitsRequestAndRecordsDuration()
         {
@@ -52,7 +52,7 @@ namespace Prometheus.Tests.HttpClientMetrics
 
             // There should be no duration metric recorded unless the task is completed
             Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
-            
+
             mockHttpClientHandler.Complete();
             Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
         }
@@ -70,7 +70,7 @@ namespace Prometheus.Tests.HttpClientMetrics
             {
                 _taskCompletionSource.SetResult(new HttpResponseMessage());
             }
-            
+
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 return _taskCompletionSource.Task;

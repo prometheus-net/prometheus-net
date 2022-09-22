@@ -95,7 +95,7 @@ namespace Prometheus.Tests
             {
                 _throwOnSend = ex;
             }
-            
+
             // PostAsync eventually calls SendAsync
             public override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     /// <summary>
     /// Signals to the metrics server that metrics are currently unavailable. Thrown from "before collect" callbacks.

@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.HttpMetrics;
 using System;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Prometheus.Tests.HttpExporter
@@ -284,7 +283,7 @@ namespace Prometheus.Tests.HttpExporter
                 });
             });
         }
-        
+
         [TestMethod]
         [DataRow(200, "2xx")]
         [DataRow(404, "4xx")]

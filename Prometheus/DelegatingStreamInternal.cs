@@ -4,11 +4,6 @@
 // Modified for prometheus-net to reduce dependencies.
 
 #nullable enable
-using Prometheus;
-using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Prometheus
 {

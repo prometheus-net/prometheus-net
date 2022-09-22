@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
-using System.Runtime.InteropServices;
 
 namespace Prometheus
 {
@@ -83,7 +82,7 @@ namespace Prometheus
                     displayName = $"({(string)displayUnitsWrapper}) {displayName}";
 
                 var mergedName = $"{eventSourceName}_{name}";
-                
+
                 var prometheusName = _counterPrometheusName.GetOrAdd(mergedName, PrometheusNameHelpers.TranslateNameToPrometheusName);
 
                 // The event counter can either be

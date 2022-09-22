@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     /// <summary>
     /// This class packages the options for creating metrics into a single class (with subclasses per metric type)

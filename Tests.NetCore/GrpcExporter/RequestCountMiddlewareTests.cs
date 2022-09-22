@@ -80,7 +80,7 @@ namespace Prometheus.Tests.GrpcExporter
 
             var labels = counter.GetAllLabels().Single();
             Assert.AreEqual(
-                expectedService, 
+                expectedService,
                 GetLabelValueOrDefault(labels, GrpcRequestLabelNames.Service)
             );
             Assert.AreEqual(

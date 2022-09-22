@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using Prometheus;
@@ -15,7 +8,7 @@ namespace Benchmark.NetCore
     // NB! This benchmark requires the Tester project to be running and the MetricPusherTester module to be active (to receive the data).
     // If there is no tester listening, the results will be overly good because the runtime is under less I/O load.
     [MemoryDiagnoser]
-    [SimpleJob(RunStrategy.Monitoring, warmupCount:0)]
+    [SimpleJob(RunStrategy.Monitoring, warmupCount: 0)]
     public class MetricPusherBenchmarks
     {
         private static string MetricPusherUrl = $"http://localhost:{TesterConstants.TesterPort}";
@@ -39,13 +32,13 @@ namespace Benchmark.NetCore
             }
         }
 
-        
+
         [Benchmark]
         public async Task PushTest()
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
-            
+
             var pusher = new MetricPusher(new MetricPusherOptions
             {
                 Endpoint = MetricPusherUrl,

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     /// <summary>
     /// A timer that can be used to observe a duration of elapsed time.

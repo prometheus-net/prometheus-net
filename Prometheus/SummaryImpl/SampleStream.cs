@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Prometheus.SummaryImpl
 {
     internal class SampleStream

@@ -1,9 +1,4 @@
-using System;
-using System.IO;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Prometheus.HttpClientMetrics
 {
@@ -50,17 +45,17 @@ namespace Prometheus.HttpClientMetrics
             var newHeaders = newContent.Headers;
 
 #if NET6_0_OR_GREATER
-        foreach (KeyValuePair<string, HeaderStringValues> header in oldHeaders.NonValidated)
-        {
-            if (header.Value.Count > 1)
+            foreach (KeyValuePair<string, HeaderStringValues> header in oldHeaders.NonValidated)
             {
-                newHeaders.TryAddWithoutValidation(header.Key, header.Value);
+                if (header.Value.Count > 1)
+                {
+                    newHeaders.TryAddWithoutValidation(header.Key, header.Value);
+                }
+                else
+                {
+                    newHeaders.TryAddWithoutValidation(header.Key, header.Value.ToString());
+                }
             }
-            else
-            {
-                newHeaders.TryAddWithoutValidation(header.Key, header.Value.ToString());
-            }
-        }
 #else
             foreach (var header in oldHeaders)
             {

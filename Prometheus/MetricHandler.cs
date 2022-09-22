@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     /// <summary>
     /// Base class for various metric server implementations that start an independent exporter in the background.
@@ -41,7 +37,7 @@ namespace Prometheus
         {
             // Signal the CTS to give a hint to the server thread that it is time to close up shop.
             _cts?.Cancel();
-            
+
             try
             {
                 if (_task == null)

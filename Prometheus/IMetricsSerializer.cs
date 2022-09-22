@@ -1,7 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     /// <summary>
     /// The only purpose this serves is to warn the developer when he might be accidentally introducing

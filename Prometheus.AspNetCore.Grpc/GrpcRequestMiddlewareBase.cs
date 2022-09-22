@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Linq;
-using Grpc.AspNetCore.Server;
+﻿using Grpc.AspNetCore.Server;
+using Microsoft.AspNetCore.Http;
 
 namespace Prometheus
 {

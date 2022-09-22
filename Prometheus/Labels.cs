@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-
 namespace Prometheus
 {
     /// <summary>
@@ -75,7 +72,7 @@ namespace Prometheus
                 var duplicates = allNames.Where(n => allNames.Count(x => x.Equals(n)) > 1).ToArray();
                 var duplicatesString = string.Join(", ", duplicates);
 
-                throw new InvalidOperationException($"The metric instance received multiple copies of the same label: {duplicatesString}."); 
+                throw new InvalidOperationException($"The metric instance received multiple copies of the same label: {duplicatesString}.");
             }
 
             return new Labels(allNames, allValues);

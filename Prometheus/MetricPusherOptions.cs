@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     public sealed class MetricPusherOptions
     {

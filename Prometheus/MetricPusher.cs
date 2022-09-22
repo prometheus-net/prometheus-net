@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System.Diagnostics;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -98,7 +92,8 @@ namespace Prometheus
                             Method = _method,
                             RequestUri = _targetUrl,
                             // We use a copy-pasted implementation of PushStreamContent here to avoid taking a dependency on the old ASP.NET Web API where it lives.
-                            Content = new PushStreamContentInternal(async (stream, content, context) => {
+                            Content = new PushStreamContentInternal(async (stream, content, context) =>
+                            {
                                 try
                                 {
                                     // Do not pass CT because we only want to cancel after pushing, so a flush is always performed.

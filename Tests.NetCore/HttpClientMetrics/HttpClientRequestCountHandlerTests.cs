@@ -1,7 +1,7 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.HttpClientMetrics;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Prometheus.Tests.HttpClientMetrics
 {

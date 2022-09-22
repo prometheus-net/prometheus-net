@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     public static class TimerExtensions
     {

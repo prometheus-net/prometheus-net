@@ -10,7 +10,7 @@ namespace Prometheus
     public static class AspNetMetricServer
     {
         private const string RouteNamePrefix = "Prometheus_";
-        
+
         public sealed class Settings
         {
             public CollectorRegistry Registry { get; set; }
@@ -21,7 +21,7 @@ namespace Prometheus
         /// </summary>
         public static void RegisterRoutes(HttpConfiguration configuration, Settings settings = null) =>
             MapRoute(configuration, "Default", "metrics", settings);
-        
+
         /// <summary>
         /// Registers an anonymous instance of the controller to be published on a given URL path (e.g. "custom/metrics").
         /// </summary>

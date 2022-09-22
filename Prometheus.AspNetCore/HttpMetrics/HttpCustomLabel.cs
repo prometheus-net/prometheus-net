@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
 
 namespace Prometheus.HttpMetrics
 {

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Prometheus.SummaryImpl
+﻿namespace Prometheus.SummaryImpl
 {
     // Ported from https://github.com/beorn7/perks/blob/master/quantile/stream.go
 

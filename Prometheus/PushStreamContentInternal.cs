@@ -3,11 +3,8 @@
 // Simplified for prometheus-net for dependency reduction reasons.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
-using System.IO;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Threading.Tasks;
 
 namespace Prometheus
 {

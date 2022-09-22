@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Prometheus
+﻿namespace Prometheus
 {
     public sealed class SummaryConfiguration : MetricConfiguration
     {

@@ -1,5 +1,4 @@
 using Grpc.Core;
-using Sample.Grpc;
 
 namespace Sample.Grpc.Services
 {
