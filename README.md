@@ -637,6 +637,15 @@ metricServer.Start();
 
 The default configuration will publish metrics on the `/metrics` URL.
 
+If your app is an ASP.NET Core web app, you can use a pipeline-integrated mechanism:
+
+```csharp
+services.AddMetricServer(options =>
+{
+    options.Port = 1234;
+});
+```
+
 # Publishing to Pushgateway
 
 Metrics can be posted to a [Pushgateway](https://prometheus.io/docs/practices/pushing/) server.

@@ -3,11 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Prometheus
 {
@@ -28,6 +25,10 @@ namespace Prometheus
             _url = url;
 
             _certificate = certificate;
+        }
+
+        public KestrelMetricServer(KestrelMetricServerOptions options) : this(options.Hostname, options.Port, options.Url, options.Registry, options.TlsCertificate)
+        {
         }
 
         private readonly string _hostname;

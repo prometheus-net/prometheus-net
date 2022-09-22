@@ -19,7 +19,10 @@ builder.Services.AddRazorPages();
 // * metrics from .NET Event Counters (enabled by default)
 // * metrics from .NET Meters (enabled by default)
 // * metrics about requests handled by the web app (configured below)
-builder.Services.AddHostedService<MetricsExporterService>();
+builder.Services.AddMetricServer(options =>
+{
+    options.Port = 1234;
+});
 
 var app = builder.Build();
 

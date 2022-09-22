@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
@@ -7,9 +6,6 @@ namespace Prometheus
 {
     public static class MetricServerMiddlewareExtensions
     {
-
-#if NET6_0_OR_GREATER
-
         private const string DefaultDisplayName = "Prometheus metrics";
 
         /// <summary>
@@ -23,7 +19,6 @@ namespace Prometheus
             CollectorRegistry? registry = null
         )
         {
-
             var pipeline = endpoints
                 .CreateApplicationBuilder()
                 .UseMiddleware<MetricServerMiddleware>(
@@ -37,10 +32,7 @@ namespace Prometheus
             return endpoints
                 .Map(pattern, pipeline)
                 .WithDisplayName(DefaultDisplayName);
-
         }
-
-#endif
 
         /// <summary>
         /// Starts a Prometheus metrics exporter, filtering to only handle requests received on a specific port.
