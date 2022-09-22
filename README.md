@@ -768,6 +768,8 @@ It is not possible for the adapter to know what the author of each event counter
 
 In fact, even some "aggregating" event counters can just be a plain event counter with no aggregation (e.g. `microsoft_aspnetcore_hosting_total_requests`).
 
+See also, [Sample.Console](Sample.Console/Program.cs).
+
 # .NET Meters integration
 
 > **Note**
