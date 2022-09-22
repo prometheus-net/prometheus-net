@@ -26,7 +26,14 @@ public sealed class SampleService : BackgroundService
         {
             while (!cancel.IsCancellationRequested)
             {
-                await ReadySetGoAsync(cancel);
+                try
+                {
+                    await ReadySetGoAsync(cancel);
+                }
+                catch
+                {
+                    // Something failed? OK, whatever. We will just try again.
+                }
 
                 await Task.Delay(TimeSpan.FromSeconds(1), cancel);
             }
