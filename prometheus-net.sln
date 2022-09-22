@@ -2,8 +2,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.32912.340
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.NetStandard", "Prometheus.NetStandard\Prometheus.NetStandard.csproj", "{BA482927-F0BC-462C-8BA0-C476D93621BC}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Resources", "Resources\Resources.csproj", "{608F1849-C417-4077-B60F-1BBF26762670}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests.NetCore", "Tests.NetCore\Tests.NetCore.csproj", "{09EED3ED-25BF-4942-8428-383B51DA0D86}"
@@ -24,8 +22,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark.NetCore", "Benchmark.NetCore\Benchmark.NetCore.csproj", "{074E91E7-37BE-459E-B42F-96F315586418}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus.NetCore", "Prometheus.NetCore\Prometheus.NetCore.csproj", "{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus.NetFramework.AspNet", "Prometheus.NetFramework.AspNet\Prometheus.NetFramework.AspNet.csproj", "{25C05E15-A8F8-4F36-A35C-4004C0948305}"
 EndProject
@@ -53,9 +49,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Grpc.Client", "Sampl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web.MetricExpiration", "Sample.Web.MetricExpiration\Sample.Web.MetricExpiration.csproj", "{AE70A38C-C136-4507-98CA-4851F2958A56}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.DotNetMeters", "Sample.Console.DotNetMeters\Sample.Console.DotNetMeters.csproj", "{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Console.DotNetMeters", "Sample.Console.DotNetMeters\Sample.Console.DotNetMeters.csproj", "{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.EventCounters", "Sample.Console.EventCounters\Sample.Console.EventCounters.csproj", "{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Console.EventCounters", "Sample.Console.EventCounters\Sample.Console.EventCounters.csproj", "{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus", "Prometheus\Prometheus.csproj", "{E585417C-F7DD-4D8C-A0C5-D4B79594634A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,10 +61,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BA482927-F0BC-462C-8BA0-C476D93621BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BA482927-F0BC-462C-8BA0-C476D93621BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BA482927-F0BC-462C-8BA0-C476D93621BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BA482927-F0BC-462C-8BA0-C476D93621BC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{608F1849-C417-4077-B60F-1BBF26762670}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{608F1849-C417-4077-B60F-1BBF26762670}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09EED3ED-25BF-4942-8428-383B51DA0D86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -93,10 +87,6 @@ Global
 		{074E91E7-37BE-459E-B42F-96F315586418}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{074E91E7-37BE-459E-B42F-96F315586418}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{074E91E7-37BE-459E-B42F-96F315586418}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9E563011-AFB6-46BF-B8AA-9735D5C2DD17}.Release|Any CPU.Build.0 = Release|Any CPU
 		{25C05E15-A8F8-4F36-A35C-4004C0948305}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{25C05E15-A8F8-4F36-A35C-4004C0948305}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{25C05E15-A8F8-4F36-A35C-4004C0948305}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -157,6 +147,10 @@ Global
 		{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E43CC67-4A12-4D7C-B26D-ED516753E2B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E585417C-F7DD-4D8C-A0C5-D4B79594634A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E585417C-F7DD-4D8C-A0C5-D4B79594634A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E585417C-F7DD-4D8C-A0C5-D4B79594634A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E585417C-F7DD-4D8C-A0C5-D4B79594634A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

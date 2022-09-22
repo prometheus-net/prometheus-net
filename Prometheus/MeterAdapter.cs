@@ -183,8 +183,8 @@ public sealed class MeterAdapter : IDisposable
         // 3) There is no 1:1 mapping between instrument and metric due to allowing flexible label name combinations, which may cause undesirable complexity.
 
         // We know we will not need this data anymore, though, so we can throw it out.
-        _instrumentPrometheusNames.Remove(instrument, out _);
-        _instrumentPrometheusHelp.Remove(instrument, out _);
+        _instrumentPrometheusNames.TryRemove(instrument, out _);
+        _instrumentPrometheusHelp.TryRemove(instrument, out _);
     }
 
     private string[] TagsToLabelNames(ReadOnlySpan<KeyValuePair<string, object?>> tags)

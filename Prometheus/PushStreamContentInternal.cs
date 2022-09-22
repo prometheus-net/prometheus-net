@@ -18,14 +18,14 @@ namespace Prometheus
     /// </summary>
     sealed class PushStreamContentInternal : HttpContent
     {
-        private readonly Func<Stream, HttpContent, TransportContext, Task> _onStreamAvailable;
+        private readonly Func<Stream, HttpContent, TransportContext?, Task> _onStreamAvailable;
 
         private static readonly MediaTypeHeaderValue OctetStreamHeaderValue = MediaTypeHeaderValue.Parse("application/octet-stream");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PushStreamContentInternal"/> class with the given <see cref="MediaTypeHeaderValue"/>.
         /// </summary>
-        public PushStreamContentInternal(Func<Stream, HttpContent, TransportContext, Task> onStreamAvailable, MediaTypeHeaderValue mediaType)
+        public PushStreamContentInternal(Func<Stream, HttpContent, TransportContext?, Task> onStreamAvailable, MediaTypeHeaderValue mediaType)
         {
             _onStreamAvailable = onStreamAvailable;
             Headers.ContentType = mediaType ?? OctetStreamHeaderValue;
@@ -40,7 +40,7 @@ namespace Prometheus
         /// <param name="context">The associated <see cref="TransportContext"/>.</param>
         /// <returns>A <see cref="Task"/> instance that is asynchronously serializing the object's content.</returns>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Exception is passed as task result.")]
-        protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context)
+        protected override async Task SerializeToStreamAsync(Stream stream, TransportContext? context)
         {
             TaskCompletionSource<bool> serializeToStreamTask = new TaskCompletionSource<bool>();
 

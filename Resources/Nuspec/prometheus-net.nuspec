@@ -20,10 +20,6 @@
 				<dependency id="Microsoft.Extensions.Http" version="6.0.0" />
 			</group>
 
-			<group targetFramework="netstandard2.0">
-				<dependency id="Microsoft.Extensions.Http" version="6.0.0" />
-			</group>
-
 			<group targetFramework="net6.0">
 				<dependency id="Microsoft.Extensions.Http" version="6.0.0" />
 			</group>
@@ -31,11 +27,7 @@
 	</metadata>
 	<files>
 		<!-- The input directory structure is as it exists on the release agent, not as in the solution. -->
-		<file src="..\Prometheus.NetStandard\**" target="lib\netstandard2.0" />
-
 		<file src="..\Prometheus.NetCore60\**" target="lib\net6.0" />
-		<file src="..\Prometheus.NetStandard\**" target="lib\net6.0" />
-
 		<file src="..\Prometheus.Net462\**" target="lib\net462" />
 
 		<file src="prometheus-net-logo.png" target="images\" />

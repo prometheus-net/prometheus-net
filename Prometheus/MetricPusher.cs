@@ -60,10 +60,13 @@ namespace Prometheus
                 }
             }
 
-            if (!Uri.TryCreate(sb.ToString(), UriKind.Absolute, out _targetUrl))
+            Uri? targetUrl;
+            if (!Uri.TryCreate(sb.ToString(), UriKind.Absolute, out targetUrl) || targetUrl == null)
             {
                 throw new ArgumentException("Endpoint must be a valid url", "endpoint");
             }
+
+            _targetUrl = targetUrl;
 
             _pushInterval = TimeSpan.FromMilliseconds(options.IntervalMilliseconds);
             _onError = options.OnError;

@@ -29,7 +29,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
-		<ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj" />
 	</ItemGroup>
 
 </Project>

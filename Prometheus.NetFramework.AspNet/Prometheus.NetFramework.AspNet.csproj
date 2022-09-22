@@ -60,13 +60,13 @@
     <Compile Include="AspNetMetricServer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Prometheus.NetStandard\Prometheus.NetStandard.csproj">
-      <Project>{ba482927-f0bc-462c-8ba0-c476d93621bc}</Project>
-      <Name>Prometheus.NetStandard</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\Prometheus\Prometheus.csproj">
+      <Project>{e585417c-f7dd-4d8c-a0c5-d4b79594634a}</Project>
+      <Name>Prometheus</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

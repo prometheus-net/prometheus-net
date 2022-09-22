@@ -79,7 +79,7 @@ namespace Prometheus.HttpClientMetrics
                         labelValues[i] = request.Method.Method;
                         break;
                     case HttpClientRequestLabelNames.Host:
-                        labelValues[i] = request.RequestUri.Host;
+                        labelValues[i] = request.RequestUri?.Host ?? "";
                         break;
                     case HttpClientRequestLabelNames.Client:
                         labelValues[i] = _identity.Name;

@@ -78,7 +78,7 @@ namespace Prometheus
             return Value.ToString(CultureInfo.InvariantCulture);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is ThreadSafeDouble)
                 return Value.Equals(((ThreadSafeDouble)obj).Value);

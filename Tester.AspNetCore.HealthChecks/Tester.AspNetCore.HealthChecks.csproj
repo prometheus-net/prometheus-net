@@ -17,6 +17,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Prometheus.AspNetCore.HealthChecks\Prometheus.AspNetCore.HealthChecks.csproj" />
 		<ProjectReference Include="..\Prometheus.AspNetCore\Prometheus.AspNetCore.csproj" />
+		<ProjectReference Include="..\Prometheus\Prometheus.csproj" />
 	</ItemGroup>
 
 </Project>

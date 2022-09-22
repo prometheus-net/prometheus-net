@@ -30,7 +30,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Prometheus.NetCore\Prometheus.NetCore.csproj" />
+	  <ProjectReference Include="..\Prometheus\Prometheus.csproj" />
 	</ItemGroup>
 
 </Project>

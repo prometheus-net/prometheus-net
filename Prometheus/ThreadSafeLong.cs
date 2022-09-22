@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Threading;
 
 namespace Prometheus
 {
@@ -34,7 +33,7 @@ namespace Prometheus
             return Value.ToString(CultureInfo.InvariantCulture);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is ThreadSafeLong)
                 return Value.Equals(((ThreadSafeLong)obj).Value);
