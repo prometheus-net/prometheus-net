@@ -5,7 +5,6 @@
 // * prometheus-net.AspNetCore
 
 using Prometheus;
-using Sample.Web.DifferentPort;
 
 var builder = WebApplication.CreateBuilder(args);
 
