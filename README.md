@@ -746,7 +746,7 @@ The level of detail obtained from this is rather low - only the total count for 
 # EventCounter integration
 
 > **Note**
-> The output produced by this integration has changed significantly between prometheus-net 6.0 and 7.0.
+> The output produced by this integration has changed significantly between prometheus-net 6.0 and prometheus-net 7.0. The old output format is no longer supported.
 
 [.NET Core provides the EventCounter mechanism for reporting diagnostic events](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/event-counters), used used widely by .NET and ASP.NET Core classes. This library publishes all .NET EventCounter data by default. To suppress this, see [Suppressing default metrics](#suppressing-default-metrics).
 
@@ -754,10 +754,10 @@ You can configure the integration using `Metrics.ConfigureEventCounterAdapter()`
 
 There are different types of event counters published via this mechanism:
 
-.| NET event counter type | Mapping to Prometheus metrics                                        |
- |------------------------|----------------------------------------------------------------------|
- | Aggregating counter    | Gauge representing latest value (e.g. requests per second)       |
- | Incrementing counter   | Gauge representing latest value AND counter representing total value |
+| NET event counter type | Mapping to Prometheus metrics                                        |
+|------------------------|----------------------------------------------------------------------|
+| Aggregating counter    | Gauge representing latest value (e.g. requests per second)           |
+| Incrementing counter   | Gauge representing latest value AND counter representing total value |
 
 The reason for having both a gauge and counter for incrementing counters is that event counters are used quite inconsistently in .NET:
 
@@ -771,7 +771,7 @@ In fact, even some "aggregating" event counters can just be a plain event counte
 # .NET Meters integration
 
 > **Note**
-> The output produced by this integration has changed significantly between prometheus-net 6.0 and 7.0.
+> The output produced by this integration has changed significantly between prometheus-net 6.0 and prometheus-net 7.0. The old output format is no longer supported.
 
 [.NET provides the Meters mechanism for reporting diagnostic metrics](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/metrics). This library publishes all .NET Meters API data by default. To suppress this, see [Suppressing default metrics](#suppressing-default-metrics).
 
