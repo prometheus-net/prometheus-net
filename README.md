@@ -79,17 +79,17 @@ Console.ReadLine();
 
 Refer to the sample projects for quick start instructions:
 
-| Name                                                                    | Description                                                                                                           |
-|-------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| [Sample.Web](Sample.Web/Program.cs)                                     | ASP.NET Core application that produces custom metrics and uses multiple integrations to publish built-in metrics      |
-| [Sample.Console](Sample.Console/Program.cs)                             | .NET console application that exports custom metrics.                                                                 |
-| [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs)   | Demonstrates how to [publish custom metrics via the .NET Meters API](#net-meters-integration)                        |
-| [Sample.Console.NetFramework](Sample.Console.NetFramework/Program.cs)   | Same as above but targeting .NET Framework.                                                                           |
-| [Sample.Grpc](Sample.Grpc/Program.cs)                                   | ASP.NET Core application that publishes a gRPC service                                                                |
-| [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                     | Client app for the above                                                                                              |
-| [Sample.Web.DifferentPort](Sample.Web.DifferentPort/Program.cs)         | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
-| [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs)   | Demonstrates how to use [automatic metric unpublishing](#unpublishing-metrics)                                        |
-| [Sample.Web.NetFramework](Sample.Web.NetFramework/Global.asax.cs)       | .NET Framework web app that publishes custom metrics                                                                  |
+| Name                                                                  | Description                                                                                                           |
+|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| [Sample.Web](Sample.Web/Program.cs)                                   | ASP.NET Core application that produces custom metrics and uses multiple integrations to publish built-in metrics      |
+| [Sample.Console](Sample.Console/Program.cs)                           | .NET console application that exports custom metrics.                                                                 |
+| [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs) | Demonstrates how to [publish custom metrics via the .NET Meters API](#net-meters-integration)                         |
+| [Sample.Console.NetFramework](Sample.Console.NetFramework/Program.cs) | Same as above but targeting .NET Framework.                                                                           |
+| [Sample.Grpc](Sample.Grpc/Program.cs)                                 | ASP.NET Core application that publishes a gRPC service                                                                |
+| [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                   | Client app for the above                                                                                              |
+| [Sample.Web.DifferentPort](Sample.Web.DifferentPort/Program.cs)       | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
+| [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs) | Demonstrates how to use [automatic metric unpublishing](#unpublishing-metrics)                                        |
+| [Sample.Web.NetFramework](Sample.Web.NetFramework/Global.asax.cs)     | .NET Framework web app that publishes custom metrics                                                                  |
 
 The rest of this document describes how to use individual features of the library.
 
@@ -749,16 +749,19 @@ The level of detail obtained from this is rather low - only the total count for 
 
 You can configure the integration using `Metrics.ConfigureEventCounterAdapter()`.
 
-.NET event counters are exported as Prometheus metrics, indicating the name of the event source and both names of the event counter itself:
+There are different types of event counters published via this mechanism:
 
-```
-dotnet_gauge{source="System.Runtime",name="active-timer-count",display_name="Number of Active Timers"} 11
-dotnet_gauge{source="System.Runtime",name="threadpool-thread-count",display_name="ThreadPool Thread Count"} 13
-dotnet_counter{source="System.Runtime",name="threadpool-completed-items-count",display_name="ThreadPool Completed Work Item Count"} 117
-dotnet_counter{source="System.Runtime",name="gen-0-gc-count",display_name="Gen 0 GC Count"} 2
-```
+.| NET event counter type | Mapping to Prometheus metrics                                        |
+ |------------------------|----------------------------------------------------------------------|
+ | Aggregating counter    | Gauge representing value per second (e.g. requests per second)       |
+ | Incrementing counter   | Gauge representing latest value AND counter representing total value |
 
-Aggregrating EventCounters are exposed as Prometheus gauges representing the mean rate per second. Incrementing EventCounters are exposed as Prometheus counters representing the total (sum of all increments).
+The reason for having both a gauge and counter for incrementing counters is that these counters are used inconsistently in .NET:
+
+* Some are just gauges, indicating the current value (e.g. `system_runtime_alloc_rate` - bytes per second)
+* Some are counters that publish the increment since the last observation (+5) (e.g. `system_runtime_time_in_jit` - milliseconds per second)
+
+It is not possible for the adapter to know what the author of each event counter intended, so it is left up to the user of the metrics to identify whether the gauge or counter is the correct representation.
 
 See also, [Sample.Console.EventCounters](Sample.Console.EventCounters/Program.cs).
 

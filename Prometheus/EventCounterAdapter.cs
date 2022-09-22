@@ -1,15 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
 
 namespace Prometheus
 {
     /// <summary>
-    /// Monitors all .NET EventCounters and exposes them as Prometheus counters and gauges.
+    /// Monitors all .NET EventCounters and exposes them as Prometheus metrics.
     /// </summary>
     /// <remarks>
-    /// Rate-based .NET event counters are transformed into Prometheus gauges indicating count per escond.
-    /// Incrementing .NET event counters are transformed into Prometheus counters.
+    /// All .NET event counters are transformed into Prometheus metrics with translated names.
+    /// 
+    /// There appear to be different types of "incrementing" counters in .NET:
+    /// * some "incrementing" counters publish the increment value ("+5")
+    /// * some "incrementing" counters are just gauges that publish a "current" value
+    /// 
+    /// It is not possible for us to really determine which is which, so for incrementing event counters we publish both a gauge (with latest value) and counter (with total value).
+    /// Which one you use for which .NET event counter depends on how the authors of the event counter made it - one of them will be wrong!
     /// </remarks>
     public sealed class EventCounterAdapter : IDisposable
     {
@@ -22,15 +27,6 @@ namespace Prometheus
             _options = options;
             _metricFactory = Metrics.WithCustomRegistry(_options.Registry);
 
-            _gauge = _metricFactory.CreateGauge("dotnet_gauge", "Values from .NET aggregating EventCounters (count per second).", new GaugeConfiguration
-            {
-                LabelNames = new[] { "source", "name", "display_name" }
-            });
-            _counter = _metricFactory.CreateCounter("dotnet_counter", "Values from .NET incrementing EventCounters.", new CounterConfiguration
-            {
-                LabelNames = new[] { "source", "name", "display_name" }
-            });
-
             _listener = new Listener(OnEventSourceCreated, OnEventWritten);
         }
 
@@ -42,11 +38,6 @@ namespace Prometheus
 
         private readonly EventCounterAdapterOptions _options;
         private readonly IMetricFactory _metricFactory;
-
-        // Each event counter is published either in gauge or counter form,
-        // depending on the type of the native .NET event counter (incrementing or aggregating).,
-        private readonly Gauge _gauge;
-        private readonly Counter _counter;
 
         private readonly Listener _listener;
 
@@ -86,9 +77,12 @@ namespace Prometheus
 
                 var displayName = displayNameWrapper as string ?? "";
 
+                var mergedName = $"{eventSourceName}_{name}";
+                var prometheusName = _counterPrometheusName.GetOrAdd(mergedName, PrometheusNameHelpers.TranslateNameToPrometheusName);
+
                 // The event counter can either be
                 // 1) an aggregating counter (in which case we use the mean); or
-                // 2) an incrementing counter (in which case we use the delta).
+                // 2) an incrementing counter (in which case we use the delta, which might not actually be the delta).
 
                 if (e.TryGetValue("Increment", out var increment))
                 {
@@ -99,7 +93,10 @@ namespace Prometheus
                     if (value == null)
                         continue; // What? Whatever.
 
-                    _counter.WithLabels(eventSourceName, name, displayName).Inc(value.Value);
+                    // It seems there exist "incrementing" event counters that behave as both counters and gauges.
+                    // We must leave it up to the user to figure out which event counter is which.
+                    _metricFactory.CreateGauge(prometheusName, displayName).Set(value.Value);
+                    _metricFactory.CreateCounter(prometheusName + "_total", displayName).Inc(value.Value);
                 }
                 else if (e.TryGetValue("Mean", out var mean))
                 {
@@ -110,14 +107,13 @@ namespace Prometheus
                     if (value == null)
                         continue; // What? Whatever.
 
-                    _gauge.WithLabels(eventSourceName, name, displayName).Set(value.Value);
-                }
-                else
-                {
-                    Thread.Sleep(0);
+                    _metricFactory.CreateGauge(prometheusName, displayName).Set(value.Value);
                 }
             }
         }
+
+        // Source+Name -> Name
+        private readonly ConcurrentDictionary<string, string> _counterPrometheusName = new();
 
         private sealed class Listener : EventListener
         {
