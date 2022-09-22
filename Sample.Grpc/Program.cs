@@ -27,9 +27,11 @@ app.UseEndpoints(endpoints =>
     // Open http://localhost:xxxx/metrics to see the metrics.
     //
     // Metrics published in this sample:
-    // * built-in process metrics giving basic information about the .NET runtime.
-    // * metrics about HTTP requests handled by the web app.
-    // * metrics about gRPC requests handled by the web app.
+    // * built-in process metrics giving basic information about the .NET runtime (enabled by default)
+    // * metrics from .NET Event Counters (enabled by default)
+    // * metrics from .NET Meters (enabled by default)
+    // * metrics about HTTP requests handled by the web app (configured above)
+    // * metrics about gRPC requests handled by the web app (configured above)
     app.MapMetrics();
 });
 

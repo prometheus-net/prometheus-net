@@ -19,7 +19,7 @@ namespace Sample.Web.NetFramework
             // Open http://localhost:xxxx/metrics to see the metrics.
             //
             // Metrics published in this sample:
-            // * built-in process metrics giving basic information about the .NET runtime.
+            // * built-in process metrics giving basic information about the .NET runtime (enabled by default)
             AspNetMetricServer.RegisterRoutes(GlobalConfiguration.Configuration);
 
             AreaRegistration.RegisterAllAreas();

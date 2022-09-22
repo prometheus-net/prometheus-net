@@ -3,9 +3,8 @@
     /// <summary>
     /// Static class for easy creation of metrics. Acts as the entry point to the prometheus-net metrics recording API.
     /// 
-    /// Some built-in metrics are registered by default in the default collector registry. This is mainly to ensure that
-    /// the library exports some metrics when installed. If these default metrics are not desired, call
-    /// <see cref="SuppressDefaultMetrics"/> to remove them before registering your own.
+    /// Some built-in metrics are registered by default in the default collector registry. If these default metrics are
+    /// not desired, call <see cref="SuppressDefaultMetrics()"/> to remove them before registering your own.
     /// </summary>
     public static class Metrics
     {
@@ -95,12 +94,9 @@
         static Metrics()
         {
             DefaultRegistry = new CollectorRegistry();
-            DefaultRegistry.SetBeforeFirstCollectCallback(delegate
-            {
-                // We include some metrics by default, just to give some output when a user first uses the library.
-                // These are not designed to be super meaningful/useful metrics.
-                DotNetStats.Register(DefaultRegistry);
-            });
+
+            // Configures defaults to their default behaviors, can be overridden by user if they desire (before first collection).
+            SuppressDefaultMetrics(SuppressDefaultMetricOptions.SuppressNone);
 
             _defaultFactory = new MetricFactory(DefaultRegistry);
         }
@@ -109,10 +105,44 @@
         /// Suppresses the registration of the default sample metrics from the default registry.
         /// Has no effect if not called on startup (it will not remove metrics from a registry already in use).
         /// </summary>
-        public static void SuppressDefaultMetrics()
+        public static void SuppressDefaultMetrics() => SuppressDefaultMetrics(SuppressDefaultMetricOptions.SuppressAll);
+
+        /// <summary>
+        /// Suppresses the registration of the default sample metrics from the default registry.
+        /// Has no effect if not called on startup (it will not remove metrics from a registry already in use).
+        /// </summary>
+        public static void SuppressDefaultMetrics(SuppressDefaultMetricOptions options)
         {
-            // Only has effect if called before the registry is collected from.
-            DefaultRegistry.SetBeforeFirstCollectCallback(delegate { });
+            options ??= SuppressDefaultMetricOptions.SuppressAll;
+
+            // Only has effect if called before the registry is collected from. Otherwise a no-op.
+            DefaultRegistry.SetBeforeFirstCollectCallback(delegate
+            {
+                var configureCallbacks = new SuppressDefaultMetricOptions.ConfigurationCallbacks()
+                {
+#if NET6_0_OR_GREATER
+                    ConfigureEventCounterAdapter = _configureEventCounterAdapterCallback,
+                    ConfigureMeterAdapter = _configureMeterAdapterOptions
+#endif
+                };
+
+                options.Configure(DefaultRegistry, configureCallbacks);
+            });
         }
+
+#if NET6_0_OR_GREATER
+        private static Action<EventCounterAdapterOptions> _configureEventCounterAdapterCallback = delegate { };
+        private static Action<MeterAdapterOptions> _configureMeterAdapterOptions = delegate { };
+
+        /// <summary>
+        /// Configures the event counter adapter that is enabled by default on startup.
+        /// </summary>
+        public static void ConfigureEventCounterAdapter(Action<EventCounterAdapterOptions> callback) => _configureEventCounterAdapterCallback = callback;
+
+        /// <summary>
+        /// Configures the meter adapter that is enabled by default on startup.
+        /// </summary>
+        public static void ConfigureMeterAdapter(Action<MeterAdapterOptions> callback) => _configureMeterAdapterOptions = callback;
+#endif
     }
 }

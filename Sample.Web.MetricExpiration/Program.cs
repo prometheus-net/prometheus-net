@@ -110,7 +110,8 @@ app.UseEndpoints(endpoints =>
     // Open http://localhost:xxxx/metrics to see the metrics.
     //
     // Metrics published in this sample:
-    // * metrics about requests handled by the web app
+    // * metrics about requests handled by the web app (configured above)
+    // * custom metrics about long-running operations, defined above
     //
     // To try out the expiration feature, navigate to different pages of the app (e.g. between Home and Privacy) and
     // observe how the metrics for accessed URLs disappear a minute after the URL was last used.

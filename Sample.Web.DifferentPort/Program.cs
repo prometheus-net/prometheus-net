@@ -15,8 +15,10 @@ builder.Services.AddRazorPages();
 // Open http://localhost:1234/metrics to see the metrics.
 //
 // Metrics published:
-// * built-in process metrics giving basic information about the .NET runtime.
-// * metrics about requests handled by the web app
+// * built-in process metrics giving basic information about the .NET runtime (enabled by default)
+// * metrics from .NET Event Counters (enabled by default)
+// * metrics from .NET Meters (enabled by default)
+// * metrics about requests handled by the web app (configured below)
 builder.Services.AddHostedService<MetricsExporterService>();
 
 var app = builder.Build();

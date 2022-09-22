@@ -14,8 +14,8 @@ The library targets the following runtimes (and newer):
 # Table of contents
 
 * [Best practices and usage](#best-practices-and-usage)
-* [Installation](#installation)
 * [Quick start](#quick-start)
+* [Installation](#installation)
 * [Counters](#counters)
 * [Gauges](#gauges)
 * [Summary](#summary)
@@ -58,28 +58,6 @@ Four types of metrics are available: Counter, Gauge, Summary and Histogram. See 
 
 More complex patterns may also be used (e.g. combining with dependency injection). The library is quite tolerant of different usage models - if the API allows it, it will generally work fine and provide satisfactory performance. The library is thread-safe.
 
-# Installation
-
-Nuget package for general use and metrics export via HttpListener or to Pushgateway: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
-
->Install-Package prometheus-net
-
-Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server: [prometheus-net.AspNetCore](https://www.nuget.org/packages/prometheus-net.AspNetCore)
-
->Install-Package prometheus-net.AspNetCore
-
-Nuget package for ASP.NET Core Health Check integration: [prometheus-net.AspNetCore.HealthChecks](https://www.nuget.org/packages/prometheus-net.AspNetCore.HealthChecks)
-
->Install-Package prometheus-net.AspNetCore.HealthChecks
-
-Nuget package for ASP.NET Core gRPC integration: [prometheus-net.AspNetCore.Grpc](https://www.nuget.org/packages/prometheus-net.AspNetCore.Grpc)
-
->Install-Package prometheus-net.AspNetCore.Grpc
-
-Nuget package for ASP.NET Web API middleware on .NET Framework: [prometheus-net.NetFramework.AspNet](https://www.nuget.org/packages/prometheus-net.NetFramework.AspNet)
-
->Install-Package prometheus-net.NetFramework.AspNet
-
 # Quick start
 
 After installing the library, you should:
@@ -105,8 +83,7 @@ Refer to the sample projects for quick start instructions:
 |-------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | [Sample.Web](Sample.Web/Program.cs)                                     | ASP.NET Core application that produces custom metrics and uses multiple integrations to publish built-in metrics      |
 | [Sample.Console](Sample.Console/Program.cs)                             | .NET console application that exports custom metrics.                                                                 |
-| [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs)   | Demonstrates how to [publish metrics exposed via the .NET Meters API](#net-meters-integration)                        |
-| [Sample.Console.EventCounters](Sample.Console.EventCounters/Program.cs) | Demonstrates how to [publish metrics exposed via .NET event counters](#eventcounter-integration)                      |
+| [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs)   | Demonstrates how to [publish custom metrics via the .NET Meters API](#net-meters-integration)                        |
 | [Sample.Console.NetFramework](Sample.Console.NetFramework/Program.cs)   | Same as above but targeting .NET Framework.                                                                           |
 | [Sample.Grpc](Sample.Grpc/Program.cs)                                   | ASP.NET Core application that publishes a gRPC service                                                                |
 | [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                     | Client app for the above                                                                                              |
@@ -115,6 +92,28 @@ Refer to the sample projects for quick start instructions:
 | [Sample.Web.NetFramework](Sample.Web.NetFramework/Global.asax.cs)       | .NET Framework web app that publishes custom metrics                                                                  |
 
 The rest of this document describes how to use individual features of the library.
+
+# Installation
+
+Nuget package for general use and metrics export via HttpListener or to Pushgateway: [prometheus-net](https://www.nuget.org/packages/prometheus-net)
+
+>Install-Package prometheus-net
+
+Nuget package for ASP.NET Core middleware and stand-alone Kestrel metrics server: [prometheus-net.AspNetCore](https://www.nuget.org/packages/prometheus-net.AspNetCore)
+
+>Install-Package prometheus-net.AspNetCore
+
+Nuget package for ASP.NET Core Health Check integration: [prometheus-net.AspNetCore.HealthChecks](https://www.nuget.org/packages/prometheus-net.AspNetCore.HealthChecks)
+
+>Install-Package prometheus-net.AspNetCore.HealthChecks
+
+Nuget package for ASP.NET Core gRPC integration: [prometheus-net.AspNetCore.Grpc](https://www.nuget.org/packages/prometheus-net.AspNetCore.Grpc)
+
+>Install-Package prometheus-net.AspNetCore.Grpc
+
+Nuget package for ASP.NET Web API middleware on .NET Framework: [prometheus-net.NetFramework.AspNet](https://www.nuget.org/packages/prometheus-net.NetFramework.AspNet)
+
+>Install-Package prometheus-net.NetFramework.AspNet
 
 # Counters
 
@@ -719,7 +718,7 @@ Metrics.DefaultRegistry.AddBeforeCollectCallback(async (cancel) =>
 
 # Suppressing default metrics
 
-The library provides some sample metrics about the current process out of the box, simply to ensure that some output is produced in a default configuration. If these metrics are not desirable you may remove them by calling `Metrics.SuppressDefaultMetrics()` before registering any of your own metrics.
+The library enables various default metrics and integrations by default. If these default metrics are not desirable you may remove them by calling `Metrics.SuppressDefaultMetrics()` before registering any of your own metrics.
 
 # DiagnosticSource integration
 
@@ -746,17 +745,9 @@ The level of detail obtained from this is rather low - only the total count for 
 
 # EventCounter integration
 
-[.NET Core provides the EventCounter mechanism for reporting diagnostic events](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/event-counters), used used widely by .NET and ASP.NET Core classes. To expose these counters as Prometheus metrics, you can use the `EventCounterAdapter` class:
+[.NET Core provides the EventCounter mechanism for reporting diagnostic events](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/event-counters), used used widely by .NET and ASP.NET Core classes. This library publishes all .NET EventCounter data by default. To suppress this, see [Suppressing default metrics](#suppressing-default-metrics).
 
-```csharp
-// An optional "options" parameter is available to customize adapter behavior.
-var registration = EventCounterAdapter.StartListening();
-
-...
-
-// Stops listening for EventCounter events.
-registration.Dispose();
-```
+You can configure the integration using `Metrics.ConfigureEventCounterAdapter()`.
 
 .NET event counters are exported as Prometheus metrics, indicating the name of the event source and both names of the event counter itself:
 
@@ -773,12 +764,9 @@ See also, [Sample.Console.EventCounters](Sample.Console.EventCounters/Program.cs
 
 # .NET Meters integration
 
-[.NET provides the Meters mechanism for reporting diagnostic metrics](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/metrics). To expose these meters as Prometheus metrics, you can use the `MeterAdapter` class:
+[.NET provides the Meters mechanism for reporting diagnostic metrics](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/metrics). This library publishes all .NET Meters API data by default. To suppress this, see [Suppressing default metrics](#suppressing-default-metrics).
 
-```csharp
-// An optional "options" parameter is available to customize adapter behavior.
-MeterAdapter.StartListening();
-```
+You can configure the integration using `Metrics.ConfigureMeterAdapter()`.
 
 See also, [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs).
 

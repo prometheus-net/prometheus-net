@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics.Metrics;
 
-namespace Sample.Console.DotNetMeters;
-
 /// <summary>
 /// Sample custom metrics exported via the .NET Meters API.
 /// </summary>

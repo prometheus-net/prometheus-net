@@ -112,6 +112,10 @@ namespace Prometheus
 
                     _gauge.WithLabels(eventSourceName, name, displayName).Set(value.Value);
                 }
+                else
+                {
+                    Thread.Sleep(0);
+                }
             }
         }
 

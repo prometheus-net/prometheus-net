@@ -24,8 +24,10 @@ _ = Task.Run(async delegate
 });
 
 // Metrics published in this sample:
-// * built-in process metrics giving basic information about the .NET runtime.
-// * the sample counter defined above.
+// * built-in process metrics giving basic information about the .NET runtime (enabled by default)
+// * metrics from .NET Event Counters (enabled by default)
+// * metrics from .NET Meters (enabled by default)
+// * the custom sample counter defined above
 Console.WriteLine("Open http://localhost:1234/metrics in a web browser.");
 Console.WriteLine("Press enter to exit.");
 Console.ReadLine();

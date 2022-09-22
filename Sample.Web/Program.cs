@@ -46,10 +46,12 @@ app.UseEndpoints(endpoints =>
     // Open http://localhost:xxxx/metrics to see the metrics.
     //
     // Metrics published in this sample:
-    // * built-in process metrics giving basic information about the .NET runtime.
-    // * metrics about requests made by registered HTTP clients (used in SampleService)
-    // * metrics about requests handled by the web app
-    // * ASP.NET health check statuses
+    // * built-in process metrics giving basic information about the .NET runtime (enabled by default)
+    // * metrics from .NET Event Counters (enabled by default)
+    // * metrics from .NET Meters (enabled by default)
+    // * metrics about requests made by registered HTTP clients used in SampleService (configured above)
+    // * metrics about requests handled by the web app (configured above)
+    // * ASP.NET health check statuses (configured above)
     // * custom business logic metrics published by the SampleService class
     endpoints.MapMetrics();
 });

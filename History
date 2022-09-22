@@ -5,6 +5,7 @@
 - Added automatic metric expiration feature, to remove timeseries when they are no longer used after a while. This improves interoperability with other metrics technologies such as .NET Meters.
 - (Breaking change) Rewrite of the MeterAdapter functionality to bridge .NET 6 metrics to Prometheus. API remains equivalent, though options class changed. Output format (what metrics are published) is completely different. Now it translates metric names (instead of putting them in labels) and preserves tags (labels) provided via the .NET Meters API. Added sample project to demonstrate functionality. Ref #359
 - (Breaking change) Dropped support for .NET Standard 2.0 - now will target specifically .NET 6.0 and .NET Framework 4.6.2. This was already documented before but there was "unofficial" support also for .NET Standard remaining. This is now removed.
+- EventCounterAdapter and MeterAdapter are now enabled on startup by default.
 * 6.0.0
 - Dropped library support for unsupported .NET runtime versions (.NET 2.1).
 - If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics, unless there is a user-defined label already present with this name.
