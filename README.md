@@ -745,6 +745,9 @@ The level of detail obtained from this is rather low - only the total count for 
 
 # EventCounter integration
 
+> **Note**
+> The output produced by this integration has changed significantly between prometheus-net 6.0 and 7.0.
+
 [.NET Core provides the EventCounter mechanism for reporting diagnostic events](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/event-counters), used used widely by .NET and ASP.NET Core classes. This library publishes all .NET EventCounter data by default. To suppress this, see [Suppressing default metrics](#suppressing-default-metrics).
 
 You can configure the integration using `Metrics.ConfigureEventCounterAdapter()`.
@@ -766,6 +769,9 @@ It is not possible for the adapter to know what the author of each event counter
 In fact, even some "aggregating" event counters can just be a plain event counter with no aggregation (e.g. `microsoft_aspnetcore_hosting_total_requests`).
 
 # .NET Meters integration
+
+> **Note**
+> The output produced by this integration has changed significantly between prometheus-net 6.0 and 7.0.
 
 [.NET provides the Meters mechanism for reporting diagnostic metrics](https://docs.microsoft.com/en-us/dotnet/core/diagnostics/metrics). This library publishes all .NET Meters API data by default. To suppress this, see [Suppressing default metrics](#suppressing-default-metrics).
 
