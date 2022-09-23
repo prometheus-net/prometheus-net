@@ -25,7 +25,3 @@ scrape_configs:
       # Sample.Web.MetricExpiration
       - $HOST_IP:5283
       # Not supported: Sample.Web.NetFramework because IIS Express is localhost-only.
-    metric_relabel_configs:
-    - source_labels: [ 'instance' ]
-      target_label: instance
-      replacement: $COMPUTERNAME
