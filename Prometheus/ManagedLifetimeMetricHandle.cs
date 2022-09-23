@@ -100,6 +100,14 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
                             // Unpublish after the timer expires.
                             lock (_lock)
                             {
+                                // It could be that something actually got a lease between the timer expiring and us getting here.
+                                if (_leaseCount != 0)
+                                    return;
+
+                                // This is pretty unlikely but it does not hurt to be safe.
+                                if (_unpublished)
+                                    return;
+
                                 _unpublished = true;
                             }
 
