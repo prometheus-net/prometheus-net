@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
 		<TargetFrameworks>net6.0</TargetFrameworks>
@@ -8,6 +8,12 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
+		<!--
+		Wait, what? This is not a .NET Standard library. True, true - however, there exist other libraries
+		that reference prometheus-net types living in Prometheus.NetStandard. To avoid breaking those libraries, we
+		preserve here the old name of the assembly even though it is no longer a .NET Standard assembly.
+		-->
+		<AssemblyName>Prometheus.NetStandard</AssemblyName>
 		<RootNamespace>Prometheus</RootNamespace>
 
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
