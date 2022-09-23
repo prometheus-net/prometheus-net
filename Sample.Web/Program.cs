@@ -43,7 +43,7 @@ app.MapRazorPages();
 app.UseEndpoints(endpoints =>
 {
     // Enable the /metrics page to export Prometheus metrics.
-    // Open http://localhost:xxxx/metrics to see the metrics.
+    // Open http://localhost:5099/metrics to see the metrics.
     //
     // Metrics published in this sample:
     // * built-in process metrics giving basic information about the .NET runtime (enabled by default)

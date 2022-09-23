@@ -107,7 +107,7 @@ app.MapRazorPages();
 app.UseEndpoints(endpoints =>
 {
     // Enable the /metrics page to export Prometheus metrics.
-    // Open http://localhost:xxxx/metrics to see the metrics.
+    // Open http://localhost:5283/metrics to see the metrics.
     //
     // Metrics published in this sample:
     // * metrics about requests handled by the web app (configured above)

@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 // Start the metrics exporter as a background service.
+// Open http://localhost:5167 to see the web app.
 // Open http://localhost:1234/metrics to see the metrics.
 //
 // Metrics published:
