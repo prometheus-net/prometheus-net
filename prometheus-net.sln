@@ -39,8 +39,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web", "Sample.Web\Sa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Grpc", "Sample.Grpc\Sample.Grpc.csproj", "{0A53812C-89AD-40E7-9A8C-52C82DD433AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web.NetFramework", "Sample.Web.NetFramework\Sample.Web.NetFramework.csproj", "{98245C82-F328-48F9-9EB5-504DD80C3782}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.NetFramework", "Sample.Console.NetFramework\Sample.Console.NetFramework.csproj", "{E4D772AF-BFA0-4EA9-AE3C-C7326A42F1E5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web.DifferentPort", "Sample.Web.DifferentPort\Sample.Web.DifferentPort.csproj", "{1E0B26AD-3CA0-495A-9F47-C8497D641F7D}"
@@ -51,7 +49,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Web.MetricExpiration
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Console.DotNetMeters", "Sample.Console.DotNetMeters\Sample.Console.DotNetMeters.csproj", "{1287EBE0-0EF2-4283-9AF9-747AD4D77F6B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prometheus", "Prometheus\Prometheus.csproj", "{E585417C-F7DD-4D8C-A0C5-D4B79594634A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus", "Prometheus\Prometheus.csproj", "{E585417C-F7DD-4D8C-A0C5-D4B79594634A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web.NetFramework", "Sample.Web.NetFramework\Sample.Web.NetFramework.csproj", "{35C90741-497A-465C-A018-633FAD414D0D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -117,10 +117,6 @@ Global
 		{0A53812C-89AD-40E7-9A8C-52C82DD433AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A53812C-89AD-40E7-9A8C-52C82DD433AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A53812C-89AD-40E7-9A8C-52C82DD433AC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{98245C82-F328-48F9-9EB5-504DD80C3782}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{98245C82-F328-48F9-9EB5-504DD80C3782}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{98245C82-F328-48F9-9EB5-504DD80C3782}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{98245C82-F328-48F9-9EB5-504DD80C3782}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E4D772AF-BFA0-4EA9-AE3C-C7326A42F1E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E4D772AF-BFA0-4EA9-AE3C-C7326A42F1E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4D772AF-BFA0-4EA9-AE3C-C7326A42F1E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -145,6 +141,10 @@ Global
 		{E585417C-F7DD-4D8C-A0C5-D4B79594634A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E585417C-F7DD-4D8C-A0C5-D4B79594634A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E585417C-F7DD-4D8C-A0C5-D4B79594634A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35C90741-497A-465C-A018-633FAD414D0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35C90741-497A-465C-A018-633FAD414D0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35C90741-497A-465C-A018-633FAD414D0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35C90741-497A-465C-A018-633FAD414D0D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
