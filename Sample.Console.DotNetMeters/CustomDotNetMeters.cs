@@ -65,7 +65,7 @@ public static class CustomDotNetMeters
                 if (Random.Shared.Next(10) == 0)
                     counter1.Add(1, new KeyValuePair<string, object?>("wing-type", "SlaxxWing 1.0"), new KeyValuePair<string, object?>("wing-version", "beta"));
 
-                histogram1.Record((byte)(Random.Shared.Next(256)), new KeyValuePair<string, object?>("is-holy", true));
+                histogram1.Record((byte)(Random.Shared.Next(256)), new KeyValuePair<string, object?>("is-faulted", true));
 
                 // .NET 7: upDown1.Add(Random.Shared.Next(-1, 2));
 

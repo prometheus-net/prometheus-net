@@ -19,7 +19,7 @@ public sealed class MeterAdapter : IDisposable
         _options = options;
 
         _registry = options.Registry;
-        _factory = Metrics.WithCustomRegistry(_options.Registry)
+        _factory = (ManagedLifetimeMetricFactory)Metrics.WithCustomRegistry(_options.Registry)
             .WithManagedLifetime(expiresAfter: options.MetricsExpireAfter);
 
         _listener.InstrumentPublished = OnInstrumentPublished;
@@ -49,7 +49,7 @@ public sealed class MeterAdapter : IDisposable
     private readonly MeterAdapterOptions _options;
 
     private readonly CollectorRegistry _registry;
-    private readonly IManagedLifetimeMetricFactory _factory;
+    private readonly ManagedLifetimeMetricFactory _factory;
 
     private readonly MeterListener _listener = new MeterListener();
 
@@ -90,8 +90,15 @@ public sealed class MeterAdapter : IDisposable
 
         try
         {
-            var labelNames = TagsToLabelNames(tags);
-            var labelValues = TagsToLabelValues(tags);
+            var labelNameCandidates = TagsToLabelNames(tags);
+            var labelValueCandidates = TagsToLabelValues(tags);
+
+            var inheritedLabelNames = _factory.GetLabelNames();
+
+            // NOTE: As we accept random input from external code here, there is no guarantee that the labels in this code do not conflict with existing static labels.
+            // We must therefore take explicit action here to prevent conflict (as prometheus-net will detect and fault on such conflicts). We do this by inspecting
+            // the internals of the factory to identify conflicts with any static labels, and remove those lables from the Meters API data point (static overrides dynamic).
+            FilterLabelsToAvoidConflicts(labelNameCandidates, labelValueCandidates, inheritedLabelNames, out var labelNames, out var labelValues);
 
             var value = Convert.ToDouble(measurement);
 
@@ -173,6 +180,23 @@ public sealed class MeterAdapter : IDisposable
         }
     }
 
+    private static void FilterLabelsToAvoidConflicts(string[] nameCandidates, string[] valueCandidates, string[] namesToSkip, out string[] names, out string[] values)
+    {
+        var acceptedNames = new List<string>();
+        var acceptedValues = new List<string>();
+
+        for (int i = 0; i < nameCandidates.Length; i++)
+        {
+            if (namesToSkip.Contains(nameCandidates[i]))
+                continue;
+
+            acceptedNames.Add(nameCandidates[i]);
+            acceptedValues.Add(valueCandidates[i]);
+        }
+
+        names = acceptedNames.ToArray();
+        values = acceptedValues.ToArray();
+    }
 
     private void OnMeasurementsCompleted(Instrument instrument, object? state)
     {

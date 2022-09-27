@@ -12,6 +12,13 @@ Metrics.SuppressDefaultMetrics(new SuppressDefaultMetricOptions
     SuppressEventCounters = true
 });
 
+// Example of static labels that conflict with .NET Meters API labels ("Bytes considered" histogram).
+// Static labels overwrite values exported from the .NET Meters API, to resolve conflicting data.
+Metrics.DefaultRegistry.SetStaticLabels(new Dictionary<string, string>
+{
+    { "is_faulted", "false" }
+});
+
 // Start the metrics server on your preferred port number.
 using var server = new KestrelMetricServer(port: 1234);
 server.Start();

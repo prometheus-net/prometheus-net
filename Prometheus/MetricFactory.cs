@@ -134,6 +134,14 @@
             return new MetricFactory(_registry, newFactoryLabels);
         }
 
+        /// <summary>
+        /// Gets all the existing label names predefined either in the factory or in the registry.
+        /// </summary>
+        internal string[] GetLabelNames()
+        {
+            return (_factoryLabels ?? Labels.Empty).Names.Concat(_registry.StaticLabels.Select(x => x.Key)).ToArray();
+        }
+
         public IManagedLifetimeMetricFactory WithManagedLifetime(TimeSpan expiresAfter) =>
             new ManagedLifetimeMetricFactory(this, expiresAfter);
     }

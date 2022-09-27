@@ -4,7 +4,7 @@ namespace Prometheus
 {
     internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFactory
     {
-        public ManagedLifetimeMetricFactory(IMetricFactory inner, TimeSpan expiresAfter)
+        public ManagedLifetimeMetricFactory(MetricFactory inner, TimeSpan expiresAfter)
         {
             // .NET Framework requires the timer to fit in int.MaxValue and we will have hidden failures to expire if it does not.
             // For simplicity, let's just limit it to 1 day, which should be enough for anyone.
@@ -15,7 +15,7 @@ namespace Prometheus
             _expiresAfter = expiresAfter;
         }
 
-        private readonly IMetricFactory _inner;
+        private readonly MetricFactory _inner;
         private readonly TimeSpan _expiresAfter;
 
         public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, CounterConfiguration? configuration = null)
@@ -46,6 +46,11 @@ namespace Prometheus
             return _summaries.GetOrAdd(identity, initializer.CreateInstance);
         }
 
+        /// <summary>
+        /// Gets all the existing label names predefined either in the factory or in the registry.
+        /// </summary>
+        internal string[] GetLabelNames() => _inner.GetLabelNames();
+
         // We need to reuse existing instances of lifetime-managed metrics because the user might not want to cache it.
         // This somewhat duplicates the metric identity tracking logic in CollectorRegistry but this is intentional, as we really do need to do this work on two layers.
         // We never remove collectors from here as long as the factory is alive. The expectation is that there is not an unbounded set of label names, so this set is non-gigantic.
@@ -56,12 +61,12 @@ namespace Prometheus
 
         private struct CounterInitializer
         {
-            public readonly IMetricFactory Inner;
+            public readonly MetricFactory Inner;
             public readonly TimeSpan ExpiresAfter;
             public readonly string Help;
             public readonly CounterConfiguration? Configuration;
 
-            public CounterInitializer(IMetricFactory inner, TimeSpan expiresAfter, string help, CounterConfiguration? configuration)
+            public CounterInitializer(MetricFactory inner, TimeSpan expiresAfter, string help, CounterConfiguration? configuration)
             {
                 Inner = inner;
                 ExpiresAfter = expiresAfter;
@@ -78,12 +83,12 @@ namespace Prometheus
 
         private struct GaugeInitializer
         {
-            public readonly IMetricFactory Inner;
+            public readonly MetricFactory Inner;
             public readonly TimeSpan ExpiresAfter;
             public readonly string Help;
             public readonly GaugeConfiguration? Configuration;
 
-            public GaugeInitializer(IMetricFactory inner, TimeSpan expiresAfter, string help, GaugeConfiguration? configuration)
+            public GaugeInitializer(MetricFactory inner, TimeSpan expiresAfter, string help, GaugeConfiguration? configuration)
             {
                 Inner = inner;
                 ExpiresAfter = expiresAfter;
@@ -100,12 +105,12 @@ namespace Prometheus
 
         private struct HistogramInitializer
         {
-            public readonly IMetricFactory Inner;
+            public readonly MetricFactory Inner;
             public readonly TimeSpan ExpiresAfter;
             public readonly string Help;
             public readonly HistogramConfiguration? Configuration;
 
-            public HistogramInitializer(IMetricFactory inner, TimeSpan expiresAfter, string help, HistogramConfiguration? configuration)
+            public HistogramInitializer(MetricFactory inner, TimeSpan expiresAfter, string help, HistogramConfiguration? configuration)
             {
                 Inner = inner;
                 ExpiresAfter = expiresAfter;
@@ -122,12 +127,12 @@ namespace Prometheus
 
         private struct SummaryInitializer
         {
-            public readonly IMetricFactory Inner;
+            public readonly MetricFactory Inner;
             public readonly TimeSpan ExpiresAfter;
             public readonly string Help;
             public readonly SummaryConfiguration? Configuration;
 
-            public SummaryInitializer(IMetricFactory inner, TimeSpan expiresAfter, string help, SummaryConfiguration? configuration)
+            public SummaryInitializer(MetricFactory inner, TimeSpan expiresAfter, string help, SummaryConfiguration? configuration)
             {
                 Inner = inner;
                 ExpiresAfter = expiresAfter;
