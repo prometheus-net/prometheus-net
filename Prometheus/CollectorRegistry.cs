@@ -227,7 +227,6 @@ namespace Prometheus
                     _hasPerformedFirstCollect = true;
                     _beforeFirstCollectCallback?.Invoke();
                     _beforeFirstCollectCallback = null;
-                    StartCollectingRegistryMetrics();
                 }
             }
 
@@ -247,7 +246,7 @@ namespace Prometheus
         /// <summary>
         /// We collect some debug metrics from the registry itself to help indicate how many metrics we are publishing.
         /// </summary>
-        private void StartCollectingRegistryMetrics()
+        internal void StartCollectingRegistryMetrics()
         {
             var factory = Metrics.WithCustomRegistry(this);
 
@@ -264,6 +263,10 @@ namespace Prometheus
                 LabelNames = new[] { MetricTypeDebugLabel }
             });
 
+            _metricFamiliesPerType = new();
+            _metricInstancesPerType = new();
+            _metricTimeseriesPerType = new();
+
             foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
             {
                 var typeName = type.ToString().ToLowerInvariant();
@@ -279,12 +282,15 @@ namespace Prometheus
         private Gauge? _metricInstances;
         private Gauge? _metricTimeseries;
 
-        private Dictionary<MetricType, Gauge.Child> _metricFamiliesPerType = new();
-        private Dictionary<MetricType, Gauge.Child> _metricInstancesPerType = new();
-        private Dictionary<MetricType, Gauge.Child> _metricTimeseriesPerType = new();
+        private Dictionary<MetricType, Gauge.Child>? _metricFamiliesPerType;
+        private Dictionary<MetricType, Gauge.Child>? _metricInstancesPerType;
+        private Dictionary<MetricType, Gauge.Child>? _metricTimeseriesPerType;
 
         private void UpdateRegistryMetrics()
         {
+            if (_metricFamiliesPerType == null ||_metricInstancesPerType == null || _metricTimeseriesPerType == null)
+                return; // Debug metrics are not enabled.
+
             foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
             {
                 long families = 0;

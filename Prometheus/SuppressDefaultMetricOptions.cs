@@ -5,6 +5,7 @@
         internal static readonly SuppressDefaultMetricOptions SuppressAll = new()
         {
             SuppressProcessMetrics = true,
+            SuppressDebugMetrics = true,
 #if NET6_0_OR_GREATER
             SuppressEventCounters = true,
             SuppressMeters = true
@@ -14,6 +15,7 @@
         internal static readonly SuppressDefaultMetricOptions SuppressNone = new()
         {
             SuppressProcessMetrics = false,
+            SuppressDebugMetrics = false,
 #if NET6_0_OR_GREATER
             SuppressEventCounters = false,
             SuppressMeters = false
@@ -24,6 +26,11 @@
         /// Suppress the current-process-inspecting metrics (uptime, resource use, ...).
         /// </summary>
         public bool SuppressProcessMetrics { get; set; }
+
+        /// <summary>
+        /// Suppress metrics that prometheus-net uses to report debug information about itself (e.g. number of metrics exported).
+        /// </summary>
+        public bool SuppressDebugMetrics { get; set; }
 
 #if NET6_0_OR_GREATER
         /// <summary>
@@ -54,6 +61,9 @@
             // These are not designed to be super meaningful/useful metrics.
             if (!SuppressProcessMetrics)
                 DotNetStats.Register(registry);
+
+            if (!SuppressDebugMetrics)
+                registry.StartCollectingRegistryMetrics();
 
 #if NET6_0_OR_GREATER
             if (!SuppressEventCounters)
