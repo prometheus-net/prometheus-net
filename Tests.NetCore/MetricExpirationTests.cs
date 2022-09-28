@@ -46,7 +46,7 @@ namespace Prometheus.Tests
             using (var lease = counterHandle.AcquireLease(out var instance))
                 Assert.AreEqual(3, instance.Value);
 
-            Assert.AreEqual(3, counterHandle.WithExtendLifetimeOnUse().Unlabelled.Value);
+            // Cannot read value of auto-leasing metric, so we just check the other 2 saw all 3 writes.
         }
 
         [TestMethod]
