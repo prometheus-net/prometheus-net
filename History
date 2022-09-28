@@ -7,6 +7,7 @@
 - (Breaking change) Dropped support for .NET Standard 2.0 - now will target specifically .NET 6.0 and .NET Framework 4.6.2. This was already documented before but there was "unofficial" support also for .NET Standard remaining. This is now removed.
 - (Breaking change) EventCounterAdapter output format changed to translate counters to Prometheus metrics and to improve usability by publishing both counters and gauges from ambiguous event counters.
 - EventCounterAdapter and MeterAdapter are now enabled on startup by default.
+- Added some debug metrics to indicate the number of metric families, instances and timeseries being exported by prometheus-net.
 * 6.0.0
 - Dropped library support for unsupported .NET runtime versions (.NET 2.1).
 - If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics, unless there is a user-defined label already present with this name.
