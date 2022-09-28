@@ -69,7 +69,7 @@ namespace Prometheus
             return new Child(this, labels, flattenedLabels, publish);
         }
 
-        private protected override MetricType Type => MetricType.Summary;
+        internal override MetricType Type => MetricType.Summary;
 
         public sealed class Child : ChildBase, ISummary
         {
@@ -304,5 +304,8 @@ namespace Prometheus
 
         public void Publish() => Unlabelled.Publish();
         public void Unpublish() => Unlabelled.Unpublish();
+
+        // count + sum + objectives
+        internal override int TimeseriesCount => ChildCount * (2 + _objectives.Count);
     }
 }

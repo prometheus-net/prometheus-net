@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 
 namespace Prometheus
 {
@@ -226,6 +227,7 @@ namespace Prometheus
                     _hasPerformedFirstCollect = true;
                     _beforeFirstCollectCallback?.Invoke();
                     _beforeFirstCollectCallback = null;
+                    StartCollectingRegistryMetrics();
                 }
             }
 
@@ -234,10 +236,72 @@ namespace Prometheus
 
             await Task.WhenAll(_beforeCollectAsyncCallbacks.Select(callback => callback(cancel)));
 
+            UpdateRegistryMetrics();
+
             foreach (var collector in _collectors.Values)
                 await collector.CollectAndSerializeAsync(serializer, cancel);
 
             await serializer.FlushAsync(cancel);
+        }
+
+        /// <summary>
+        /// We collect some debug metrics from the registry itself to help indicate how many metrics we are publishing.
+        /// </summary>
+        private void StartCollectingRegistryMetrics()
+        {
+            var factory = Metrics.WithCustomRegistry(this);
+
+            _metricFamilies = factory.CreateGauge("prometheus_net_metric_families", "Number of metric families currently registered.", new GaugeConfiguration
+            {
+                LabelNames = new[] { MetricTypeDebugLabel }
+            });
+            _metricInstances = factory.CreateGauge("prometheus_net_metric_instances", "Number of metric instances currently registered across all metric families.", new GaugeConfiguration
+            {
+                LabelNames = new[] { MetricTypeDebugLabel }
+            });
+            _metricTimeseries = factory.CreateGauge("prometheus_net_metric_timeseries", "Number of metric timeseries currently generated from all metric instances.", new GaugeConfiguration
+            {
+                LabelNames = new[] { MetricTypeDebugLabel }
+            });
+
+            foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
+            {
+                var typeName = type.ToString().ToLowerInvariant();
+                _metricFamiliesPerType[type] = _metricFamilies.WithLabels(typeName);
+                _metricInstancesPerType[type] = _metricInstances.WithLabels(typeName);
+                _metricTimeseriesPerType[type] = _metricTimeseries.WithLabels(typeName);
+            }
+        }
+
+        private const string MetricTypeDebugLabel = "metric_type";
+
+        private Gauge? _metricFamilies;
+        private Gauge? _metricInstances;
+        private Gauge? _metricTimeseries;
+
+        private Dictionary<MetricType, Gauge.Child> _metricFamiliesPerType = new();
+        private Dictionary<MetricType, Gauge.Child> _metricInstancesPerType = new();
+        private Dictionary<MetricType, Gauge.Child> _metricTimeseriesPerType = new();
+
+        private void UpdateRegistryMetrics()
+        {
+            foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
+            {
+                long families = 0;
+                long instances = 0;
+                long timeseries = 0;
+
+                foreach (var collector in _collectors.Values.Where(c => c.Type == type))
+                {
+                    families++;
+                    instances += collector.ChildCount;
+                    timeseries += collector.TimeseriesCount;
+                }
+
+                _metricFamiliesPerType[type].Set(families);
+                _metricInstancesPerType[type].Set(instances);
+                _metricTimeseriesPerType[type].Set(timeseries);
+            }
         }
     }
 }

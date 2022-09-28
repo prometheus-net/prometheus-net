@@ -120,7 +120,7 @@ namespace Prometheus
             }
         }
 
-        private protected override MetricType Type => MetricType.Histogram;
+        internal override MetricType Type => MetricType.Histogram;
 
         public double Sum => Unlabelled.Sum;
         public long Count => Unlabelled.Count;
@@ -247,5 +247,8 @@ namespace Prometheus
 
             return buckets.ToArray();
         }
+
+        // sum + count + buckets
+        internal override int TimeseriesCount => ChildCount * (2 + _buckets.Length);
     }
 }

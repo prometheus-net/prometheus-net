@@ -70,6 +70,8 @@
         public void Publish() => Unlabelled.Publish();
         public void Unpublish() => Unlabelled.Unpublish();
 
-        private protected override MetricType Type => MetricType.Gauge;
+        internal override MetricType Type => MetricType.Gauge;
+
+        internal override int TimeseriesCount => ChildCount;
     }
 }

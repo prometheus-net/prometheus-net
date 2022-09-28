@@ -25,6 +25,11 @@ namespace Prometheus
         /// </summary>
         public string[] LabelNames { get; }
 
+        internal abstract MetricType Type { get; }
+
+        internal abstract int ChildCount { get; }
+        internal abstract int TimeseriesCount { get; }
+
         internal abstract Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel);
 
         // Used by ChildBase.Remove()
@@ -126,6 +131,8 @@ namespace Prometheus
             return new Lazy<TChild>(() => GetOrAddLabelled(Prometheus.Labels.Empty));
         }
 
+        internal override int ChildCount => _labelledMetrics.Count;
+
         /// <summary>
         /// Gets the instance-specific label values of all labelled instances of the collector.
         /// Values of any inherited static labels are not returned in the result.
@@ -188,8 +195,6 @@ namespace Prometheus
         /// Creates a new instance of the child collector type.
         /// </summary>
         private protected abstract TChild NewChild(Labels labels, Labels flattenedLabels, bool publish);
-
-        private protected abstract MetricType Type { get; }
 
         private readonly byte[][] _familyHeaderLines;
 
