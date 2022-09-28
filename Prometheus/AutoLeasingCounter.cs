@@ -2,6 +2,7 @@
 {
     /// <summary>
     /// A counter that automatically extends the lifetime of a lease-extended metric whenever it is used.
+    /// It only supports write operations because we cannot guarantee that the metric is still alive when reading.
     /// </summary>
     internal sealed class AutoLeasingCounter : ICollector<ICounter>
     {
@@ -18,34 +19,25 @@
         public string Help => _root.Help;
         public string[] LabelNames => _root.LabelNames;
 
-        public ICounter Unlabelled => new Instance(_inner, _root.Unlabelled, Array.Empty<string>());
+        public ICounter Unlabelled => new Instance(_inner, Array.Empty<string>());
 
         public ICounter WithLabels(params string[] labelValues)
         {
-            return new Instance(_inner, _root.WithLabels(labelValues), labelValues);
+            return new Instance(_inner, labelValues);
         }
 
         private sealed class Instance : ICounter
         {
-            public Instance(IManagedLifetimeMetricHandle<ICounter> inner, ICounter root, string[] labelValues)
+            public Instance(IManagedLifetimeMetricHandle<ICounter> inner, string[] labelValues)
             {
                 _inner = inner;
-                _root = root;
                 _labelValues = labelValues;
             }
 
             private readonly IManagedLifetimeMetricHandle<ICounter> _inner;
-            private readonly ICounter _root;
             private readonly string[] _labelValues;
 
-            public double Value
-            {
-                get
-                {
-                    // Read operations do not take a lease to extend lifetime.
-                    return _root.Value;
-                }
-            }
+            public double Value => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
 
             public void Inc(double increment = 1)
             {

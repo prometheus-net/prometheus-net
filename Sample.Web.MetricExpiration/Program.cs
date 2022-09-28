@@ -24,6 +24,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+Metrics.DefaultRegistry.SetStaticLabels(new Dictionary<string, string>
+{
+    { "key", "value" },
+    { "aaa", "aaaa" },
+    { "xxx_xxx", "xxx_xxx" }
+});
+
 // Use an auto-expiring variant for all the demo metrics here - they get automatically unpublished if not used in the last 60 seconds.
 var expiringMetricFactory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
 
@@ -42,7 +49,7 @@ _ = Task.Run(async delegate
 
     // Long-running 3 minute operation, which we track via the "in progress" gauge.
     using (inProgressInstance.TrackInProgress())
-        await Task.Delay(TimeSpan.FromMinutes(3));
+        await Task.Delay(TimeSpan.FromSeconds(30));
 
     // Just to let you know when to look at it.
     Console.WriteLine("Long-running operation has finished.");

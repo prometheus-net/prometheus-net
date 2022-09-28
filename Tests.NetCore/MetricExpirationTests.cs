@@ -176,31 +176,5 @@ namespace Prometheus.Tests
 
             Assert.AreEqual(1, delayer.CancelCount);
         }
-
-        [TestMethod]
-        public async Task AutoLeaseMetric_OnRead_DoesNotRefreshLease()
-        {
-            var handle = _expiringMetrics.CreateCounter(MetricName, "");
-
-            // We detect lease refresh by the existing delay being cancelled (and a new delay being made).
-            var delayer = new CancelDetectingDelayer();
-            ((ManagedLifetimeCounter)handle).Delayer = delayer;
-
-            // At the start, no expiration timer is running (it will only start with the first lease being released).
-
-            var counter = handle.WithExtendLifetimeOnUse();
-
-            // Acquires + releases first lease. Expiration timer starts.
-            counter.Unlabelled.Inc();
-            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to trigger any potential expiration timer reset.
-
-            Assert.AreEqual(0, delayer.CancelCount);
-
-            // Does not acquire a lease. No effect on lifetime. Expiration timer keeps ticking without cancellation.
-            var value = counter.Unlabelled.Value;
-            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to trigger any potential expiration timer reset.
-
-            Assert.AreEqual(0, delayer.CancelCount);
-        }
     }
 }

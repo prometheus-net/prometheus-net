@@ -2,6 +2,7 @@
 {
     /// <summary>
     /// A histogram that automatically extends the lifetime of a lease-extended metric whenever it is used.
+    /// It only supports write operations because we cannot guarantee that the metric is still alive when reading.
     /// </summary>
     internal sealed class AutoLeasingHistogram : ICollector<IHistogram>
     {
@@ -18,43 +19,26 @@
         public string Help => _root.Help;
         public string[] LabelNames => _root.LabelNames;
 
-        public IHistogram Unlabelled => new Instance(_inner, _root.Unlabelled, Array.Empty<string>());
+        public IHistogram Unlabelled => new Instance(_inner, Array.Empty<string>());
 
         public IHistogram WithLabels(params string[] labelValues)
         {
-            return new Instance(_inner, _root.WithLabels(labelValues), labelValues);
+            return new Instance(_inner, labelValues);
         }
 
         private sealed class Instance : IHistogram
         {
-            public Instance(IManagedLifetimeMetricHandle<IHistogram> inner, IHistogram root, string[] labelValues)
+            public Instance(IManagedLifetimeMetricHandle<IHistogram> inner, string[] labelValues)
             {
                 _inner = inner;
-                _root = root;
                 _labelValues = labelValues;
             }
 
             private readonly IManagedLifetimeMetricHandle<IHistogram> _inner;
-            private readonly IHistogram _root;
             private readonly string[] _labelValues;
 
-            public double Sum
-            {
-                get
-                {
-                    // Read operations do not take a lease to extend lifetime.
-                    return _root.Sum;
-                }
-            }
-
-            public long Count
-            {
-                get
-                {
-                    // Read operations do not take a lease to extend lifetime.
-                    return _root.Count;
-                }
-            }
+            public double Sum => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
+            public long Count => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
 
             public void Observe(double val, long count)
             {

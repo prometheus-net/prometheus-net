@@ -2,6 +2,7 @@
 {
     /// <summary>
     /// A Summary that automatically extends the lifetime of a lease-extended metric whenever it is used.
+    /// It only supports write operations because we cannot guarantee that the metric is still alive when reading.
     /// </summary>
     internal sealed class AutoLeasingSummary : ICollector<ISummary>
     {

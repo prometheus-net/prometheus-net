@@ -22,6 +22,7 @@ namespace Prometheus
         /// <summary>
         /// Names of the instance-specific labels (name-value pairs) that apply to this metric.
         /// When the values are added to the names, you get a <see cref="ChildBase"/> instance.
+        /// Does not include any static label names (from metric configuration, factory or registry).
         /// </summary>
         public string[] LabelNames { get; }
 
@@ -163,6 +164,7 @@ namespace Prometheus
             if (_labelledMetrics.TryGetValue(key, out var metric))
                 return metric;
 
+            // Note: order of labels is 1) dynamic labels; 2) static labels.
             return _labelledMetrics.GetOrAdd(key, k => NewChild(k, k.Concat(_staticLabels), publish: !_suppressInitialValue));
         }
 
