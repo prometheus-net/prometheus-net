@@ -18,8 +18,8 @@ The library targets the following runtimes (and newer):
 * [Installation](#installation)
 * [Counters](#counters)
 * [Gauges](#gauges)
-* [Summary](#summary)
 * [Histogram](#histogram)
+* [Summary](#summary)
 * [Measuring operation duration](#measuring-operation-duration)
 * [Tracking in-progress operations](#tracking-in-progress-operations)
 * [Counting exceptions](#counting-exceptions)
@@ -150,6 +150,24 @@ var job = jobQueue.Dequeue();
 JobsInQueue.Dec();
 ```
 
+# Histogram
+
+Histograms track the size and number of events in buckets. This allows for aggregatable calculation of quantiles.
+
+```csharp
+private static readonly Histogram OrderValueHistogram = Metrics
+    .CreateHistogram("myapp_order_value_usd", "Histogram of received order values (in USD).",
+        new HistogramConfiguration
+        {
+            // We divide measurements in 10 buckets of $100 each, up to $1000.
+            Buckets = Histogram.LinearBuckets(start: 100, width: 100, count: 10)
+        });
+
+...
+
+OrderValueHistogram.Observe(order.TotalValueUsd);
+```
+
 # Summary
 
 Summaries track the trends in events over time (10 minutes by default).
@@ -181,24 +199,6 @@ private static readonly Summary RequestSizeSummary = Metrics
 ```
 
 The epsilon indicates the absolute error allowed in measurements. For more information, refer to the [Prometheus documentation on summaries and histograms](https://prometheus.io/docs/practices/histograms/).
-
-# Histogram
-
-Histograms track the size and number of events in buckets. This allows for aggregatable calculation of quantiles.
-
-```csharp
-private static readonly Histogram OrderValueHistogram = Metrics
-    .CreateHistogram("myapp_order_value_usd", "Histogram of received order values (in USD).",
-        new HistogramConfiguration
-        {
-            // We divide measurements in 10 buckets of $100 each, up to $1000.
-            Buckets = Histogram.LinearBuckets(start: 100, width: 100, count: 10)
-        });
-
-...
-
-OrderValueHistogram.Observe(order.TotalValueUsd);
-```
 
 # Measuring operation duration
 
