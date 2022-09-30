@@ -44,6 +44,7 @@ The library targets the following runtimes (and newer):
 * [DiagnosticSource integration](#diagnosticsource-integration)
 * [EventCounter integration](#eventcounter-integration)
 * [.NET Meters integration](#net-meters-integration)
+* [Benchmarks](#benchmarks)
 * [Community projects](#community-projects)
 
 # Best practices and usage
@@ -790,6 +791,49 @@ See also, [Sample.Console](Sample.Console/Program.cs).
 You can configure the integration using `Metrics.ConfigureMeterAdapter()`.
 
 See also, [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs).
+
+# Benchmarks
+
+A suite of benchmarks is included if you wish to explore the performance characteristics of the app. Simply build and run the `Benchmarks.NetCore` project in Release mode.
+
+As an example of the performance of measuring data using prometheus-net, we have the results of the MeasurementBenchmarks here:
+
+```
+BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.2006/21H2/November2021Update)
+AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
+.NET SDK=7.0.100-rc.1.22431.12
+  [Host]     : .NET 6.0.9 (6.0.922.41905), X64 RyuJIT AVX2
+
+| MeasurementCount | ThreadCount | TargetMetricType |           Mean | Lock Contentions | Allocated |
+|------------------|-------------|------------------|---------------:|-----------------:|----------:|
+| 100000           | 1           | Counter          |       406.4 us |                - |     480 B |
+| 100000           | 1           | Gauge            |       207.8 us |                - |     480 B |
+| 100000           | 1           | Histogram        |     1,678.7 us |                - |     480 B |
+| 100000           | 1           | Summary          |    42,601.8 us |                - |     480 B |
+| 100000           | 16          | Counter          |   176,601.2 us |          13.0000 |     480 B |
+| 100000           | 16          | Gauge            |    31,241.0 us |          14.0000 |     480 B |
+| 100000           | 16          | Histogram        |   220,617.6 us |          14.0000 |     480 B |
+| 100000           | 16          | Summary          | 1,017,871.1 us |       10332.0000 |     480 B |
+```
+
+> **Note**
+> The 480 byte allocation is benchmark harness overhead. Metric measurements do not allocate memory.
+
+Converting this to more everyday units:
+
+| Metric type | Concurrency | Measurements per second |
+|-------------|-------------|------------------------:|
+| Counter     | 1 thread    |             246 million |
+| Gauge       | 1 thread    |             481 million |
+| Histogram   | 1 thread    |              60 million |
+| Summary     | 1 thread    |               2 million |
+| Counter     | 16 threads  |               9 million |
+| Gauge       | 16 threads  |              51 million |
+| Histogram   | 16 threads  |               7 million |
+| Summary     | 16 threads  |               2 million |
+
+> **Note**
+> All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. If you have more than 1 metric in your app, multithreaded performance will likely be similar to single-threaded performance.
 
 # Community projects
 
