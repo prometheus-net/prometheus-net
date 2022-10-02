@@ -8,6 +8,7 @@
 - (Breaking change) EventCounterAdapter output format changed to translate counters to Prometheus metrics and to improve usability by publishing both counters and gauges from ambiguous event counters.
 - EventCounterAdapter and MeterAdapter are now enabled on startup by default.
 - Added some debug metrics to indicate the number of metric families, instances and timeseries being exported by prometheus-net.
+- Added typical benchmark results to readme for easy reference, and to show relative speed of the simple versus complex instruments.
 * 6.0.0
 - Dropped library support for unsupported .NET runtime versions (.NET 2.1).
 - If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics, unless there is a user-defined label already present with this name.
