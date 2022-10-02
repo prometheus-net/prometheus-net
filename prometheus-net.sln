@@ -53,7 +53,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Prometheus", "Prometheus\Pr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web.NetFramework", "Sample.Web.NetFramework\Sample.Web.NetFramework.csproj", "{35C90741-497A-465C-A018-633FAD414D0D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.NoAspNetCore", "Sample.Console.NoAspNetCore\Sample.Console.NoAspNetCore.csproj", "{673B5DEC-8530-4226-B923-9D97A6AC29DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Console.NoAspNetCore", "Sample.Console.NoAspNetCore\Sample.Console.NoAspNetCore.csproj", "{673B5DEC-8530-4226-B923-9D97A6AC29DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

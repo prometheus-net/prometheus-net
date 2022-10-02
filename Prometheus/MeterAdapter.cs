@@ -109,11 +109,8 @@ public sealed class MeterAdapter : IDisposable
                     LabelNames = labelNames
                 });
 
-                using (counterHandle.AcquireLease(out var counter, labelValues))
-                {
-                    // A measurement is the increment.
-                    counter.Inc(value);
-                }
+                // A measurement is the increment.
+                counterHandle.WithLease(c => c.Inc(value), labelValues);
             }
             else if (instrument is ObservableCounter<T>)
             {
@@ -122,11 +119,8 @@ public sealed class MeterAdapter : IDisposable
                     LabelNames = labelNames
                 });
 
-                using (counterHandle.AcquireLease(out var counter, labelValues))
-                {
-                    // A measurement is the current value.
-                    counter.IncTo(value);
-                }
+                // A measurement is the current value.
+                counterHandle.WithLease(c => c.IncTo(value), labelValues);
             }
             /* .NET 7: else if (instrument is UpDownCounter<T>)
             {
@@ -148,11 +142,8 @@ public sealed class MeterAdapter : IDisposable
                     LabelNames = labelNames
                 });
 
-                using (gaugeHandle.AcquireLease(out var gauge, labelValues))
-                {
-                    // A measurement is the current value.
-                    gauge.Set(value);
-                }
+                // A measurement is the current value.
+                gaugeHandle.WithLease(g => g.Set(value), labelValues);
             }
             else if (instrument is Histogram<T>)
             {
@@ -163,11 +154,8 @@ public sealed class MeterAdapter : IDisposable
                     Buckets = _options.ResolveHistogramBuckets(instrument)
                 });
 
-                using (histogramHandle.AcquireLease(out var metric, labelValues))
-                {
-                    // A measurement is the observed value.
-                    metric.Observe(value);
-                }
+                // A measurement is the observed value.
+                histogramHandle.WithLease(h => h.Observe(value), labelValues);
             }
             else
             {
