@@ -68,7 +68,12 @@ public class MetricExpirationBenchmarks
             // If the params say so, we even preallocate the lifetime manager to ensure that we only measure the usage of the metric.
             // Both the usage and the lifetime manager allocation matter but we want to bring them out separately in the benchmarks.
             if (PreallocateLifetimeManager)
-                _factory.CreateCounter(_metricNames[i], _help, _configuration);
+            {
+                var managedLifetimeCounter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
+
+                // And also take the first lease to pre-warm the lifetime manager.
+                managedLifetimeCounter.AcquireLease(out _, _labels).Dispose();
+            }
         }
     }
 
@@ -145,13 +150,16 @@ public class MetricExpirationBenchmarks
     [Benchmark]
     public void CreateAndUse_WithLease()
     {
+        // Reuse the delegate.
+        Action<ICounter> incrementCounterAction = IncrementCounter;
+
         for (var i = 0; i < _metricCount; i++)
         {
             var counter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
 
             for (var repeat = 0; repeat < RepeatCount; repeat++)
             {
-                counter.WithLease(IncrementCounter, _labels);
+                counter.WithLease(incrementCounterAction, _labels);
             }
         }
     }
@@ -159,13 +167,16 @@ public class MetricExpirationBenchmarks
     [Benchmark]
     public void CreateAndUse_WithLease_WithDuplicates()
     {
+        // Reuse the delegate.
+        Action<ICounter> incrementCounterAction = IncrementCounter;
+
         for (var dupe = 0; dupe < _duplicateCount; dupe++)
             for (var i = 0; i < _metricCount; i++)
             {
                 var counter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
 
                 for (var repeat = 0; repeat < RepeatCount; repeat++)
-                    counter.WithLease(IncrementCounter, _labels);
+                    counter.WithLease(incrementCounterAction, _labels);
             }
     }
 }
