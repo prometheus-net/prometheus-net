@@ -808,11 +808,11 @@ AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
 |------------------|-------------|------------------|---------------:|-----------------:|----------:|
 | 100000           | 1           | Counter          |       406.4 us |                - |     480 B |
 | 100000           | 1           | Gauge            |       207.8 us |                - |     480 B |
-| 100000           | 1           | Histogram        |     1,678.7 us |                - |     480 B |
+| 100000           | 1           | Histogram        |     1,416.5 us |                - |     480 B |
 | 100000           | 1           | Summary          |    42,601.8 us |                - |     480 B |
 | 100000           | 16          | Counter          |   176,601.2 us |          13.0000 |     480 B |
 | 100000           | 16          | Gauge            |    31,241.0 us |          14.0000 |     480 B |
-| 100000           | 16          | Histogram        |   220,617.6 us |          14.0000 |     480 B |
+| 100000           | 16          | Histogram        |   179,327.9 us |          14.0000 |     480 B |
 | 100000           | 16          | Summary          | 1,017,871.1 us |       10332.0000 |     480 B |
 ```
 
@@ -822,15 +822,15 @@ AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
 Converting this to more everyday units:
 
 | Metric type | Concurrency | Measurements per second |
-|-------------|-------------|------------------------:|
-| Counter     | 1 thread    |             246 million |
-| Gauge       | 1 thread    |             481 million |
-| Histogram   | 1 thread    |              60 million |
-| Summary     | 1 thread    |               2 million |
-| Counter     | 16 threads  |               9 million |
-| Gauge       | 16 threads  |              51 million |
-| Histogram   | 16 threads  |               7 million |
-| Summary     | 16 threads  |               2 million |
+|-------------|------------:|------------------------:|
+| Counter     |    1 thread |             246 million |
+| Gauge       |    1 thread |             481 million |
+| Histogram   |    1 thread |              71 million |
+| Summary     |    1 thread |               2 million |
+| Counter     |  16 threads |               9 million |
+| Gauge       |  16 threads |              51 million |
+| Histogram   |  16 threads |               9 million |
+| Summary     |  16 threads |               2 million |
 
 > **Note**
 > All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. If you have more than 1 metric in your app, multithreaded performance will likely be similar to single-threaded performance.

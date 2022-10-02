@@ -65,8 +65,8 @@ public class MeasurementBenchmarks
         var histogramTemplate = _factory.CreateHistogram("histogram", "test histogram", new HistogramConfiguration
         {
             LabelNames = new[] { "label" },
-            // 0.01 to 100, 5 divisions each
-            Buckets = Histogram.PowersOfTenDividedBuckets(-2, 2, 5)
+            // 1 ms to 32K ms, 16 buckets. Same as used in HTTP metrics by default.
+            Buckets = Histogram.ExponentialBuckets(0.001, 2, 16)
         });
 
         // We cache the children, as is typical usage.
