@@ -92,6 +92,7 @@ namespace Prometheus.Tests
             ((ManagedLifetimeCounter)handle).Delayer = delayer;
 
             // We detect expiration by the value having been reset when we try allocate the counter again.
+            // We break 2 delays on every use, to ensure that the expiration logic has enough iterations to make up its mind.
 
             using (handle.AcquireLease(out var instance1))
             {
@@ -105,6 +106,8 @@ namespace Prometheus.Tests
 
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
+                    delayer.BreakAllDelays();
+                    await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
                     // 2 leases remain - should not have expired yet. Check with a fresh copy from the root registry.
                     Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "").Value);
@@ -112,6 +115,8 @@ namespace Prometheus.Tests
 
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+                delayer.BreakAllDelays();
+                await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -123,60 +128,11 @@ namespace Prometheus.Tests
 
             delayer.BreakAllDelays();
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
+            delayer.BreakAllDelays();
+            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
             // 0 leases remains - should have expired. Check with a fresh copy from the root registry.
             Assert.AreEqual(0, _metrics.CreateCounter(MetricName, "").Value);
-        }
-
-        private sealed class CancelDetectingDelayer : IDelayer
-        {
-            public int CancelCount { get; private set; }
-
-            private readonly object _lock = new();
-
-            public Task Delay(TimeSpan duration)
-            {
-                throw new NotSupportedException();
-            }
-
-            public async Task Delay(TimeSpan duration, CancellationToken cancel)
-            {
-                try
-                {
-                    await Task.Delay(-1, cancel);
-                }
-                catch (OperationCanceledException) when (cancel.IsCancellationRequested)
-                {
-                    lock (_lock)
-                        CancelCount++;
-                }
-            }
-        }
-
-        [TestMethod]
-        public async Task AutoLeaseMetric_OnWrite_RefreshesLease()
-        {
-            var handle = _expiringMetrics.CreateCounter(MetricName, "");
-
-            // We detect lease refresh by the existing delay being cancelled (and a new delay being made).
-            var delayer = new CancelDetectingDelayer();
-            ((ManagedLifetimeCounter)handle).Delayer = delayer;
-
-            // At the start, no expiration timer is running (it will only start with the first lease being released).
-
-            var counter = handle.WithExtendLifetimeOnUse();
-
-            // Acquires + releases first lease. Expiration timer starts.
-            counter.Unlabelled.Inc();
-            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to trigger any potential expiration timer reset.
-
-            Assert.AreEqual(0, delayer.CancelCount);
-
-            // Acquires + releases 2nd lease. Expiration timer restarts.
-            counter.Unlabelled.Inc();
-            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to trigger any potential expiration timer reset.
-
-            Assert.AreEqual(1, delayer.CancelCount);
         }
     }
 }

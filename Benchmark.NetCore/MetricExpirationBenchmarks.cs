@@ -22,7 +22,7 @@ public class MetricExpirationBenchmarks
     /// <summary>
     /// How many times we repeat acquiring and incrementing the same instance.
     /// </summary>
-    [Params(1, 5)]
+    [Params(1, 10)]
     public int RepeatCount { get; set; }
 
     /// <summary>

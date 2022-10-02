@@ -78,12 +78,17 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     /// <summary>
     /// An instance of LifetimeManager takes care of the lifetime of a single child metric:
     /// * It maintains the count of active leases.
-    /// * It schedules removal after the last lease is released (and cancels removal if a new lease is taken).
+    /// * It schedules removal for a suitable moment after the last lease is released.
     /// 
     /// Once the lifetime manager decides to remove the metric, it can no longer be used and a new lifetime manager must be allocated.
     /// Taking new leases after removal will have no effect without recycling the lifetime manager (because it will be a lease on
     /// a metric instance that has already been removed from its parent metric family - even if you update the value, it is no longer exported).
     /// </summary>
+    /// <remarks>
+    /// Expiration is managed on a loosely accurate method - when the first lease is taken, an expiration timer is started.
+    /// This timer will tick at a regular interval and, upon each tick, check whether the metric needs to expire. That's it.
+    /// The metric expiration is guaranteed to be no less than [expiresAfter] has elapsed, but may be more as the timer ticks on its own clock.
+    /// </remarks>
     private sealed class LifetimeManager
     {
         public LifetimeManager(TChild child, TimeSpan expiresAfter, IDelayer delayer, Action<TChild> remove)
@@ -104,11 +109,14 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 
         private readonly object _lock = new();
         private int _leaseCount = 0;
-        // Used to cancel a scheduled removal task when a stale LifetimeManager becomes active again.
-        private CancellationTokenSource? _cts;
-        // We need to ensure only-once removal semantics, as we are racy by design.
-        // If we were to remova multiple times, it means we might be accidentally removing a "newer" instance of this metric with the same labels.
-        private bool _removed;
+
+        // Taking or releasing a lease will always start a new epoch. The expiration timer simply checks whether the epoch changes between two ticks.
+        // If the epoch changes, it must mean there was some lease-related activity and it will do nothing. If the epoch remains the same and the lease
+        // count is 0, the metric has expired and will be removed.
+        private int _epoch = 0;
+
+        // We start the expiration timer the first time a lease is taken.
+        private bool _timerStarted;
 
         private readonly ReusableLease _reusableLease;
 
@@ -133,15 +141,10 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         {
             lock (_lock)
             {
-                if (_leaseCount == 0)
-                {
-                    // There may have been an existing scheduled unpublishing. Cancel it.
-                    _cts?.Cancel(); // Or this may be the first lease ever, in which case there is no CTS yet.
-                    _cts?.Dispose();
-                    _cts = new();
-                }
+                EnsureExpirationTimerStarted();
 
                 _leaseCount++;
+                unchecked { _epoch++; }
             }
         }
 
@@ -150,42 +153,50 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
             lock (_lock)
             {
                 _leaseCount--;
-
-                if (_leaseCount == 0)
-                {
-                    if (_removed)
-                        return;
-
-                    var cancel = _cts!.Token;
-
-                    // We want to avoid throwing exceptions here, so let's try be smart.
-                    // Only execute the followup if we did not get canceled.
-                    _ = _delayer.Delay(_expiresAfter, cancel)
-                        .ContinueWith(OnExpiration, TaskContinuationOptions.NotOnCanceled);
-                }
+                unchecked { _epoch++; }
             }
         }
 
-        private void OnExpiration(Task completedTimerTask)
+        private void EnsureExpirationTimerStarted()
         {
-            // Unpublish after the timer expires.
-            lock (_lock)
+            if (_timerStarted)
+                return;
+
+            _timerStarted = true;
+
+            _ = Task.Run(ExecuteExpirationTimer);
+        }
+
+        private async Task ExecuteExpirationTimer()
+        {
+            while (true)
             {
-                // It could be that something actually got a lease between the timer expiring and us getting here.
-                if (_leaseCount != 0)
-                    return;
+                int epochBeforeDelay;
+                
+                lock (_lock)
+                    epochBeforeDelay = _epoch;
 
-                // This is pretty unlikely but it does not hurt to be safe.
-                if (_removed)
-                    return;
+                // We iterate on the expiration interval. This means that the real lifetime of a metric may be up to 2x the expiration interval.
+                // This is fine - we are intentionally loose here, to avoid the timer logic being scheduled too aggressively. Approximate is good enough.
+                await _delayer.Delay(_expiresAfter);
 
-                _removed = true;
+                lock (_lock)
+                {
+                    if (_leaseCount != 0)
+                        continue; // Will not expire if there are active leases.
+
+                    if (_epoch != epochBeforeDelay)
+                        continue; // Will not expire if some leasing activity happened during this interval.
+                }
+
+                // Expired!
+                //
+                // It is possible that a new lease still gets taken before this call completes, because we are not yet holding the lifetime manager write lock that
+                // guards against new leases being taken. In that case, the new lease will be a dud - it will fail to extend the lifetime because the removal happens
+                // already now, even if the new lease is taken. This is intentional, to keep the code simple.
+                _remove(_child);
+                break;
             }
-
-            // It is possible that a new lease still gets taken before this call completes, because we are not yet holding the lifetime manager write lock that
-            // guards against new leases being taken. In that case, the new lease will be a dud - it will fail to extend the lifetime because the removal happens
-            // already now, even if the new lease is taken. This is intentional, to keep the code simple.
-            _remove(_child);
         }
 
         private sealed class Lease : IDisposable
