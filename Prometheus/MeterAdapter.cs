@@ -86,8 +86,6 @@ public sealed class MeterAdapter : IDisposable
     {
         // NOTE: If we throw an exception from this, it can lead to the instrument becoming inoperable (no longer measured). Let's not do that.
 
-        // TODO: We can do some good here by reducing the constant memory allocation that is happening (options, leases, etc).
-
         try
         {
             var labelNameCandidates = TagsToLabelNames(tags);
