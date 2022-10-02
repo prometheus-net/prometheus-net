@@ -40,11 +40,13 @@ namespace Prometheus.Tests
 
             counterHandle.WithExtendLifetimeOnUse().Unlabelled.Inc();
 
+            counterHandle.WithLease(c => c.Inc());
+
             // All increments should be seen by all viewpoints to proves they are the same counter.
-            Assert.AreEqual(3, counter1.Value);
+            Assert.AreEqual(4, counter1.Value);
 
             using (var lease = counterHandle.AcquireLease(out var instance))
-                Assert.AreEqual(3, instance.Value);
+                Assert.AreEqual(4, instance.Value);
 
             // Cannot read value of auto-leasing metric, so we just check the other 2 saw all 3 writes.
         }

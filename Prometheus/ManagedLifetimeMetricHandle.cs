@@ -23,6 +23,51 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         return TakeLease(child);
     }
 
+    public void WithLease(Action<TMetricInterface> action, params string[] labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        var lease = TakeLeaseFast(child);
+
+        try
+        {
+            action(child);
+        }
+        finally
+        {
+            lease.Dispose();
+        }
+    }
+
+    public async ValueTask WithLeaseAsync(Func<TMetricInterface, ValueTask> action, params string[] labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        await action(metric);
+    }
+
+    public async Task WithLeaseAsync(Func<TMetricInterface, Task> action, params string[] labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        await action(metric);
+    }
+
+    public TResult WithLease<TResult>(Func<TMetricInterface, TResult> func, params string[] labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return func(metric);
+    }
+
+    public async ValueTask<TResult> WithLeaseAsync<TResult>(Func<TMetricInterface, ValueTask<TResult>> func, params string[] labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return await func(metric);
+    }
+
+    public async Task<TResult> WithLeaseAsync<TResult>(Func<TMetricInterface, Task<TResult>> func, params string[] labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return await func(metric);
+    }
+
     public abstract ICollector<TMetricInterface> WithExtendLifetimeOnUse();
 
     /// <summary>
@@ -49,6 +94,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
             _remove = remove;
 
             // NB! There may be optimistic copies made by the ConcurrentDictionary - this may be such a copy!
+            _reusableLease = new ReusableLease(ReleaseLease);
         }
 
         private readonly TChild _child;
@@ -64,7 +110,26 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         // If we were to remova multiple times, it means we might be accidentally removing a "newer" instance of this metric with the same labels.
         private bool _removed;
 
+        private readonly ReusableLease _reusableLease;
+
         public IDisposable TakeLease()
+        {
+            TakeLeaseCore();
+
+            return new Lease(ReleaseLease);
+        }
+
+        /// <summary>
+        /// Returns a reusable lease-releaser object. Only for internal use - to avoid allocating on every lease.
+        /// </summary>
+        internal IDisposable TakeLeaseFast()
+        {
+            TakeLeaseCore();
+
+            return _reusableLease;
+        }
+
+        private void TakeLeaseCore()
         {
             lock (_lock)
             {
@@ -78,8 +143,6 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 
                 _leaseCount++;
             }
-
-            return new Lease(ReleaseLease);
         }
 
         private void ReleaseLease()
@@ -96,32 +159,33 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
                     var cancel = _cts!.Token;
 
                     // We want to avoid throwing exceptions here, so let's try be smart.
+                    // Only execute the followup if we did not get canceled.
                     _ = _delayer.Delay(_expiresAfter, cancel)
-                        .ContinueWith(task =>
-                        {
-                            // Unpublish after the timer expires.
-                            lock (_lock)
-                            {
-                                // It could be that something actually got a lease between the timer expiring and us getting here.
-                                if (_leaseCount != 0)
-                                    return;
-
-                                // This is pretty unlikely but it does not hurt to be safe.
-                                if (_removed)
-                                    return;
-
-                                _removed = true;
-                            }
-
-                            // It is possible that a new lease still gets taken before this call completes, because we are not yet holding the lifetime manager write lock that
-                            // guards against new leases being taken. In that case, the new lease will be a dud - it will fail to extend the lifetime because the removal happens
-                            // already now, even if the new lease is taken. This is intentional, to keep the code simple.
-                            _remove(_child);
-
-                            // Only execute the above block if we did not get canceled.
-                        }, TaskContinuationOptions.NotOnCanceled);
+                        .ContinueWith(OnExpiration, TaskContinuationOptions.NotOnCanceled);
                 }
             }
+        }
+
+        private void OnExpiration(Task completedTimerTask)
+        {
+            // Unpublish after the timer expires.
+            lock (_lock)
+            {
+                // It could be that something actually got a lease between the timer expiring and us getting here.
+                if (_leaseCount != 0)
+                    return;
+
+                // This is pretty unlikely but it does not hurt to be safe.
+                if (_removed)
+                    return;
+
+                _removed = true;
+            }
+
+            // It is possible that a new lease still gets taken before this call completes, because we are not yet holding the lifetime manager write lock that
+            // guards against new leases being taken. In that case, the new lease will be a dud - it will fail to extend the lifetime because the removal happens
+            // already now, even if the new lease is taken. This is intentional, to keep the code simple.
+            _remove(_child);
         }
 
         private sealed class Lease : IDisposable
@@ -154,6 +218,21 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 
                 _releaseLease();
                 GC.SuppressFinalize(this);
+            }
+        }
+
+        public sealed class ReusableLease : IDisposable
+        {
+            public ReusableLease(Action releaseLease)
+            {
+                _releaseLease = releaseLease;
+            }
+
+            private readonly Action _releaseLease;
+
+            public void Dispose()
+            {
+                _releaseLease();
             }
         }
     }
@@ -189,6 +268,23 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         {
             var lifetimeManager = _lifetimeManagers.GetOrAdd(child, CreateLifetimeManager);
             return lifetimeManager.TakeLease();
+        }
+        finally
+        {
+            _lifetimeManagersLock.ExitReadLock();
+        }
+    }
+
+    // Non-allocating variant, for internal use via WithLease().
+    private IDisposable TakeLeaseFast(TChild child)
+    {
+        // We synchronize here to ensure that we do not get a LifetimeManager that has already ended the lifetime.
+        _lifetimeManagersLock.EnterReadLock();
+
+        try
+        {
+            var lifetimeManager = _lifetimeManagers.GetOrAdd(child, CreateLifetimeManager);
+            return lifetimeManager.TakeLeaseFast();
         }
         finally
         {

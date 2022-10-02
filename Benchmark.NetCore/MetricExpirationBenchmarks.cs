@@ -12,7 +12,7 @@ public class MetricExpirationBenchmarks
     /// <summary>
     /// Just to ensure that a benchmark iteration has enough to do for stable and meaningful results.
     /// </summary>
-    private const int _metricCount = 1000;
+    private const int _metricCount = 100;
 
     /// <summary>
     /// Some benchmarks try to register metrics that already exist.
@@ -24,6 +24,13 @@ public class MetricExpirationBenchmarks
     /// </summary>
     [Params(1, 5)]
     public int RepeatCount { get; set; }
+
+    /// <summary>
+    /// If true, we preallocate a lifetime manager for every metric, so the benchmark only measures the actual usage
+    /// of the metric and not the creation, as these two components of a metric lifetime can have different impact in different cases.
+    /// </summary>
+    [Params(true, false)]
+    public bool PreallocateLifetimeManager { get; set; }
 
     private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
 
@@ -47,6 +54,22 @@ public class MetricExpirationBenchmarks
         _factory = Metrics.WithCustomRegistry(_registry)
             // We enable lifetime management but set the expiration timer very high to avoid expiration in the middle of the benchmark.
             .WithManagedLifetime(expiresAfter: TimeSpan.FromHours(24));
+
+        var regularFactory = Metrics.WithCustomRegistry(_registry);
+
+        // We create non-expiring versions of the metrics to pre-warm the metrics registry.
+        // While not a realistic use case, it does help narrow down the benchmark workload to the actual part that is special about expiring metrics,
+        // which means we get more useful results from this (rather than with some metric allocation overhead mixed in).
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var counter = regularFactory.CreateCounter(_metricNames[i], _help, _configuration);
+            counter.WithLabels(_labels);
+
+            // If the params say so, we even preallocate the lifetime manager to ensure that we only measure the usage of the metric.
+            // Both the usage and the lifetime manager allocation matter but we want to bring them out separately in the benchmarks.
+            if (PreallocateLifetimeManager)
+                _factory.CreateCounter(_metricNames[i], _help, _configuration);
+        }
     }
 
     // We use the same strings both for the names and the values.
@@ -83,7 +106,7 @@ public class MetricExpirationBenchmarks
             }
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public void CreateAndUse_ManualLease()
     {
         for (var i = 0; i < _metricCount; i++)
@@ -111,6 +134,38 @@ public class MetricExpirationBenchmarks
                     using var lease = counter.AcquireLease(out var instance, _labels);
                     instance.Inc();
                 }
+            }
+    }
+
+    private static void IncrementCounter(ICounter counter)
+    {
+        counter.Inc();
+    }
+
+    [Benchmark]
+    public void CreateAndUse_WithLease()
+    {
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var counter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
+
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+            {
+                counter.WithLease(IncrementCounter, _labels);
+            }
+        }
+    }
+
+    [Benchmark]
+    public void CreateAndUse_WithLease_WithDuplicates()
+    {
+        for (var dupe = 0; dupe < _duplicateCount; dupe++)
+            for (var i = 0; i < _metricCount; i++)
+            {
+                var counter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
+
+                for (var repeat = 0; repeat < RepeatCount; repeat++)
+                    counter.WithLease(IncrementCounter, _labels);
             }
     }
 }

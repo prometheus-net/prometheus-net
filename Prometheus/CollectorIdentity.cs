@@ -9,16 +9,23 @@
     {
         public readonly string Name;
         public readonly string[] LabelNames;
+        
+        private readonly int _hashCode;
 
         public CollectorIdentity(string name, string[] labelNames)
         {
             Name = name;
             LabelNames = labelNames;
+
+            _hashCode = CalculateHashCode();
         }
 
         public bool Equals(CollectorIdentity other)
         {
             if (!string.Equals(Name, other.Name, StringComparison.InvariantCulture))
+                return false;
+
+            if (_hashCode != other._hashCode)
                 return false;
 
             if (LabelNames.Length != other.LabelNames.Length)
@@ -29,6 +36,28 @@
                     return false;
 
             return true;
+        }
+
+        public override int GetHashCode()
+        {
+            return _hashCode;
+        }
+
+        private int CalculateHashCode()
+        {
+            unchecked
+            {
+                int hashCode = 0;
+
+                hashCode ^= Name.GetHashCode() * 31;
+
+                for (int i = 0; i < LabelNames.Length; i++)
+                {
+                    hashCode ^= (LabelNames[i].GetHashCode() * 397);
+                }
+
+                return hashCode;
+            }
         }
     }
 }
