@@ -41,14 +41,12 @@
 
             public void Inc(double increment = 1)
             {
-                using var lease = _inner.AcquireLease(out var instance, _labelValues);
-                instance.Inc(increment);
+                _inner.WithLease(x => x.Inc(increment), _labelValues);
             }
 
             public void IncTo(double targetValue)
             {
-                using var lease = _inner.AcquireLease(out var instance, _labelValues);
-                instance.IncTo(targetValue);
+                _inner.WithLease(x => x.IncTo(targetValue), _labelValues);
             }
         }
     }

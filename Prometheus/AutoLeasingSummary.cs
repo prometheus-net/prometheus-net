@@ -39,8 +39,7 @@
 
             public void Observe(double val)
             {
-                using var lease = _inner.AcquireLease(out var instance, _labelValues);
-                instance.Observe(val);
+                _inner.WithLease(x => x.Observe(val), _labelValues);
             }
         }
     }

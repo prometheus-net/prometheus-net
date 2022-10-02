@@ -41,32 +41,27 @@
 
             public void Inc(double increment = 1)
             {
-                using var lease = _inner.AcquireLease(out var instance, _labelValues);
-                instance.Inc(increment);
+                _inner.WithLease(x => x.Inc(increment), _labelValues);
             }
 
             public void Set(double val)
             {
-                using var lease = _inner.AcquireLease(out var instance, _labelValues);
-                instance.Set(val);
+                _inner.WithLease(x => x.Set(val), _labelValues);
             }
 
             public void Dec(double decrement = 1)
             {
-                using var lease = _inner.AcquireLease(out var instance, _labelValues);
-                instance.Dec(decrement);
+                _inner.WithLease(x => x.Dec(decrement), _labelValues);
             }
 
             public void IncTo(double targetValue)
             {
-                using var lease = _inner.AcquireLease(out var instance, _labelValues);
-                instance.IncTo(targetValue);
+                _inner.WithLease(x => x.IncTo(targetValue), _labelValues);
             }
 
             public void DecTo(double targetValue)
             {
-                using var lease = _inner.AcquireLease(out var instance, _labelValues);
-                instance.DecTo(targetValue);
+                _inner.WithLease(x => x.DecTo(targetValue), _labelValues);
             }
         }
     }
