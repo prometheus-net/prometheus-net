@@ -21,6 +21,11 @@ namespace Prometheus
         public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, CounterConfiguration? configuration = null)
         {
             var identity = new CollectorIdentity(name, configuration?.LabelNames ?? Array.Empty<string>());
+
+            // Let's be optimistic and assume that in the typical case, the metric will already exist.
+            if (_counters.TryGetValue(identity, out var existing))
+                return existing;
+
             var initializer = new CounterInitializer(_inner, _expiresAfter, help, configuration);
             return _counters.GetOrAdd(identity, initializer.CreateInstance);
         }
@@ -28,6 +33,11 @@ namespace Prometheus
         public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, GaugeConfiguration? configuration = null)
         {
             var identity = new CollectorIdentity(name, configuration?.LabelNames ?? Array.Empty<string>());
+
+            // Let's be optimistic and assume that in the typical case, the metric will already exist.
+            if (_gauges.TryGetValue(identity, out var existing))
+                return existing;
+
             var initializer = new GaugeInitializer(_inner, _expiresAfter, help, configuration);
             return _gauges.GetOrAdd(identity, initializer.CreateInstance);
         }
@@ -35,6 +45,11 @@ namespace Prometheus
         public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, HistogramConfiguration? configuration = null)
         {
             var identity = new CollectorIdentity(name, configuration?.LabelNames ?? Array.Empty<string>());
+            
+            // Let's be optimistic and assume that in the typical case, the metric will already exist.
+            if (_histograms.TryGetValue(identity, out var existing))
+                return existing;
+
             var initializer = new HistogramInitializer(_inner, _expiresAfter, help, configuration);
             return _histograms.GetOrAdd(identity, initializer.CreateInstance);
         }
@@ -42,6 +57,11 @@ namespace Prometheus
         public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, SummaryConfiguration? configuration = null)
         {
             var identity = new CollectorIdentity(name, configuration?.LabelNames ?? Array.Empty<string>());
+
+            // Let's be optimistic and assume that in the typical case, the metric will already exist.
+            if (_summaries.TryGetValue(identity, out var existing))
+                return existing;
+
             var initializer = new SummaryInitializer(_inner, _expiresAfter, help, configuration);
             return _summaries.GetOrAdd(identity, initializer.CreateInstance);
         }
@@ -59,7 +79,7 @@ namespace Prometheus
         private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeHistogram> _histograms = new();
         private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeSummary> _summaries = new();
 
-        private struct CounterInitializer
+        private readonly struct CounterInitializer
         {
             public readonly MetricFactory Inner;
             public readonly TimeSpan ExpiresAfter;
@@ -81,7 +101,7 @@ namespace Prometheus
             }
         }
 
-        private struct GaugeInitializer
+        private readonly struct GaugeInitializer
         {
             public readonly MetricFactory Inner;
             public readonly TimeSpan ExpiresAfter;
@@ -103,7 +123,7 @@ namespace Prometheus
             }
         }
 
-        private struct HistogramInitializer
+        private readonly struct HistogramInitializer
         {
             public readonly MetricFactory Inner;
             public readonly TimeSpan ExpiresAfter;
@@ -125,7 +145,7 @@ namespace Prometheus
             }
         }
 
-        private struct SummaryInitializer
+        private readonly struct SummaryInitializer
         {
             public readonly MetricFactory Inner;
             public readonly TimeSpan ExpiresAfter;

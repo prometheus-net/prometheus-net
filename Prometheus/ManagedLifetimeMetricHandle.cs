@@ -277,8 +277,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 
         try
         {
-            var lifetimeManager = _lifetimeManagers.GetOrAdd(child, CreateLifetimeManager);
-            return lifetimeManager.TakeLease();
+            return GetOrAddLifetimeManagerCore(child).TakeLease();
         }
         finally
         {
@@ -294,13 +293,21 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 
         try
         {
-            var lifetimeManager = _lifetimeManagers.GetOrAdd(child, CreateLifetimeManager);
-            return lifetimeManager.TakeLeaseFast();
+            return GetOrAddLifetimeManagerCore(child).TakeLeaseFast();
         }
         finally
         {
             _lifetimeManagersLock.ExitReadLock();
         }
+    }
+
+    private LifetimeManager GetOrAddLifetimeManagerCore(TChild child)
+    {
+        // Let's assume optimistically that in the typical case, there already is a lifetime manager for it.
+        if (_lifetimeManagers.TryGetValue(child, out var existing))
+            return existing;
+
+        return _lifetimeManagers.GetOrAdd(child, CreateLifetimeManager);
     }
 
     private LifetimeManager CreateLifetimeManager(TChild child)
