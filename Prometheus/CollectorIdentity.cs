@@ -17,7 +17,7 @@
             Name = name;
             LabelNames = labelNames;
 
-            _hashCode = CalculateHashCode();
+            _hashCode = CalculateHashCode(name, labelNames);
         }
 
         public bool Equals(CollectorIdentity other)
@@ -43,17 +43,17 @@
             return _hashCode;
         }
 
-        private int CalculateHashCode()
+        private static int CalculateHashCode(string name, string[] labelNames)
         {
             unchecked
             {
                 int hashCode = 0;
 
-                hashCode ^= Name.GetHashCode() * 31;
+                hashCode ^= name.GetHashCode() * 31;
 
-                for (int i = 0; i < LabelNames.Length; i++)
+                for (int i = 0; i < labelNames.Length; i++)
                 {
-                    hashCode ^= (LabelNames[i].GetHashCode() * 397);
+                    hashCode ^= (labelNames[i].GetHashCode() * 397);
                 }
 
                 return hashCode;
