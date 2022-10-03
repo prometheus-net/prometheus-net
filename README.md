@@ -383,11 +383,11 @@ public void ProcessDocument(string documentProvider)
 {
   // Automatic unpublishing will not occur while this lease is held.
   // This will also reset any existing expiration timer for this document provider.
-  using var lease = inProgressHandle.AcquireLease(out var metric, documentProvider);
-
-  using (metric.TrackInProgress())
+  inProgressHandle.WithLease(metric =>
+  {
+    using (metric.TrackInProgress())
       DoDocumentProcessingWork();
-
+  }, documentProvider);
   // Lease is released here.
   // If this was the last lease for this document provider, the expiration timer will now start.
 }

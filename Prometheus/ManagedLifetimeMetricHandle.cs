@@ -38,12 +38,6 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         }
     }
 
-    public async ValueTask WithLeaseAsync(Func<TMetricInterface, ValueTask> action, params string[] labelValues)
-    {
-        using var lease = AcquireLease(out var metric, labelValues);
-        await action(metric);
-    }
-
     public async Task WithLeaseAsync(Func<TMetricInterface, Task> action, params string[] labelValues)
     {
         using var lease = AcquireLease(out var metric, labelValues);
@@ -54,12 +48,6 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     {
         using var lease = AcquireLease(out var metric, labelValues);
         return func(metric);
-    }
-
-    public async ValueTask<TResult> WithLeaseAsync<TResult>(Func<TMetricInterface, ValueTask<TResult>> func, params string[] labelValues)
-    {
-        using var lease = AcquireLease(out var metric, labelValues);
-        return await func(metric);
     }
 
     public async Task<TResult> WithLeaseAsync<TResult>(Func<TMetricInterface, Task<TResult>> func, params string[] labelValues)

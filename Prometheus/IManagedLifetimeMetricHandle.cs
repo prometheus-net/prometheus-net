@@ -41,18 +41,6 @@ public interface IManagedLifetimeMetricHandle<TMetricInterface>
     /// Acquiring a new lease after the metric has been removed will re-publish the metric without preserving the old value.
     /// Re-publishing may return a new instance of the metric (data collected via expired instances will not be published).
     /// </remarks>
-    ValueTask WithLeaseAsync(Func<TMetricInterface, ValueTask> func, params string[] labelValues);
-
-    /// <summary>
-    /// While executing an action, holds a lifetime-extending lease on the metric, scoped to a specific combination of label values.
-    /// 
-    /// The typical pattern is that the metric value is only modified when the caller is holding a lease on the metric.
-    /// Automatic removal of the metric will not occur until all leases on the metric are disposed and the expiration duration elapses.
-    /// </summary>
-    /// <remarks>
-    /// Acquiring a new lease after the metric has been removed will re-publish the metric without preserving the old value.
-    /// Re-publishing may return a new instance of the metric (data collected via expired instances will not be published).
-    /// </remarks>
     Task WithLeaseAsync(Func<TMetricInterface, Task> func, params string[] labelValues);
 
     /// <summary>
@@ -66,18 +54,6 @@ public interface IManagedLifetimeMetricHandle<TMetricInterface>
     /// Re-publishing may return a new instance of the metric (data collected via expired instances will not be published).
     /// </remarks>
     TResult WithLease<TResult>(Func<TMetricInterface, TResult> func, params string[] labelValues);
-
-    /// <summary>
-    /// While executing a function, holds a lifetime-extending lease on the metric, scoped to a specific combination of label values.
-    /// 
-    /// The typical pattern is that the metric value is only modified when the caller is holding a lease on the metric.
-    /// Automatic removal of the metric will not occur until all leases on the metric are disposed and the expiration duration elapses.
-    /// </summary>
-    /// <remarks>
-    /// Acquiring a new lease after the metric has been removed will re-publish the metric without preserving the old value.
-    /// Re-publishing may return a new instance of the metric (data collected via expired instances will not be published).
-    /// </remarks>
-    ValueTask<TResult> WithLeaseAsync<TResult>(Func<TMetricInterface, ValueTask<TResult>> action, params string[] labelValues);
 
     /// <summary>
     /// While executing a function, holds a lifetime-extending lease on the metric, scoped to a specific combination of label values.

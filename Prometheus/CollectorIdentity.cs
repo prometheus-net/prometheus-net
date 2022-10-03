@@ -22,7 +22,7 @@
 
         public bool Equals(CollectorIdentity other)
         {
-            if (!string.Equals(Name, other.Name, StringComparison.InvariantCulture))
+            if (!string.Equals(Name, other.Name, StringComparison.Ordinal))
                 return false;
 
             if (_hashCode != other._hashCode)
@@ -32,7 +32,7 @@
                 return false;
 
             for (var i = 0; i < LabelNames.Length; i++)
-                if (!string.Equals(LabelNames[i], other.LabelNames[i], StringComparison.InvariantCulture))
+                if (!string.Equals(LabelNames[i], other.LabelNames[i], StringComparison.Ordinal))
                     return false;
 
             return true;

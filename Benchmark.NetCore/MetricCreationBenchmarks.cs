@@ -13,18 +13,21 @@ namespace Benchmark.NetCore
         /// <summary>
         /// Just to ensure that a benchmark iteration has enough to do for stable and meaningful results.
         /// </summary>
-        private const int _metricCount = 1000;
+        private const int _metricCount = 100;
 
         /// <summary>
         /// Some benchmarks try to register metrics that already exist.
         /// </summary>
-        private const int _duplicateCount = 5;
+        private const int _duplicateCount = 10;
 
         /// <summary>
         /// How many times we repeat acquiring and incrementing the same instance.
         /// </summary>
-        [Params(1, 5)]
+        [Params(1, 10)]
         public int RepeatCount { get; set; }
+
+        [Params(true, false)]
+        public bool IncludeStaticLabels { get; set; }
 
         private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
 
@@ -39,13 +42,35 @@ namespace Benchmark.NetCore
         }
 
         private CollectorRegistry _registry;
-        private MetricFactory _factory;
+        private IMetricFactory _factory;
 
         [IterationSetup]
         public void Setup()
         {
             _registry = Metrics.NewCustomRegistry();
             _factory = Metrics.WithCustomRegistry(_registry);
+
+            if (IncludeStaticLabels)
+            {
+                _registry.SetStaticLabels(new Dictionary<string, string>
+                {
+                    { "static_foo", "static_bar" },
+                    { "static_foo1", "static_bar" },
+                    { "static_foo2", "static_bar" },
+                    { "static_foo3", "static_bar" },
+                    { "static_foo4", "static_bar" }
+                });
+
+                _factory = _factory.WithLabels(new Dictionary<string, string>
+                {
+                    { "static_gaa", "static_bar" },
+                    { "static_gaa1", "static_bar" },
+                    { "static_gaa2", "static_bar" },
+                    { "static_gaa3", "static_bar" },
+                    { "static_gaa4", "static_bar" },
+                    { "static_gaa5", "static_bar" },
+                });
+            }
         }
 
         // We use the same strings both for the names and the values.
