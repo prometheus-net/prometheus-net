@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
 namespace Prometheus
@@ -51,69 +52,77 @@ namespace Prometheus
             // This deserialization here is pretty gnarly.
             // We just skip anything that makes no sense.
 
-            if (args.EventName != "EventCounters")
-                return; // Do not know what it is and do not care.
-
-            if (args.Payload == null)
-                return; // What? Whatever.
-
-            var eventSourceName = args.EventSource.Name;
-
-            foreach (var item in args.Payload)
+            try
             {
-                if (item is not IDictionary<string, object> e)
-                    continue;
+                if (args.EventName != "EventCounters")
+                    return; // Do not know what it is and do not care.
 
-                if (!e.TryGetValue("Name", out var nameWrapper))
-                    continue;
+                if (args.Payload == null)
+                    return; // What? Whatever.
 
-                var name = nameWrapper as string;
+                var eventSourceName = args.EventSource.Name;
 
-                if (name == null)
-                    continue; // What? Whatever.
-
-                if (!e.TryGetValue("DisplayName", out var displayNameWrapper))
-                    continue;
-
-                var displayName = displayNameWrapper as string ?? "";
-
-                // If there is a DisplayUnits, prefix it to the help text.
-                if (e.TryGetValue("DisplayUnits", out var displayUnitsWrapper) && !string.IsNullOrWhiteSpace(displayUnitsWrapper as string))
-                    displayName = $"({(string)displayUnitsWrapper}) {displayName}";
-
-                var mergedName = $"{eventSourceName}_{name}";
-
-                var prometheusName = _counterPrometheusName.GetOrAdd(mergedName, PrometheusNameHelpers.TranslateNameToPrometheusName);
-
-                // The event counter can either be
-                // 1) an aggregating counter (in which case we use the mean); or
-                // 2) an incrementing counter (in which case we use the delta, which might not actually be the delta).
-
-                if (e.TryGetValue("Increment", out var increment))
+                foreach (var item in args.Payload)
                 {
-                    // Looks like an incrementing counter.
+                    if (item is not IDictionary<string, object> e)
+                        continue;
 
-                    var value = increment as double?;
+                    if (!e.TryGetValue("Name", out var nameWrapper))
+                        continue;
 
-                    if (value == null)
+                    var name = nameWrapper as string;
+
+                    if (name == null)
                         continue; // What? Whatever.
 
-                    // It seems there exist "incrementing" event counters that behave as both counters and gauges.
-                    // We must leave it up to the user to figure out which event counter is which.
-                    _metricFactory.CreateGauge(prometheusName, displayName).Set(value.Value);
-                    _metricFactory.CreateCounter(prometheusName + "_total", displayName).Inc(value.Value);
+                    if (!e.TryGetValue("DisplayName", out var displayNameWrapper))
+                        continue;
+
+                    var displayName = displayNameWrapper as string ?? "";
+
+                    // If there is a DisplayUnits, prefix it to the help text.
+                    if (e.TryGetValue("DisplayUnits", out var displayUnitsWrapper) && !string.IsNullOrWhiteSpace(displayUnitsWrapper as string))
+                        displayName = $"({(string)displayUnitsWrapper}) {displayName}";
+
+                    var mergedName = $"{eventSourceName}_{name}";
+
+                    var prometheusName = _counterPrometheusName.GetOrAdd(mergedName, PrometheusNameHelpers.TranslateNameToPrometheusName);
+
+                    // The event counter can either be
+                    // 1) an aggregating counter (in which case we use the mean); or
+                    // 2) an incrementing counter (in which case we use the delta, which might not actually be the delta).
+
+                    if (e.TryGetValue("Increment", out var increment))
+                    {
+                        // Looks like an incrementing counter.
+
+                        var value = increment as double?;
+
+                        if (value == null)
+                            continue; // What? Whatever.
+
+                        // It seems there exist "incrementing" event counters that behave as both counters and gauges.
+                        // We must leave it up to the user to figure out which event counter is which.
+                        _metricFactory.CreateGauge(prometheusName, displayName).Set(value.Value);
+                        _metricFactory.CreateCounter(prometheusName + "_total", displayName).Inc(value.Value);
+                    }
+                    else if (e.TryGetValue("Mean", out var mean))
+                    {
+                        // Looks like an aggregating counter.
+
+                        var value = mean as double?;
+
+                        if (value == null)
+                            continue; // What? Whatever.
+
+                        _metricFactory.CreateGauge(prometheusName, displayName).Set(value.Value);
+                    }
                 }
-                else if (e.TryGetValue("Mean", out var mean))
-                {
-                    // Looks like an aggregating counter.
-
-                    var value = mean as double?;
-
-                    if (value == null)
-                        continue; // What? Whatever.
-
-                    _metricFactory.CreateGauge(prometheusName, displayName).Set(value.Value);
-                }
+            }
+            catch (Exception ex)
+            {
+                // We do not want to throw any exceptions if we fail to handle this event because who knows what it messes up upstream.
+                Trace.WriteLine($"Failed to parse EventCounter event: {ex.Message}");
             }
         }
 
