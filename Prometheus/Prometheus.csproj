@@ -27,7 +27,8 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 		<NoWarn>1591</NoWarn>
 
-		<LangVersion>latest</LangVersion>
+		<!-- Preview in 6.0 for struct initialization, can switch to latest with 7.0 SDK. -->
+		<LangVersion>preview</LangVersion>
 		<WarningLevel>9999</WarningLevel>
 
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
