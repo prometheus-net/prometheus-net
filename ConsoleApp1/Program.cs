@@ -2,39 +2,32 @@
 
 var registry = Metrics.DefaultRegistry;
 
-registry.SetStaticLabels(new Dictionary<string, string>
-{
-    { "registry_label_1", "value" },
-    { "registry_label_2", "value" },
-    { "registry_label_3", "value" },
-});
 
-var factory = Metrics.WithCustomRegistry(registry).WithLabels(new Dictionary<string, string>
-{
-    { "factory_label_1", "value" },
-    { "factory_label_2", "value" },
-    { "factory_label_3", "value" },
-});
 
 Console.WriteLine("Ready to start.");
 Console.ReadLine();
 
-var gaugeConfiguration = new GaugeConfiguration
-{
-    StaticLabels = new Dictionary<string, string>
-    {
-        { "family_label_1", "value" },
-        { "family_label_2", "value" },
-        { "family_label_3", "value" },
-    }
-};
+var _counterConfiguration = new CounterConfiguration();
+var DuplicateCount = 1;
+var RepeatCount = 100_000;
+var _metricCount = 100;
 
-for (var i = 0; i < 100_000_000; i++)
-{
-    for (var metric = 0; metric < 100; metric++)
-    {
-        factory.CreateGauge("foo" + metric, "bar", new string[] { "metric_label_1", "metric_label_2", "metric_label_3" }, gaugeConfiguration);
-    }
+var _registry = Metrics.NewCustomRegistry();
+var _factory = Metrics.WithCustomRegistry(_registry);
 
-    Console.WriteLine("Iteration");
-}
+var _help = "arbitrary help message for metric, not relevant for benchmarking";
+var _labels = new[] { "foo", "bar", "baz" };
+
+var _metricNames = new string[_metricCount];
+
+for (var i = 0; i < _metricCount; i++)
+    _metricNames[i] = $"metric_{i:D4}";
+
+for (var dupe = 0; dupe < DuplicateCount; dupe++)
+    for (var i = 0; i < _metricCount; i++)
+    {
+        var metric = _factory.CreateCounter(_metricNames[i], _help, _labels, _counterConfiguration);
+
+        for (var repeat = 0; repeat < RepeatCount; repeat++)
+            metric.WithLabels(_labels).Inc();
+    }

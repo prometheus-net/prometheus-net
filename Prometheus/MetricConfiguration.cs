@@ -17,11 +17,6 @@
         public string[]? LabelNames { get; set; }
 
         /// <summary>
-        /// The static labels to apply to all instances of this metric. These labels cannot be later overwritten.
-        /// </summary>
-        public Dictionary<string, string>? StaticLabels { get; set; }
-
-        /// <summary>
         /// If true, the metric will not be published until its value is first modified (regardless of the specific value).
         /// This is useful to delay publishing gauges that get their initial values delay-loaded.
         /// 

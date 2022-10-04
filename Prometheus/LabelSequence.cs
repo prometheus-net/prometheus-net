@@ -23,6 +23,8 @@ internal struct LabelSequence
         Values = values;
 
         Length = names.Length;
+
+        _hashCode = CalculateHashCode();
     }
 
     public static LabelSequence From(StringSequence names, StringSequence values)
@@ -112,6 +114,39 @@ internal struct LabelSequence
         }
 
         return sb.ToString();
+    }
+
+    public bool Equals(LabelSequence other)
+    {
+        if (_hashCode != other._hashCode) return false;
+        if (Length != other.Length) return false;
+
+        return Names.Equals(other.Names) && Values.Equals(other.Values);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is LabelSequence ls)
+            return Equals(ls);
+
+        return false;
+    }
+
+    public override int GetHashCode() => _hashCode;
+
+    private readonly int _hashCode;
+
+    private int CalculateHashCode()
+    {
+        int hashCode = 0;
+
+        unchecked
+        {
+            hashCode ^= (Names.GetHashCode() * 397);
+            hashCode ^= (Values.GetHashCode() * 397);
+        }
+
+        return hashCode;
     }
 
     /// <summary>

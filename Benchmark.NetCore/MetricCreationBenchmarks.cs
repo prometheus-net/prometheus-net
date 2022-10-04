@@ -71,19 +71,6 @@ namespace Benchmark.NetCore
                     { "static_gaa4", "static_bar" },
                     { "static_gaa5", "static_bar" },
                 });
-
-                _counterConfiguration = new CounterConfiguration
-                {
-                    StaticLabels = new Dictionary<string, string>
-                    {
-                        { "static_bii", "static_bar" },
-                        { "static_bii1", "static_bar" },
-                        { "static_bii2", "static_bar" },
-                        { "static_bii3", "static_bar" },
-                        { "static_bii4", "static_bar" },
-                        { "static_bii5", "static_bar" },
-                    }
-                };
             }
         }
 

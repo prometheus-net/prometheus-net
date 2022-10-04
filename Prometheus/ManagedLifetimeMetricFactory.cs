@@ -20,7 +20,7 @@ namespace Prometheus
 
         public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[] instanceLabelNames, CounterConfiguration? configuration = null)
         {
-            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.From(configuration?.StaticLabels?.Keys?.ToArray() ?? Array.Empty<string>()));
+            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
 
             // Let's be optimistic and assume that in the typical case, the metric will already exist.
             if (_counters.TryGetValue(identity, out var existing))
@@ -32,7 +32,7 @@ namespace Prometheus
 
         public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[] instanceLabelNames, GaugeConfiguration? configuration = null)
         {
-            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.From(configuration?.StaticLabels?.Keys?.ToArray() ?? Array.Empty<string>()));
+            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
 
             // Let's be optimistic and assume that in the typical case, the metric will already exist.
             if (_gauges.TryGetValue(identity, out var existing))
@@ -44,7 +44,7 @@ namespace Prometheus
 
         public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[] instanceLabelNames, HistogramConfiguration? configuration = null)
         {
-            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.From(configuration?.StaticLabels?.Keys?.ToArray() ?? Array.Empty<string>()));
+            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
 
             // Let's be optimistic and assume that in the typical case, the metric will already exist.
             if (_histograms.TryGetValue(identity, out var existing))
@@ -56,7 +56,7 @@ namespace Prometheus
 
         public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[] instanceLabelNames, SummaryConfiguration? configuration = null)
         {
-            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.From(configuration?.StaticLabels?.Keys?.ToArray() ?? Array.Empty<string>()));
+            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
 
             // Let's be optimistic and assume that in the typical case, the metric will already exist.
             if (_summaries.TryGetValue(identity, out var existing))

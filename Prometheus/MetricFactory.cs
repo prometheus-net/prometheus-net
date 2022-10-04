@@ -11,30 +11,28 @@
         // These are appended to the metric-specific static labels set at metric creation time.
         private readonly LabelSequence _factoryLabels;
 
-        internal MetricFactory(CollectorRegistry registry)
+        // Both the factory-defined and the registry-defined static labels.
+        // TODO: We should validate that registry labels cannot be defined any more once we have already resolved this.
+        private readonly Lazy<LabelSequence> _staticLabelsLazy;
+
+        internal MetricFactory(CollectorRegistry registry) : this(registry, LabelSequence.Empty)
         {
-            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         }
 
         internal MetricFactory(CollectorRegistry registry, LabelSequence withLabels)
         {
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
             _factoryLabels = withLabels;
+
+            _staticLabelsLazy = new Lazy<LabelSequence>(ResolveStaticLabels);
         }
 
-        private LabelSequence CreateStaticLabels(IDictionary<string, string>? metricSpecificStaticLabels)
+        private LabelSequence ResolveStaticLabels()
         {
-            var labels = LabelSequence.Empty;
-
-            if (metricSpecificStaticLabels != null && metricSpecificStaticLabels.Count != 0)
-                labels = labels.Concat(LabelSequence.From(metricSpecificStaticLabels));
-
             if (_factoryLabels.Length != 0)
-                labels = labels.Concat(_factoryLabels);
-
-            labels = labels.Concat(_registry.GetStaticLabels());
-
-            return labels;
+                return _factoryLabels.Concat(_registry.GetStaticLabels());
+            else
+                return _registry.GetStaticLabels();
         }
 
         /// <summary>
@@ -92,7 +90,7 @@
                 return new Counter(finalName, finalHelp, finalInstanceLabelNames, finalStaticLabels, finalConfiguration.SuppressInitialValue);
             }
 
-            var initializer = new CollectorRegistry.CollectorInitializer<Counter, CounterConfiguration>(CreateInstance, name, help, instanceLabelNames, CreateStaticLabels(configuration?.StaticLabels), configuration ?? CounterConfiguration.Default);
+            var initializer = new CollectorRegistry.CollectorInitializer<Counter, CounterConfiguration>(CreateInstance, name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? CounterConfiguration.Default);
             return _registry.GetOrAdd(initializer);
         }
 
@@ -103,7 +101,7 @@
                 return new Gauge(finalName, finalHelp, finalInstanceLabelNames, finalStaticLabels, finalConfiguration.SuppressInitialValue);
             }
 
-            var initializer = new CollectorRegistry.CollectorInitializer<Gauge, GaugeConfiguration>(CreateInstance, name, help, instanceLabelNames, CreateStaticLabels(configuration?.StaticLabels), configuration ?? GaugeConfiguration.Default);
+            var initializer = new CollectorRegistry.CollectorInitializer<Gauge, GaugeConfiguration>(CreateInstance, name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? GaugeConfiguration.Default);
             return _registry.GetOrAdd(initializer);
         }
 
@@ -114,7 +112,7 @@
                 return new Histogram(finalName, finalHelp, finalInstanceLabelNames, finalStaticLabels, finalConfiguration.SuppressInitialValue, finalConfiguration.Buckets);
             }
 
-            var initializer = new CollectorRegistry.CollectorInitializer<Histogram, HistogramConfiguration>(CreateInstance, name, help, instanceLabelNames, CreateStaticLabels(configuration?.StaticLabels), configuration ?? HistogramConfiguration.Default);
+            var initializer = new CollectorRegistry.CollectorInitializer<Histogram, HistogramConfiguration>(CreateInstance, name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? HistogramConfiguration.Default);
             return _registry.GetOrAdd(initializer);
         }
 
@@ -126,7 +124,7 @@
                     finalConfiguration.Objectives, finalConfiguration.MaxAge, finalConfiguration.AgeBuckets, finalConfiguration.BufferSize);
             }
 
-            var initializer = new CollectorRegistry.CollectorInitializer<Summary, SummaryConfiguration>(CreateInstance, name, help, instanceLabelNames, CreateStaticLabels(configuration?.StaticLabels), configuration ?? SummaryConfiguration.Default);
+            var initializer = new CollectorRegistry.CollectorInitializer<Summary, SummaryConfiguration>(CreateInstance, name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? SummaryConfiguration.Default);
             return _registry.GetOrAdd(initializer);
         }
 

@@ -22,20 +22,8 @@ namespace Prometheus.Tests
 
             var registryLabel = factory.CreateCounter("foo1", "");
 
-            var registryAndMetricLabel = factory.CreateCounter("foo2", "", new CounterConfiguration
+            var registryAndInstanceLabel = factory.CreateCounter("foo3", "", new CounterConfiguration
             {
-                StaticLabels = new Dictionary<string, string>
-                {
-                    { "metricLabel", "metricLabelValue" }
-                }
-            });
-
-            var registryAndMetricAndInstanceLabel = factory.CreateCounter("foo3", "", new CounterConfiguration
-            {
-                StaticLabels = new Dictionary<string, string>
-                {
-                    { "metricLabel", "metricLabelValue" }
-                },
                 LabelNames = new[] { "instanceLabel" }
             });
 
@@ -44,20 +32,11 @@ namespace Prometheus.Tests
             Assert.IsTrue(labels.Names.Contains("registryLabel"));
             Assert.IsTrue(labels.Values.Contains("registryLabelValue"));
 
-            labels = registryAndMetricLabel.Unlabelled.FlattenedLabels;
+            var instance = registryAndInstanceLabel.WithLabels("instanceLabelValue");
+            labels = instance.FlattenedLabels;
             Assert.AreEqual(2, labels.Length);
             Assert.IsTrue(labels.Names.Contains("registryLabel"));
             Assert.IsTrue(labels.Values.Contains("registryLabelValue"));
-            Assert.IsTrue(labels.Names.Contains("metricLabel"));
-            Assert.IsTrue(labels.Values.Contains("metricLabelValue"));
-
-            var instance = registryAndMetricAndInstanceLabel.WithLabels("instanceLabelValue");
-            labels = instance.FlattenedLabels;
-            Assert.AreEqual(3, labels.Length);
-            Assert.IsTrue(labels.Names.Contains("registryLabel"));
-            Assert.IsTrue(labels.Values.Contains("registryLabelValue"));
-            Assert.IsTrue(labels.Names.Contains("metricLabel"));
-            Assert.IsTrue(labels.Values.Contains("metricLabelValue"));
             Assert.IsTrue(labels.Names.Contains("instanceLabel"));
             Assert.IsTrue(labels.Values.Contains("instanceLabelValue"));
         }
@@ -75,37 +54,33 @@ namespace Prometheus.Tests
 
             var registryLabel = factory.CreateCounter("foo1", "");
 
-            var registryAndMetricLabel = factory.CreateCounter("foo2", "", new CounterConfiguration
-            {
-                StaticLabels = new Dictionary<string, string>
-                {
-                    { "metricLabel", "metricLabelValue" }
-                }
-            });
-
             // Static label (registry) and instance label with same name -> error.
             Assert.ThrowsException<InvalidOperationException>(() => factory.CreateGauge("test1", "", new GaugeConfiguration
             {
                 LabelNames = new[] { "registryLabel" }
             }));
 
-            // Static label (metric) and instance label with same name -> error.
-            Assert.ThrowsException<InvalidOperationException>(() => factory.CreateGauge("test2", "", new GaugeConfiguration
+            var factoryLabel = factory.WithLabels(new Dictionary<string, string>
             {
-                StaticLabels = new Dictionary<string, string>
-                {
-                    { "metricLabel", "metricLabelValue" }
-                },
-                LabelNames = new[] { "metricLabel" }
+                { "registryLabel", "otherValue" }
+            });
+
+            // Static label (registry) and factory label with same name -> error.
+            Assert.ThrowsException<InvalidOperationException>(() => factory.CreateGauge("test1", "", new GaugeConfiguration
+            {
+                LabelNames = new[] { "registryLabel" }
             }));
 
-            // Static label (registry) and static label (metric) with same name -> error.
-            Assert.ThrowsException<InvalidOperationException>(() => factory.CreateGauge("test2", "", new GaugeConfiguration
+            // Factory label and instance label with same name -> error.
+            var registry2 = Metrics.NewCustomRegistry();
+            var factory2 = Metrics.WithCustomRegistry(registry2).WithLabels(new Dictionary<string, string>
             {
-                StaticLabels = new Dictionary<string, string>
-                {
-                    { "registryLabel", "" }
-                }
+                { "factoryLabel", "value" }
+            });
+
+            Assert.ThrowsException<InvalidOperationException>(() => factory2.CreateGauge("test1", "", new GaugeConfiguration
+            {
+                LabelNames = new[] { "factoryLabel" }
             }));
         }
 
