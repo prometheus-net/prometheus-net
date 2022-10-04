@@ -11,10 +11,10 @@ namespace Prometheus
         private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
         private readonly double[] _buckets;
 
-        internal Histogram(string name, string help, string[]? labelNames, Labels staticLabels, bool suppressInitialValue, double[]? buckets)
-            : base(name, help, labelNames, staticLabels, suppressInitialValue)
+        internal Histogram(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, double[]? buckets)
+            : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue)
         {
-            if (labelNames?.Any(l => l == "le") == true)
+            if (instanceLabelNames.Contains("le"))
             {
                 throw new ArgumentException("'le' is a reserved label name");
             }
@@ -39,15 +39,15 @@ namespace Prometheus
             }
         }
 
-        private protected override Child NewChild(Labels labels, Labels flattenedLabels, bool publish)
+        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
-            return new Child(this, labels, flattenedLabels, publish);
+            return new Child(this, instanceLabels, flattenedLabels, publish);
         }
 
         public sealed class Child : ChildBase, IHistogram
         {
-            internal Child(Histogram parent, Labels labels, Labels flattenedLabels, bool publish)
-                : base(parent, labels, flattenedLabels, publish)
+            internal Child(Histogram parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+                : base(parent, instanceLabels, flattenedLabels, publish)
             {
                 _parent = parent;
 
@@ -62,7 +62,7 @@ namespace Prometheus
                 {
                     var value = double.IsPositiveInfinity(_upperBounds[i]) ? "+Inf" : _upperBounds[i].ToString(CultureInfo.InvariantCulture);
 
-                    _bucketIdentifiers[i] = CreateIdentifier("bucket", ("le", value));
+                    _bucketIdentifiers[i] = CreateIdentifier("bucket", "le", value);
                 }
             }
 

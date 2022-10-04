@@ -7,6 +7,8 @@
     public abstract class MetricConfiguration
     {
         /// <summary>
+        /// NOTE: Only used by APIs that do not take an explicit labelNames value as input.
+        /// 
         /// Names of all the label fields that are defined for each instance of the metric.
         /// If null, the metric will be created without any instance-specific labels.
         /// 

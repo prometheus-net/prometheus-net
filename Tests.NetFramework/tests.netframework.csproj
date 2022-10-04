@@ -150,6 +150,9 @@
     <Compile Include="..\Tests.NetCore\StaticLabelTests.cs">
       <Link>StaticLabelTests.cs</Link>
     </Compile>
+    <Compile Include="..\Tests.NetCore\StringSequenceTests.cs">
+      <Link>StringSequenceTests.cs</Link>
+    </Compile>
     <Compile Include="..\Tests.NetCore\TestExtensions.cs">
       <Link>TestExtensions.cs</Link>
     </Compile>

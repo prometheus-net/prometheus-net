@@ -60,19 +60,21 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
-        public void WithLabels_WithFactoryAndRegistryConflict_WillThrowWhenCreatingFactory()
+        public void WithLabels_WithFactoryAndRegistryConflict_WillThrowWhenCreatingMetric()
         {
             _registry.SetStaticLabels(new Dictionary<string, string>
             {
                 { "foo", "bar" }
             });
 
+            var factory = _metrics.WithLabels(new Dictionary<string, string>
+            {
+                { "foo", "bar" }
+            });
+
             Assert.ThrowsException<InvalidOperationException>(delegate
             {
-                _metrics.WithLabels(new Dictionary<string, string>
-                {
-                    { "foo", "bar" }
-                });
+                factory.CreateCounter("foofoo", "");
             });
         }
 

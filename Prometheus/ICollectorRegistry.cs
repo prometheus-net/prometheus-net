@@ -10,7 +10,7 @@
         void AddBeforeCollectCallback(Func<CancellationToken, Task> callback);
 
         IEnumerable<KeyValuePair<string, string>> StaticLabels { get; }
-        void SetStaticLabels(Dictionary<string, string> labels);
+        void SetStaticLabels(IDictionary<string, string> labels);
 
         Task CollectAndExportAsTextAsync(Stream to, CancellationToken cancel = default);
     }

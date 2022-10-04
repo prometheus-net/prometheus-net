@@ -4,8 +4,8 @@
     {
         public sealed class Child : ChildBase, IGauge
         {
-            internal Child(Collector parent, Labels labels, Labels flattenedLabels, bool publish)
-                : base(parent, labels, flattenedLabels, publish)
+            internal Child(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+                : base(parent, instanceLabels, flattenedLabels, publish)
             {
                 _identifier = CreateIdentifier();
             }
@@ -51,13 +51,13 @@
             public double Value => _value.Value;
         }
 
-        private protected override Child NewChild(Labels labels, Labels flattenedLabels, bool publish)
+        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
-            return new Child(this, labels, flattenedLabels, publish);
+            return new Child(this, instanceLabels, flattenedLabels, publish);
         }
 
-        internal Gauge(string name, string help, string[]? labelNames, Labels staticLabels, bool suppressInitialValue)
-            : base(name, help, labelNames, staticLabels, suppressInitialValue)
+        internal Gauge(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue)
+            : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue)
         {
         }
 

@@ -40,26 +40,26 @@ namespace Prometheus.Tests
             });
 
             var labels = registryLabel.Unlabelled.FlattenedLabels;
-            Assert.AreEqual(1, labels.Count);
-            CollectionAssert.Contains(labels.Names, "registryLabel");
-            CollectionAssert.Contains(labels.Values, "registryLabelValue");
+            Assert.AreEqual(1, labels.Length);
+            Assert.IsTrue(labels.Names.Contains("registryLabel"));
+            Assert.IsTrue(labels.Values.Contains("registryLabelValue"));
 
             labels = registryAndMetricLabel.Unlabelled.FlattenedLabels;
-            Assert.AreEqual(2, labels.Count);
-            CollectionAssert.Contains(labels.Names, "registryLabel");
-            CollectionAssert.Contains(labels.Values, "registryLabelValue");
-            CollectionAssert.Contains(labels.Names, "metricLabel");
-            CollectionAssert.Contains(labels.Values, "metricLabelValue");
+            Assert.AreEqual(2, labels.Length);
+            Assert.IsTrue(labels.Names.Contains("registryLabel"));
+            Assert.IsTrue(labels.Values.Contains("registryLabelValue"));
+            Assert.IsTrue(labels.Names.Contains("metricLabel"));
+            Assert.IsTrue(labels.Values.Contains("metricLabelValue"));
 
             var instance = registryAndMetricAndInstanceLabel.WithLabels("instanceLabelValue");
             labels = instance.FlattenedLabels;
-            Assert.AreEqual(3, labels.Count);
-            CollectionAssert.Contains(labels.Names, "registryLabel");
-            CollectionAssert.Contains(labels.Values, "registryLabelValue");
-            CollectionAssert.Contains(labels.Names, "metricLabel");
-            CollectionAssert.Contains(labels.Values, "metricLabelValue");
-            CollectionAssert.Contains(labels.Names, "instanceLabel");
-            CollectionAssert.Contains(labels.Values, "instanceLabelValue");
+            Assert.AreEqual(3, labels.Length);
+            Assert.IsTrue(labels.Names.Contains("registryLabel"));
+            Assert.IsTrue(labels.Values.Contains("registryLabelValue"));
+            Assert.IsTrue(labels.Names.Contains("metricLabel"));
+            Assert.IsTrue(labels.Values.Contains("metricLabelValue"));
+            Assert.IsTrue(labels.Names.Contains("instanceLabel"));
+            Assert.IsTrue(labels.Values.Contains("instanceLabelValue"));
         }
 
         [TestMethod]

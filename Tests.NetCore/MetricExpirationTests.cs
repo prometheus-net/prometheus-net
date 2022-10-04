@@ -27,11 +27,13 @@ namespace Prometheus.Tests
         // This has a slight dependency on the performance of the PC executing the tests - maybe not ideal long term strategy but what can you do.
         private static readonly TimeSpan WaitForAsyncActionSleepTime = TimeSpan.FromSeconds(0.1);
 
+        private static readonly string[] _labels = Array.Empty<string>();
+
         [TestMethod]
         public void ManagedLifetimeMetric_IsSameMetricAsNormalMetric()
         {
-            var counter1 = _metrics.CreateCounter(MetricName, "");
-            var counterHandle = _expiringMetrics.CreateCounter(MetricName, "");
+            var counter1 = _metrics.CreateCounter(MetricName, "", _labels);
+            var counterHandle = _expiringMetrics.CreateCounter(MetricName, "", _labels);
 
             counter1.Inc();
 
@@ -54,8 +56,8 @@ namespace Prometheus.Tests
         [TestMethod]
         public void ManagedLifetimeMetric_MultipleHandlesFromSameFactory_AreSameHandle()
         {
-            var handle1 = _expiringMetrics.CreateCounter(MetricName, "");
-            var handle2 = _expiringMetrics.CreateCounter(MetricName, "");
+            var handle1 = _expiringMetrics.CreateCounter(MetricName, "", _labels);
+            var handle2 = _expiringMetrics.CreateCounter(MetricName, "", _labels);
 
             Assert.AreSame(handle1, handle2);
         }
@@ -63,10 +65,10 @@ namespace Prometheus.Tests
         [TestMethod]
         public void ManagedLifetimeMetric_ViaDifferentFactories_IsSameMetric()
         {
-            var handle1 = _expiringMetrics.CreateCounter(MetricName, "");
+            var handle1 = _expiringMetrics.CreateCounter(MetricName, "", _labels);
 
             var expiringMetrics2 = _metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromHours(24));
-            var handle2 = expiringMetrics2.CreateCounter(MetricName, "");
+            var handle2 = expiringMetrics2.CreateCounter(MetricName, "", _labels);
 
             using (var lease = handle1.AcquireLease(out var instance))
                 instance.Inc();
@@ -85,7 +87,7 @@ namespace Prometheus.Tests
         [TestMethod]
         public async Task ManagedLifetimeMetric_ExpiresOnlyAfterAllLeasesReleased()
         {
-            var handle = _expiringMetrics.CreateCounter(MetricName, "");
+            var handle = _expiringMetrics.CreateCounter(MetricName, "", _labels);
 
             // We break delays on demand to force any expiring-eligible metrics to expire.
             var delayer = new BreakableDelayer();
@@ -110,7 +112,7 @@ namespace Prometheus.Tests
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
                     // 2 leases remain - should not have expired yet. Check with a fresh copy from the root registry.
-                    Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "").Value);
+                    Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "", _labels).Value);
                 }
 
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
@@ -121,7 +123,7 @@ namespace Prometheus.Tests
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
                 // 1 lease remains - should not have expired yet. Check with a fresh copy from the root registry.
-                Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "").Value);
+                Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "", _labels).Value);
             }
 
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
@@ -132,7 +134,7 @@ namespace Prometheus.Tests
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
             // 0 leases remains - should have expired. Check with a fresh copy from the root registry.
-            Assert.AreEqual(0, _metrics.CreateCounter(MetricName, "").Value);
+            Assert.AreEqual(0, _metrics.CreateCounter(MetricName, "", _labels).Value);
         }
     }
 }

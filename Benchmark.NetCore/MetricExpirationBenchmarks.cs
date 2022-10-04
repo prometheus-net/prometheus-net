@@ -62,14 +62,14 @@ public class MetricExpirationBenchmarks
         // which means we get more useful results from this (rather than with some metric allocation overhead mixed in).
         for (var i = 0; i < _metricCount; i++)
         {
-            var counter = regularFactory.CreateCounter(_metricNames[i], _help, _configuration);
+            var counter = regularFactory.CreateCounter(_metricNames[i], _help, _labels);
             counter.WithLabels(_labels);
 
             // If the params say so, we even preallocate the lifetime manager to ensure that we only measure the usage of the metric.
             // Both the usage and the lifetime manager allocation matter but we want to bring them out separately in the benchmarks.
             if (PreallocateLifetimeManager)
             {
-                var managedLifetimeCounter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
+                var managedLifetimeCounter = _factory.CreateCounter(_metricNames[i], _help, _labels);
 
                 // And also take the first lease to pre-warm the lifetime manager.
                 managedLifetimeCounter.AcquireLease(out _, _labels).Dispose();
@@ -80,18 +80,12 @@ public class MetricExpirationBenchmarks
     // We use the same strings both for the names and the values.
     private static readonly string[] _labels = new[] { "foo", "bar", "baz" };
 
-    // We cache this to focus the benchmarks on the part that is actually unique to expiring metrics.
-    private static readonly CounterConfiguration _configuration = new CounterConfiguration
-    {
-        LabelNames = _labels
-    };
-
     [Benchmark]
     public void CreateAndUse_AutoLease()
     {
         for (var i = 0; i < _metricCount; i++)
         {
-            var metric = _factory.CreateCounter(_metricNames[i], _help, _configuration).WithExtendLifetimeOnUse();
+            var metric = _factory.CreateCounter(_metricNames[i], _help, _labels).WithExtendLifetimeOnUse();
 
             for (var repeat = 0; repeat < RepeatCount; repeat++)
                 metric.WithLabels(_labels).Inc();
@@ -104,7 +98,7 @@ public class MetricExpirationBenchmarks
         for (var dupe = 0; dupe < _duplicateCount; dupe++)
             for (var i = 0; i < _metricCount; i++)
             {
-                var metric = _factory.CreateCounter(_metricNames[i], _help, _configuration).WithExtendLifetimeOnUse();
+                var metric = _factory.CreateCounter(_metricNames[i], _help, _labels).WithExtendLifetimeOnUse();
 
                 for (var repeat = 0; repeat < RepeatCount; repeat++)
                     metric.WithLabels(_labels).Inc();
@@ -116,7 +110,7 @@ public class MetricExpirationBenchmarks
     {
         for (var i = 0; i < _metricCount; i++)
         {
-            var counter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
+            var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
 
             for (var repeat = 0; repeat < RepeatCount; repeat++)
             {
@@ -132,7 +126,7 @@ public class MetricExpirationBenchmarks
         for (var dupe = 0; dupe < _duplicateCount; dupe++)
             for (var i = 0; i < _metricCount; i++)
             {
-                var counter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
+                var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
 
                 for (var repeat = 0; repeat < RepeatCount; repeat++)
                 {
@@ -155,7 +149,7 @@ public class MetricExpirationBenchmarks
 
         for (var i = 0; i < _metricCount; i++)
         {
-            var counter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
+            var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
 
             for (var repeat = 0; repeat < RepeatCount; repeat++)
             {
@@ -173,7 +167,7 @@ public class MetricExpirationBenchmarks
         for (var dupe = 0; dupe < _duplicateCount; dupe++)
             for (var i = 0; i < _metricCount; i++)
             {
-                var counter = _factory.CreateCounter(_metricNames[i], _help, _configuration);
+                var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
 
                 for (var repeat = 0; repeat < RepeatCount; repeat++)
                     counter.WithLease(incrementCounterAction, _labels);

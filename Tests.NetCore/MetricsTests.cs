@@ -375,7 +375,7 @@ namespace Prometheus.Tests
 
             metric.Labels("");
             metric.Labels("mylabelvalue");
-            Assert.ThrowsException<ArgumentNullException>(() => metric.Labels(null));
+            Assert.ThrowsException<NotSupportedException>(() => metric.Labels(new string[] { null }));
         }
 
         [TestMethod]

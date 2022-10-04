@@ -31,7 +31,7 @@
         /// Adds the specified static labels to all metrics created using the returned factory.
         /// </summary>
         public static IMetricFactory WithLabels(IDictionary<string, string> labels) =>
-            new MetricFactory(DefaultRegistry, new Labels(labels));
+            new MetricFactory(DefaultRegistry, LabelSequence.From(labels));
 
         /// <summary>
         /// Returns a factory that creates metrics with a managed lifetime.

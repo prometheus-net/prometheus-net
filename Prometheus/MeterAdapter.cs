@@ -22,6 +22,8 @@ public sealed class MeterAdapter : IDisposable
         _factory = (ManagedLifetimeMetricFactory)Metrics.WithCustomRegistry(_options.Registry)
             .WithManagedLifetime(expiresAfter: options.MetricsExpireAfter);
 
+        _inheritedStaticLabelNames = _factory.GetAllStaticLabelNames().ToArray();
+
         _listener.InstrumentPublished = OnInstrumentPublished;
         _listener.MeasurementsCompleted += OnMeasurementsCompleted;
         _listener.SetMeasurementEventCallback<byte>(OnMeasurementRecorded);
@@ -50,6 +52,7 @@ public sealed class MeterAdapter : IDisposable
 
     private readonly CollectorRegistry _registry;
     private readonly ManagedLifetimeMetricFactory _factory;
+    private readonly string[] _inheritedStaticLabelNames;
 
     private readonly MeterListener _listener = new MeterListener();
 
@@ -88,34 +91,29 @@ public sealed class MeterAdapter : IDisposable
 
         try
         {
-            var labelNameCandidates = TagsToLabelNames(tags);
-            var labelValueCandidates = TagsToLabelValues(tags);
-
-            var inheritedLabelNames = _factory.GetLabelNames();
+            // NB! Order of labels matters in the prometheus-net API. However, in .NET Meters the data is unordered.
+            // Therefore, we need to sort the labels to ensure that we always create metrics with the same order.
+            var sortedTags = tags.ToArray().OrderBy(x => x.Key, StringComparer.Ordinal).ToList();
+            var labelNameCandidates = TagsToLabelNames(sortedTags);
+            var labelValueCandidates = TagsToLabelValues(sortedTags);
 
             // NOTE: As we accept random input from external code here, there is no guarantee that the labels in this code do not conflict with existing static labels.
             // We must therefore take explicit action here to prevent conflict (as prometheus-net will detect and fault on such conflicts). We do this by inspecting
             // the internals of the factory to identify conflicts with any static labels, and remove those lables from the Meters API data point (static overrides dynamic).
-            FilterLabelsToAvoidConflicts(labelNameCandidates, labelValueCandidates, inheritedLabelNames, out var labelNames, out var labelValues);
+            FilterLabelsToAvoidConflicts(labelNameCandidates, labelValueCandidates, _inheritedStaticLabelNames, out var labelNames, out var labelValues);
 
             var value = Convert.ToDouble(measurement);
 
             if (instrument is Counter<T>)
             {
-                var counterHandle = _factory.CreateCounter(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new CounterConfiguration
-                {
-                    LabelNames = labelNames
-                });
+                var counterHandle = _factory.CreateCounter(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the increment.
                 counterHandle.WithLease(c => c.Inc(value), labelValues);
             }
             else if (instrument is ObservableCounter<T>)
             {
-                var counterHandle = _factory.CreateCounter(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new CounterConfiguration
-                {
-                    LabelNames = labelNames
-                });
+                var counterHandle = _factory.CreateCounter(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the current value.
                 counterHandle.WithLease(c => c.IncTo(value), labelValues);
@@ -135,19 +133,15 @@ public sealed class MeterAdapter : IDisposable
             }*/
             else if (instrument is ObservableGauge<T> /* .NET 7: or ObservableUpDownCounter<T>*/)
             {
-                var gaugeHandle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new GaugeConfiguration
-                {
-                    LabelNames = labelNames
-                });
+                var gaugeHandle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the current value.
                 gaugeHandle.WithLease(g => g.Set(value), labelValues);
             }
             else if (instrument is Histogram<T>)
             {
-                var histogramHandle = _factory.CreateHistogram(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new HistogramConfiguration
+                var histogramHandle = _factory.CreateHistogram(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames, new HistogramConfiguration
                 {
-                    LabelNames = labelNames,
                     // We oursource the bucket definition to the callback in options, as it might need to be different for different instruments.
                     Buckets = _options.ResolveHistogramBuckets(instrument)
                 });
@@ -168,8 +162,8 @@ public sealed class MeterAdapter : IDisposable
 
     private static void FilterLabelsToAvoidConflicts(string[] nameCandidates, string[] valueCandidates, string[] namesToSkip, out string[] names, out string[] values)
     {
-        var acceptedNames = new List<string>();
-        var acceptedValues = new List<string>();
+        var acceptedNames = new List<string>(nameCandidates.Length);
+        var acceptedValues = new List<string>(valueCandidates.Length);
 
         for (int i = 0; i < nameCandidates.Length; i++)
         {
@@ -196,11 +190,11 @@ public sealed class MeterAdapter : IDisposable
         _instrumentPrometheusHelp.TryRemove(instrument, out _);
     }
 
-    private string[] TagsToLabelNames(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    private string[] TagsToLabelNames(List<KeyValuePair<string, object?>> tags)
     {
-        var labelNames = new string[tags.Length];
+        var labelNames = new string[tags.Count];
 
-        for (var i = 0; i < tags.Length; i++)
+        for (var i = 0; i < tags.Count; i++)
         {
             var prometheusLabelName = _tagPrometheusNames.GetOrAdd(tags[i].Key, TranslateTagNameToPrometheusName);
             labelNames[i] = prometheusLabelName;
@@ -209,11 +203,11 @@ public sealed class MeterAdapter : IDisposable
         return labelNames;
     }
 
-    private string[] TagsToLabelValues(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    private string[] TagsToLabelValues(List<KeyValuePair<string, object?>> tags)
     {
-        var labelValues = new string[tags.Length];
+        var labelValues = new string[tags.Count];
 
-        for (var i = 0; i < tags.Length; i++)
+        for (var i = 0; i < tags.Count; i++)
         {
             labelValues[i] = tags[i].Value?.ToString() ?? "";
         }

@@ -4,8 +4,8 @@ namespace Prometheus
     {
         public sealed class Child : ChildBase, ICounter
         {
-            internal Child(Collector parent, Labels labels, Labels flattenedLabels, bool publish)
-                : base(parent, labels, flattenedLabels, publish)
+            internal Child(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+                : base(parent, instanceLabels, flattenedLabels, publish)
             {
                 _identifier = CreateIdentifier();
             }
@@ -37,13 +37,13 @@ namespace Prometheus
             public double Value => _value.Value;
         }
 
-        private protected override Child NewChild(Labels labels, Labels flattenedLabels, bool publish)
+        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
-            return new Child(this, labels, flattenedLabels, publish);
+            return new Child(this, instanceLabels, flattenedLabels, publish);
         }
 
-        internal Counter(string name, string help, string[]? labelNames, Labels staticLabels, bool suppressInitialValue)
-            : base(name, help, labelNames, staticLabels, suppressInitialValue)
+        internal Counter(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue)
+            : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue)
         {
         }
 

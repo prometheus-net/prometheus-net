@@ -34,14 +34,14 @@ namespace Prometheus
         internal Summary(
             string name,
             string help,
-            string[]? labelNames,
-            Labels staticLabels,
+            StringSequence instanceLabelNames,
+            LabelSequence staticLabels,
             bool suppressInitialValue = false,
             IReadOnlyList<QuantileEpsilonPair>? objectives = null,
             TimeSpan? maxAge = null,
             int? ageBuckets = null,
             int? bufCap = null)
-            : base(name, help, labelNames, staticLabels, suppressInitialValue)
+            : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue)
         {
             _objectives = objectives ?? DefObjectivesArray;
             _maxAge = maxAge ?? DefMaxAge;
@@ -60,21 +60,21 @@ namespace Prometheus
             if (_bufCap == 0)
                 _bufCap = DefBufCap;
 
-            if (labelNames?.Any(_ => _ == QuantileLabel) == true)
+            if (instanceLabelNames.Contains(QuantileLabel))
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
-        private protected override Child NewChild(Labels labels, Labels flattenedLabels, bool publish)
+        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
-            return new Child(this, labels, flattenedLabels, publish);
+            return new Child(this, instanceLabels, flattenedLabels, publish);
         }
 
         internal override MetricType Type => MetricType.Summary;
 
         public sealed class Child : ChildBase, ISummary
         {
-            internal Child(Summary parent, Labels labels, Labels flattenedLabels, bool publish)
-                : base(parent, labels, flattenedLabels, publish)
+            internal Child(Summary parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+                : base(parent, instanceLabels, flattenedLabels, publish)
             {
                 _objectives = parent._objectives;
                 _maxAge = parent._maxAge;
@@ -111,7 +111,7 @@ namespace Prometheus
                 {
                     var value = double.IsPositiveInfinity(_objectives[i].Quantile) ? "+Inf" : _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
 
-                    _quantileIdentifiers[i] = CreateIdentifier(null, ("quantile", value));
+                    _quantileIdentifiers[i] = CreateIdentifier(null, "quantile", value);
                 }
             }
 

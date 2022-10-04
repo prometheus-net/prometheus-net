@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
 
 namespace Prometheus
 {
@@ -65,13 +64,13 @@ namespace Prometheus
         /// The set of static labels that are applied to all metrics in this registry.
         /// Enumeration of the returned collection is thread-safe.
         /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> StaticLabels => _staticLabels;
+        public IEnumerable<KeyValuePair<string, string>> StaticLabels => _staticLabels.ToDictionary();
 
         /// <summary>
         /// Defines the set of static labels to apply to all metrics in this registry.
         /// The static labels can only be set once on startup, before adding or publishing any metrics.
         /// </summary>
-        public void SetStaticLabels(Dictionary<string, string> labels)
+        public void SetStaticLabels(IDictionary<string, string> labels)
         {
             if (labels == null)
                 throw new ArgumentNullException(nameof(labels));
@@ -104,7 +103,7 @@ namespace Prometheus
                         Collector.ValidateLabelName(pair.Key);
                     }
 
-                    _staticLabels = labels.ToArray();
+                    _staticLabels = LabelSequence.From(labels);
                 }
             }
             finally
@@ -113,21 +112,16 @@ namespace Prometheus
             }
         }
 
-        private KeyValuePair<string, string>[] _staticLabels = new KeyValuePair<string, string>[0];
+        private LabelSequence _staticLabels;
         private readonly ReaderWriterLockSlim _staticLabelsLock = new ReaderWriterLockSlim();
 
-        /// <summary>
-        /// Executes an action while holding a read lock on the set of static labels (provided as parameter).
-        /// </summary>
-        internal TReturn WhileReadingStaticLabels<TReturn>(Func<Labels, TReturn> action)
+        internal LabelSequence GetStaticLabels()
         {
             _staticLabelsLock.EnterReadLock();
 
             try
             {
-                var labels = new Labels(_staticLabels.Select(item => item.Key).ToArray(), _staticLabels.Select(item => item.Value).ToArray());
-
-                return action(labels);
+                return _staticLabels;
             }
             finally
             {
@@ -155,24 +149,30 @@ namespace Prometheus
             where TCollector : Collector
             where TConfiguration : MetricConfiguration
         {
-            private readonly Func<string, string, TConfiguration, TCollector> _createInstance;
+            private readonly CreateInstanceDelegate _createInstance;
             private readonly string _name;
             private readonly string _help;
+            private readonly StringSequence _instanceLabelNames;
+            private readonly LabelSequence _staticLabels;
             private readonly TConfiguration _configuration;
 
             public string Name => _name;
-            public TConfiguration Configuration => _configuration;
+            public StringSequence InstanceLabelNames => _instanceLabelNames;
+            public LabelSequence StaticLabels => _staticLabels;
 
-            public CollectorInitializer(Func<string, string, TConfiguration, TCollector> createInstance,
-                string name, string help, TConfiguration configuration)
+            public CollectorInitializer(CreateInstanceDelegate createInstance, string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration)
             {
                 _createInstance = createInstance;
                 _name = name;
                 _help = help;
+                _instanceLabelNames = instanceLabelNames;
+                _staticLabels = staticLabels;
                 _configuration = configuration;
             }
 
-            public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _configuration);
+            public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration);
+
+            public delegate TCollector CreateInstanceDelegate(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration);
         }
 
         /// <summary>
@@ -182,17 +182,28 @@ namespace Prometheus
             where TCollector : Collector
             where TConfiguration : MetricConfiguration
         {
-            var identity = new CollectorIdentity(initializer.Name, initializer.Configuration.LabelNames ?? Array.Empty<string>());
+            var identity = new CollectorIdentity(initializer.Name, initializer.InstanceLabelNames, initializer.StaticLabels.Names);
+
+            static TCollector Validate(Collector candidate)
+            {
+                // We either created a new collector or found one with a matching identity.
+                // We do some basic validation here to avoid silly API usage mistakes.
+
+                if (!(candidate is TCollector))
+                    throw new InvalidOperationException("Collector of a different type with the same identity is already registered.");
+
+                return (TCollector)candidate;
+            }
+
+            // Should we optimize for the case where the collector is already registered? It is unlikely to be very common. However, we still should because:
+            // 1) In scenarios where collector re-registration is common, it could be an expensive persistent cost in terms of allocations.
+            // 2) In scenarios where collector re-registration is not common, a tiny compute overhead is unlikely to be significant in the big picture, as it only happens once.
+            if (_collectors.TryGetValue(identity, out var existing))
+                return Validate(existing);
 
             var collector = _collectors.GetOrAdd(identity, initializer.CreateInstance);
 
-            // We either created a new collector or found one with a matching identity.
-            // We do some basic validation here to avoid silly API usage mistakes.
-
-            if (!(collector is TCollector))
-                throw new InvalidOperationException("Collector of a different type with the same identity is already registered.");
-
-            return (TCollector)collector;
+            return Validate(collector);
         }
 
         private readonly ConcurrentDictionary<CollectorIdentity, Collector> _collectors = new ConcurrentDictionary<CollectorIdentity, Collector>();

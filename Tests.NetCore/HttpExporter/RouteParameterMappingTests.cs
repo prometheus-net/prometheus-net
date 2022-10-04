@@ -52,7 +52,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpoint, child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpoint, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
@@ -60,7 +60,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestAction,
                 TestController,
                 TestEndpoint
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -74,7 +74,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            Assert.AreEqual(0, child.Labels.Count);
+            Assert.AreEqual(0, child.InstanceLabels.Length);
         }
 
         [TestMethod]
@@ -93,7 +93,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.Labels.Names);
+            CollectionAssert.AreEquivalent(HttpRequestLabelNames.All, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
@@ -102,7 +102,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestController,
                 TestEndpoint,
                 "" // page
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -116,14 +116,14 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(HttpRequestLabelNames.Default, child.Labels.Names);
+            CollectionAssert.AreEquivalent(HttpRequestLabelNames.Default, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
                 TestMethod,
                 TestAction,
                 TestController
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -154,7 +154,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(allLabelNames, child.Labels.Names);
+            CollectionAssert.AreEquivalent(allLabelNames, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
@@ -164,7 +164,7 @@ namespace Prometheus.Tests.HttpExporter
                 "123", // foo
                 "", // bar
                 "excellent" // route_method
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -195,7 +195,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(allLabelNames, child.Labels.Names);
+            CollectionAssert.AreEquivalent(allLabelNames, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
@@ -206,7 +206,7 @@ namespace Prometheus.Tests.HttpExporter
                 "123", // foo
                 "", // bar
                 "excellent" // route_method
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -300,7 +300,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpoint, child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpoint, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 expectedStatusLabel,
@@ -308,7 +308,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestAction,
                 TestController,
                 TestEndpoint
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -326,7 +326,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
@@ -335,7 +335,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestController,
                 TestEndpoint,
                 "page_name"
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -356,7 +356,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
@@ -365,7 +365,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestController,
                 TestEndpoint,
                 "page_name"
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -391,7 +391,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.Labels.Names);
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpointAndPage, child.InstanceLabels.Names.ToArray());
             CollectionAssert.AreEquivalent(new[]
             {
                 TestStatusCode.ToString(),
@@ -400,7 +400,7 @@ namespace Prometheus.Tests.HttpExporter
                 TestController,
                 TestEndpoint,
                 canary
-            }, child.Labels.Values);
+            }, child.InstanceLabels.Values.ToArray());
         }
 
         [TestMethod]
@@ -421,7 +421,7 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            Assert.AreEqual(0, child.Labels.Names.Length);
+            Assert.AreEqual(0, child.InstanceLabels.Names.Length);
         }
 
         [TestMethod]
@@ -445,9 +445,9 @@ namespace Prometheus.Tests.HttpExporter
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
-            Assert.AreEqual(1, child.Labels.Names.Length);
-            Assert.AreEqual(HttpRequestLabelNames.Page, child.Labels.Names[0]);
-            Assert.AreEqual("page_name", child.Labels.Values[0]);
+            Assert.AreEqual(1, child.InstanceLabels.Names.Length);
+            Assert.AreEqual(HttpRequestLabelNames.Page, child.InstanceLabels.Names.ToArray().Single());
+            Assert.AreEqual("page_name", child.InstanceLabels.Values.ToArray().Single());
         }
 
         private static void SetupHttpContext(DefaultHttpContext context, int statusCode, string httpMethod, string action, string controller, (string name, string value)[] routeParameters = null)

@@ -8,16 +8,18 @@
     internal struct CollectorIdentity : IEquatable<CollectorIdentity>
     {
         public readonly string Name;
-        public readonly string[] LabelNames;
+        public readonly StringSequence InstanceLabelNames;
+        public readonly StringSequence StaticLabelNames;
         
         private readonly int _hashCode;
 
-        public CollectorIdentity(string name, string[] labelNames)
+        public CollectorIdentity(string name, StringSequence instanceLabelNames, StringSequence staticLabelNames)
         {
             Name = name;
-            LabelNames = labelNames;
+            InstanceLabelNames = instanceLabelNames;
+            StaticLabelNames = staticLabelNames;
 
-            _hashCode = CalculateHashCode(name, labelNames);
+            _hashCode = CalculateHashCode(name, instanceLabelNames, staticLabelNames);
         }
 
         public bool Equals(CollectorIdentity other)
@@ -28,12 +30,14 @@
             if (_hashCode != other._hashCode)
                 return false;
 
-            if (LabelNames.Length != other.LabelNames.Length)
+            if (InstanceLabelNames.Length != other.InstanceLabelNames.Length)
                 return false;
 
-            for (var i = 0; i < LabelNames.Length; i++)
-                if (!string.Equals(LabelNames[i], other.LabelNames[i], StringComparison.Ordinal))
-                    return false;
+            if (!InstanceLabelNames.Equals(other.InstanceLabelNames))
+                return false;
+
+            if (!StaticLabelNames.Equals(other.StaticLabelNames))
+                return false;
 
             return true;
         }
@@ -43,18 +47,15 @@
             return _hashCode;
         }
 
-        private static int CalculateHashCode(string name, string[] labelNames)
+        private static int CalculateHashCode(string name, StringSequence labelNames, StringSequence staticLabelNames)
         {
             unchecked
             {
                 int hashCode = 0;
 
                 hashCode ^= name.GetHashCode() * 31;
-
-                for (int i = 0; i < labelNames.Length; i++)
-                {
-                    hashCode ^= (labelNames[i].GetHashCode() * 397);
-                }
+                hashCode ^= labelNames.GetHashCode() * 397;
+                hashCode ^= staticLabelNames.GetHashCode() * 397;
 
                 return hashCode;
             }

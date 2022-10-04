@@ -5,10 +5,10 @@ namespace Prometheus
     /// </summary>
     public abstract class ChildBase : ICollectorChild, IDisposable
     {
-        internal ChildBase(Collector parent, Labels labels, Labels flattenedLabels, bool publish)
+        internal ChildBase(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
             _parent = parent;
-            Labels = labels;
+            InstanceLabels = instanceLabels;
             FlattenedLabels = flattenedLabels;
             _publish = publish;
         }
@@ -43,7 +43,7 @@ namespace Prometheus
         /// </summary>
         public void Remove()
         {
-            _parent.RemoveLabelled(Labels);
+            _parent.RemoveLabelled(InstanceLabels);
         }
 
         public void Dispose() => Remove();
@@ -52,13 +52,13 @@ namespace Prometheus
         /// Labels specific to this metric instance, without any inherited static labels.
         /// Internal for testing purposes only.
         /// </summary>
-        internal Labels Labels { get; }
+        internal LabelSequence InstanceLabels { get; }
 
         /// <summary>
         /// All labels that materialize on this metric instance, including inherited static labels.
         /// Internal for testing purposes only.
         /// </summary>
-        internal Labels FlattenedLabels { get; }
+        internal LabelSequence FlattenedLabels { get; }
 
         private readonly Collector _parent;
 
@@ -82,18 +82,27 @@ namespace Prometheus
         private protected abstract Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel);
 
         /// <summary>
-        /// Creates a metric identifier, with an optional name postfix and optional extra labels.
+        /// Creates a metric identifier, with an optional name postfix and an optional extra label to append to the end.
         /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
         /// </summary>
-        protected byte[] CreateIdentifier(string? postfix = null, params (string, string)[] extraLabels)
+        protected byte[] CreateIdentifier(string? postfix = null, string? extraLabelName = null, string? extraLabelValue = null)
         {
             var fullName = postfix != null ? $"{_parent.Name}_{postfix}" : _parent.Name;
 
             var labels = FlattenedLabels;
-            if (extraLabels?.Length > 0)
-                labels = FlattenedLabels.Concat(extraLabels);
 
-            if (labels.Count != 0)
+            if (extraLabelName != null && extraLabelValue != null)
+            {
+                var extraLabelNames = StringSequence.From(extraLabelName);
+                var extraLabelValues = StringSequence.From(extraLabelValue);
+
+                var extraLabels = LabelSequence.From(extraLabelNames, extraLabelValues);
+
+                // Extra labels go to the end (i.e. they are deepest to inherit from).
+                labels = labels.Concat(extraLabels);
+            }
+
+            if (labels.Length != 0)
                 return PrometheusConstants.ExportEncoding.GetBytes($"{fullName}{{{labels.Serialize()}}}");
             else
                 return PrometheusConstants.ExportEncoding.GetBytes(fullName);
