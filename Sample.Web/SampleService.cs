@@ -94,15 +94,11 @@ public sealed class SampleService : BackgroundService
 
     private static readonly Counter IterationCount = Metrics.CreateCounter("sampleservice_iterations_total", "Number of iterations that the sample service has ever executed.");
 
+    private static readonly string[] ByEndpointLabelNames = new[] { "endpoint" };
+
     // We measure wins and losses.
-    private static readonly Counter WinsByEndpoint = Metrics.CreateCounter("sampleservice_wins_total", "Number of times a target endpoint has won the competition.", new CounterConfiguration
-    {
-        LabelNames = new[] { "endpoint" }
-    });
-    private static readonly Counter LossesByEndpoint = Metrics.CreateCounter("sampleservice_losses_total", "Number of times a target endpoint has lost the competition.", new CounterConfiguration
-    {
-        LabelNames = new[] { "endpoint" }
-    });
+    private static readonly Counter WinsByEndpoint = Metrics.CreateCounter("sampleservice_wins_total", "Number of times a target endpoint has won the competition.", ByEndpointLabelNames);
+    private static readonly Counter LossesByEndpoint = Metrics.CreateCounter("sampleservice_losses_total", "Number of times a target endpoint has lost the competition.", ByEndpointLabelNames);
 
     // We measure a histogram of the absolute difference between the winner and loser.
     private static readonly Histogram Difference = Metrics.CreateHistogram("sampleservice_difference_seconds", "How far apart the winner and loser were, in seconds.", new HistogramConfiguration

@@ -20,9 +20,6 @@ namespace Prometheus.HttpClientMetrics
         protected override ICollector<IGauge> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateGauge(
             "httpclient_requests_in_progress",
             "Number of requests currently being executed by an HttpClient.",
-            new GaugeConfiguration
-            {
-                LabelNames = labelNames
-            });
+            labelNames);
     }
 }

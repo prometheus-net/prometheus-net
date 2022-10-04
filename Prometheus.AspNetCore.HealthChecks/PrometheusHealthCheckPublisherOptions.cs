@@ -6,10 +6,6 @@
         private const string DefaultHelp = "ASP.NET Core health check status (0 == Unhealthy, 0.5 == Degraded, 1 == Healthy)";
 
         public Gauge Gauge { get; set; } =
-            Metrics.CreateGauge(DefaultName, DefaultHelp, new GaugeConfiguration
-            {
-                LabelNames = new string[] { "name" },
-                SuppressInitialValue = true
-            });
+            Metrics.CreateGauge(DefaultName, DefaultHelp, labelNames: new[] { "name" });
     }
 }

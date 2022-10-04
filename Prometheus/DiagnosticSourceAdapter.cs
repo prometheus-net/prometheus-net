@@ -28,13 +28,10 @@ namespace Prometheus
         {
             _options = options;
             _metric = Metrics.WithCustomRegistry(options.Registry)
-                .CreateCounter("diagnostic_events_total", "Total count of events received via the DiagnosticSource infrastructure.", new CounterConfiguration
+                .CreateCounter("diagnostic_events_total", "Total count of events received via the DiagnosticSource infrastructure.", labelNames: new[]
                 {
-                    LabelNames = new[]
-                    {
-                        "source", // Name of the DiagnosticSource
-                        "event" // Name of the event
-                    }
+                    "source", // Name of the DiagnosticSource
+                    "event" // Name of the event
                 });
 
             var newListenerObserver = new NewListenerObserver(OnNewListener);

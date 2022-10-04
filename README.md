@@ -272,12 +272,7 @@ Taking a counter as an example:
 
 ```csharp
 private static readonly Counter RequestCountByMethod = Metrics
-    .CreateCounter("myapp_requests_total", "Number of requests received, by HTTP method.",
-        new CounterConfiguration
-        {
-            // Here you specify only the names of the labels.
-            LabelNames = new[] { "method" }
-        });
+    .CreateCounter("myapp_requests_total", "Number of requests received, by HTTP method.", labelNames: new[] { "method" });
 
 ...
 
@@ -296,11 +291,10 @@ You can add static labels that always have fixed values. This is possible on two
 
 * on the metrics registry (e.g. `Metrics.DefaultRegistry`)
 * on a metric factory (e.g. `Metrics.WithLabels()`)
-* on one specific metric
 
 All levels of labeling can be combined and instance-specific metric labels can also be applied on top, as usual.
 
-Example with static labels on three levels and one instance-specific label:
+Example with static labels on two levels and one instance-specific label:
 
 ```csharp
 Metrics.DefaultRegistry.SetStaticLabels(new Dictionary<string, string>
@@ -316,16 +310,7 @@ var backgroundServicesMetricFactory = Metrics.WithLabels(new Dictionary<string, 
 });
 
 var requestsHandled = backgroundServicesMetricFactory
-  .CreateCounter("myapp_requests_handled_total", "Count of requests handled, labelled by response code.",
-    new CounterConfiguration
-    {
-        // Labels applied to all instances of myapp_requests_handled_total.
-        StaticLabels = new Dictionary<string, string>
-        {
-        { "is_pci_compliant_environment", AppSettings.IsPciCompliant.ToString() }
-        },
-        LabelNames = new[] { "response_code" }
-    });
+  .CreateCounter("myapp_requests_handled_total", "Count of requests handled, labelled by response code.", labelNames: new[] { "response_code" });
 
 // Labels applied to individual instances of the metric.
 requestsHandled.WithLabels("404").Inc();
@@ -370,12 +355,9 @@ var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromMinutes(5))
 // With expiring metrics, we get back handles to the metric, not the metric directly.
 var inProgressHandle = expiringMetricFactory
   .CreateGauge("documents_in_progress", "Number of documents currently being processed.",
-    new GaugeConfiguration
-    {
-      // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
-      // so here is a sample label for each "document provider", whoever that may be.
-      LabelNames = new[] { "document_provider" }
-    });
+    // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
+    // so here is a sample label for each "document provider", whoever that may be.
+    labelNames: new[] { "document_provider" });
 
 ...
 
@@ -401,12 +383,9 @@ var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromMinutes(5))
 // With expiring metrics, we get back handles to the metric, not the metric directly.
 var processingStartedHandle = expiringMetricFactory
   .CreateGauge("documents_started_processing_total", "Number of documents for which processing has started.",
-    new GaugeConfiguration
-    {
-      // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
-      // so here is a sample label for each "document provider", whoever that may be.
-      LabelNames = new[] { "document_provider" }
-    });
+    // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
+    // so here is a sample label for each "document provider", whoever that may be.
+    labelNames: new[] { "document_provider" });
 
 // This returns a metric instance that will reset the expiration timer whenever the metric value is updated.
 var processingStarted = processingStartedHandle.WithExtendLifetimeOnUse();

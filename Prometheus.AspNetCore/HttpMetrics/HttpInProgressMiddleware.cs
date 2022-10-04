@@ -28,9 +28,6 @@ namespace Prometheus.HttpMetrics
         protected override ICollector<IGauge> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateGauge(
             "http_requests_in_progress",
             "The number of requests currently in progress in the ASP.NET Core pipeline. One series without controller/action label values counts all in-progress requests, with separate series existing for each controller-action pair.",
-            new GaugeConfiguration
-            {
-                LabelNames = labelNames
-            });
+            labelNames);
     }
 }

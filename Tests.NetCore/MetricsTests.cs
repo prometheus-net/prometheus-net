@@ -106,10 +106,9 @@ namespace Prometheus.Tests
         public async Task Export_FamilyWithOnlyNonpublishedLabeledMetrics_ExportsFamilyDeclaration()
         {
             // See https://github.com/prometheus-net/prometheus-net/issues/196
-            var metric = _metrics.CreateCounter("my_family", "", new CounterConfiguration
+            var metric = _metrics.CreateCounter("my_family", "", new[] { "labelname" }, new CounterConfiguration
             {
                 SuppressInitialValue = true,
-                LabelNames = new[] { "labelname" }
             });
 
             var instance = metric.WithLabels("labelvalue");
@@ -133,10 +132,9 @@ namespace Prometheus.Tests
         [TestMethod]
         public async Task DisposeChild_RemovesMetric()
         {
-            var metric = _metrics.CreateCounter("my_family", "", new CounterConfiguration
+            var metric = _metrics.CreateCounter("my_family", "", new[] { "labelname" }, new CounterConfiguration
             {
                 SuppressInitialValue = true,
-                LabelNames = new[] { "labelname" }
             });
 
             var instance = metric.WithLabels("labelvalue");

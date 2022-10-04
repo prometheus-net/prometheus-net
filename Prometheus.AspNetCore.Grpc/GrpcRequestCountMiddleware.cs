@@ -27,9 +27,6 @@ namespace Prometheus
         protected override ICollector<ICounter> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateCounter(
             "grpc_requests_received_total",
             "Number of gRPC requests received (including those currently being processed).",
-            new CounterConfiguration
-            {
-                LabelNames = labelNames
-            });
+            labelNames);
     }
 }

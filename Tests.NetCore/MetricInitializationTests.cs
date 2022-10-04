@@ -166,21 +166,13 @@ namespace Prometheus.Tests
             var factory = Metrics.WithCustomRegistry(registry);
 
             var sumamryConfig = NewSummaryConfiguration();
-            sumamryConfig.LabelNames = new[] { "foo" };
 
             var histogramConfig = NewHistogramConfiguration();
-            histogramConfig.LabelNames = new[] { "foo" };
 
-            var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
-            {
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
-            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
-            {
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
-            var summary = factory.CreateSummary("summary", "", sumamryConfig).WithLabels("bar");
-            var histogram = factory.CreateHistogram("histogram", "", histogramConfig).WithLabels("bar");
+            var gauge = factory.CreateGauge("gauge", "", new[] { "foo" }).WithLabels("bar");
+            var counter = factory.CreateCounter("counter", "", new[] { "foo" }).WithLabels("bar");
+            var summary = factory.CreateSummary("summary", "", new[] { "foo" }, sumamryConfig).WithLabels("bar");
+            var histogram = factory.CreateHistogram("histogram", "", new[] { "foo" }, histogramConfig).WithLabels("bar");
             // 4 families with 9 metrics total.
 
             var serializer = Substitute.For<IMetricsSerializer>();
@@ -199,24 +191,20 @@ namespace Prometheus.Tests
 
             var sumamryConfig = NewSummaryConfiguration();
             sumamryConfig.SuppressInitialValue = true;
-            sumamryConfig.LabelNames = new[] { "foo" };
 
             var histogramConfig = NewHistogramConfiguration();
             histogramConfig.SuppressInitialValue = true;
-            histogramConfig.LabelNames = new[] { "foo" };
 
-            var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
+            var gauge = factory.CreateGauge("gauge", "", new[] { "foo" }, new GaugeConfiguration
             {
                 SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
+            var counter = factory.CreateCounter("counter", "", new[] { "foo" }, new CounterConfiguration
             {
                 SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var summary = factory.CreateSummary("summary", "", sumamryConfig).WithLabels("bar");
-            var histogram = factory.CreateHistogram("histogram", "", histogramConfig).WithLabels("bar");
+            var summary = factory.CreateSummary("summary", "", new[] { "foo" }, sumamryConfig).WithLabels("bar");
+            var histogram = factory.CreateHistogram("histogram", "", new[] { "foo" }, histogramConfig).WithLabels("bar");
             // 4 families with 9 metrics total.
 
             var serializer = Substitute.For<IMetricsSerializer>();
@@ -235,24 +223,20 @@ namespace Prometheus.Tests
 
             var sumamryConfig = NewSummaryConfiguration();
             sumamryConfig.SuppressInitialValue = true;
-            sumamryConfig.LabelNames = new[] { "foo" };
 
             var histogramConfig = NewHistogramConfiguration();
             histogramConfig.SuppressInitialValue = true;
-            histogramConfig.LabelNames = new[] { "foo" };
 
-            var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
+            var gauge = factory.CreateGauge("gauge", "", new[] { "foo" }, new GaugeConfiguration
             {
                 SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
+            var counter = factory.CreateCounter("counter", "", new[] { "foo" }, new CounterConfiguration
             {
                 SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var summary = factory.CreateSummary("summary", "", sumamryConfig).WithLabels("bar");
-            var histogram = factory.CreateHistogram("histogram", "", histogramConfig).WithLabels("bar");
+            var summary = factory.CreateSummary("summary", "", new[] { "foo" }, sumamryConfig).WithLabels("bar");
+            var histogram = factory.CreateHistogram("histogram", "", new[] { "foo" }, histogramConfig).WithLabels("bar");
             // 4 families with 9 metrics total.
 
             gauge.Set(123);
@@ -276,24 +260,20 @@ namespace Prometheus.Tests
 
             var sumamryConfig = NewSummaryConfiguration();
             sumamryConfig.SuppressInitialValue = true;
-            sumamryConfig.LabelNames = new[] { "foo" };
 
             var histogramConfig = NewHistogramConfiguration();
             histogramConfig.SuppressInitialValue = true;
-            histogramConfig.LabelNames = new[] { "foo" };
 
-            var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
+            var gauge = factory.CreateGauge("gauge", "", new[] { "foo" }, new GaugeConfiguration
             {
                 SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
+            var counter = factory.CreateCounter("counter", "", new[] { "foo" }, new CounterConfiguration
             {
                 SuppressInitialValue = true,
-                LabelNames = new[] { "foo" }
             }).WithLabels("bar");
-            var summary = factory.CreateSummary("summary", "", sumamryConfig).WithLabels("bar");
-            var histogram = factory.CreateHistogram("histogram", "", histogramConfig).WithLabels("bar");
+            var summary = factory.CreateSummary("summary", "", new[] { "foo" }, sumamryConfig).WithLabels("bar");
+            var histogram = factory.CreateHistogram("histogram", "", new[] { "foo" }, histogramConfig).WithLabels("bar");
             // 4 families with 9 metrics total.
 
             gauge.Publish();
@@ -315,10 +295,7 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
-            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
-            {
-                LabelNames = new[] { "foo" }
-            }).WithLabels("bar");
+            var counter = factory.CreateCounter("counter", "", new[] { "foo" }).WithLabels("bar");
 
             counter.Inc();
             counter.Unpublish();
@@ -339,20 +316,12 @@ namespace Prometheus.Tests
             var factory = Metrics.WithCustomRegistry(registry);
 
             var summaryConfig = NewSummaryConfiguration();
-            summaryConfig.LabelNames = new[] { "labelname" };
             var histogramConfig = NewHistogramConfiguration();
-            histogramConfig.LabelNames = new[] { "labelname" };
 
-            var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
-            {
-                LabelNames = new[] { "labelname" }
-            });
-            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
-            {
-                LabelNames = new[] { "labelname" }
-            });
-            var summary = factory.CreateSummary("summary", "", summaryConfig);
-            var histogram = factory.CreateHistogram("histogram", "", histogramConfig);
+            var gauge = factory.CreateGauge("gauge", "", new[] { "labelname" });
+            var counter = factory.CreateCounter("counter", "", new[] { "labelname" });
+            var summary = factory.CreateSummary("summary", "", new[] { "labelname" }, summaryConfig);
+            var histogram = factory.CreateHistogram("histogram", "", new[] { "labelname" }, histogramConfig);
             // 4 families with 9 metrics total.
 
             var serializer = Substitute.For<IMetricsSerializer>();
@@ -370,20 +339,12 @@ namespace Prometheus.Tests
             var factory = Metrics.WithCustomRegistry(registry);
 
             var summaryConfig = NewSummaryConfiguration();
-            summaryConfig.LabelNames = new[] { "labelname" };
             var histogramConfig = NewHistogramConfiguration();
-            histogramConfig.LabelNames = new[] { "labelname" };
 
-            var gauge = factory.CreateGauge("gauge", "", new GaugeConfiguration
-            {
-                LabelNames = new[] { "labelname" }
-            });
-            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
-            {
-                LabelNames = new[] { "labelname" }
-            });
-            var summary = factory.CreateSummary("summary", "", summaryConfig);
-            var histogram = factory.CreateHistogram("histogram", "", histogramConfig);
+            var gauge = factory.CreateGauge("gauge", "", new[] { "labelname" });
+            var counter = factory.CreateCounter("counter", "", new[] { "labelname" });
+            var summary = factory.CreateSummary("summary", "", new[] { "labelname" }, summaryConfig);
+            var histogram = factory.CreateHistogram("histogram", "", new[] { "labelname" }, histogramConfig);
             // 4 families with 9 metrics total.
 
             // Touch some labelled metrics.
@@ -420,10 +381,7 @@ namespace Prometheus.Tests
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
 
-            var counter = factory.CreateCounter("counter", "", new CounterConfiguration
-            {
-                LabelNames = new[] { "foo" }
-            });
+            var counter = factory.CreateCounter("counter", "", new[] { "foo" });
 
             var bar1 = counter.WithLabels("bar");
             bar1.Inc();

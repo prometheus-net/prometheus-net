@@ -22,10 +22,7 @@ namespace Prometheus.Tests
 
             var registryLabel = factory.CreateCounter("foo1", "");
 
-            var registryAndInstanceLabel = factory.CreateCounter("foo3", "", new CounterConfiguration
-            {
-                LabelNames = new[] { "instanceLabel" }
-            });
+            var registryAndInstanceLabel = factory.CreateCounter("foo3", "", new[] { "instanceLabel" });
 
             var labels = registryLabel.Unlabelled.FlattenedLabels;
             Assert.AreEqual(1, labels.Length);
@@ -55,10 +52,7 @@ namespace Prometheus.Tests
             var registryLabel = factory.CreateCounter("foo1", "");
 
             // Static label (registry) and instance label with same name -> error.
-            Assert.ThrowsException<InvalidOperationException>(() => factory.CreateGauge("test1", "", new GaugeConfiguration
-            {
-                LabelNames = new[] { "registryLabel" }
-            }));
+            Assert.ThrowsException<InvalidOperationException>(() => factory.CreateGauge("test1", "", new[] { "registryLabel" }));
 
             var factoryLabel = factory.WithLabels(new Dictionary<string, string>
             {
@@ -66,10 +60,7 @@ namespace Prometheus.Tests
             });
 
             // Static label (registry) and factory label with same name -> error.
-            Assert.ThrowsException<InvalidOperationException>(() => factory.CreateGauge("test1", "", new GaugeConfiguration
-            {
-                LabelNames = new[] { "registryLabel" }
-            }));
+            Assert.ThrowsException<InvalidOperationException>(() => factory.CreateGauge("test1", "", new[] { "registryLabel" }));
 
             // Factory label and instance label with same name -> error.
             var registry2 = Metrics.NewCustomRegistry();
@@ -78,10 +69,7 @@ namespace Prometheus.Tests
                 { "factoryLabel", "value" }
             });
 
-            Assert.ThrowsException<InvalidOperationException>(() => factory2.CreateGauge("test1", "", new GaugeConfiguration
-            {
-                LabelNames = new[] { "factoryLabel" }
-            }));
+            Assert.ThrowsException<InvalidOperationException>(() => factory2.CreateGauge("test1", "", new[] { "factoryLabel" }));
         }
 
         [TestMethod]

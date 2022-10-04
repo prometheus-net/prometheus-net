@@ -52,10 +52,7 @@ namespace Prometheus.Tests
 
             Assert.ThrowsException<InvalidOperationException>(delegate
             {
-                factory.CreateCounter("test_counter", "", new CounterConfiguration
-                {
-                    LabelNames = new[] { "foo" }
-                });
+                factory.CreateCounter("test_counter", "", new[] { "foo" });
             });
         }
 

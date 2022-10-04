@@ -44,17 +44,10 @@ public class MeasurementBenchmarks
         _factory = Metrics.WithCustomRegistry(_registry);
 
         // We add a label to each, as labeled usage is the typical usage.
-        var counterTemplate = _factory.CreateCounter("counter", "test counter", new CounterConfiguration
+        var counterTemplate = _factory.CreateCounter("counter", "test counter", new[] { "label" });
+        var gaugeTemplate = _factory.CreateGauge("gauge", "test gauge", new[] { "label" });
+        var summaryTemplate = _factory.CreateSummary("summary", "test summary", new[] { "label" }, new SummaryConfiguration
         {
-            LabelNames = new[] { "label" }
-        });
-        var gaugeTemplate = _factory.CreateGauge("gauge", "test gauge", new GaugeConfiguration
-        {
-            LabelNames = new[] { "label" }
-        });
-        var summaryTemplate = _factory.CreateSummary("summary", "test summary", new SummaryConfiguration
-        {
-            LabelNames = new[] { "label" },
             Objectives = new QuantileEpsilonPair[]
             {
                 new(0.9, 0.1),
@@ -62,9 +55,8 @@ public class MeasurementBenchmarks
                 new(0.99, 0.005)
             }
         });
-        var histogramTemplate = _factory.CreateHistogram("histogram", "test histogram", new HistogramConfiguration
+        var histogramTemplate = _factory.CreateHistogram("histogram", "test histogram", new[] { "label" }, new HistogramConfiguration
         {
-            LabelNames = new[] { "label" },
             // 1 ms to 32K ms, 16 buckets. Same as used in HTTP metrics by default.
             Buckets = Histogram.ExponentialBuckets(0.001, 2, 16)
         });

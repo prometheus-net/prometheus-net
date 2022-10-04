@@ -86,10 +86,7 @@ namespace Prometheus.Tests.HttpExporter
 
             var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
             {
-                Counter = _metrics.CreateCounter("xxx", "", new CounterConfiguration
-                {
-                    LabelNames = HttpRequestLabelNames.All
-                })
+                Counter = _metrics.CreateCounter("xxx", "", HttpRequestLabelNames.All)
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 
@@ -438,10 +435,7 @@ namespace Prometheus.Tests.HttpExporter
             {
                 Registry = _registry,
                 IncludePageLabelInDefaultsInternal = true,
-                Counter = _metrics.CreateCounter("xxx", "", new CounterConfiguration
-                {
-                    LabelNames = new[] { HttpRequestLabelNames.Page }
-                })
+                Counter = _metrics.CreateCounter("xxx", "", new[] { HttpRequestLabelNames.Page })
             });
             var child = (ChildBase)middleware.CreateChild(_context);
 

@@ -34,11 +34,11 @@ namespace Prometheus.HttpMetrics
         protected override ICollector<IHistogram> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateHistogram(
             "http_request_duration_seconds",
             "The duration of HTTP requests processed by an ASP.NET Core application.",
+            labelNames,
             new HistogramConfiguration
             {
                 // 1 ms to 32K ms buckets
                 Buckets = Histogram.ExponentialBuckets(0.001, 2, 16),
-                LabelNames = labelNames
             });
     }
 }

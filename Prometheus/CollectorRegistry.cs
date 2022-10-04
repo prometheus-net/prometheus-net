@@ -261,18 +261,9 @@ namespace Prometheus
         {
             var factory = Metrics.WithCustomRegistry(this);
 
-            _metricFamilies = factory.CreateGauge("prometheus_net_metric_families", "Number of metric families currently registered.", new GaugeConfiguration
-            {
-                LabelNames = new[] { MetricTypeDebugLabel }
-            });
-            _metricInstances = factory.CreateGauge("prometheus_net_metric_instances", "Number of metric instances currently registered across all metric families.", new GaugeConfiguration
-            {
-                LabelNames = new[] { MetricTypeDebugLabel }
-            });
-            _metricTimeseries = factory.CreateGauge("prometheus_net_metric_timeseries", "Number of metric timeseries currently generated from all metric instances.", new GaugeConfiguration
-            {
-                LabelNames = new[] { MetricTypeDebugLabel }
-            });
+            _metricFamilies = factory.CreateGauge("prometheus_net_metric_families", "Number of metric families currently registered.", labelNames: new[] { MetricTypeDebugLabel });
+            _metricInstances = factory.CreateGauge("prometheus_net_metric_instances", "Number of metric instances currently registered across all metric families.", labelNames: new[] { MetricTypeDebugLabel });
+            _metricTimeseries = factory.CreateGauge("prometheus_net_metric_timeseries", "Number of metric timeseries currently generated from all metric instances.", labelNames: new[] { MetricTypeDebugLabel });
 
             _metricFamiliesPerType = new();
             _metricInstancesPerType = new();
