@@ -104,28 +104,30 @@ public sealed class MeterAdapter : IDisposable
 
             var value = Convert.ToDouble(measurement);
 
+            // We do not represent any of the "counter" style .NET meter types as counters because they may be re-created on the .NET Meters side at any time, decrementing the value!
+
             if (instrument is Counter<T>)
             {
-                var counterHandle = _factory.CreateCounter(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
+                var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the increment.
-                counterHandle.WithLease(c => c.Inc(value), labelValues);
+                handle.WithLease(c => c.Inc(value), labelValues);
             }
             else if (instrument is ObservableCounter<T>)
             {
-                var counterHandle = _factory.CreateCounter(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
+                var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the current value.
-                counterHandle.WithLease(c => c.IncTo(value), labelValues);
+                handle.WithLease(c => c.IncTo(value), labelValues);
             }
             /* .NET 7: else if (instrument is UpDownCounter<T>)
             {
-                var gaugeHandle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new GaugeConfiguration
+                var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new GaugeConfiguration
                 {
                     LabelNames = labelNames
                 });
 
-                using (gaugeHandle.AcquireLease(out var gauge, labelValues))
+                using (handle.AcquireLease(out var gauge, labelValues))
                 {
                     // A measurement is the increment.
                     gauge.Inc(value);
@@ -133,21 +135,21 @@ public sealed class MeterAdapter : IDisposable
             }*/
             else if (instrument is ObservableGauge<T> /* .NET 7: or ObservableUpDownCounter<T>*/)
             {
-                var gaugeHandle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
+                var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the current value.
-                gaugeHandle.WithLease(g => g.Set(value), labelValues);
+                handle.WithLease(g => g.Set(value), labelValues);
             }
             else if (instrument is Histogram<T>)
             {
-                var histogramHandle = _factory.CreateHistogram(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames, new HistogramConfiguration
+                var handle = _factory.CreateHistogram(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames, new HistogramConfiguration
                 {
                     // We oursource the bucket definition to the callback in options, as it might need to be different for different instruments.
                     Buckets = _options.ResolveHistogramBuckets(instrument)
                 });
 
                 // A measurement is the observed value.
-                histogramHandle.WithLease(h => h.Observe(value), labelValues);
+                handle.WithLease(h => h.Observe(value), labelValues);
             }
             else
             {
