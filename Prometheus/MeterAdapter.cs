@@ -250,6 +250,9 @@ public sealed class MeterAdapter : IDisposable
 
         sb.Append(instrument.Description);
 
+        // Append the base type name, so we see what type of metric it is.
+        sb.Append($" ({instrument.GetType().Name})");
+
         return sb.ToString();
     }
 }
