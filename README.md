@@ -742,22 +742,6 @@ The level of detail obtained from this is rather low - only the total count for 
 
 You can configure the integration using `Metrics.ConfigureEventCounterAdapter()`.
 
-There are different types of event counters published via this mechanism:
-
-| NET event counter type | Mapping to Prometheus metrics                                        |
-|------------------------|----------------------------------------------------------------------|
-| Aggregating counter    | Gauge representing latest value (e.g. requests per second)           |
-| Incrementing counter   | Gauge representing latest value AND counter representing total value |
-
-The reason for having both a gauge and counter for incrementing counters is that event counters are used quite inconsistently in .NET:
-
-* Some are just gauges, indicating the current value (e.g. `system_runtime_alloc_rate` - bytes per second)
-* Some are counters that publish the increment since the last observation (+5) (e.g. `system_runtime_time_in_jit` - milliseconds per second)
-
-It is not possible for the adapter to know what the author of each event counter intended, so it is left up to the user of the metrics to identify whether the gauge or counter is the correct representation.
-
-In fact, even some "aggregating" event counters can just be a plain event counter with no aggregation (e.g. `microsoft_aspnetcore_hosting_total_requests`).
-
 See also, [Sample.Console](Sample.Console/Program.cs).
 
 # .NET Meters integration

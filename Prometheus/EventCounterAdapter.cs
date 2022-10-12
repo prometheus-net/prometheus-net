@@ -47,6 +47,8 @@ namespace Prometheus
             return _options.EventSourceFilterPredicate(source.Name);
         }
 
+        private const string RateSuffix = "_rate";
+
         private void OnEventWritten(EventWrittenEventArgs args)
         {
             // This deserialization here is pretty gnarly.
@@ -90,7 +92,7 @@ namespace Prometheus
 
                     // The event counter can either be
                     // 1) an aggregating counter (in which case we use the mean); or
-                    // 2) an incrementing counter (in which case we use the delta, which might not actually be the delta).
+                    // 2) an incrementing counter (in which case we use the delta).
 
                     if (e.TryGetValue("Increment", out var increment))
                     {
@@ -101,9 +103,11 @@ namespace Prometheus
                         if (value == null)
                             continue; // What? Whatever.
 
-                        // It seems there exist "incrementing" event counters that behave as both counters and gauges.
-                        // We must leave it up to the user to figure out which event counter is which.
-                        _metricFactory.CreateGauge(prometheusName, displayName).Set(value.Value);
+                        // If the underlying metric is exposing a rate then this can result in some strange terminology like "rate_total".
+                        // We will remove the "rate" from the name to be more understandable - you'll get the rate when you apply the Prometheus rate() function, the raw value is not the rate.
+                        if (prometheusName.EndsWith(RateSuffix))
+                            prometheusName = prometheusName.Remove(prometheusName.Length - RateSuffix.Length);
+
                         _metricFactory.CreateCounter(prometheusName + "_total", displayName).Inc(value.Value);
                     }
                     else if (e.TryGetValue("Mean", out var mean))
