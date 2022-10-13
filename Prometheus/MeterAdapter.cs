@@ -34,6 +34,9 @@ public sealed class MeterAdapter : IDisposable
         _listener.SetMeasurementEventCallback<double>(OnMeasurementRecorded);
         _listener.SetMeasurementEventCallback<decimal>(OnMeasurementRecorded);
 
+        var regularFactory = Metrics.WithCustomRegistry(_registry);
+        _instrumentsConnected = regularFactory.CreateGauge("prometheus_net_meteradapter_instruments_connected_total", "Number of instruments that are currently connected to the adapter.");
+
         _listener.Start();
 
         _registry.AddBeforeCollectCallback(delegate
@@ -53,6 +56,8 @@ public sealed class MeterAdapter : IDisposable
     private readonly CollectorRegistry _registry;
     private readonly ManagedLifetimeMetricFactory _factory;
     private readonly string[] _inheritedStaticLabelNames;
+
+    private readonly Gauge _instrumentsConnected;
 
     private readonly MeterListener _listener = new MeterListener();
 
@@ -76,6 +81,8 @@ public sealed class MeterAdapter : IDisposable
     {
         if (!_options.InstrumentFilterPredicate(instrument))
             return; // This instrument is not wanted.
+
+        _instrumentsConnected.Inc();
 
         _instrumentPrometheusNames.TryAdd(instrument, TranslateInstrumentNameToPrometheusName(instrument));
         _instrumentPrometheusHelp.TryAdd(instrument, TranslateInstrumentDescriptionToPrometheusHelp(instrument));

@@ -28,6 +28,8 @@ namespace Prometheus
             _options = options;
             _metricFactory = Metrics.WithCustomRegistry(_options.Registry);
 
+            _eventSourcesConnected = _metricFactory.CreateGauge("prometheus_net_eventcounteradapter_sources_connected_total", "Number of event sources that are currently connected to the adapter.");
+
             _listener = new Listener(OnEventSourceCreated, OnEventWritten);
         }
 
@@ -42,9 +44,17 @@ namespace Prometheus
 
         private readonly Listener _listener;
 
+        // We never decrease it in the current implementation but perhaps might in a future implementation, so might as well make it a counter.
+        private readonly Gauge _eventSourcesConnected;
+
         private bool OnEventSourceCreated(EventSource source)
         {
-            return _options.EventSourceFilterPredicate(source.Name);
+            bool connect = _options.EventSourceFilterPredicate(source.Name);
+
+            if (connect)
+                _eventSourcesConnected.Inc();
+
+            return connect;
         }
 
         private const string RateSuffix = "_rate";
