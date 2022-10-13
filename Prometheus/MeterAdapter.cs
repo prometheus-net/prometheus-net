@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Text;
 
 namespace Prometheus;
@@ -87,8 +88,17 @@ public sealed class MeterAdapter : IDisposable
         _instrumentPrometheusNames.TryAdd(instrument, TranslateInstrumentNameToPrometheusName(instrument));
         _instrumentPrometheusHelp.TryAdd(instrument, TranslateInstrumentDescriptionToPrometheusHelp(instrument));
 
-        // Always listen to everything - we want to adapt all input metrics to Prometheus metrics.
-        listener.EnableMeasurementEvents(instrument);
+        try
+        {
+            // Always listen to everything - we want to adapt all input metrics to Prometheus metrics.
+            listener.EnableMeasurementEvents(instrument);
+        }
+        catch (Exception ex)
+        {
+            // Eat exceptions here to ensure no harm comes of failed enabling.
+            // The previous generation EventCounter infrastructure has proven quite buggy and while Meters may not be afflicted with the same problems, let's be paranoid.
+            Trace.WriteLine($"Failed to enable Meter listening for {instrument.Name}: {ex.Message}");
+        }
     }
 
     private void OnMeasurementRecorded<T>(Instrument instrument, T measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)

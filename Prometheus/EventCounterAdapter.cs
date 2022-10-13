@@ -175,10 +175,19 @@ namespace Prometheus
                 if (!_onEventSourceCreated(eventSource))
                     return;
 
-                EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All, new Dictionary<string, string?>()
+                try
                 {
-                    ["EventCounterIntervalSec"] = "1"
-                });
+                    EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All, new Dictionary<string, string?>()
+                    {
+                        ["EventCounterIntervalSec"] = "1"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // Eat exceptions here to ensure no harm comes of failed enabling.
+                    // The EventCounter infrastructure has proven quite buggy and while it is not certain that this may throw, let's be paranoid.
+                    Trace.WriteLine($"Failed to enable EventCounter listening for {eventSource.Name}: {ex.Message}");
+                }
             }
 
             protected override void OnEventWritten(EventWrittenEventArgs eventData)
