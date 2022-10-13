@@ -292,6 +292,6 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
     public override string ToString()
     {
         // Just for debugging.
-        return $"({Length}) {string.Join(", ", this)}";
+        return $"({Length}) {string.Join(", ", ToArray())}";
     }
 }
