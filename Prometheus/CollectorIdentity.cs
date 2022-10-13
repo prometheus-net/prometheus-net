@@ -63,7 +63,7 @@
 
         public override string ToString()
         {
-            return $"Name{{{InstanceLabelNames.Length + StaticLabelNames.Length}}}";
+            return $"{Name}{{{InstanceLabelNames.Length + StaticLabelNames.Length}}}";
         }
     }
 }
