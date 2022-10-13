@@ -47,18 +47,23 @@
             return _hashCode;
         }
 
-        private static int CalculateHashCode(string name, StringSequence labelNames, StringSequence staticLabelNames)
+        private static int CalculateHashCode(string name, StringSequence instanceLabelNames, StringSequence staticLabelNames)
         {
             unchecked
             {
                 int hashCode = 0;
 
                 hashCode ^= name.GetHashCode() * 31;
-                hashCode ^= labelNames.GetHashCode() * 397;
+                hashCode ^= instanceLabelNames.GetHashCode() * 397;
                 hashCode ^= staticLabelNames.GetHashCode() * 397;
 
                 return hashCode;
             }
+        }
+
+        public override string ToString()
+        {
+            return $"Name{{{InstanceLabelNames.Length + StaticLabelNames.Length}}}";
         }
     }
 }
