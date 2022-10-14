@@ -242,6 +242,18 @@ namespace Prometheus
                 }
             }
 
+            await RunBeforeCollectCallbacksAsync(cancel);
+
+            UpdateRegistryMetrics();
+
+            foreach (var collector in _collectors.Values)
+                await collector.CollectAndSerializeAsync(serializer, cancel);
+
+            await serializer.FlushAsync(cancel);
+        }
+
+        private async Task RunBeforeCollectCallbacksAsync(CancellationToken cancel)
+        {
             foreach (var callback in _beforeCollectCallbacks)
             {
                 try
@@ -254,24 +266,17 @@ namespace Prometheus
                 }
             }
 
-            await Task.WhenAll(_beforeCollectAsyncCallbacks.Select(callback =>
+            await Task.WhenAll(_beforeCollectAsyncCallbacks.Select(async (callback) =>
             {
                 try
                 {
-                    return callback(cancel);
+                    await callback(cancel);
                 }
                 catch (Exception ex)
                 {
                     Trace.WriteLine($"Metrics before-collect callback failed: {ex}");
                 }
             }));
-
-            UpdateRegistryMetrics();
-
-            foreach (var collector in _collectors.Values)
-                await collector.CollectAndSerializeAsync(serializer, cancel);
-
-            await serializer.FlushAsync(cancel);
         }
 
         /// <summary>
