@@ -70,6 +70,30 @@
         /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
+        public static Counter CreateCounter(string name, string help, string[] labelNames, CounterConfiguration? configuration = null) =>
+            _defaultFactory.CreateCounter(name, help, labelNames, configuration);
+
+        /// <summary>
+        /// Gauges can have any numeric value and change arbitrarily.
+        /// </summary>
+        public static Gauge CreateGauge(string name, string help, string[] labelNames, GaugeConfiguration? configuration = null) =>
+            _defaultFactory.CreateGauge(name, help, labelNames, configuration);
+
+        /// <summary>
+        /// Summaries track the trends in events over time (10 minutes by default).
+        /// </summary>
+        public static Summary CreateSummary(string name, string help, string[] labelNames, SummaryConfiguration? configuration = null) =>
+            _defaultFactory.CreateSummary(name, help, labelNames, configuration);
+
+        /// <summary>
+        /// Histograms track the size and number of events in buckets.
+        /// </summary>
+        public static Histogram CreateHistogram(string name, string help, string[] labelNames, HistogramConfiguration? configuration = null) =>
+            _defaultFactory.CreateHistogram(name, help, labelNames, configuration);
+
+        /// <summary>
+        /// Counters only increase in value and reset to zero when the process restarts.
+        /// </summary>
         public static Counter CreateCounter(string name, string help, params string[] labelNames) =>
             _defaultFactory.CreateCounter(name, help, labelNames);
 
