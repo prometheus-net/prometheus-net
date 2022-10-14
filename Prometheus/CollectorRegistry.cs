@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Prometheus
 {
@@ -242,9 +243,28 @@ namespace Prometheus
             }
 
             foreach (var callback in _beforeCollectCallbacks)
-                callback();
+            {
+                try
+                {
+                    callback();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"Metrics before-collect callback failed: {ex}");
+                }
+            }
 
-            await Task.WhenAll(_beforeCollectAsyncCallbacks.Select(callback => callback(cancel)));
+            await Task.WhenAll(_beforeCollectAsyncCallbacks.Select(callback =>
+            {
+                try
+                {
+                    return callback(cancel);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"Metrics before-collect callback failed: {ex}");
+                }
+            }));
 
             UpdateRegistryMetrics();
 
