@@ -11,6 +11,7 @@
 - Added typical benchmark results to readme for easy reference, and to show relative speed of the simple versus complex instruments.
 - Removed MetricConfiguration.StaticLabels because it had negative performance impact on many code paths that did not use it. The same functionality can be manually implemented in user code. Static labels remain available on registry and factory level.
 - When a before-collection metrics update callback throws an exception, it is now logged and ignored instead of breaking all metrics collection.
+- EventCounterAdapter now defaults to Informational events only, for reduced performance overhead. Can be configured via callback.
 * 6.0.0
 - Dropped library support for unsupported .NET runtime versions (.NET 2.1).
 - If Razor Pages is enabled, the "page" label is now automatically added to the default HTTP server metrics, unless there is a user-defined label already present with this name.

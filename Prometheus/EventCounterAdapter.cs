@@ -30,7 +30,7 @@ namespace Prometheus
 
             _eventSourcesConnected = _metricFactory.CreateGauge("prometheus_net_eventcounteradapter_sources_connected_total", "Number of event sources that are currently connected to the adapter.");
 
-            _listener = new Listener(OnEventSourceCreated, OnEventWritten);
+            _listener = new Listener(OnEventSourceCreated, ConfigureEventSource, OnEventWritten);
         }
 
         public void Dispose()
@@ -55,6 +55,11 @@ namespace Prometheus
                 _eventSourcesConnected.Inc();
 
             return connect;
+        }
+
+        private EventCounterAdapterEventSourceSettings ConfigureEventSource(EventSource source)
+        {
+            return _options.EventSourceSettingsProvider(source.Name);
         }
 
         private const string RateSuffix = "_rate";
@@ -145,9 +150,13 @@ namespace Prometheus
 
         private sealed class Listener : EventListener
         {
-            public Listener(Func<EventSource, bool> onEventSourceCreated, Action<EventWrittenEventArgs> onEventWritten)
+            public Listener(
+                Func<EventSource, bool> onEventSourceCreated,
+                Func<EventSource, EventCounterAdapterEventSourceSettings> configureEventSosurce,
+                Action<EventWrittenEventArgs> onEventWritten)
             {
                 _onEventSourceCreated = onEventSourceCreated;
+                _configureEventSosurce = configureEventSosurce;
                 _onEventWritten = onEventWritten;
 
                 foreach (var eventSource in _preRegisteredEventSources)
@@ -159,6 +168,7 @@ namespace Prometheus
             private readonly List<EventSource> _preRegisteredEventSources = new List<EventSource>();
 
             private readonly Func<EventSource, bool> _onEventSourceCreated;
+            private readonly Func<EventSource, EventCounterAdapterEventSourceSettings> _configureEventSosurce;
             private readonly Action<EventWrittenEventArgs> _onEventWritten;
 
             protected override void OnEventSourceCreated(EventSource eventSource)
@@ -177,7 +187,9 @@ namespace Prometheus
 
                 try
                 {
-                    EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All, new Dictionary<string, string?>()
+                    var options = _configureEventSosurce(eventSource);
+
+                    EnableEvents(eventSource, options.MinimumLevel, options.MatchKeywords, new Dictionary<string, string?>()
                     {
                         ["EventCounterIntervalSec"] = "1"
                     });
