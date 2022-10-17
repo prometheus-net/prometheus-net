@@ -15,6 +15,6 @@ namespace Prometheus
         /// <summary>
         /// Event keywords, of which at least one must match for an event to be received.
         /// </summary>
-        public EventKeywords MatchKeywords { get; set; } = EventKeywords.All;
+        public EventKeywords MatchKeywords { get; set; } = EventKeywords.None;
     }
 }
