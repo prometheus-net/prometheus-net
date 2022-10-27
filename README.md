@@ -89,6 +89,7 @@ Refer to the sample projects for quick start instructions:
 | [Sample.Console.NoAspNetCore](Sample.Console.NoAspNetCore/Program.cs) | .NET console application that exports custom metrics without requiring the ASP.NET Core runtime to be installed       |
 | [Sample.Grpc](Sample.Grpc/Program.cs)                                 | ASP.NET Core application that publishes a gRPC service                                                                |
 | [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                   | Client app for the above                                                                                              |
+| [Sample.NetStandard](Sample.NetStandard/ImportantProcess.cs)          | Demonstrates how to reference prometheus-net in a .NET Standard class library                                         |
 | [Sample.Web.DifferentPort](Sample.Web.DifferentPort/Program.cs)       | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
 | [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs) | Demonstrates how to use [automatic metric unpublishing](#unpublishing-metrics)                                        |
 | [Sample.Web.NetFramework](Sample.Web.NetFramework/Global.asax.cs)     | .NET Framework web app that publishes custom metrics                                                                  |
