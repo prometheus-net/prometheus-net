@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿#if NET6_0_OR_GREATER
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
@@ -273,3 +274,4 @@ public sealed class MeterAdapter : IDisposable
         return sb.ToString();
     }
 }
+#endif

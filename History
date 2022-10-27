@@ -1,3 +1,5 @@
+* 7.1.0
+- Added back .NET Standard 2.0 support as some customers had a hard dependency on .NET Standard 2.0 (despite not being a documented feature even earlier).
 * 7.0.0
 - .NET Core specific functionality now targeting .NET 6.0 or greater (all previous versions will be end of life by December 2022).
 - Relaxed the API restriction that forbade you to create multiple metrics with the same name but different label names. While this is a Prometheus anti-pattern, it is a standard pattern in other metrics technologies and we will allow it in the name of interoperability.

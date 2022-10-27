@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿#if NET
+using System.Diagnostics;
 
 namespace Prometheus
 {
@@ -14,3 +15,4 @@ namespace Prometheus
         public CollectorRegistry Registry = Metrics.DefaultRegistry;
     }
 }
+#endif

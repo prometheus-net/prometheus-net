@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿#if NET
+using System.Diagnostics;
 
 namespace Prometheus
 {
@@ -129,3 +130,4 @@ namespace Prometheus
         }
     }
 }
+#endif

@@ -144,8 +144,10 @@
             {
                 var configureCallbacks = new SuppressDefaultMetricOptions.ConfigurationCallbacks()
                 {
-#if NET6_0_OR_GREATER
+#if NET
                     ConfigureEventCounterAdapter = _configureEventCounterAdapterCallback,
+#endif
+#if NET6_0_OR_GREATER
                     ConfigureMeterAdapter = _configureMeterAdapterOptions
 #endif
                 };
@@ -154,14 +156,17 @@
             });
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         private static Action<EventCounterAdapterOptions> _configureEventCounterAdapterCallback = delegate { };
-        private static Action<MeterAdapterOptions> _configureMeterAdapterOptions = delegate { };
 
         /// <summary>
         /// Configures the event counter adapter that is enabled by default on startup.
         /// </summary>
         public static void ConfigureEventCounterAdapter(Action<EventCounterAdapterOptions> callback) => _configureEventCounterAdapterCallback = callback;
+#endif
+
+#if NET6_0_OR_GREATER
+        private static Action<MeterAdapterOptions> _configureMeterAdapterOptions = delegate { };
 
         /// <summary>
         /// Configures the meter adapter that is enabled by default on startup.

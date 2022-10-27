@@ -6,8 +6,11 @@
         {
             SuppressProcessMetrics = true,
             SuppressDebugMetrics = true,
-#if NET6_0_OR_GREATER
+#if NET
             SuppressEventCounters = true,
+#endif
+
+#if NET6_0_OR_GREATER
             SuppressMeters = true
 #endif
         };
@@ -16,8 +19,11 @@
         {
             SuppressProcessMetrics = false,
             SuppressDebugMetrics = false,
-#if NET6_0_OR_GREATER
+#if NET
             SuppressEventCounters = false,
+#endif
+
+#if NET6_0_OR_GREATER
             SuppressMeters = false
 #endif
         };
@@ -32,12 +38,14 @@
         /// </summary>
         public bool SuppressDebugMetrics { get; set; }
 
-#if NET6_0_OR_GREATER
+#if NET
         /// <summary>
         /// Suppress the default .NET Event Counter integration.
         /// </summary>
         public bool SuppressEventCounters { get; set; }
+#endif
 
+#if NET6_0_OR_GREATER
         /// <summary>
         /// Suppress the .NET Meter API integration.
         /// </summary>
@@ -46,8 +54,11 @@
 
         internal sealed class ConfigurationCallbacks
         {
-#if NET6_0_OR_GREATER
+#if NET
             public Action<EventCounterAdapterOptions> ConfigureEventCounterAdapter = delegate { };
+#endif
+
+#if NET6_0_OR_GREATER
             public Action<MeterAdapterOptions> ConfigureMeterAdapter = delegate { };
 #endif
         }
@@ -65,14 +76,16 @@
             if (!SuppressDebugMetrics)
                 registry.StartCollectingRegistryMetrics();
 
-#if NET6_0_OR_GREATER
+#if NET
             if (!SuppressEventCounters)
             {
                 var options = new EventCounterAdapterOptions();
                 configurationCallbacks.ConfigureEventCounterAdapter(options);
                 EventCounterAdapter.StartListening(options);
             }
+#endif
 
+#if NET6_0_OR_GREATER
             if (!SuppressMeters)
             {
                 var options = new MeterAdapterOptions();
