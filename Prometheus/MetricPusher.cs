@@ -77,6 +77,7 @@ namespace Prometheus
             // Start the server processing loop asynchronously in the background.
             return Task.Run(async delegate
             {
+                var pushFinalMetricsState = false;
                 while (true)
                 {
                     // We schedule approximately at the configured interval. There may be some small accumulation for the
@@ -121,9 +122,18 @@ namespace Prometheus
                         HandleFailedPush(ex);
                     }
 
-                    // We stop only after pushing metrics, to ensure that the latest state is flushed when told to stop.
                     if (cancel.IsCancellationRequested)
-                        break;
+                    {
+                        if (!pushFinalMetricsState){
+                            // continue for one more loop if we haven't pushed the final metrics state
+                            pushFinalMetricsState = true;
+                            continue;
+                        }
+                        else {
+                            // exit if we've already pushed the final metrics state
+                            break;
+                        }
+                    }
 
                     var sleepTime = _pushInterval - duration.GetElapsedTime();
 
@@ -137,7 +147,8 @@ namespace Prometheus
                         catch (OperationCanceledException)
                         {
                             // The task was cancelled.
-                            // We continue the loop here to ensure final state gets pushed.
+                            // Contnue for one more loop if so that we push the final metrics state, and then exit 
+                            pushFinalMetricsState = true;
                             continue;
                         }
                     }
