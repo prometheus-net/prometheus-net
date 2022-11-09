@@ -53,34 +53,21 @@ namespace Prometheus
 
                 _upperBounds = _parent._buckets;
                 _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
-
-                _sumIdentifier = CreateIdentifier("sum");
-                _countIdentifier = CreateIdentifier("count");
-
-                _bucketIdentifiers = new byte[_upperBounds.Length][];
-                for (var i = 0; i < _upperBounds.Length; i++)
-                {
-                    var value = double.IsPositiveInfinity(_upperBounds[i]) ? "+Inf" : _upperBounds[i].ToString(CultureInfo.InvariantCulture);
-
-                    _bucketIdentifiers[i] = CreateIdentifier("bucket", "le", value);
-                }
             }
 
-            private readonly Histogram _parent;
+            internal new readonly Histogram _parent;
 
             private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
             private readonly ThreadSafeLong[] _bucketCounts;
             private readonly double[] _upperBounds;
-
-            internal readonly byte[] _sumIdentifier;
-            internal readonly byte[] _countIdentifier;
-            internal readonly byte[][] _bucketIdentifiers;
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
                 // We output sum.
                 // We output count.
                 // We output each bucket in order of increasing upper bound.
+                var _sumIdentifier = serializer.CreateIdentifier(this,"sum");
+                var _countIdentifier = serializer.CreateIdentifier(this,"count");
 
                 await serializer.WriteMetricAsync(_sumIdentifier, _sum.Value, cancel);
                 await serializer.WriteMetricAsync(_countIdentifier, _bucketCounts.Sum(b => b.Value), cancel);
@@ -91,7 +78,9 @@ namespace Prometheus
                 {
                     cumulativeCount += _bucketCounts[i].Value;
 
-                    await serializer.WriteMetricAsync(_bucketIdentifiers[i], cumulativeCount, cancel);
+                    var value = double.IsPositiveInfinity(_upperBounds[i]) ? "+Inf" : _upperBounds[i].ToString(CultureInfo.InvariantCulture);
+                    var identifier = serializer.CreateIdentifier(this,"bucket", "le", value);
+                    await serializer.WriteMetricAsync(identifier, cumulativeCount, cancel);
                 }
             }
 

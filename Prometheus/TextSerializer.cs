@@ -63,5 +63,35 @@ namespace Prometheus
             await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
             await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
         }
+        
+        /// <summary>
+        /// Creates a metric identifier, with an optional name postfix and an optional extra label to append to the end.
+        /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
+        /// </summary>
+        public byte[] CreateIdentifier(ChildBase self, string? postfix = null, string? extraLabelName = null, string? extraLabelValue = null)
+        {
+            // TODO
+            //   This function should be reworked to write the identity out to the stream directly, this class will likely
+            //   have a StringBuilder to offset the cost of removing the memoization.
+            var fullName = postfix != null ? $"{self._parent.Name}_{postfix}" : self._parent.Name;
+
+            var labels = self.FlattenedLabels;
+
+            if (extraLabelName != null && extraLabelValue != null)
+            {
+                var extraLabelNames = StringSequence.From(extraLabelName);
+                var extraLabelValues = StringSequence.From(extraLabelValue);
+
+                var extraLabels = LabelSequence.From(extraLabelNames, extraLabelValues);
+
+                // Extra labels go to the end (i.e. they are deepest to inherit from).
+                labels = labels.Concat(extraLabels);
+            }
+
+            if (labels.Length != 0)
+                return PrometheusConstants.ExportEncoding.GetBytes($"{fullName}{{{labels.Serialize()}}}");
+            else
+                return PrometheusConstants.ExportEncoding.GetBytes(fullName);
+        }
     }
 }

@@ -17,6 +17,12 @@
         /// </summary>
         Task WriteMetricAsync(byte[] identifier, double value, CancellationToken cancel);
 
+        public byte[] CreateIdentifier(
+            ChildBase self,
+            string? postfix = null,
+            string? extraLabelName = null,
+            string? extraLabelValue = null);
+        
         /// <summary>
         /// Flushes any pending buffers. Always call this after all your write calls.
         /// </summary>

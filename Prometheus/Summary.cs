@@ -102,22 +102,7 @@ namespace Prometheus
                 }
 
                 Array.Sort(_sortedObjectives);
-
-                _sumIdentifier = CreateIdentifier("sum");
-                _countIdentifier = CreateIdentifier("count");
-
-                _quantileIdentifiers = new byte[_objectives.Count][];
-                for (var i = 0; i < _objectives.Count; i++)
-                {
-                    var value = double.IsPositiveInfinity(_objectives[i].Quantile) ? "+Inf" : _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
-
-                    _quantileIdentifiers[i] = CreateIdentifier(null, "quantile", value);
-                }
             }
-
-            private readonly byte[] _sumIdentifier;
-            private readonly byte[] _countIdentifier;
-            private readonly byte[][] _quantileIdentifiers;
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
@@ -151,12 +136,20 @@ namespace Prometheus
                         }
                     }
                 }
-
-                await serializer.WriteMetricAsync(_sumIdentifier, sum, cancel);
-                await serializer.WriteMetricAsync(_countIdentifier, count, cancel);
+                var sumIdentifier = serializer.CreateIdentifier(this,"sum");
+                var countIdentifier = serializer.CreateIdentifier(this, "count");
+                await serializer.WriteMetricAsync(sumIdentifier, sum, cancel);
+                await serializer.WriteMetricAsync(countIdentifier, count, cancel);
 
                 for (var i = 0; i < values.Count; i++)
-                    await serializer.WriteMetricAsync(_quantileIdentifiers[i], values[i].value, cancel);
+                {
+                    var value = double.IsPositiveInfinity(
+                        _objectives[i].Quantile) ? "+Inf" : 
+                        _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
+
+                    var identifier = serializer.CreateIdentifier(this, null, "quantile", value);
+                    await serializer.WriteMetricAsync(identifier, values[i].value, cancel);
+                }
             }
 
             // Objectives defines the quantile rank estimates with their respective
