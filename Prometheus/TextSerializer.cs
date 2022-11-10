@@ -14,6 +14,7 @@ namespace Prometheus
         private static readonly byte[] Underscore = { (byte)'_' };
         private static readonly byte[] LBrace = { (byte)'{' };
         private static readonly byte[] RBraceSp = { (byte)'}', (byte)' ' };
+        private static readonly byte[] Sp = { (byte)' ' };
         private static readonly byte[] PInf = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
 
         public TextSerializer(Stream stream)
@@ -26,7 +27,7 @@ namespace Prometheus
         {
             _stream = new Lazy<Stream>(streamFactory);
         }
-        
+
         public async Task FlushAsync(CancellationToken cancel)
         {
             // If we never opened the stream, we don't touch it on flush.
@@ -72,7 +73,7 @@ namespace Prometheus
         /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
         /// Note: Terminates with a SPACE
         /// </summary>
-        public async Task WriteIdentifierPartAsync(byte[] name, byte[] flatennedLabels, CancellationToken cancel, 
+        public async Task WriteIdentifierPartAsync(byte[] name, byte[] flatennedLabels, CancellationToken cancel,
             byte[]? postfix = null, byte[]? extraLabelName = null, byte[]? extraLabelValue = null,
             byte[]? extraLabelValueOpenMetrics = null)
         {
@@ -83,29 +84,35 @@ namespace Prometheus
                 await _stream.Value.WriteAsync(postfix, 0, postfix.Length, cancel);
             }
 
-            await _stream.Value.WriteAsync(LBrace, 0, LBrace.Length, cancel);
-            if (flatennedLabels.Length > 0)
+            if (flatennedLabels.Length > 0 || (extraLabelName != null && extraLabelValue != null))
             {
-                await _stream.Value.WriteAsync(flatennedLabels, 0, flatennedLabels.Length, cancel);
-            }
-
-            if (extraLabelName != null && extraLabelValue != null)
-            {
+                await _stream.Value.WriteAsync(LBrace, 0, LBrace.Length, cancel);
                 if (flatennedLabels.Length > 0)
                 {
-                    await _stream.Value.WriteAsync(Comma, 0, Comma.Length, cancel);
+                    await _stream.Value.WriteAsync(flatennedLabels, 0, flatennedLabels.Length, cancel);
                 }
 
-                await _stream.Value.WriteAsync(extraLabelName, 0, extraLabelName.Length, cancel);
-                await _stream.Value.WriteAsync(Equal, 0, Equal.Length, cancel);
-                await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
-                await _stream.Value.WriteAsync(extraLabelValue, 0, extraLabelValue.Length, cancel);
-                await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
-            }
+                if (extraLabelName != null && extraLabelValue != null)
+                {
+                    if (flatennedLabels.Length > 0)
+                    {
+                        await _stream.Value.WriteAsync(Comma, 0, Comma.Length, cancel);
+                    }
 
-            await _stream.Value.WriteAsync(RBraceSp, 0, RBraceSp.Length, cancel);
+                    await _stream.Value.WriteAsync(extraLabelName, 0, extraLabelName.Length, cancel);
+                    await _stream.Value.WriteAsync(Equal, 0, Equal.Length, cancel);
+                    await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
+                    await _stream.Value.WriteAsync(extraLabelValue, 0, extraLabelValue.Length, cancel);
+                    await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
+                }
+                await _stream.Value.WriteAsync(RBraceSp, 0, RBraceSp.Length, cancel);
+            }
+            else
+            {
+                await _stream.Value.WriteAsync(Sp, 0, Sp.Length, cancel);
+            }
         }
-        
+
         /// <summary>
         /// Encode the system variable in regular Prometheus form and also return a OpenMetrics variant, these can be
         /// the same.
