@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -52,8 +51,8 @@ boom_bam{blah=""foo"",quantile=""0.5""} 3
         // TODO help has a trailing whitespace before the newline
         result.ShouldBe(@"# HELP boom_bam something
 # TYPE boom_bam summary
-boom_bam_sum{} 3
-boom_bam_count{} 1
+boom_bam_sum 3
+boom_bam_count 1
 boom_bam{quantile=""0.5""} 3
 ");
     }
@@ -136,8 +135,8 @@ boom_bam_bucket{blah=""foo"",le=""+Inf""} 1
 
         result.ShouldBe(@"# HELP boom_bam something
 # TYPE boom_bam histogram
-boom_bam_sum{} 0.5
-boom_bam_count{} 1
+boom_bam_sum 0.5
+boom_bam_count 1
 boom_bam_bucket{le=""1""} 1
 boom_bam_bucket{le=""2""} 1
 boom_bam_bucket{le=""+Inf""} 1
