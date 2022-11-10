@@ -10,6 +10,7 @@ namespace Prometheus
             _parent = parent;
             InstanceLabels = instanceLabels;
             FlattenedLabels = flattenedLabels;
+            FlattenedLabelsBytes = PrometheusConstants.ExportEncoding.GetBytes(flattenedLabels.Serialize());
             _publish = publish;
         }
 
@@ -59,7 +60,8 @@ namespace Prometheus
         /// Internal for testing purposes only.
         /// </summary>
         internal LabelSequence FlattenedLabels { get; }
-
+        internal byte[] FlattenedLabelsBytes { get; }
+        
         internal readonly Collector _parent;         // TODO: rename to Parent (right?)
 
         private bool _publish;

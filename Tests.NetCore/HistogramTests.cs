@@ -31,7 +31,7 @@ namespace Prometheus.Tests
             // 2.0
             // 3.0
             // +inf
-            await serializer.ReceivedWithAnyArgs(6).WriteIdentifierPartAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(6).WriteIdentifierPartAsync(default,default, default);
             await serializer.Received().WriteValuePartAsync(5.0, default);
             await serializer.Received().WriteValuePartAsync(2.0, default);
             await serializer.Received().WriteValuePartAsync(0, default);

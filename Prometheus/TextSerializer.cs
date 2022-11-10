@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Text;
 
 namespace Prometheus
 {
@@ -8,8 +7,14 @@ namespace Prometheus
     /// </remarks>
     internal sealed class TextSerializer : IMetricsSerializer
     {
-        private static readonly byte[] NewLine = new[] { (byte)'\n' };
-        private static readonly byte[] Space = new[] { (byte)' ' };
+        private static readonly byte[] NewLine = { (byte)'\n' };
+        private static readonly byte[] Quote = { (byte)'"' };
+        private static readonly byte[] Equal = { (byte)'=' };
+        private static readonly byte[] Comma = { (byte)',' };
+        private static readonly byte[] Underscore = { (byte)'_' };
+        private static readonly byte[] LBrace = { (byte)'{' };
+        private static readonly byte[] RBraceSp = { (byte)'}', (byte)' ' };
+        private static readonly byte[] PInf = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
 
         public TextSerializer(Stream stream)
         {
@@ -21,7 +26,7 @@ namespace Prometheus
         {
             _stream = new Lazy<Stream>(streamFactory);
         }
-
+        
         public async Task FlushAsync(CancellationToken cancel)
         {
             // If we never opened the stream, we don't touch it on flush.
@@ -50,14 +55,11 @@ namespace Prometheus
         // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
         private readonly byte[] _stringBytesBuffer = new byte[32];
 
-        private readonly StringBuilder _sb = new();
-
         // 123.456
         // Note: Terminates with a NEWLINE
         public async Task WriteValuePartAsync(double value, CancellationToken cancel)
         {
             var valueAsString = value.ToString(CultureInfo.InvariantCulture);
-
             var numBytes = PrometheusConstants.ExportEncoding
                 .GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
 
@@ -70,67 +72,50 @@ namespace Prometheus
         /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
         /// Note: Terminates with a SPACE
         /// </summary>
-        public async Task WriteIdentifierPartAsync(ChildBase metric, CancellationToken cancel, 
-            string? postfix = null, string? extraLabelName = null, string? extraLabelValue = null)
+        public async Task WriteIdentifierPartAsync(byte[] name, byte[] flatennedLabels, CancellationToken cancel, 
+            byte[]? postfix = null, byte[]? extraLabelName = null, byte[]? extraLabelValue = null,
+            byte[]? extraLabelValueOpenMetrics = null)
         {
-            _sb.Clear();
-            _sb.Append(metric._parent.Name);
-            if(postfix != null)
+            await _stream.Value.WriteAsync(name, 0, name.Length, cancel);
+            if (postfix != null && postfix.Length > 0)
             {
-                _sb.Append("_");
-                _sb.Append(postfix);
+                await _stream.Value.WriteAsync(Underscore, 0, Underscore.Length, cancel);
+                await _stream.Value.WriteAsync(postfix, 0, postfix.Length, cancel);
             }
 
-            _sb.Append("{");
-            SerializeLabels(metric.FlattenedLabels);
+            await _stream.Value.WriteAsync(LBrace, 0, LBrace.Length, cancel);
+            if (flatennedLabels.Length > 0)
+            {
+                await _stream.Value.WriteAsync(flatennedLabels, 0, flatennedLabels.Length, cancel);
+            }
+
             if (extraLabelName != null && extraLabelValue != null)
             {
-                if (metric.FlattenedLabels.Length > 0) _sb.Append(",");
-                SerialiseLabelValue(extraLabelName, extraLabelValue);
+                if (flatennedLabels.Length > 0)
+                {
+                    await _stream.Value.WriteAsync(Comma, 0, Comma.Length, cancel);
+                }
+
+                await _stream.Value.WriteAsync(extraLabelName, 0, extraLabelName.Length, cancel);
+                await _stream.Value.WriteAsync(Equal, 0, Equal.Length, cancel);
+                await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
+                await _stream.Value.WriteAsync(extraLabelValue, 0, extraLabelValue.Length, cancel);
+                await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
             }
-            _sb.Append("} "); // <--- note the whitespace
-            var bytes = Encoding.UTF8.GetBytes(_sb.ToString());
-            await _stream.Value.WriteAsync(bytes, 0, bytes.Length, cancel);
+
+            await _stream.Value.WriteAsync(RBraceSp, 0, RBraceSp.Length, cancel);
         }
         
-        /// <summary>
-        /// Serializes to the labelkey1="labelvalue1",labelkey2="labelvalue2" label string.
-        /// </summary>
-        private void SerializeLabels(LabelSequence labels)
+        internal static Tuple<byte[], byte[]> EncodeSystemLabelValue(double value)
         {
-            // Result is cached in child collector - no need to worry about efficiency here.
-
-            var nameEnumerator = labels.Names.GetEnumerator();
-            var valueEnumerator = labels.Values.GetEnumerator();
-
-            for (var i = 0; i < labels.Names.Length; i++)
+            if (double.IsPositiveInfinity(value))
             {
-                if (!nameEnumerator.MoveNext()) throw new Exception("API contract violation.");
-                if (!valueEnumerator.MoveNext()) throw new Exception("API contract violation.");
-
-                if (i != 0)
-                    _sb.Append(',');
-
-                SerialiseLabelValue(nameEnumerator.Current, valueEnumerator.Current);
+                return Tuple.Create(PInf, PInf);
             }
-        }
-        
-        private void SerialiseLabelValue(String name, String value)
-        {
-            _sb.Append(name);
-            _sb.Append('=');
-            _sb.Append('"');
-            _sb.Append(EscapeLabelValue(value));
-            _sb.Append('"');
-        }
-        
-        private static string EscapeLabelValue(string value)
-        {
-            
-            return value
-                .Replace("\\", @"\\")
-                .Replace("\n", @"\n")
-                .Replace("\"", @"\""");
+
+            var valueAsString = value.ToString(CultureInfo.InvariantCulture);
+            var bytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
+            return Tuple.Create(bytes, bytes);
         }
     }
 }

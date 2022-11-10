@@ -48,7 +48,7 @@ namespace Prometheus.Tests
             // Without touching any metrics, there should be output for all because default config publishes immediately.
 
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default, default);
             await serializer.ReceivedWithAnyArgs(9).WriteValuePartAsync(default, default);
         }
 
@@ -81,7 +81,7 @@ namespace Prometheus.Tests
 
             // There is a family for each of the above, in each family we expect to see 0 metrics.
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteIdentifierPartAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteIdentifierPartAsync(default,default, default);
             await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync(default, default);
         }
 
@@ -119,7 +119,7 @@ namespace Prometheus.Tests
 
             // Even though suppressed, they all now have values so should all be published.
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default,default, default);
             await serializer.ReceivedWithAnyArgs(9).WriteValuePartAsync( default, default);
         }
 
@@ -157,7 +157,7 @@ namespace Prometheus.Tests
 
             // Even though suppressed, they were all explicitly published.
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default, default);
             await serializer.ReceivedWithAnyArgs(9).WriteValuePartAsync(default, default);
         }
         #endregion
@@ -184,7 +184,7 @@ namespace Prometheus.Tests
 
             // Metrics are published as soon as label values are defined.
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default,default);
             await serializer.ReceivedWithAnyArgs(9).WriteValuePartAsync(default, default);
         }
 
@@ -254,7 +254,7 @@ namespace Prometheus.Tests
 
             // Metrics are published because value was set.
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync( default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync( default,default, default);
             await serializer.ReceivedWithAnyArgs(9).WriteValuePartAsync(default, default);
         }
 
@@ -292,7 +292,7 @@ namespace Prometheus.Tests
 
             // Metrics are published because of explicit publish.
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync(default, default, default);
             await serializer.ReceivedWithAnyArgs(9).WriteValuePartAsync(default, default);
         }
 
@@ -365,7 +365,7 @@ namespace Prometheus.Tests
 
             // Family for each of the above, in each is 4 metrics (labelled only).
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync( default, default);
+            await serializer.ReceivedWithAnyArgs(9).WriteIdentifierPartAsync( default, default, default);
             await serializer.ReceivedWithAnyArgs(9).WriteValuePartAsync(default, default);
 
             // Only after touching unlabelled do they get published.
@@ -379,7 +379,7 @@ namespace Prometheus.Tests
 
             // Family for each of the above, in each is 8 metrics (unlabelled+labelled).
             await serializer.ReceivedWithAnyArgs(4).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(9 * 2).WriteIdentifierPartAsync( default, default);
+            await serializer.ReceivedWithAnyArgs(9 * 2).WriteIdentifierPartAsync( default, default, default);
             await serializer.ReceivedWithAnyArgs(9 * 2).WriteValuePartAsync( default, default);
         }
         #endregion

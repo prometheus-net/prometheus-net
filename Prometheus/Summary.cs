@@ -1,5 +1,4 @@
 ﻿using Prometheus.SummaryImpl;
-using System.Globalization;
 
 namespace Prometheus
 {
@@ -15,7 +14,8 @@ namespace Prometheus
         internal static readonly QuantileEpsilonPair[] DefObjectivesArray = new QuantileEpsilonPair[0];
 
         // Default Summary quantile values.
-        public static readonly IList<QuantileEpsilonPair> DefObjectives = new List<QuantileEpsilonPair>(DefObjectivesArray);
+        public static readonly IList<QuantileEpsilonPair> DefObjectives =
+            new List<QuantileEpsilonPair>(DefObjectivesArray);
 
         // Default duration for which observations stay relevant
         public static readonly TimeSpan DefMaxAge = TimeSpan.FromMinutes(10);
@@ -64,7 +64,8 @@ namespace Prometheus
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
-        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels,
+            bool publish)
         {
             return new Child(this, instanceLabels, flattenedLabels, publish);
         }
@@ -96,15 +97,23 @@ namespace Prometheus
 
                 _headStream = _streams[0];
 
+                _quantileLabels = new Tuple<byte[], byte[]>[_objectives.Count];
                 for (var i = 0; i < _objectives.Count; i++)
                 {
                     _sortedObjectives[i] = _objectives[i].Quantile;
+                    _quantileLabels[i] = TextSerializer.EncodeSystemLabelValue(_objectives[i].Quantile);
                 }
 
                 Array.Sort(_sortedObjectives);
             }
 
-            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+            private readonly Tuple<byte[], byte[]>[] _quantileLabels;
+            private static readonly byte[] SumLabelBytes = PrometheusConstants.ExportEncoding.GetBytes("sum");
+            private static readonly byte[] CountLabelBytes = PrometheusConstants.ExportEncoding.GetBytes("count");
+            private static readonly byte[] QuantileLabelBytes = PrometheusConstants.ExportEncoding.GetBytes("quantile");
+
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
+                CancellationToken cancel)
             {
                 // We output sum.
                 // We output count.
@@ -136,19 +145,20 @@ namespace Prometheus
                         }
                     }
                 }
-                await serializer.WriteIdentifierPartAsync(this,cancel, postfix: "sum");
+
+                await serializer.WriteIdentifierPartAsync(_parent.NameBytes, FlattenedLabelsBytes, cancel,
+                    postfix: SumLabelBytes);
                 await serializer.WriteValuePartAsync(sum, cancel);
-                await serializer.WriteIdentifierPartAsync(this,cancel, postfix: "count");
+                await serializer.WriteIdentifierPartAsync(_parent.NameBytes, FlattenedLabelsBytes, cancel,
+                    postfix: CountLabelBytes);
                 await serializer.WriteValuePartAsync(count, cancel);
 
                 for (var i = 0; i < values.Count; i++)
                 {
-                    var value = double.IsPositiveInfinity(
-                        _objectives[i].Quantile) ? "+Inf" : 
-                        _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
-
                     await serializer.WriteIdentifierPartAsync(
-                        this, cancel, postfix: null, extraLabelName: "quantile", extraLabelValue: value);
+                        _parent.NameBytes, FlattenedLabelsBytes, cancel, postfix: null,
+                        extraLabelName: QuantileLabelBytes, extraLabelValue: _quantileLabels[i].Item1,
+                        extraLabelValueOpenMetrics: _quantileLabels[i].Item2);
                     await serializer.WriteValuePartAsync(values[i].value, cancel);
                 }
             }

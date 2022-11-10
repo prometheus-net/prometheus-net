@@ -13,7 +13,7 @@ namespace Prometheus
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                await serializer.WriteIdentifierPartAsync(this, cancel);
+                await serializer.WriteIdentifierPartAsync(this._parent.NameBytes, this.FlattenedLabelsBytes, cancel);
                 await serializer.WriteValuePartAsync(Value, cancel);
             }
 
