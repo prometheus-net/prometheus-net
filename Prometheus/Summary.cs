@@ -141,17 +141,17 @@ namespace Prometheus
                     }
                 }
 
-                await serializer.WriteIdentifierPartAsync(_parent.NameBytes, FlattenedLabelsBytes, cancel,
+                await serializer.WriteIdentifierPartAsync(Parent.NameBytes, FlattenedLabelsBytes, cancel,
                     postfix: SumLabelBytes);
                 await serializer.WriteValuePartAsync(sum, cancel);
-                await serializer.WriteIdentifierPartAsync(_parent.NameBytes, FlattenedLabelsBytes, cancel,
+                await serializer.WriteIdentifierPartAsync(Parent.NameBytes, FlattenedLabelsBytes, cancel,
                     postfix: CountLabelBytes);
                 await serializer.WriteValuePartAsync(count, cancel);
 
                 for (var i = 0; i < values.Count; i++)
                 {
                     await serializer.WriteIdentifierPartAsync(
-                        _parent.NameBytes, FlattenedLabelsBytes, cancel, postfix: null,
+                        Parent.NameBytes, FlattenedLabelsBytes, cancel, postfix: null,
                         extraLabelName: QuantileLabelBytes, extraLabelValue: _quantileLabels[i].Item1,
                         extraLabelValueOpenMetrics: _quantileLabels[i].Item2);
                     await serializer.WriteValuePartAsync(values[i].value, cancel);

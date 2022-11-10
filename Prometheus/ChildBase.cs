@@ -7,7 +7,7 @@ namespace Prometheus
     {
         internal ChildBase(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
-            _parent = parent;
+            Parent = parent;
             InstanceLabels = instanceLabels;
             FlattenedLabels = flattenedLabels;
             FlattenedLabelsBytes = PrometheusConstants.ExportEncoding.GetBytes(flattenedLabels.Serialize());
@@ -44,7 +44,7 @@ namespace Prometheus
         /// </summary>
         public void Remove()
         {
-            _parent.RemoveLabelled(InstanceLabels);
+            Parent.RemoveLabelled(InstanceLabels);
         }
 
         public void Dispose() => Remove();
@@ -60,9 +60,10 @@ namespace Prometheus
         /// Internal for testing purposes only.
         /// </summary>
         internal LabelSequence FlattenedLabels { get; }
+
         internal byte[] FlattenedLabelsBytes { get; }
-        
-        internal readonly Collector _parent;         // TODO: rename to Parent (right?)
+
+        internal readonly Collector Parent;
 
         private bool _publish;
 

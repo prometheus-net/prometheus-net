@@ -13,7 +13,7 @@
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                await serializer.WriteIdentifierPartAsync(_parent.NameBytes,FlattenedLabelsBytes, cancel);
+                await serializer.WriteIdentifierPartAsync(Parent.NameBytes,FlattenedLabelsBytes, cancel);
                 await serializer.WriteValuePartAsync(Value, cancel);
             }
 
