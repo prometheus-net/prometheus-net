@@ -13,6 +13,8 @@ namespace Prometheus
         /// The metric name, e.g. http_requests_total.
         /// </summary>
         public string Name { get; }
+        
+        internal byte[] NameBytes { get;  }
 
         /// <summary>
         /// The help text describing the metric for a human audience.
@@ -57,8 +59,9 @@ namespace Prometheus
         {
             if (!MetricNameRegex.IsMatch(name))
                 throw new ArgumentException($"Metric name '{name}' does not match regex '{ValidMetricNameExpression}'.");
-
+            
             Name = name;
+            NameBytes = PrometheusConstants.ExportEncoding.GetBytes(Name);
             Help = help;
             InstanceLabelNames = instanceLabelNames;
             StaticLabels = staticLabels;

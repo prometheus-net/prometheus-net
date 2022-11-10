@@ -7,16 +7,14 @@
             internal Child(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
                 : base(parent, instanceLabels, flattenedLabels, publish)
             {
-                _identifier = CreateIdentifier();
             }
-
-            private readonly byte[] _identifier;
 
             private ThreadSafeDouble _value;
 
-            private protected override Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                return serializer.WriteMetricAsync(_identifier, Value, cancel);
+                await serializer.WriteIdentifierPartAsync(_parent.NameBytes,FlattenedLabelsBytes, cancel);
+                await serializer.WriteValuePartAsync(Value, cancel);
             }
 
             public void Inc(double increment = 1)

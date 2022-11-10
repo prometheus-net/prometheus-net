@@ -30,12 +30,13 @@ namespace Prometheus.Tests
             // 2.0
             // 3.0
             // +inf
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._sumIdentifier, 5.0, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._countIdentifier, 2.0, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[0], 0, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[1], 1, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[2], 2, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[3], 2, default);
+            await serializer.ReceivedWithAnyArgs(6).WriteIdentifierPartAsync(default,default, default);
+            await serializer.Received().WriteValuePartAsync(5.0, default);
+            await serializer.Received().WriteValuePartAsync(2.0, default);
+            await serializer.Received().WriteValuePartAsync(0, default);
+            await serializer.Received().WriteValuePartAsync(1, default);
+            await serializer.Received().WriteValuePartAsync(2, default);
+            await serializer.Received().WriteValuePartAsync(2, default);
         }
 
         [TestMethod]

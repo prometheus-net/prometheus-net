@@ -53,45 +53,44 @@ namespace Prometheus
 
                 _upperBounds = _parent._buckets;
                 _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
-
-                _sumIdentifier = CreateIdentifier("sum");
-                _countIdentifier = CreateIdentifier("count");
-
-                _bucketIdentifiers = new byte[_upperBounds.Length][];
-                for (var i = 0; i < _upperBounds.Length; i++)
+                _leLabels = new Tuple<byte[], byte[]>[_upperBounds.Length];
+                for (var i = 0; i < _parent._buckets.Length; i++)
                 {
-                    var value = double.IsPositiveInfinity(_upperBounds[i]) ? "+Inf" : _upperBounds[i].ToString(CultureInfo.InvariantCulture);
-
-                    _bucketIdentifiers[i] = CreateIdentifier("bucket", "le", value);
+                    _leLabels[i] = TextSerializer.EncodeSystemLabelValue(_parent._buckets[i]);
                 }
             }
 
-            private readonly Histogram _parent;
+            internal new readonly Histogram _parent;
 
             private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
             private readonly ThreadSafeLong[] _bucketCounts;
             private readonly double[] _upperBounds;
-
-            internal readonly byte[] _sumIdentifier;
-            internal readonly byte[] _countIdentifier;
-            internal readonly byte[][] _bucketIdentifiers;
+            private readonly Tuple<byte[], byte[]>[] _leLabels;
+            private readonly byte[] _sumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
+            private readonly byte[] _countSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
+            private readonly byte[] _bucketSuffix = PrometheusConstants.ExportEncoding.GetBytes("bucket");
+            private readonly byte[] _leLabel = PrometheusConstants.ExportEncoding.GetBytes("le");
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
                 // We output sum.
                 // We output count.
                 // We output each bucket in order of increasing upper bound.
-
-                await serializer.WriteMetricAsync(_sumIdentifier, _sum.Value, cancel);
-                await serializer.WriteMetricAsync(_countIdentifier, _bucketCounts.Sum(b => b.Value), cancel);
+                await serializer.WriteIdentifierPartAsync(this._parent.NameBytes, this.FlattenedLabelsBytes, cancel, postfix: _sumSuffix);
+                await serializer.WriteValuePartAsync(_sum.Value, cancel);
+                await serializer.WriteIdentifierPartAsync(this._parent.NameBytes, this.FlattenedLabelsBytes, cancel, postfix: _countSuffix);
+                await serializer.WriteValuePartAsync(_bucketCounts.Sum(b => b.Value), cancel);
 
                 var cumulativeCount = 0L;
 
-                for (var i = 0; i < _bucketCounts.Length; i++)
+                for (var i = 0; i < _bucketCounts.Length; i++) 
                 {
                     cumulativeCount += _bucketCounts[i].Value;
-
-                    await serializer.WriteMetricAsync(_bucketIdentifiers[i], cumulativeCount, cancel);
+                    
+                    await serializer.WriteIdentifierPartAsync(this._parent.NameBytes, FlattenedLabelsBytes, cancel, 
+                        postfix: _bucketSuffix, extraLabelName: _leLabel, extraLabelValue: _leLabels[i].Item1, 
+                        extraLabelValueOpenMetrics: _leLabels[i].Item2);
+                    await serializer.WriteValuePartAsync(cumulativeCount, cancel);
                 }
             }
 
