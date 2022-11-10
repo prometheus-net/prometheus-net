@@ -85,7 +85,7 @@ namespace Prometheus
             SerializeLabels(metric.FlattenedLabels);
             if (extraLabelName != null && extraLabelValue != null)
             {
-                if (metric.FlattenedLabels.Length > 1) _sb.Append(",");
+                if (metric.FlattenedLabels.Length > 0) _sb.Append(",");
                 SerialiseLabelValue(extraLabelName, extraLabelValue);
             }
             _sb.Append("} "); // <--- note the whitespace
