@@ -31,13 +31,13 @@ namespace Prometheus.Tests
             // 2.0
             // 3.0
             // +inf
-            // TODO revisit this test and replace Arg.Any with actual assertions
-            await serializer.Received().WriteMetricAsync(Arg.Any<byte[]>(), 5.0, default);
-            await serializer.Received().WriteMetricAsync(Arg.Any<byte[]>(), 2.0, default);
-            await serializer.Received().WriteMetricAsync(Arg.Any<byte[]>(), 0, default);
-            await serializer.Received().WriteMetricAsync(Arg.Any<byte[]>(), 1, default);
-            await serializer.Received().WriteMetricAsync(Arg.Any<byte[]>(), 2, default);
-            await serializer.Received().WriteMetricAsync(Arg.Any<byte[]>(), 2, default);
+            await serializer.ReceivedWithAnyArgs(6).WriteIdentifierPartAsync(default, default);
+            await serializer.Received().WriteValuePartAsync(5.0, default);
+            await serializer.Received().WriteValuePartAsync(2.0, default);
+            await serializer.Received().WriteValuePartAsync(0, default);
+            await serializer.Received().WriteValuePartAsync(1, default);
+            await serializer.Received().WriteValuePartAsync(2, default);
+            await serializer.Received().WriteValuePartAsync(2, default);
         }
 
         [TestMethod]

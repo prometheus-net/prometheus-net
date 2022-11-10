@@ -13,15 +13,15 @@
         Task WriteFamilyDeclarationAsync(byte[][] headerLines, CancellationToken cancel);
 
         /// <summary>
-        /// Writes a single metric in a metric family.
+        /// Writes the second part of the metric, the value (and the exemplar). Terminates with a newline 
         /// </summary>
-        Task WriteMetricAsync(byte[] identifier, double value, CancellationToken cancel);
-
-        public byte[] CreateIdentifier(
-            ChildBase self,
-            string? postfix = null,
-            string? extraLabelName = null,
-            string? extraLabelValue = null);
+        Task WriteValuePartAsync(double value, CancellationToken cancel);
+        
+        /// <summary>
+        /// Writes the identifier for a series. Terminates with a SPACE. 
+        /// </summary>
+        Task WriteIdentifierPartAsync(ChildBase metric, CancellationToken cancellationToken, 
+            string? postfix = null, string? extraLabelName = null, string? extraLabelValue = null);
         
         /// <summary>
         /// Flushes any pending buffers. Always call this after all your write calls.

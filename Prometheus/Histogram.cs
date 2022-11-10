@@ -66,21 +66,20 @@ namespace Prometheus
                 // We output sum.
                 // We output count.
                 // We output each bucket in order of increasing upper bound.
-                var _sumIdentifier = serializer.CreateIdentifier(this,"sum");
-                var _countIdentifier = serializer.CreateIdentifier(this,"count");
-
-                await serializer.WriteMetricAsync(_sumIdentifier, _sum.Value, cancel);
-                await serializer.WriteMetricAsync(_countIdentifier, _bucketCounts.Sum(b => b.Value), cancel);
+                await serializer.WriteIdentifierPartAsync(this, cancel, postfix: "sum");
+                await serializer.WriteValuePartAsync(_sum.Value, cancel);
+                await serializer.WriteIdentifierPartAsync(this, cancel, postfix: "count");
+                await serializer.WriteValuePartAsync(_bucketCounts.Sum(b => b.Value), cancel);
 
                 var cumulativeCount = 0L;
 
-                for (var i = 0; i < _bucketCounts.Length; i++)
+                for (var i = 0; i < _bucketCounts.Length; i++) 
                 {
                     cumulativeCount += _bucketCounts[i].Value;
-
                     var value = double.IsPositiveInfinity(_upperBounds[i]) ? "+Inf" : _upperBounds[i].ToString(CultureInfo.InvariantCulture);
-                    var identifier = serializer.CreateIdentifier(this,"bucket", "le", value);
-                    await serializer.WriteMetricAsync(identifier, cumulativeCount, cancel);
+                    await serializer.WriteIdentifierPartAsync(this, cancel, 
+                        postfix: "bucket", extraLabelName: "le", extraLabelValue: value);
+                    await serializer.WriteValuePartAsync(cumulativeCount, cancel);
                 }
             }
 

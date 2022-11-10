@@ -11,9 +11,10 @@
 
             private ThreadSafeDouble _value;
 
-            private protected override Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                return serializer.WriteMetricAsync(serializer.CreateIdentifier(this), Value, cancel);
+                await serializer.WriteIdentifierPartAsync(this, cancel);
+                await serializer.WriteValuePartAsync(Value, cancel);
             }
 
             public void Inc(double increment = 1)

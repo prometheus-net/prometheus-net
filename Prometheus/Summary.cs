@@ -136,10 +136,10 @@ namespace Prometheus
                         }
                     }
                 }
-                var sumIdentifier = serializer.CreateIdentifier(this,"sum");
-                var countIdentifier = serializer.CreateIdentifier(this, "count");
-                await serializer.WriteMetricAsync(sumIdentifier, sum, cancel);
-                await serializer.WriteMetricAsync(countIdentifier, count, cancel);
+                await serializer.WriteIdentifierPartAsync(this,cancel, postfix: "sum");
+                await serializer.WriteValuePartAsync(sum, cancel);
+                await serializer.WriteIdentifierPartAsync(this,cancel, postfix: "count");
+                await serializer.WriteValuePartAsync(count, cancel);
 
                 for (var i = 0; i < values.Count; i++)
                 {
@@ -147,8 +147,9 @@ namespace Prometheus
                         _objectives[i].Quantile) ? "+Inf" : 
                         _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
 
-                    var identifier = serializer.CreateIdentifier(this, null, "quantile", value);
-                    await serializer.WriteMetricAsync(identifier, values[i].value, cancel);
+                    await serializer.WriteIdentifierPartAsync(
+                        this, cancel, postfix: null, extraLabelName: "quantile", extraLabelValue: value);
+                    await serializer.WriteValuePartAsync(values[i].value, cancel);
                 }
             }
 

@@ -71,10 +71,12 @@ namespace Prometheus.Tests
             await registry2.CollectAndSerializeAsync(serializer2, default);
 
             await serializer1.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default);
-            await serializer1.ReceivedWithAnyArgs().WriteMetricAsync(default, default, default);
+            await serializer2.ReceivedWithAnyArgs().WriteIdentifierPartAsync(default, default);
+            await serializer1.ReceivedWithAnyArgs().WriteValuePartAsync( default, default);
 
             await serializer2.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default);
-            await serializer2.ReceivedWithAnyArgs().WriteMetricAsync(default, default, default);
+            await serializer2.ReceivedWithAnyArgs().WriteIdentifierPartAsync(default, default);
+            await serializer2.ReceivedWithAnyArgs().WriteValuePartAsync( default, default);
         }
 
         [TestMethod]
@@ -90,7 +92,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync( default, default);
             serializer.ClearReceivedCalls();
 
             metric.Inc();
@@ -99,7 +101,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync(default, default);
         }
 
         [TestMethod]
@@ -117,7 +119,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync( default, default);
             serializer.ClearReceivedCalls();
 
             instance.Inc();
@@ -126,7 +128,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync(default, default);
         }
 
         [TestMethod]
@@ -144,15 +146,17 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(1).WriteMetricAsync(default, default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteIdentifierPartAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteValuePartAsync(default, default);
             serializer.ClearReceivedCalls();
 
             instance.Dispose();
-
+            
             await _registry.CollectAndSerializeAsync(serializer, default);
-
+            
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteMetricAsync(default, default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteIdentifierPartAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync( default, default);
         }
 
         [TestMethod]
