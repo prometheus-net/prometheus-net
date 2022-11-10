@@ -13,10 +13,6 @@ namespace Prometheus
         /// </summary>
         internal static readonly QuantileEpsilonPair[] DefObjectivesArray = new QuantileEpsilonPair[0];
 
-        // Default Summary quantile values.
-        public static readonly IList<QuantileEpsilonPair> DefObjectives =
-            new List<QuantileEpsilonPair>(DefObjectivesArray);
-
         // Default duration for which observations stay relevant
         public static readonly TimeSpan DefMaxAge = TimeSpan.FromMinutes(10);
 
@@ -64,8 +60,7 @@ namespace Prometheus
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
-        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels,
-            bool publish)
+        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
             return new Child(this, instanceLabels, flattenedLabels, publish);
         }

@@ -106,6 +106,10 @@ namespace Prometheus
             await _stream.Value.WriteAsync(RBraceSp, 0, RBraceSp.Length, cancel);
         }
         
+        /// <summary>
+        /// Encode the system variable in regular Prometheus form and also return a OpenMetrics variant, these can be
+        /// the same.
+        /// </summary>
         internal static Tuple<byte[], byte[]> EncodeSystemLabelValue(double value)
         {
             if (double.IsPositiveInfinity(value))

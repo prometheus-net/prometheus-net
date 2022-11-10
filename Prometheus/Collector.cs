@@ -14,7 +14,7 @@ namespace Prometheus
         /// </summary>
         public string Name { get; }
         
-        public byte[] NameBytes { get;  }
+        internal byte[] NameBytes { get;  }
 
         /// <summary>
         /// The help text describing the metric for a human audience.
