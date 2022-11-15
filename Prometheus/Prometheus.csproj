@@ -27,7 +27,8 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 		<NoWarn>1591</NoWarn>
 
-		<LangVersion>latest</LangVersion>
+		<!-- "latest" works on local PC but not in build pipeline; Visual Studio version difference? Whatever, preview it is. -->
+		<LangVersion>preview</LangVersion>
 		<WarningLevel>9999</WarningLevel>
 
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
