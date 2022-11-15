@@ -32,7 +32,7 @@ public static class CustomDotNetMeters
         var histogram1 = meter1.CreateHistogram<byte>("bytes-considered", "bytes", "Informs about all the bytes considered.");
 
         // .NET 7: Example metric: an up/down counter.
-        /*var upDown1 = meter1.CreateUpDownCounter<int>("water-level", "brick-heights", "Current water level in the tank (measured in visible bricks from the midpoint).");
+        var upDown1 = meter1.CreateUpDownCounter<int>("water-level", "brick-heights", "Current water level in the tank (measured in visible bricks from the midpoint).");
 
         // Example metric: an observable up/down counter.
         int sandLevel = 0;
@@ -43,7 +43,7 @@ public static class CustomDotNetMeters
             return sandLevel;
         }
 
-        var upDown2 = meter1.CreateObservableUpDownCounter<int>("sand-level", MeasureSandLevel, "chainlinks", "Current sand level in the tank (measured in visible chain links from the midpoint).");*/
+        var upDown2 = meter1.CreateObservableUpDownCounter<int>("sand-level", MeasureSandLevel, "chainlinks", "Current sand level in the tank (measured in visible chain links from the midpoint).");
 
         // Example high cardinality metric: bytes sent per connection.
         var highCardinalityCounter1 = meter1.CreateCounter<long>("bytes-sent", "bytes", "Bytes sent per connection.");
@@ -67,7 +67,8 @@ public static class CustomDotNetMeters
 
                 histogram1.Record((byte)(Random.Shared.Next(256)), new KeyValuePair<string, object?>("is-faulted", true));
 
-                // .NET 7: upDown1.Add(Random.Shared.Next(-1, 2));
+                // .NET 7
+                upDown1.Add(Random.Shared.Next(-1, 2));
 
                 // Add some bytes for every active connection.
                 foreach (var connection in activeConnections)

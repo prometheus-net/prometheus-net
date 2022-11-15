@@ -129,34 +129,34 @@ public sealed class MeterAdapter : IDisposable
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the increment.
-                handle.WithLease(c => c.Inc(value), labelValues);
+                handle.WithLease(x => x.Inc(value), labelValues);
             }
             else if (instrument is ObservableCounter<T>)
             {
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the current value.
-                handle.WithLease(c => c.IncTo(value), labelValues);
+                handle.WithLease(x => x.IncTo(value), labelValues);
             }
-            /* .NET 7: else if (instrument is UpDownCounter<T>)
+#if NET7_0_OR_GREATER
+            else if (instrument is UpDownCounter<T>)
             {
-                var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], new GaugeConfiguration
-                {
-                    LabelNames = labelNames
-                });
+                var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
-                using (handle.AcquireLease(out var gauge, labelValues))
-                {
-                    // A measurement is the increment.
-                    gauge.Inc(value);
-                }
-            }*/
-            else if (instrument is ObservableGauge<T> /* .NET 7: or ObservableUpDownCounter<T>*/)
+                // A measurement is the increment.
+                handle.WithLease(x => x.Inc(value));
+            }
+#endif
+            else if (instrument is ObservableGauge<T>
+#if NET7_0_OR_GREATER
+                or ObservableUpDownCounter<T>
+#endif
+                )
             {
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the current value.
-                handle.WithLease(g => g.Set(value), labelValues);
+                handle.WithLease(x => x.Set(value), labelValues);
             }
             else if (instrument is Histogram<T>)
             {
@@ -167,7 +167,7 @@ public sealed class MeterAdapter : IDisposable
                 });
 
                 // A measurement is the observed value.
-                handle.WithLease(h => h.Observe(value), labelValues);
+                handle.WithLease(x => x.Observe(value), labelValues);
             }
             else
             {
