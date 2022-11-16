@@ -12,10 +12,10 @@ namespace Prometheus
         private static readonly byte[] Equal = { (byte)'=' };
         private static readonly byte[] Comma = { (byte)',' };
         private static readonly byte[] Underscore = { (byte)'_' };
-        private static readonly byte[] LBrace = { (byte)'{' };
-        private static readonly byte[] RBraceSp = { (byte)'}', (byte)' ' };
-        private static readonly byte[] Sp = { (byte)' ' };
-        private static readonly byte[] PInf = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
+        private static readonly byte[] LeftBrace = { (byte)'{' };
+        private static readonly byte[] RightBraceSpace = { (byte)'}', (byte)' ' };
+        private static readonly byte[] Space = { (byte)' ' };
+        private static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
 
         public TextSerializer(Stream stream)
         {
@@ -50,6 +50,14 @@ namespace Prometheus
             }
         }
 
+        public async Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+            CancellationToken cancel,
+            double value, byte[]? suffix = null)
+        {
+            await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, suffix);
+            await WriteValuePartAsync(value, cancel);
+        }
+
         // Reuse a buffer to do the UTF-8 encoding.
         // Maybe one day also ValueStringBuilder but that would be .NET Core only.
         // https://github.com/dotnet/corefx/issues/28379
@@ -58,7 +66,7 @@ namespace Prometheus
 
         // 123.456
         // Note: Terminates with a NEWLINE
-        public async Task WriteValuePartAsync(double value, CancellationToken cancel)
+        private async Task WriteValuePartAsync(double value, CancellationToken cancel)
         {
             var valueAsString = value.ToString(CultureInfo.InvariantCulture);
             var numBytes = PrometheusConstants.ExportEncoding
@@ -73,60 +81,61 @@ namespace Prometheus
         /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
         /// Note: Terminates with a SPACE
         /// </summary>
-        public async Task WriteIdentifierPartAsync(byte[] name, byte[] flatennedLabels, CancellationToken cancel,
-            byte[]? postfix = null, byte[]? extraLabelName = null, byte[]? extraLabelValue = null,
-            byte[]? extraLabelValueOpenMetrics = null)
+        private async Task WriteIdentifierPartAsync(byte[] name, byte[] flattenedLabels, CancellationToken cancel,
+            CanonicalLabel canonicalLabel, byte[]? suffix = null)
         {
             await _stream.Value.WriteAsync(name, 0, name.Length, cancel);
-            if (postfix != null && postfix.Length > 0)
+            if (suffix != null && suffix.Length > 0)
             {
                 await _stream.Value.WriteAsync(Underscore, 0, Underscore.Length, cancel);
-                await _stream.Value.WriteAsync(postfix, 0, postfix.Length, cancel);
+                await _stream.Value.WriteAsync(suffix, 0, suffix.Length, cancel);
             }
 
-            if (flatennedLabels.Length > 0 || (extraLabelName != null && extraLabelValue != null))
+            if (flattenedLabels.Length > 0 || canonicalLabel.IsNotEmpty)
             {
-                await _stream.Value.WriteAsync(LBrace, 0, LBrace.Length, cancel);
-                if (flatennedLabels.Length > 0)
+                await _stream.Value.WriteAsync(LeftBrace, 0, LeftBrace.Length, cancel);
+                if (flattenedLabels.Length > 0)
                 {
-                    await _stream.Value.WriteAsync(flatennedLabels, 0, flatennedLabels.Length, cancel);
+                    await _stream.Value.WriteAsync(flattenedLabels, 0, flattenedLabels.Length, cancel);
                 }
 
-                if (extraLabelName != null && extraLabelValue != null)
+                // Extra labels go to the end (i.e. they are deepest to inherit from).
+                if (canonicalLabel.IsNotEmpty)
                 {
-                    if (flatennedLabels.Length > 0)
+                    if (flattenedLabels.Length > 0)
                     {
                         await _stream.Value.WriteAsync(Comma, 0, Comma.Length, cancel);
                     }
 
-                    await _stream.Value.WriteAsync(extraLabelName, 0, extraLabelName.Length, cancel);
+                    await _stream.Value.WriteAsync(canonicalLabel.Name, 0, canonicalLabel.Name.Length, cancel);
                     await _stream.Value.WriteAsync(Equal, 0, Equal.Length, cancel);
                     await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
-                    await _stream.Value.WriteAsync(extraLabelValue, 0, extraLabelValue.Length, cancel);
+                    await _stream.Value.WriteAsync(canonicalLabel.Prometheus, 0, canonicalLabel.Prometheus.Length,
+                        cancel);
                     await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
                 }
-                await _stream.Value.WriteAsync(RBraceSp, 0, RBraceSp.Length, cancel);
+
+                await _stream.Value.WriteAsync(RightBraceSpace, 0, RightBraceSpace.Length, cancel);
             }
             else
             {
-                await _stream.Value.WriteAsync(Sp, 0, Sp.Length, cancel);
+                await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
             }
         }
 
         /// <summary>
-        /// Encode the system variable in regular Prometheus form and also return a OpenMetrics variant, these can be
+        /// Encode the special variable in regular Prometheus form and also return a OpenMetrics variant, these can be
         /// the same.
+        /// see: https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#considerations-canonical-numbers
         /// </summary>
-        internal static Tuple<byte[], byte[]> EncodeSystemLabelValue(double value)
+        internal static CanonicalLabel EncodeValueAsCanonicalLabel(byte[] name, double value)
         {
             if (double.IsPositiveInfinity(value))
-            {
-                return Tuple.Create(PInf, PInf);
-            }
+                return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
             var valueAsString = value.ToString(CultureInfo.InvariantCulture);
             var bytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
-            return Tuple.Create(bytes, bytes);
+            return new CanonicalLabel(name, bytes, bytes);
         }
     }
 }

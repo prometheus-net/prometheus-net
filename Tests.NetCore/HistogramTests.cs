@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Threading;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using System.Threading.Tasks;
 
@@ -30,13 +31,12 @@ namespace Prometheus.Tests
             // 2.0
             // 3.0
             // +inf
-            await serializer.ReceivedWithAnyArgs(6).WriteIdentifierPartAsync(default,default, default);
-            await serializer.Received().WriteValuePartAsync(5.0, default);
-            await serializer.Received().WriteValuePartAsync(2.0, default);
-            await serializer.Received().WriteValuePartAsync(0, default);
-            await serializer.Received().WriteValuePartAsync(1, default);
-            await serializer.Received().WriteValuePartAsync(2, default);
-            await serializer.Received().WriteValuePartAsync(2, default);
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),5.0, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2.0, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),0, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),1, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2, Arg.Any<byte[]>());
         }
 
         [TestMethod]

@@ -156,6 +156,9 @@
     <Compile Include="..\Tests.NetCore\TestExtensions.cs">
       <Link>TestExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\Tests.NetCore\TextSerializerTests.cs">
+      <Link>TextSerializerTests.cs</Link>
+    </Compile>
     <Compile Include="..\Tests.NetCore\ThreadSafeDoubleTests.cs">
       <Link>ThreadSafeDoubleTests.cs</Link>
     </Compile>

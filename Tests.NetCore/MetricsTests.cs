@@ -71,12 +71,10 @@ namespace Prometheus.Tests
             await registry2.CollectAndSerializeAsync(serializer2, default);
 
             await serializer1.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default);
-            await serializer2.ReceivedWithAnyArgs().WriteIdentifierPartAsync(default,default, default);
-            await serializer1.ReceivedWithAnyArgs().WriteValuePartAsync( default, default);
+            await serializer1.ReceivedWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default);
 
             await serializer2.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default);
-            await serializer2.ReceivedWithAnyArgs().WriteIdentifierPartAsync(default, default, default);
-            await serializer2.ReceivedWithAnyArgs().WriteValuePartAsync( default, default);
+            await serializer2.ReceivedWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default);
         }
 
         [TestMethod]
@@ -92,7 +90,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync( default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default,default);
             serializer.ClearReceivedCalls();
 
             metric.Inc();
@@ -101,7 +99,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default,default);
         }
 
         [TestMethod]
@@ -119,7 +117,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync( default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default,default);
             serializer.ClearReceivedCalls();
 
             instance.Inc();
@@ -128,7 +126,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync(default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default,default);
         }
 
         [TestMethod]
@@ -146,8 +144,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
 
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.ReceivedWithAnyArgs(1).WriteIdentifierPartAsync(default,default, default);
-            await serializer.ReceivedWithAnyArgs(1).WriteValuePartAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteMetricPointAsync(default, default, default, default, default);
             serializer.ClearReceivedCalls();
 
             instance.Dispose();
@@ -155,8 +152,7 @@ namespace Prometheus.Tests
             await _registry.CollectAndSerializeAsync(serializer, default);
             
             await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteIdentifierPartAsync(default, default, default);
-            await serializer.DidNotReceiveWithAnyArgs().WriteValuePartAsync( default, default);
+            await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default);
         }
 
         [TestMethod]

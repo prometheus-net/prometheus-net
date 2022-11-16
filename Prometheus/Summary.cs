@@ -92,20 +92,21 @@ namespace Prometheus
 
                 _headStream = _streams[0];
 
-                _quantileLabels = new Tuple<byte[], byte[]>[_objectives.Count];
+                _quantileLabels = new CanonicalLabel[_objectives.Count];
                 for (var i = 0; i < _objectives.Count; i++)
                 {
                     _sortedObjectives[i] = _objectives[i].Quantile;
-                    _quantileLabels[i] = TextSerializer.EncodeSystemLabelValue(_objectives[i].Quantile);
+                    _quantileLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(
+                        QuantileLabelName, _objectives[i].Quantile);
                 }
 
                 Array.Sort(_sortedObjectives);
             }
 
-            private readonly Tuple<byte[], byte[]>[] _quantileLabels;
-            private static readonly byte[] SumLabelBytes = PrometheusConstants.ExportEncoding.GetBytes("sum");
-            private static readonly byte[] CountLabelBytes = PrometheusConstants.ExportEncoding.GetBytes("count");
-            private static readonly byte[] QuantileLabelBytes = PrometheusConstants.ExportEncoding.GetBytes("quantile");
+            private readonly CanonicalLabel[] _quantileLabels;
+            private static readonly byte[] SumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
+            private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
+            private static readonly byte[] QuantileLabelName = PrometheusConstants.ExportEncoding.GetBytes("quantile");
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
                 CancellationToken cancel)
@@ -141,20 +142,29 @@ namespace Prometheus
                     }
                 }
 
-                await serializer.WriteIdentifierPartAsync(Parent.NameBytes, FlattenedLabelsBytes, cancel,
-                    postfix: SumLabelBytes);
-                await serializer.WriteValuePartAsync(sum, cancel);
-                await serializer.WriteIdentifierPartAsync(Parent.NameBytes, FlattenedLabelsBytes, cancel,
-                    postfix: CountLabelBytes);
-                await serializer.WriteValuePartAsync(count, cancel);
+                await serializer.WriteMetricPointAsync(
+                    Parent.NameBytes,
+                    FlattenedLabelsBytes,
+                    CanonicalLabel.Empty,
+                    cancel, 
+                    sum,
+                    suffix: SumSuffix);
+                await serializer.WriteMetricPointAsync(
+                    Parent.NameBytes,
+                    FlattenedLabelsBytes,
+                    CanonicalLabel.Empty,
+                    cancel, 
+                    count,
+                    suffix: CountSuffix);
 
                 for (var i = 0; i < values.Count; i++)
                 {
-                    await serializer.WriteIdentifierPartAsync(
-                        Parent.NameBytes, FlattenedLabelsBytes, cancel, postfix: null,
-                        extraLabelName: QuantileLabelBytes, extraLabelValue: _quantileLabels[i].Item1,
-                        extraLabelValueOpenMetrics: _quantileLabels[i].Item2);
-                    await serializer.WriteValuePartAsync(values[i].value, cancel);
+                    await serializer.WriteMetricPointAsync(
+                        Parent.NameBytes,
+                        FlattenedLabelsBytes,
+                        _quantileLabels[i],
+                        cancel, 
+                        values[i].value);
                 }
             }
 

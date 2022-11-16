@@ -227,7 +227,9 @@ namespace Prometheus
 
             _familyHeaderLines = new byte[][]
             {
-                PrometheusConstants.ExportEncoding.GetBytes($"# HELP {name} {help}"),
+                string.IsNullOrWhiteSpace(help)
+                    ? PrometheusConstants.ExportEncoding.GetBytes($"# HELP {name}")
+                    : PrometheusConstants.ExportEncoding.GetBytes($"# HELP {name} {help}"),
                 PrometheusConstants.ExportEncoding.GetBytes($"# TYPE {name} {Type.ToString().ToLowerInvariant()}")
             };
         }

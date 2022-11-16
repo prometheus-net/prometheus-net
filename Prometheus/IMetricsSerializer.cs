@@ -13,16 +13,11 @@
         Task WriteFamilyDeclarationAsync(byte[][] headerLines, CancellationToken cancel);
 
         /// <summary>
-        /// Writes the second part of the metric, the value (and the exemplar). Terminates with a newline 
+        /// Writes out a single metric point
         /// </summary>
-        Task WriteValuePartAsync(double value, CancellationToken cancel);
-
-        /// <summary>
-        /// Writes the identifier for a series. Terminates with a SPACE. 
-        /// </summary>
-        Task WriteIdentifierPartAsync(byte[] name, byte[] flatennedLabels, CancellationToken cancel, 
-            byte[]? postfix = null, byte[]? extraLabelName = null, byte[]? extraLabelValue = null,
-            byte[]? extraLabelValueOpenMetrics = null);
+        /// <returns></returns>
+        Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+            CancellationToken cancel, double value, byte[]? suffix = null);
 
         /// <summary>
         /// Flushes any pending buffers. Always call this after all your write calls.

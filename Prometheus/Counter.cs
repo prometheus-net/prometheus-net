@@ -13,8 +13,12 @@ namespace Prometheus
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
-                await serializer.WriteIdentifierPartAsync(this.Parent.NameBytes, this.FlattenedLabelsBytes, cancel);
-                await serializer.WriteValuePartAsync(Value, cancel);
+                await serializer.WriteMetricPointAsync(
+                    Parent.NameBytes,
+                    FlattenedLabelsBytes,
+                    CanonicalLabel.Empty,
+                    cancel, 
+                    Value);
             }
 
             public void Inc(double increment = 1.0)

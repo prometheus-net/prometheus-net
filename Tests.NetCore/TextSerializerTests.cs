@@ -10,7 +10,7 @@ namespace Prometheus.Tests;
 public class TextSerializerTests
 {
     [TestMethod]
-    public async Task ValidateTextFmtSummaryExposition_HappyPath()
+    public async Task ValidateTextFmtSummaryExposition_Labels()
     {
         var result = await TestCase.Run(factory =>
         {
@@ -25,8 +25,8 @@ public class TextSerializerTests
 
             summary.WithLabels("foo").Observe(3);
         });
-        // TODO help has a trailing whitespace before the newline
-        result.ShouldBe(@"# HELP boom_bam 
+        
+        result.ShouldBe(@"# HELP boom_bam
 # TYPE boom_bam summary
 boom_bam_sum{blah=""foo""} 3
 boom_bam_count{blah=""foo""} 1
@@ -35,7 +35,7 @@ boom_bam{blah=""foo"",quantile=""0.5""} 3
     }
 
     [TestMethod]
-    public async Task ValidateTextFmtSummaryExposition_HappyPath_NoLabels()
+    public async Task ValidateTextFmtSummaryExposition_NoLabels()
     {
         var result = await TestCase.Run(factory =>
         {
@@ -48,7 +48,7 @@ boom_bam{blah=""foo"",quantile=""0.5""} 3
             });
             summary.Observe(3);
         });
-        // TODO help has a trailing whitespace before the newline
+        
         result.ShouldBe(@"# HELP boom_bam something
 # TYPE boom_bam summary
 boom_bam_sum 3
@@ -59,7 +59,7 @@ boom_bam{quantile=""0.5""} 3
 
 
     [TestMethod]
-    public async Task ValidateTextFmtGaugeExposition_HappyPath()
+    public async Task ValidateTextFmtGaugeExposition_Labels()
     {
         var result = await TestCase.Run(factory =>
         {
@@ -70,15 +70,15 @@ boom_bam{quantile=""0.5""} 3
 
             gauge.WithLabels("foo").IncTo(10);
         });
-        // TODO help has a trailing whitespace before the newline
-        result.ShouldBe(@"# HELP boom_bam 
+        
+        result.ShouldBe(@"# HELP boom_bam
 # TYPE boom_bam gauge
 boom_bam{blah=""foo""} 10
 ");
     }
 
     [TestMethod]
-    public async Task ValidateTextFmtCounterExposition_HappyPath()
+    public async Task ValidateTextFmtCounterExposition_Labels()
     {
         var result = await TestCase.Run(factory =>
         {
@@ -90,14 +90,13 @@ boom_bam{blah=""foo""} 10
             counter.WithLabels("foo").IncTo(10);
         });
 
-        // TODO help has a trailing whitespace before the newline
-        result.ShouldBe("# HELP boom_bam \n" +
+        result.ShouldBe("# HELP boom_bam\n" +
                         "# TYPE boom_bam counter\n" +
                         "boom_bam{blah=\"foo\"} 10\n");
     }
 
     [TestMethod]
-    public async Task ValidateTextFmtHistogramExposition_HappyPath()
+    public async Task ValidateTextFmtHistogramExposition_Labels()
     {
         var result = await TestCase.Run(factory =>
         {
@@ -110,8 +109,7 @@ boom_bam{blah=""foo""} 10
             counter.WithLabels("foo").Observe(0.5);
         });
 
-        // TODO help has a trailing whitespace before the newline
-        result.ShouldBe(@"# HELP boom_bam 
+        result.ShouldBe(@"# HELP boom_bam
 # TYPE boom_bam histogram
 boom_bam_sum{blah=""foo""} 0.5
 boom_bam_count{blah=""foo""} 1
@@ -121,7 +119,7 @@ boom_bam_bucket{blah=""foo"",le=""+Inf""} 1
     }
 
     [TestMethod]
-    public async Task ValidateTextFmtHistogramExposition_HappyPath_NoLabels()
+    public async Task ValidateTextFmtHistogramExposition_NoLabels()
     {
         var result = await TestCase.Run(factory =>
         {
