@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Threading;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using System.Threading.Tasks;
 
@@ -30,12 +31,12 @@ namespace Prometheus.Tests
             // 2.0
             // 3.0
             // +inf
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._sumIdentifier, 5.0, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._countIdentifier, 2.0, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[0], 0, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[1], 1, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[2], 2, default);
-            await serializer.Received().WriteMetricAsync(histogram.Unlabelled._bucketIdentifiers[3], 2, default);
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),5.0, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2.0, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),0, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),1, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2, Arg.Any<byte[]>());
         }
 
         [TestMethod]

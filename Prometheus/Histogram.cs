@@ -49,49 +49,61 @@ namespace Prometheus
             internal Child(Histogram parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
                 : base(parent, instanceLabels, flattenedLabels, publish)
             {
-                _parent = parent;
+                Parent = parent;
 
-                _upperBounds = _parent._buckets;
+                _upperBounds = Parent._buckets;
                 _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
-
-                _sumIdentifier = CreateIdentifier("sum");
-                _countIdentifier = CreateIdentifier("count");
-
-                _bucketIdentifiers = new byte[_upperBounds.Length][];
-                for (var i = 0; i < _upperBounds.Length; i++)
+                _leLabels = new CanonicalLabel[_upperBounds.Length];
+                for (var i = 0; i < Parent._buckets.Length; i++)
                 {
-                    var value = double.IsPositiveInfinity(_upperBounds[i]) ? "+Inf" : _upperBounds[i].ToString(CultureInfo.InvariantCulture);
-
-                    _bucketIdentifiers[i] = CreateIdentifier("bucket", "le", value);
+                    _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, Parent._buckets[i]);
                 }
             }
 
-            private readonly Histogram _parent;
+            internal new readonly Histogram Parent;
 
             private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
             private readonly ThreadSafeLong[] _bucketCounts;
             private readonly double[] _upperBounds;
+            private readonly CanonicalLabel[] _leLabels;
+            private static readonly byte[] SumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
+            private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
+            private static readonly byte[] BucketSuffix = PrometheusConstants.ExportEncoding.GetBytes("bucket");
+            private static readonly byte[] LeLabelName = PrometheusConstants.ExportEncoding.GetBytes("le");
 
-            internal readonly byte[] _sumIdentifier;
-            internal readonly byte[] _countIdentifier;
-            internal readonly byte[][] _bucketIdentifiers;
-
-            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
+                CancellationToken cancel)
             {
                 // We output sum.
                 // We output count.
                 // We output each bucket in order of increasing upper bound.
-
-                await serializer.WriteMetricAsync(_sumIdentifier, _sum.Value, cancel);
-                await serializer.WriteMetricAsync(_countIdentifier, _bucketCounts.Sum(b => b.Value), cancel);
+                await serializer.WriteMetricPointAsync(
+                    Parent.NameBytes,
+                    FlattenedLabelsBytes,
+                    CanonicalLabel.Empty,
+                    cancel,
+                    _sum.Value,
+                    suffix: SumSuffix);
+                await serializer.WriteMetricPointAsync(
+                    Parent.NameBytes,
+                    FlattenedLabelsBytes,
+                    CanonicalLabel.Empty,
+                    cancel,
+                    _bucketCounts.Sum(b => b.Value),
+                    suffix: CountSuffix);
 
                 var cumulativeCount = 0L;
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
                     cumulativeCount += _bucketCounts[i].Value;
-
-                    await serializer.WriteMetricAsync(_bucketIdentifiers[i], cumulativeCount, cancel);
+                    await serializer.WriteMetricPointAsync(
+                        Parent.NameBytes,
+                        FlattenedLabelsBytes,
+                        _leLabels[i],
+                        cancel,
+                        cumulativeCount,
+                        suffix: BucketSuffix);
                 }
             }
 

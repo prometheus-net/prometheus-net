@@ -7,9 +7,10 @@ namespace Prometheus
     {
         internal ChildBase(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
-            _parent = parent;
+            Parent = parent;
             InstanceLabels = instanceLabels;
             FlattenedLabels = flattenedLabels;
+            FlattenedLabelsBytes = PrometheusConstants.ExportEncoding.GetBytes(flattenedLabels.Serialize());
             _publish = publish;
         }
 
@@ -43,7 +44,7 @@ namespace Prometheus
         /// </summary>
         public void Remove()
         {
-            _parent.RemoveLabelled(InstanceLabels);
+            Parent.RemoveLabelled(InstanceLabels);
         }
 
         public void Dispose() => Remove();
@@ -60,7 +61,9 @@ namespace Prometheus
         /// </summary>
         internal LabelSequence FlattenedLabels { get; }
 
-        private readonly Collector _parent;
+        internal byte[] FlattenedLabelsBytes { get; }
+
+        internal readonly Collector Parent;
 
         private bool _publish;
 
@@ -80,32 +83,5 @@ namespace Prometheus
 
         // Same as above, just only called if we really need to serialize this metric (if publish is true).
         private protected abstract Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel);
-
-        /// <summary>
-        /// Creates a metric identifier, with an optional name postfix and an optional extra label to append to the end.
-        /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
-        /// </summary>
-        protected byte[] CreateIdentifier(string? postfix = null, string? extraLabelName = null, string? extraLabelValue = null)
-        {
-            var fullName = postfix != null ? $"{_parent.Name}_{postfix}" : _parent.Name;
-
-            var labels = FlattenedLabels;
-
-            if (extraLabelName != null && extraLabelValue != null)
-            {
-                var extraLabelNames = StringSequence.From(extraLabelName);
-                var extraLabelValues = StringSequence.From(extraLabelValue);
-
-                var extraLabels = LabelSequence.From(extraLabelNames, extraLabelValues);
-
-                // Extra labels go to the end (i.e. they are deepest to inherit from).
-                labels = labels.Concat(extraLabels);
-            }
-
-            if (labels.Length != 0)
-                return PrometheusConstants.ExportEncoding.GetBytes($"{fullName}{{{labels.Serialize()}}}");
-            else
-                return PrometheusConstants.ExportEncoding.GetBytes(fullName);
-        }
     }
 }

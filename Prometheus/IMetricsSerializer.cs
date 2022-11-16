@@ -13,9 +13,11 @@
         Task WriteFamilyDeclarationAsync(byte[][] headerLines, CancellationToken cancel);
 
         /// <summary>
-        /// Writes a single metric in a metric family.
+        /// Writes out a single metric point
         /// </summary>
-        Task WriteMetricAsync(byte[] identifier, double value, CancellationToken cancel);
+        /// <returns></returns>
+        Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+            CancellationToken cancel, double value, byte[]? suffix = null);
 
         /// <summary>
         /// Flushes any pending buffers. Always call this after all your write calls.

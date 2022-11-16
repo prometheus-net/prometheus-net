@@ -1,5 +1,4 @@
 ﻿using Prometheus.SummaryImpl;
-using System.Globalization;
 
 namespace Prometheus
 {
@@ -13,9 +12,6 @@ namespace Prometheus
         /// https://prometheus.io/docs/instrumenting/writing_clientlibs/#summary
         /// </summary>
         internal static readonly QuantileEpsilonPair[] DefObjectivesArray = new QuantileEpsilonPair[0];
-
-        // Default Summary quantile values.
-        public static readonly IList<QuantileEpsilonPair> DefObjectives = new List<QuantileEpsilonPair>(DefObjectivesArray);
 
         // Default duration for which observations stay relevant
         public static readonly TimeSpan DefMaxAge = TimeSpan.FromMinutes(10);
@@ -96,30 +92,24 @@ namespace Prometheus
 
                 _headStream = _streams[0];
 
+                _quantileLabels = new CanonicalLabel[_objectives.Count];
                 for (var i = 0; i < _objectives.Count; i++)
                 {
                     _sortedObjectives[i] = _objectives[i].Quantile;
+                    _quantileLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(
+                        QuantileLabelName, _objectives[i].Quantile);
                 }
 
                 Array.Sort(_sortedObjectives);
-
-                _sumIdentifier = CreateIdentifier("sum");
-                _countIdentifier = CreateIdentifier("count");
-
-                _quantileIdentifiers = new byte[_objectives.Count][];
-                for (var i = 0; i < _objectives.Count; i++)
-                {
-                    var value = double.IsPositiveInfinity(_objectives[i].Quantile) ? "+Inf" : _objectives[i].Quantile.ToString(CultureInfo.InvariantCulture);
-
-                    _quantileIdentifiers[i] = CreateIdentifier(null, "quantile", value);
-                }
             }
 
-            private readonly byte[] _sumIdentifier;
-            private readonly byte[] _countIdentifier;
-            private readonly byte[][] _quantileIdentifiers;
+            private readonly CanonicalLabel[] _quantileLabels;
+            private static readonly byte[] SumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
+            private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
+            private static readonly byte[] QuantileLabelName = PrometheusConstants.ExportEncoding.GetBytes("quantile");
 
-            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
+                CancellationToken cancel)
             {
                 // We output sum.
                 // We output count.
@@ -152,11 +142,30 @@ namespace Prometheus
                     }
                 }
 
-                await serializer.WriteMetricAsync(_sumIdentifier, sum, cancel);
-                await serializer.WriteMetricAsync(_countIdentifier, count, cancel);
+                await serializer.WriteMetricPointAsync(
+                    Parent.NameBytes,
+                    FlattenedLabelsBytes,
+                    CanonicalLabel.Empty,
+                    cancel, 
+                    sum,
+                    suffix: SumSuffix);
+                await serializer.WriteMetricPointAsync(
+                    Parent.NameBytes,
+                    FlattenedLabelsBytes,
+                    CanonicalLabel.Empty,
+                    cancel, 
+                    count,
+                    suffix: CountSuffix);
 
                 for (var i = 0; i < values.Count; i++)
-                    await serializer.WriteMetricAsync(_quantileIdentifiers[i], values[i].value, cancel);
+                {
+                    await serializer.WriteMetricPointAsync(
+                        Parent.NameBytes,
+                        FlattenedLabelsBytes,
+                        _quantileLabels[i],
+                        cancel, 
+                        values[i].value);
+                }
             }
 
             // Objectives defines the quantile rank estimates with their respective
