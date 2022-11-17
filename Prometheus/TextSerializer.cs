@@ -16,15 +16,19 @@ namespace Prometheus
         private static readonly byte[] RightBraceSpace = { (byte)'}', (byte)' ' };
         private static readonly byte[] Space = { (byte)' ' };
         private static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
+        private static readonly byte[] EofLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
 
-        public TextSerializer(Stream stream)
+        public TextSerializer(Stream stream, ExpositionFormat text = ExpositionFormat.Text)
         {
+            _text = text;
             _stream = new Lazy<Stream>(() => stream);
         }
 
         // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
-        public TextSerializer(Func<Stream> streamFactory)
+        public TextSerializer(Func<Stream> streamFactory,
+            ExpositionFormat text = ExpositionFormat.Text)
         {
+            _text = text;
             _stream = new Lazy<Stream>(streamFactory);
         }
 
@@ -50,6 +54,14 @@ namespace Prometheus
             }
         }
 
+        public async Task WriteEnd(CancellationToken cancel)
+        {
+            if (_text == ExpositionFormat.OpenMetricsText)
+            {
+                await _stream.Value.WriteAsync(EofLine, 0, EofLine.Length, cancel);
+            }
+        }
+
         public async Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
             CancellationToken cancel,
             double value, byte[]? suffix = null)
@@ -63,6 +75,7 @@ namespace Prometheus
         // https://github.com/dotnet/corefx/issues/28379
         // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
         private readonly byte[] _stringBytesBuffer = new byte[32];
+        private readonly ExpositionFormat _text;
 
         // 123.456
         // Note: Terminates with a NEWLINE
@@ -76,6 +89,14 @@ namespace Prometheus
             await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
         }
 
+        // For the observer methods on the instruments --e.g., `Observe*` I am thinking of a polymorpohic override were
+        // an exemplar is captured as `params (string, string) exemplars`. This is then captured in a local `Examplar`
+        // class/struct along with additional fields (timestamp and value). 
+        // 
+        // I could create an interface to help us memoise the key of the exemplar up front but I think perhaps we should
+        // relly on a stringbuilder(In the `TextSerializer`) to construct the exemplar encoding, we can store the encoded
+        // bytes in the `Exemplar`for future scrape cycles, but perhaps this is overoptimising.
+        
         /// <summary>
         /// Creates a metric identifier, with an optional name postfix and an optional extra label to append to the end.
         /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
@@ -110,8 +131,12 @@ namespace Prometheus
                     await _stream.Value.WriteAsync(canonicalLabel.Name, 0, canonicalLabel.Name.Length, cancel);
                     await _stream.Value.WriteAsync(Equal, 0, Equal.Length, cancel);
                     await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
-                    await _stream.Value.WriteAsync(canonicalLabel.Prometheus, 0, canonicalLabel.Prometheus.Length,
-                        cancel);
+                    if (_text == ExpositionFormat.OpenMetricsText)
+                        await _stream.Value.WriteAsync(
+                            canonicalLabel.OpenMetrics, 0, canonicalLabel.OpenMetrics.Length, cancel);
+                    else
+                        await _stream.Value.WriteAsync(
+                            canonicalLabel.Prometheus, 0, canonicalLabel.Prometheus.Length, cancel);
                     await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
                 }
 
@@ -134,8 +159,11 @@ namespace Prometheus
                 return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
             var valueAsString = value.ToString(CultureInfo.InvariantCulture);
-            var bytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
-            return new CanonicalLabel(name, bytes, bytes);
+            var prom = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
+
+            return new CanonicalLabel(name, prom, valueAsString.Contains(".")
+                ? prom
+                : PrometheusConstants.ExportEncoding.GetBytes(valueAsString + ".0"));
         }
     }
 }

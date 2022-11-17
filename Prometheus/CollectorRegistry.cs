@@ -136,12 +136,12 @@ namespace Prometheus
         /// 
         /// This method is designed to be used with custom output mechanisms that do not use an IMetricServer.
         /// </summary>
-        public Task CollectAndExportAsTextAsync(Stream to, CancellationToken cancel = default)
+        public Task CollectAndExportAsTextAsync(Stream to, ExpositionFormat format= ExpositionFormat.Text, CancellationToken cancel = default)
         {
             if (to == null)
                 throw new ArgumentNullException(nameof(to));
 
-            return CollectAndSerializeAsync(new TextSerializer(to), cancel);
+            return CollectAndSerializeAsync(new TextSerializer(to, format), cancel);
         }
 
         // We pass this thing to GetOrAdd to avoid allocating a collector or a closure.
@@ -248,7 +248,7 @@ namespace Prometheus
 
             foreach (var collector in _collectors.Values)
                 await collector.CollectAndSerializeAsync(serializer, cancel);
-
+            await serializer.WriteEnd(cancel);
             await serializer.FlushAsync(cancel);
         }
 

@@ -20,6 +20,11 @@
             CancellationToken cancel, double value, byte[]? suffix = null);
 
         /// <summary>
+        /// Writes out terminal lines
+        /// </summary>
+        Task WriteEnd(CancellationToken cancel);
+        
+        /// <summary>
         /// Flushes any pending buffers. Always call this after all your write calls.
         /// </summary>
         Task FlushAsync(CancellationToken cancel);

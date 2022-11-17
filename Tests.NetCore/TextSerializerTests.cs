@@ -141,6 +141,31 @@ boom_bam_bucket{le=""+Inf""} 1
 ");
     }
 
+    [TestMethod]
+    public async Task ValidateOpenMetricsFmtHistogram_Basic()
+    {
+        var result = await TestCase.RunOpenMetrics(factory =>
+        {
+            var counter = factory.CreateHistogram("boom_bam", "something", new HistogramConfiguration
+            {
+                Buckets = new[] { 1, 2.5 }
+            });
+
+            counter.Observe(1.5);
+            counter.Observe(1);
+        });
+        
+        // This asserts that the le label has been modified and that we have a EOF
+        result.ShouldBe(@"# HELP boom_bam something
+# TYPE boom_bam histogram
+boom_bam_sum 2.5
+boom_bam_count 2
+boom_bam_bucket{le=""1.0""} 1
+boom_bam_bucket{le=""2.5""} 2
+boom_bam_bucket{le=""+Inf""} 2
+# EOF
+");
+    }
 
     private class TestCase
     {
@@ -153,8 +178,12 @@ boom_bam_bucket{le=""+Inf""} 1
             this.raw = raw;
         }
 
+        public static async Task<TestCase> RunOpenMetrics(Action<MetricFactory> register)
+        {
+            return await Run(register, ExpositionFormat.OpenMetricsText);
+        }
 
-        public static async Task<TestCase> Run(Action<MetricFactory> register)
+        public static async Task<TestCase> Run(Action<MetricFactory> register, ExpositionFormat format = ExpositionFormat.Text)
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);
@@ -162,7 +191,7 @@ boom_bam_bucket{le=""+Inf""} 1
             register(factory);
 
             using var stream = new MemoryStream();
-            await registry.CollectAndExportAsTextAsync(stream);
+            await registry.CollectAndExportAsTextAsync(stream, format);
 
             var lines = new List<String>();
             stream.Position = 0;
