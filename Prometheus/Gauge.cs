@@ -14,7 +14,7 @@
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
                 await serializer.WriteMetricPointAsync(
-                    Parent.NameBytes, FlattenedLabelsBytes, CanonicalLabel.Empty, cancel, Value);
+                    Parent.NameBytes, FlattenedLabelsBytes, CanonicalLabel.Empty, cancel, Value, ObservedExemplar.Empty);
             }
 
             public void Inc(double increment = 1)

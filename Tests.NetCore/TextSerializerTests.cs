@@ -9,6 +9,12 @@ namespace Prometheus.Tests;
 [TestClass]
 public class TextSerializerTests
 {
+    [ClassInitialize]
+    public static void BeforeClass(TestContext testContext)
+    {
+        ObservedExemplar.NowProvider = new TestNowProvider();
+    }
+    
     [TestMethod]
     public async Task ValidateTextFmtSummaryExposition_Labels()
     {
@@ -159,14 +165,72 @@ boom_bam_bucket{le=""+Inf""} 1
         result.ShouldBe(@"# HELP boom_bam something
 # TYPE boom_bam histogram
 boom_bam_sum 2.5
-boom_bam_count 2
-boom_bam_bucket{le=""1.0""} 1
-boom_bam_bucket{le=""2.5""} 2
-boom_bam_bucket{le=""+Inf""} 2
+boom_bam_count 2.0
+boom_bam_bucket{le=""1.0""} 1.0
+boom_bam_bucket{le=""2.5""} 2.0
+boom_bam_bucket{le=""+Inf""} 2.0
+# EOF
+");
+    }
+    
+    [TestMethod]
+    public async Task ValidateOpenMetricsFmtHistogram_WithExemplar()
+    {
+        var result = await TestCase.RunOpenMetrics(factory =>
+        {
+            var counter = factory.CreateHistogram("boom_bam", "something", new HistogramConfiguration
+            {
+                Buckets = new[] { 1, 2.5, 3}
+            });
+
+            counter.Observe(1, Exemplar.Pair("traceID", "1"));
+            counter.Observe(1.5, Exemplar.Pair("traceID", "2"));
+            counter.Observe(4, Exemplar.Pair("traceID", "3"));
+        });
+        
+        // This asserts that the le label has been modified and that we have a EOF
+        result.ShouldBe(@"# HELP boom_bam something
+# TYPE boom_bam histogram
+boom_bam_sum 6.5
+boom_bam_count 3.0
+boom_bam_bucket{le=""1.0""} 1.0  # {traceID=""1""} 1.0 1668779954.714
+boom_bam_bucket{le=""2.5""} 2.0  # {traceID=""2""} 1.5 1668779954.714
+boom_bam_bucket{le=""3.0""} 2.0
+boom_bam_bucket{le=""+Inf""} 3.0  # {traceID=""3""} 4.0 1668779954.714
+# EOF
+");
+    }
+    
+    [TestMethod]
+    public async Task ValidateOpenMetricsFmtCounter_MultiItemExemplar()
+    {
+        var result = await TestCase.RunOpenMetrics(factory =>
+        {
+            var counter = factory.CreateCounter("boom_bam", "", new CounterConfiguration
+            {
+                LabelNames = new[] { "blah" }
+            });
+
+            counter.WithLabels("foo").Inc(1, 
+                Exemplar.Pair("traceID", "1234"), Exemplar.Pair("yaay", "4321"));
+        });
+        // This asserts that multi-labeled exemplars work as well as counters
+        result.ShouldBe(@"# HELP boom_bam
+# TYPE boom_bam counter
+boom_bam{blah=""foo""} 1.0  # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
 # EOF
 ");
     }
 
+    private class TestNowProvider : ObservedExemplar.INowProvder
+    {
+        public readonly double TestNow = 1668779954.714;
+        public double Now()
+        {
+            return TestNow;
+        }
+    }
+    
     private class TestCase
     {
         private readonly String raw;

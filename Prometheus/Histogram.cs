@@ -58,6 +58,11 @@ namespace Prometheus
                 {
                     _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, Parent._buckets[i]);
                 }
+                _exemplars = new ObservedExemplar[_upperBounds.Length];
+                for (var i = 0; i < _upperBounds.Length; i++)
+                {
+                    _exemplars[i] = new ObservedExemplar();
+                }
             }
 
             internal new readonly Histogram Parent;
@@ -70,6 +75,7 @@ namespace Prometheus
             private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
             private static readonly byte[] BucketSuffix = PrometheusConstants.ExportEncoding.GetBytes("bucket");
             private static readonly byte[] LeLabelName = PrometheusConstants.ExportEncoding.GetBytes("le");
+            private readonly ObservedExemplar[] _exemplars;
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
                 CancellationToken cancel)
@@ -83,6 +89,7 @@ namespace Prometheus
                     CanonicalLabel.Empty,
                     cancel,
                     _sum.Value,
+                    ObservedExemplar.Empty,
                     suffix: SumSuffix);
                 await serializer.WriteMetricPointAsync(
                     Parent.NameBytes,
@@ -90,12 +97,17 @@ namespace Prometheus
                     CanonicalLabel.Empty,
                     cancel,
                     _bucketCounts.Sum(b => b.Value),
+                    ObservedExemplar.Empty,
                     suffix: CountSuffix);
 
                 var cumulativeCount = 0L;
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
+                    ObservedExemplar cp;
+                    lock (_exemplars)
+                        cp = _exemplars[i];
+                    
                     cumulativeCount += _bucketCounts[i].Value;
                     await serializer.WriteMetricPointAsync(
                         Parent.NameBytes,
@@ -103,6 +115,7 @@ namespace Prometheus
                         _leLabels[i],
                         cancel,
                         cumulativeCount,
+                        cp,
                         suffix: BucketSuffix);
                 }
             }
@@ -110,9 +123,13 @@ namespace Prometheus
             public double Sum => _sum.Value;
             public long Count => _bucketCounts.Sum(b => b.Value);
 
+            public void Observe(double val, params Exemplar.LabelPair[] exemplar) => ObserveInternal(val, 1, exemplar);
+
             public void Observe(double val) => Observe(val, 1);
 
-            public void Observe(double val, long count)
+            public void Observe(double val, long count) => ObserveInternal(val, count);
+
+            private void ObserveInternal(double val, long count, params Exemplar.LabelPair[] exemplar)
             {
                 if (double.IsNaN(val))
                 {
@@ -124,6 +141,9 @@ namespace Prometheus
                     if (val <= _upperBounds[i])
                     {
                         _bucketCounts[i].Add(count);
+                        if (exemplar.Length > 0)
+                            lock (_exemplars) 
+                                _exemplars[i].Update(exemplar, val);
                         break;
                     }
                 }
@@ -138,6 +158,7 @@ namespace Prometheus
         public long Count => Unlabelled.Count;
         public void Observe(double val) => Unlabelled.Observe(val, 1);
         public void Observe(double val, long count) => Unlabelled.Observe(val, count);
+        public void Observe(double val, params Exemplar.LabelPair[] exemplar) => Unlabelled.Observe(val, exemplar);
         public void Publish() => Unlabelled.Publish();
         public void Unpublish() => Unlabelled.Unpublish();
 

@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using System.Threading.Tasks;
@@ -8,6 +9,34 @@ namespace Prometheus.Tests
     [TestClass]
     public sealed class HistogramTests
     {
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void ObserveExemplarDuplicateKeys()
+        {
+            var registry = Metrics.NewCustomRegistry();
+            var factory = Metrics.WithCustomRegistry(registry);
+
+            var histogram = factory.CreateHistogram("xxx", "");
+            histogram.Observe(1, Exemplar.Pair("traceID", "123"), Exemplar.Pair("traceID", "1"));
+        }
+        
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void ObserveExemplarTooManyRunes()
+        {
+            var registry = Metrics.NewCustomRegistry();
+            var factory = Metrics.WithCustomRegistry(registry);
+
+            var key1 = "0123456789" + "0123456789" + "0123456789" + "0123456789" + "0123456789"; // 50
+            var key2 = "0123456789" + "0123456789" + "0123456789" + "0123456789" + "0123456780"; // 50
+            var val1 = "01234567890123"; // 14
+            var val2 = "012345678901234"; // 15 (= 129)
+            
+            var histogram = factory.CreateHistogram("xxx", "");
+            histogram.Observe(1, Exemplar.Pair(key1, val1), Exemplar.Pair(key2, val2));
+        }
+        
+        
         [TestMethod]
         public async Task Observe_IncrementsCorrectBucketsAndCountAndSum()
         {
@@ -31,12 +60,11 @@ namespace Prometheus.Tests
             // 2.0
             // 3.0
             // +inf
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),5.0, Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2.0, Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),0, Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),1, Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2, Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2, Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2.0,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),0,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),1,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
         }
 
         [TestMethod]

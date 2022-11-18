@@ -17,7 +17,7 @@
         /// </summary>
         /// <returns></returns>
         Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
-            CancellationToken cancel, double value, byte[]? suffix = null);
+            CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null);
 
         /// <summary>
         /// Writes out terminal lines

@@ -10,22 +10,30 @@ namespace Prometheus
             }
 
             private ThreadSafeDouble _value;
+            private ObservedExemplar _observedExemplar = new();
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
             {
+                ObservedExemplar ex;
+                lock(this)
+                    ex = _observedExemplar;
+                
                 await serializer.WriteMetricPointAsync(
                     Parent.NameBytes,
                     FlattenedLabelsBytes,
                     CanonicalLabel.Empty,
                     cancel, 
-                    Value);
+                    Value,
+                    ex);
             }
 
-            public void Inc(double increment = 1.0)
+            public void Inc(double increment = 1.0, params Exemplar.LabelPair[] exemplar)
             {
                 if (increment < 0.0)
                     throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
-
+                
+                if (exemplar.Length > 0)
+                    lock (this) _observedExemplar.Update(exemplar, increment);
                 _value.Add(increment);
                 Publish();
             }
@@ -38,6 +46,7 @@ namespace Prometheus
 
             public double Value => _value.Value;
         }
+        
 
         private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
         {
@@ -56,6 +65,9 @@ namespace Prometheus
         public void Publish() => Unlabelled.Publish();
         public void Unpublish() => Unlabelled.Unpublish();
 
+        public void Inc(double increment = 1, params Exemplar.LabelPair[] exemplar) =>
+            Unlabelled.Inc(increment, exemplar);
+        
         internal override MetricType Type => MetricType.Counter;
 
         internal override int TimeseriesCount => ChildCount;

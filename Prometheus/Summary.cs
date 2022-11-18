@@ -148,6 +148,7 @@ namespace Prometheus
                     CanonicalLabel.Empty,
                     cancel, 
                     sum,
+                    ObservedExemplar.Empty,
                     suffix: SumSuffix);
                 await serializer.WriteMetricPointAsync(
                     Parent.NameBytes,
@@ -155,6 +156,7 @@ namespace Prometheus
                     CanonicalLabel.Empty,
                     cancel, 
                     count,
+                    ObservedExemplar.Empty,
                     suffix: CountSuffix);
 
                 for (var i = 0; i < values.Count; i++)
@@ -164,7 +166,8 @@ namespace Prometheus
                         FlattenedLabelsBytes,
                         _quantileLabels[i],
                         cancel, 
-                        values[i].value);
+                        values[i].value,
+                        ObservedExemplar.Empty);
                 }
             }
 
