@@ -70,10 +70,10 @@ namespace Prometheus.Tests
             var serializer2 = Substitute.For<IMetricsSerializer>();
             await registry2.CollectAndSerializeAsync(serializer2, default);
 
-            await serializer1.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default);
+            await serializer1.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default, default, default, default, default);
             await serializer1.ReceivedWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default, default);
 
-            await serializer2.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default);
+            await serializer2.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default, default, default, default, default);
             await serializer2.ReceivedWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default, default);
         }
 
@@ -89,7 +89,7 @@ namespace Prometheus.Tests
             var serializer = Substitute.For<IMetricsSerializer>();
             await _registry.CollectAndSerializeAsync(serializer, default);
 
-            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
             await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default,default, default);
             serializer.ClearReceivedCalls();
 
@@ -98,7 +98,7 @@ namespace Prometheus.Tests
 
             await _registry.CollectAndSerializeAsync(serializer, default);
 
-            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
             await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default,default, default);
         }
 
@@ -116,7 +116,7 @@ namespace Prometheus.Tests
             var serializer = Substitute.For<IMetricsSerializer>();
             await _registry.CollectAndSerializeAsync(serializer, default);
 
-            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
             await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default,default, default);
             serializer.ClearReceivedCalls();
 
@@ -125,7 +125,7 @@ namespace Prometheus.Tests
 
             await _registry.CollectAndSerializeAsync(serializer, default);
 
-            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
             await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default,default, default);
         }
 
@@ -143,7 +143,7 @@ namespace Prometheus.Tests
             var serializer = Substitute.For<IMetricsSerializer>();
             await _registry.CollectAndSerializeAsync(serializer, default);
 
-            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
             await serializer.ReceivedWithAnyArgs(1).WriteMetricPointAsync(default, default, default, default, default, default);
             serializer.ClearReceivedCalls();
 
@@ -151,7 +151,7 @@ namespace Prometheus.Tests
             
             await _registry.CollectAndSerializeAsync(serializer, default);
             
-            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default);
+            await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
             await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default, default);
         }
 

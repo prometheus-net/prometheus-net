@@ -23,6 +23,9 @@ namespace Prometheus
         private static readonly byte[] Zero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
         private static readonly byte[] NegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
         private static readonly byte[] EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
+        private static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
+        private static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
+        private static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
 
         public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.Text)
         {
@@ -49,15 +52,34 @@ namespace Prometheus
 
         private readonly Lazy<Stream> _stream;
 
-        // # HELP name help
-        // # TYPE name type
-        public async Task WriteFamilyDeclarationAsync(byte[][] headerLines, CancellationToken cancel)
+        public async Task WriteFamilyDeclarationAsync(string name, byte[]nameBytes, byte[] helpBytes, MetricType type, 
+            byte[] typeBytes, CancellationToken cancel)
         {
-            foreach (var line in headerLines)
+            var nameLen = nameBytes.Length; 
+            if (_fmt == ExpositionFormat.OpenMetricsText && type == MetricType.Counter)
             {
-                await _stream.Value.WriteAsync(line, 0, line.Length, cancel);
-                await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
+                if (name.EndsWith("_total"))
+                {
+                    nameLen -= 6; // in OpenMetrics the counter name does not include the _total prefix.
+                }
+                else
+                {
+                    typeBytes = Unknown; // if the total prefix is missing the _total prefix it is out of spec
+                }
             }
+
+            await _stream.Value.WriteAsync(HashHelpSpace, 0, HashHelpSpace.Length, cancel);
+            await _stream.Value.WriteAsync(nameBytes, 0, nameLen, cancel);
+            if (helpBytes.Length > 0)
+            {
+                await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
+                await _stream.Value.WriteAsync(helpBytes, 0, helpBytes.Length, cancel);
+            }
+            await _stream.Value.WriteAsync(NewlineHashTypeSpace, 0, NewlineHashTypeSpace.Length, cancel);
+            await _stream.Value.WriteAsync(nameBytes, 0, nameLen, cancel);
+            await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
+            await _stream.Value.WriteAsync(typeBytes, 0, typeBytes.Length, cancel);
+            await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
         }
 
         public async Task WriteEnd(CancellationToken cancel)

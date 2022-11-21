@@ -10,7 +10,8 @@
         /// <summary>
         /// Writes the lines that declare the metric family.
         /// </summary>
-        Task WriteFamilyDeclarationAsync(byte[][] headerLines, CancellationToken cancel);
+        Task WriteFamilyDeclarationAsync(string name, byte[] nameBytes, byte[] helpBytes, MetricType type,
+            byte[] typeBytes, CancellationToken cancel);
 
         /// <summary>
         /// Writes out a single metric point

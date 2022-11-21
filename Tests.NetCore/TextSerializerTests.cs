@@ -100,6 +100,26 @@ boom_bam{blah=""foo""} 10
                         "# TYPE boom_bam counter\n" +
                         "boom_bam{blah=\"foo\"} 10\n");
     }
+    
+    [TestMethod]
+    public async Task ValidateTextFmtCounterExposition_TotalSuffixInName()
+    {
+        var result = await TestCase.Run(factory =>
+        {
+            var counter = factory.CreateCounter("boom_bam_total", "", new CounterConfiguration
+            {
+                LabelNames = new[] { "blah" }
+            });
+
+            counter.WithLabels("foo").IncTo(10);
+        });
+        
+        // This tests that the counter exposition format isn't influenced by openmetrics codepaths when it comes to the
+        // _total suffix
+        result.ShouldBe("# HELP boom_bam_total\n" +
+                        "# TYPE boom_bam_total counter\n" +
+                        "boom_bam_total{blah=\"foo\"} 10\n");
+    }
 
     [TestMethod]
     public async Task ValidateTextFmtHistogramExposition_Labels()
@@ -188,7 +208,7 @@ boom_bam_bucket{le=""+Inf""} 2.0
             counter.Observe(4, Exemplar.Pair("traceID", "3"));
         });
         
-        // This asserts that the le label has been modified and that we have a EOF
+        // This asserts histogram openmetrics form with exemplars
         result.ShouldBe(@"# HELP boom_bam something
 # TYPE boom_bam histogram
 boom_bam_sum 6.5
@@ -214,10 +234,31 @@ boom_bam_bucket{le=""+Inf""} 3.0  # {traceID=""3""} 4.0 1668779954.714
             counter.WithLabels("foo").Inc(1, 
                 Exemplar.Pair("traceID", "1234"), Exemplar.Pair("yaay", "4321"));
         });
-        // This asserts that multi-labeled exemplars work as well as counters
+        // This asserts that multi-labeled exemplars work as well not supplying a _total suffix in the counter name.
+        result.ShouldBe(@"# HELP boom_bam
+# TYPE boom_bam unknown
+boom_bam{blah=""foo""} 1.0  # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
+# EOF
+");
+    }
+    
+    [TestMethod]
+    public async Task ValidateOpenMetricsFmtCounter_TotalInNameSuffix()
+    {
+        var result = await TestCase.RunOpenMetrics(factory =>
+        {
+            var counter = factory.CreateCounter("boom_bam_total", "", new CounterConfiguration
+            {
+                LabelNames = new[] { "blah" }
+            });
+
+            counter.WithLabels("foo").Inc(1, 
+                Exemplar.Pair("traceID", "1234"), Exemplar.Pair("yaay", "4321"));
+        });
+        // This tests the shape of OpenMetrics when _total suffix is supplied
         result.ShouldBe(@"# HELP boom_bam
 # TYPE boom_bam counter
-boom_bam{blah=""foo""} 1.0  # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
+boom_bam_total{blah=""foo""} 1.0  # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
 # EOF
 ");
     }
