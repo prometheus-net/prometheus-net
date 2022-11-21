@@ -56,6 +56,9 @@ public static class Exemplar
     /// </summary>
     public static LabelKey Key(string key)
     {
+        if (string.IsNullOrEmpty(key))
+            throw new ArgumentException("empty key");
+        
         var si = new StringInfo(key);
         return new LabelKey(PrometheusConstants.ExportEncoding.GetBytes(key), si.LengthInTextElements);
     }
