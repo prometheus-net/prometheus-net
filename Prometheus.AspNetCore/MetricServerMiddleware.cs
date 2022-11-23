@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace Prometheus
 {
@@ -12,29 +14,50 @@ namespace Prometheus
         public MetricServerMiddleware(RequestDelegate next, Settings settings)
         {
             _registry = settings.Registry ?? Metrics.DefaultRegistry;
+            _enableOpenMetrics = settings.EnableOpenMetrics;
         }
 
         public sealed class Settings
         {
             public CollectorRegistry? Registry { get; set; }
+            public bool EnableOpenMetrics { get; set; } = false;
         }
 
         private readonly CollectorRegistry _registry;
+        private readonly bool _enableOpenMetrics;
 
+        private (ExpositionFormat, string) Negotiate(string header)
+        {
+            foreach (var candidate in header.Split(',')
+                         .Select(MediaTypeWithQualityHeaderValue.Parse)
+                         .OrderByDescending(mt => mt.Quality.GetValueOrDefault(1)))
+                if (candidate.MediaType == PrometheusConstants.TextFmtContentType)
+                {
+                    break;
+                }
+                else if (_enableOpenMetrics && candidate.MediaType == PrometheusConstants.OpenMetricsContentType)
+                {
+                    return (ExpositionFormat.OpenMetricsText, PrometheusConstants.ExporterOpenMetricsContentType);
+                }
+
+            return (ExpositionFormat.Text, PrometheusConstants.ExporterContentType);
+        }
+        
         public async Task Invoke(HttpContext context)
         {
             var response = context.Response;
-
+            
             try
             {
+                var (fmt, contentType) = Negotiate(context.Request.Headers.Accept.ToString());    
                 // We first touch the response.Body only in the callback because touching
                 // it means we can no longer send headers (the status code).
                 var serializer = new TextSerializer(delegate
                 {
-                    response.ContentType = PrometheusConstants.ExporterContentType;
+                    response.ContentType = contentType;
                     response.StatusCode = StatusCodes.Status200OK;
                     return response.Body;
-                });
+                }, fmt: fmt);
 
                 await _registry.CollectAndSerializeAsync(serializer, context.RequestAborted);
             }

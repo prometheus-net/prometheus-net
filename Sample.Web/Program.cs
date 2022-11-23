@@ -53,7 +53,7 @@ app.UseEndpoints(endpoints =>
     // * metrics about requests handled by the web app (configured above)
     // * ASP.NET health check statuses (configured above)
     // * custom business logic metrics published by the SampleService class
-    endpoints.MapMetrics();
+    endpoints.MapMetrics(enableOpenMetrics:true);
 });
 
 app.Run();
