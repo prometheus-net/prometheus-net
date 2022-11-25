@@ -63,13 +63,14 @@ namespace Benchmark.NetCore
         [GlobalSetup]
         public void GenerateData()
         {
+            var exemplar = Exemplar.Key("traceID").WithValue("bar");
             for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
                 for (var variantIndex = 0; variantIndex < _variantCount; variantIndex++)
                 {
-                    _counters[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Inc();
+                    _counters[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Inc(exemplar);
                     _gauges[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Inc();
                     _summaries[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex);
-                    _histograms[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex);
+                    _histograms[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex, exemplar);
                 }
         }
 
@@ -77,6 +78,12 @@ namespace Benchmark.NetCore
         public async Task CollectAndSerialize()
         {
             await _registry.CollectAndSerializeAsync(new TextSerializer(Stream.Null), default);
+        }
+        
+        [Benchmark]
+        public async Task CollectAndSerializeOpenMetrics()
+        {
+            await _registry.CollectAndSerializeAsync(new TextSerializer(Stream.Null, ExpositionFormat.OpenMetricsText), default);
         }
     }
 }

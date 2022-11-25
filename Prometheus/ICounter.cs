@@ -3,6 +3,11 @@
     public interface ICounter : ICollectorChild
     {
         /// <summary>
+        /// Increment a counter by 1.
+        /// </summary>
+        /// <param name="exemplar">A set of labels representing an exemplar.</param>
+        void Inc(params Exemplar.LabelPair[] exemplar);
+        /// <summary>
         /// Increment a counter
         /// </summary>
         /// <param name="increment">The increment.</param>

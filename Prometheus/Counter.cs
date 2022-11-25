@@ -27,6 +27,11 @@ namespace Prometheus
                     ex);
             }
 
+            public void Inc(params Exemplar.LabelPair[] exemplar)
+            {
+                Inc(increment: 1, exemplar: exemplar);
+            }
+
             public void Inc(double increment = 1.0, params Exemplar.LabelPair[] exemplar)
             {
                 if (increment < 0.0)
@@ -64,6 +69,11 @@ namespace Prometheus
 
         public void Publish() => Unlabelled.Publish();
         public void Unpublish() => Unlabelled.Unpublish();
+
+        public void Inc(params Exemplar.LabelPair[] exemplar)
+        {
+            Inc(increment: 1, exemplar: exemplar);
+        }
 
         public void Inc(double increment = 1, params Exemplar.LabelPair[] exemplar) =>
             Unlabelled.Inc(increment, exemplar);

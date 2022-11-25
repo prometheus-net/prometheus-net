@@ -39,6 +39,11 @@
 
             public double Value => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
 
+            public void Inc(params Exemplar.LabelPair[] exemplar)
+            {
+                Inc(increment:1, exemplar: exemplar);
+            }
+
             public void Inc(double increment = 1,  params Exemplar.LabelPair[] exemplar)
             {
                 _inner.WithLease(x => x.Inc(increment, exemplar), _labelValues);
