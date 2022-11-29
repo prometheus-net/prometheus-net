@@ -68,16 +68,18 @@ public sealed class SampleService : BackgroundService
 
         await Task.WhenAll(googleTask, microsoftTask);
 
+        var exemplar = Exemplar.Pair("traceID", "1234");
+        
         // Determine the winner and report the change in score.
         if (googleStopwatch.Elapsed < microsoftStopwatch.Elapsed)
         {
-            WinsByEndpoint.WithLabels(googleUrl).Inc();
-            LossesByEndpoint.WithLabels(microsoftUrl).Inc();
+            WinsByEndpoint.WithLabels(googleUrl).Inc(exemplar);
+            LossesByEndpoint.WithLabels(microsoftUrl).Inc(exemplar);
         }
         else if (googleStopwatch.Elapsed < microsoftStopwatch.Elapsed)
         {
-            WinsByEndpoint.WithLabels(microsoftUrl).Inc();
-            LossesByEndpoint.WithLabels(googleUrl).Inc();
+            WinsByEndpoint.WithLabels(microsoftUrl).Inc(exemplar);
+            LossesByEndpoint.WithLabels(googleUrl).Inc(exemplar);
         }
         else
         {
@@ -86,7 +88,7 @@ public sealed class SampleService : BackgroundService
 
         // Report the difference.
         var difference = Math.Abs(googleStopwatch.Elapsed.TotalSeconds - microsoftStopwatch.Elapsed.TotalSeconds);
-        Difference.Observe(difference);
+        Difference.Observe(difference, exemplar: exemplar);
 
         // We finished one iteration of the service's work.
         IterationCount.Inc();
