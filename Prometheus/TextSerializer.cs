@@ -169,7 +169,6 @@ namespace Prometheus
             await WriteValue(value, cancel);
             if (_fmt == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
             {
-                await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
                 await WriteExemplarAsync(cancel, exemplar);
             }
 

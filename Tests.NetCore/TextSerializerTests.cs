@@ -213,10 +213,10 @@ boom_bam_bucket{le=""+Inf""} 2.0
 # TYPE boom_bam histogram
 boom_bam_sum 6.5
 boom_bam_count 3.0
-boom_bam_bucket{le=""1.0""} 1.0  # {traceID=""1""} 1.0 1668779954.714
-boom_bam_bucket{le=""2.5""} 2.0  # {traceID=""2""} 1.5 1668779954.714
+boom_bam_bucket{le=""1.0""} 1.0 # {traceID=""1""} 1.0 1668779954.714
+boom_bam_bucket{le=""2.5""} 2.0 # {traceID=""2""} 1.5 1668779954.714
 boom_bam_bucket{le=""3.0""} 2.0
-boom_bam_bucket{le=""+Inf""} 3.0  # {traceID=""3""} 4.0 1668779954.714
+boom_bam_bucket{le=""+Inf""} 3.0 # {traceID=""3""} 4.0 1668779954.714
 # EOF
 ");
     }
@@ -237,7 +237,7 @@ boom_bam_bucket{le=""+Inf""} 3.0  # {traceID=""3""} 4.0 1668779954.714
         // This asserts that multi-labeled exemplars work as well not supplying a _total suffix in the counter name.
         result.ShouldBe(@"# HELP boom_bam
 # TYPE boom_bam unknown
-boom_bam{blah=""foo""} 1.0  # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
+boom_bam{blah=""foo""} 1.0 # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
 # EOF
 ");
     }
@@ -258,7 +258,7 @@ boom_bam{blah=""foo""} 1.0  # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.71
         // This tests the shape of OpenMetrics when _total suffix is supplied
         result.ShouldBe(@"# HELP boom_bam
 # TYPE boom_bam counter
-boom_bam_total{blah=""foo""} 1.0  # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
+boom_bam_total{blah=""foo""} 1.0 # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
 # EOF
 ");
     }
