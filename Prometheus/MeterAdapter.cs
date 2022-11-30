@@ -264,7 +264,7 @@ public sealed class MeterAdapter : IDisposable
         var sb = new StringBuilder();
 
         if (!string.IsNullOrWhiteSpace(instrument.Unit))
-            sb.AppendFormat($"({instrument.Unit}) ");
+            sb.Append($"({instrument.Unit}) ");
 
         sb.Append(instrument.Description);
 
