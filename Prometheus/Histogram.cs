@@ -50,7 +50,7 @@ namespace Prometheus
                 : base(parent, instanceLabels, flattenedLabels, publish)
             {
                 Parent = parent;
-
+                
                 _upperBounds = Parent._buckets;
                 _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
                 _leLabels = new CanonicalLabel[_upperBounds.Length];
@@ -61,7 +61,7 @@ namespace Prometheus
                 _exemplars = new ObservedExemplar[_upperBounds.Length];
                 for (var i = 0; i < _upperBounds.Length; i++)
                 {
-                    _exemplars[i] = new ObservedExemplar();
+                    _exemplars[i] = ObservedExemplar.Empty;
                 }
             }
 
@@ -104,10 +104,8 @@ namespace Prometheus
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
-                    ObservedExemplar cp;
-                    lock (_exemplars)
-                        cp = _exemplars[i];
-                    
+                    // borrow the current exemplar.
+                    ObservedExemplar cp = Interlocked.CompareExchange(ref _exemplars[i], ObservedExemplar.Empty, _exemplars[i]);
                     cumulativeCount += _bucketCounts[i].Value;
                     await serializer.WriteMetricPointAsync(
                         Parent.NameBytes,
@@ -117,6 +115,14 @@ namespace Prometheus
                         cumulativeCount,
                         cp,
                         suffix: BucketSuffix);
+                    
+                    if (cp != ObservedExemplar.Empty)
+                    {
+                        // attempt to return the exemplar to the pool unless a new one has arrived.
+                        var prev = Interlocked.CompareExchange(ref _exemplars[i], cp, ObservedExemplar.Empty);
+                        if (prev != ObservedExemplar.Empty) // a new exemplar is present so we return ours back to the pool. 
+                            ObservedExemplar.ReturnPooled(cp);
+                    }
                 }
             }
 
@@ -141,9 +147,14 @@ namespace Prometheus
                     if (val <= _upperBounds[i])
                     {
                         _bucketCounts[i].Add(count);
-                        if (exemplar.Length > 0)
-                            lock (_exemplars) 
-                                _exemplars[i].Update(exemplar, val);
+                        if (exemplar is { Length: > 0 })
+                        {
+                            var observedExemplar = ObservedExemplar.CreatePooled(exemplar, val);
+                            var current = Interlocked.Exchange(ref _exemplars[i], observedExemplar);
+                            if (current != ObservedExemplar.Empty)
+                                ObservedExemplar.ReturnPooled(current);
+                        }
+
                         break;
                     }
                 }

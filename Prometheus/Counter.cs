@@ -10,21 +10,30 @@ namespace Prometheus
             }
 
             private ThreadSafeDouble _value;
-            private ObservedExemplar _observedExemplar = new();
+            private ObservedExemplar _observedExemplar = ObservedExemplar.Empty;
 
-            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
+                CancellationToken cancel)
             {
-                ObservedExemplar ex;
-                lock(this)
-                    ex = _observedExemplar;
-                
+                // Borrow the current exemplar
+                ObservedExemplar cp =
+                    Interlocked.CompareExchange(ref _observedExemplar, ObservedExemplar.Empty, _observedExemplar);
+
                 await serializer.WriteMetricPointAsync(
                     Parent.NameBytes,
                     FlattenedLabelsBytes,
                     CanonicalLabel.Empty,
-                    cancel, 
+                    cancel,
                     Value,
-                    ex);
+                    cp);
+
+                if (cp != ObservedExemplar.Empty)
+                {
+                    // attempt to return the exemplar to the pool unless a new one has arrived.
+                    var prev = Interlocked.CompareExchange(ref _observedExemplar, cp, ObservedExemplar.Empty);
+                    if (prev != ObservedExemplar.Empty) // a new exemplar is present so we return ours back to the pool. 
+                        ObservedExemplar.ReturnPooled(cp);
+                }
             }
 
             public void Inc(params Exemplar.LabelPair[] exemplar)
@@ -36,9 +45,14 @@ namespace Prometheus
             {
                 if (increment < 0.0)
                     throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
-                
-                if (exemplar.Length > 0)
-                    lock (this) _observedExemplar.Update(exemplar, increment);
+
+                if (exemplar is { Length: > 0 })
+                {
+                    var ex = ObservedExemplar.CreatePooled(exemplar, increment);
+                    var current = Interlocked.Exchange(ref _observedExemplar, ex);
+                    if (current != ObservedExemplar.Empty)
+                        ObservedExemplar.ReturnPooled(current);
+                }
                 _value.Add(increment);
                 Publish();
             }

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿using System.Text;
 
 namespace Prometheus;
 
@@ -21,16 +21,14 @@ public static class Exemplar
 
         /// <summary>
         /// Create a LabelPair once a value is available
+        ///
+        /// The string is expected to only contain runes in the ASCII range, runes outside the ASCII range will get replaced
+        /// with placeholders. This constraint may be relaxed with future versions.
         /// </summary>
         public LabelPair WithValue(string value)
         {
-            // TODO find a way of counting runes without using the StringInfo. Or find a way of pooling these :cry:
-            // It is used in K as well.
-            var si = new StringInfo(value);
-            return new LabelPair(
-                Bytes,
-                PrometheusConstants.ExportEncoding.GetBytes(value),
-                RuneCount + si.LengthInTextElements);
+            var asciiBytes = Encoding.ASCII.GetBytes(value);
+            return new LabelPair(Bytes, asciiBytes, RuneCount + asciiBytes.Length);
         }
     }
 
@@ -50,19 +48,21 @@ public static class Exemplar
         internal byte[] KeyBytes { get; }
         internal byte[] ValueBytes { get; }
     }
-    
+
     /// <summary>
     /// Return an exemplar label key, this may be curried with a value to produce a LabelPair.
+    ///
+    /// The string is expected to only contain runes in the ASCII range, runes outside the ASCII range will get replaced
+    /// with placeholders. This constraint may be relaxed with future versions.
     /// </summary>
     public static LabelKey Key(string key)
     {
-        if (string.IsNullOrEmpty(key))
+        if (string.IsNullOrWhiteSpace(key))
             throw new ArgumentException("empty key");
-        
-        var si = new StringInfo(key);
-        return new LabelKey(PrometheusConstants.ExportEncoding.GetBytes(key), si.LengthInTextElements);
+        var asciiBytes = Encoding.ASCII.GetBytes(key);
+        return new LabelKey(asciiBytes, asciiBytes.Length);
     }
-    
+
     /// <summary>
     /// Pair constructs a LabelPair, it is advisable to memoize a "Key" (eg: "traceID") and then to derive "LabelPair"s
     /// from these.
