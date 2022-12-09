@@ -151,7 +151,7 @@ boom_bam_bucket{blah=""foo"",le=""+Inf""} 1
         {
             var counter = factory.CreateHistogram("boom_bam", "something", new HistogramConfiguration
             {
-                Buckets = new[] { 1.0, 2 }
+                Buckets = new[] { 1.0, Math.Pow(10, 45) }
             });
 
             counter.Observe(0.5);
@@ -162,7 +162,7 @@ boom_bam_bucket{blah=""foo"",le=""+Inf""} 1
 boom_bam_sum 0.5
 boom_bam_count 1
 boom_bam_bucket{le=""1""} 1
-boom_bam_bucket{le=""2""} 1
+boom_bam_bucket{le=""1e+45""} 1
 boom_bam_bucket{le=""+Inf""} 1
 ");
     }
@@ -200,23 +200,26 @@ boom_bam_bucket{le=""+Inf""} 2.0
         {
             var counter = factory.CreateHistogram("boom_bam", "something", new HistogramConfiguration
             {
-                Buckets = new[] { 1, 2.5, 3}
+                Buckets = new[] { 1, 2.5, 3, Math.Pow(10, 45)}
             });
 
             counter.Observe(1, Exemplar.Pair("traceID", "1"));
             counter.Observe(1.5, Exemplar.Pair("traceID", "2"));
             counter.Observe(4, Exemplar.Pair("traceID", "3"));
+            counter.Observe(Math.Pow(10,44), Exemplar.Pair("traceID", "4"));
         });
         
-        // This asserts histogram openmetrics form with exemplars
+        // This asserts histogram OpenMetrics form with exemplars and also using numbers which are large enough for
+        // scientific notation
         result.ShouldBe(@"# HELP boom_bam something
 # TYPE boom_bam histogram
-boom_bam_sum 6.5
-boom_bam_count 3.0
+boom_bam_sum 1e+44
+boom_bam_count 4.0
 boom_bam_bucket{le=""1.0""} 1.0 # {traceID=""1""} 1.0 1668779954.714
 boom_bam_bucket{le=""2.5""} 2.0 # {traceID=""2""} 1.5 1668779954.714
 boom_bam_bucket{le=""3.0""} 2.0
-boom_bam_bucket{le=""+Inf""} 3.0 # {traceID=""3""} 4.0 1668779954.714
+boom_bam_bucket{le=""1e+45""} 4.0 # {traceID=""4""} 1e+44 1668779954.714
+boom_bam_bucket{le=""+Inf""} 4.0
 # EOF
 ");
     }

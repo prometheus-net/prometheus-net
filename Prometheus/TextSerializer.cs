@@ -26,7 +26,9 @@ namespace Prometheus
         private static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
         private static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
         private static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
-
+        
+        private static readonly char[] DotEChar = { '.', 'e' };
+        
         public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.Text)
         {
             _fmt = fmt;
@@ -147,8 +149,8 @@ namespace Prometheus
                 }
             }
 
-            var valueAsString = value.ToString(CultureInfo.InvariantCulture);
-            if (_fmt == ExpositionFormat.OpenMetricsText && !valueAsString.Contains("."))
+            var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
+            if (_fmt == ExpositionFormat.OpenMetricsText && valueAsString.IndexOfAny(DotEChar)==-1 /* did not contain .|e */)
                 valueAsString += ".0";
             var numBytes = PrometheusConstants.ExportEncoding
                 .GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
@@ -237,10 +239,10 @@ namespace Prometheus
             if (double.IsPositiveInfinity(value))
                 return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
-            var valueAsString = value.ToString(CultureInfo.InvariantCulture);
+            var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
             var prom = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
 
-            return new CanonicalLabel(name, prom, valueAsString.Contains(".")
+            return new CanonicalLabel(name, prom, valueAsString.IndexOfAny(DotEChar) != -1 // contained .|e
                 ? prom
                 : PrometheusConstants.ExportEncoding.GetBytes(valueAsString + ".0"));
         }
