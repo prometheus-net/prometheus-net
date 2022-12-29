@@ -57,6 +57,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Console.NoAspNetCore
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.NetStandard", "Sample.NetStandard\Sample.NetStandard.csproj", "{4F91DAA7-9DD3-418F-A276-84ABFED388A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Console.Exemplars", "Sample.Console.Exemplars\Sample.Console.Exemplars.csproj", "{7F4947F1-C9DD-42F9-867D-5AC931478205}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -155,6 +157,10 @@ Global
 		{4F91DAA7-9DD3-418F-A276-84ABFED388A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F91DAA7-9DD3-418F-A276-84ABFED388A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F91DAA7-9DD3-418F-A276-84ABFED388A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F4947F1-C9DD-42F9-867D-5AC931478205}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F4947F1-C9DD-42F9-867D-5AC931478205}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F4947F1-C9DD-42F9-867D-5AC931478205}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F4947F1-C9DD-42F9-867D-5AC931478205}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

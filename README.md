@@ -85,6 +85,7 @@ Refer to the sample projects for quick start instructions:
 | [Sample.Web](Sample.Web/Program.cs)                                   | ASP.NET Core application that produces custom metrics and uses multiple integrations to publish built-in metrics      |
 | [Sample.Console](Sample.Console/Program.cs)                           | .NET console application that exports custom metrics                                                                  |
 | [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs) | Demonstrates how to [publish custom metrics via the .NET Meters API](#net-meters-integration)                         |
+| [Sample.Console.Exemplars](Sample.Console.Exemplars/Program.cs)       | .NET console application that attaches exemplars to some metrics                                                      |
 | [Sample.Console.NetFramework](Sample.Console.NetFramework/Program.cs) | Same as above but targeting .NET Framework                                                                            |
 | [Sample.Console.NoAspNetCore](Sample.Console.NoAspNetCore/Program.cs) | .NET console application that exports custom metrics without requiring the ASP.NET Core runtime to be installed       |
 | [Sample.Grpc](Sample.Grpc/Program.cs)                                 | ASP.NET Core application that publishes a gRPC service                                                                |

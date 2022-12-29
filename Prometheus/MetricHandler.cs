@@ -6,19 +6,14 @@
     /// </summary>
     public abstract class MetricHandler : IMetricServer, IDisposable
     {
-        // The registry that contains the collectors to export metrics from.
-        // Subclasses are expected to use this variable to obtain the correct registry.
-        protected readonly CollectorRegistry _registry;
-
         // The token is cancelled when the handler is instructed to stop.
         private CancellationTokenSource? _cts = new CancellationTokenSource();
 
         // This is the task started for the purpose of exporting metrics.
         private Task? _task;
 
-        protected MetricHandler(CollectorRegistry? registry = null)
+        protected MetricHandler()
         {
-            _registry = registry ?? Metrics.DefaultRegistry;
         }
 
         public IMetricServer Start()
