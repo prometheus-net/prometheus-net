@@ -44,7 +44,7 @@ namespace Prometheus
 
         private readonly Listener _listener;
 
-        // We never decrease it in the current implementation but perhaps might in a future implementation, so might as well make it a counter.
+        // We never decrease it in the current implementation but perhaps might in a future implementation, so might as well make it a gauge.
         private readonly Gauge _eventSourcesConnected;
 
         private bool OnEventSourceCreated(EventSource source)
