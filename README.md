@@ -343,6 +343,9 @@ foreach (var record in recordsToProcess)
 
 Exemplars are only present if the metrics are being scraped by an OpenMetrics-capable client. For development purposes, you can force the library to use the OpenMetrics exposition format by adding `?accept=application/openmetrics-text` to the `/metrics` URL. The Prometheus database automatically negotiates OpenMetrics support when scraping metrics - you do not need to take any special action in production scenarios.
 
+> **Warning**
+> Exemplars are limited to 128 bytes - they are meant to contain IDs for cross-referencing with trace databases, not as a replacement for trace databases.
+
 See also, [Sample.Console.Exemplars](Sample.Console.Exemplars/Program.cs).
 
 # When are metrics published?
