@@ -51,14 +51,14 @@ public static class Exemplar
 
     /// <summary>
     /// Return an exemplar label key, this may be curried with a value to produce a LabelPair.
-    ///
-    /// The string is expected to only contain runes in the ASCII range, runes outside the ASCII range will get replaced
-    /// with placeholders. This constraint may be relaxed with future versions.
     /// </summary>
     public static LabelKey Key(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
             throw new ArgumentException("empty key");
+
+        Collector.ValidateLabelName(key);
+
         var asciiBytes = Encoding.ASCII.GetBytes(key);
         return new LabelKey(asciiBytes, asciiBytes.Length);
     }
