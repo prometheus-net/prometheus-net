@@ -37,6 +37,8 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
             if (increment < 0.0)
                 throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
 
+            exemplarLabels = ExemplarOrDefault(exemplarLabels);
+
             if (exemplarLabels is { Length: > 0 })
             {
                 var exemplar = ObservedExemplar.CreatePooled(exemplarLabels, increment);

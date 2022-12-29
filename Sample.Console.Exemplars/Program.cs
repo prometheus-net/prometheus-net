@@ -1,4 +1,5 @@
 ﻿using Prometheus;
+using System.Diagnostics;
 
 // This sample demonstrates how to attach exemplars to metrics exposed by a .NET console app.
 // 
@@ -24,6 +25,8 @@ var recordSizeInPages = Metrics.CreateHistogram("sample_record_size_pages", "Siz
     Buckets = Histogram.PowersOfTenDividedBuckets(0, 2, 10)
 });
 
+var totalSleepTime = Metrics.CreateCounter("sample_sleep_seconds_total", "Total amount of time spent sleeping.");
+
 // The key from an exemplar key-value pair should be created once and reused to minimize memory allocations.
 var recordIdKey = Exemplar.Key("record_id");
 
@@ -42,12 +45,22 @@ _ = Task.Run(async delegate
         recordsProcessed.Inc(recordIdKeyValuePair);
         recordSizeInPages.Observe(recordPageCount, recordIdKeyValuePair);
 
-        await Task.Delay(TimeSpan.FromSeconds(1));
+        // The activity is often automatically inherited from incoming HTTP requests if using OpenTelemetry tracing in ASP.NET Core.
+        // Here, we manually create and start an activity for sample purposes, without relying on the platform managing the activity context.
+        // See https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-concepts
+        using (var activity = new Activity("Taking a break from record processing").Start())
+        {
+            var sleepStopwatch = Stopwatch.StartNew();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // If you do not specify an exemplar yourself, the trace_id and span_id from the current Activity are automatically used.
+            totalSleepTime.Inc(sleepStopwatch.Elapsed.TotalSeconds);
+        }
     }
 });
 
 // Metrics published in this sample:
-// * the custom sample counter defined above, with exemplars
+// * the custom sample metrics defined above, with exemplars
 // * internal debug metrics from prometheus-net, without exemplars
 Console.WriteLine("Open http://localhost:1234/metrics in a web browser.");
 Console.WriteLine("Press enter to exit.");

@@ -25,6 +25,7 @@ The library targets the following runtimes (and newer):
 * [Counting exceptions](#counting-exceptions)
 * [Labels](#labels)
 * [Static labels](#static-labels)
+* [Exemplars](#exemplars)
 * [When are metrics published?](#when-are-metrics-published)
 * [Unpublishing metrics](#unpublishing-metrics)
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
@@ -318,6 +319,29 @@ var requestsHandled = backgroundServicesMetricFactory
 requestsHandled.WithLabels("404").Inc();
 requestsHandled.WithLabels("200").Inc();
 ```
+
+# Exemplars
+
+Exemplars facilitate [distributed tracing](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-concepts), by attaching related trace IDs to metrics. This enables a metrics GUI to cross-references [traces](https://opentelemetry.io/docs/concepts/signals/traces/) that explain how the metric got the value it has.
+
+By default, prometheus-net will create an exemplar with the `trace_id` and `span_id` labels from the current .NET distributed tracing context (`Activity.Current`). To override this, provide your own exemplar when updating the value of the metric:
+
+```csharp
+private static readonly Counter RecordsProcessed = Metrics.CreateCounter("sample_records_processed_total", "Total number of records processed.");
+
+...
+
+// The key from an exemplar key-value pair should be created once and reused to minimize memory allocations.
+var recordIdKey = Exemplar.Key("record_id");
+
+foreach (var record in recordsToProcess)
+{
+    var recordIdKeyValuePair = recordIdKey.WithValue(record.Id.ToString());
+    RecordsProcessed.Inc(recordIdKeyValuePair);
+}
+```
+
+See also, [Sample.Console.Exemplars](Sample.Console.Exemplars/Program.cs).
 
 # When are metrics published?
 

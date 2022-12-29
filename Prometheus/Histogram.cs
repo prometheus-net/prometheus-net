@@ -136,6 +136,8 @@ namespace Prometheus
                     return;
                 }
 
+                exemplarLabels = ExemplarOrDefault(exemplarLabels);
+
                 for (int i = 0; i < _upperBounds.Length; i++)
                 {
                     if (val <= _upperBounds[i])

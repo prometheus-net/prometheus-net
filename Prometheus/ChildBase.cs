@@ -1,3 +1,7 @@
+#if NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
+
 namespace Prometheus;
 
 /// <summary>
@@ -110,5 +114,33 @@ public abstract class ChildBase : ICollectorChild, IDisposable
             // A new exemplar had already been written, so we could not return the borrowed one. That's perfectly fine - discard it.
             ObservedExemplar.ReturnPooledIfNotEmpty(borrowed);
         }
+    }
+
+    // Based on https://opentelemetry.io/docs/reference/specification/compatibility/prometheus_and_openmetrics/
+    private static readonly Exemplar.LabelKey TraceIdKey = Exemplar.Key("trace_id");
+    private static readonly Exemplar.LabelKey SpanIdKey = Exemplar.Key("span_id");
+
+    /// <summary>
+    /// Returns either the provided exemplar (if any) or the default exemplar.
+    /// The default exemplar consists of "trace_id" and "span_id" from the current trace context (.NET Core only).
+    /// </summary>
+    protected internal Exemplar.LabelPair[] ExemplarOrDefault(Exemplar.LabelPair[] exemplar)
+    {
+        // A custom exemplar was provided - just use it.
+        if (exemplar is { Length: > 0 }) { return exemplar; }
+
+#if NET6_0_OR_GREATER
+        var activity = Activity.Current;
+        if (activity != null)
+        {
+            // Based on https://opentelemetry.io/docs/reference/specification/compatibility/prometheus_and_openmetrics/
+            var traceIdLabel = TraceIdKey.WithValue(activity.TraceId.ToString());
+            var spanIdLabel = SpanIdKey.WithValue(activity.SpanId.ToString());
+
+            return new[] { traceIdLabel, spanIdLabel };
+        }
+#endif
+
+        return Array.Empty<Exemplar.LabelPair>();
     }
 }
