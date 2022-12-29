@@ -125,7 +125,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     private readonly ConcurrentDictionary<LabelSequence, TChild> _labelledMetrics = new();
 
     // Lazy-initialized since not every collector will use a child with no labels.
-    // Lazy instance will be replaced if the unlabelled timeseries is unpublished.
+    // Lazy instance will be replaced if the unlabelled timeseries is removed.
     private Lazy<TChild> _unlabelledLazy;
 
     /// <summary>
@@ -167,7 +167,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
         if (labels.Length == 0)
         {
-            // If we remove the unlabeled instance (technically legitimate, to unpublish it) then
+            // If we remove the unlabeled instance (technically legitimate, if the caller really desires to do so) then
             // we need to also ensure that the special-casing used for it gets properly wired up the next time.
             _unlabelledLazy = GetUnlabelledLazyInitializer();
         }

@@ -246,7 +246,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     ///     - ConcurrentDictionary will throw away an optimistically created duplicate.
     /// * Creating a new instance takes a reader lock to allow allocation to be blocked by removal logic.
     /// * Removal will take a writer lock to prevent concurrent allocataions (which also implies preventing concurrent new leases that might "renew" a lifetime).
-    ///     - It can be that between "unpublishing needed" event and write lock being taken, the state of the lifetime manager changes because of
+    ///     - It can be that between "deletion needed" event and write lock being taken, the state of the lifetime manager changes because of
     ///       actions done by holders of the read lock (e.g. new lease added). For code simplicity, we accept this as a gap where we may lose data (such a lease fails to renew/start a lifetime).
     /// </summary>
     private readonly ConcurrentDictionary<TChild, LifetimeManager> _lifetimeManagers = new();
@@ -300,13 +300,13 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 
     private LifetimeManager CreateLifetimeManager(TChild child)
     {
-        return new LifetimeManager(child, _expiresAfter, Delayer, UnpublishOuter);
+        return new LifetimeManager(child, _expiresAfter, Delayer, DeleteMetricOuter);
     }
 
     /// <summary>
     /// Performs the locking necessary to ensure that a LifetimeManager that ends the lifetime does not get reused.
     /// </summary>
-    private void UnpublishOuter(TChild child)
+    private void DeleteMetricOuter(TChild child)
     {
         _lifetimeManagersLock.EnterWriteLock();
 

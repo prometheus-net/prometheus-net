@@ -17,7 +17,7 @@ public sealed class MeterAdapterOptions
 
     /// <summary>
     /// The .NET Meters API does not tell us (or even know itself) when a metric with a certain label combination is no longer going to receive new data.
-    /// To avoid building an ever-increasing store of in-memory metrics states, we unpublish metrics once they have not been updated in a while.
+    /// To avoid building an ever-increasing store of in-memory metrics states, we delete metrics once they have not been updated in a while.
     /// The idea being that metrics are useful when they are changing regularly - if a value stays the same for N minutes, it probably is not a valuable data point anymore.
     /// </summary>
     public TimeSpan MetricsExpireAfter { get; set; } = TimeSpan.FromMinutes(5);

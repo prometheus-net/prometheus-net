@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Handle to a metric with a lease-extended lifetime, enabling the metric to be accessed and its lifetime to be controlled.
-/// Each label combination is automatically unpublished N seconds after the last lease on that label combination expires.
+/// Each label combination is automatically deleted N seconds after the last lease on that label combination expires.
 /// </summary>
 public interface IManagedLifetimeMetricHandle<TMetricInterface>
     where TMetricInterface : ICollectorChild

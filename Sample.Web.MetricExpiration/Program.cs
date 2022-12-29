@@ -24,7 +24,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Use an auto-expiring variant for all the demo metrics here - they get automatically unpublished if not used in the last 60 seconds.
+// Use an auto-expiring variant for all the demo metrics here - they get automatically deleted if not used in the last 60 seconds.
 var expiringMetricFactory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromSeconds(60));
 
 // OPTION 1: metric lifetime can be managed by leases, to ensure they do not go away during potentially
@@ -33,7 +33,7 @@ _ = Task.Run(async delegate
 {
     var inProgress = expiringMetricFactory.CreateGauge("long_running_operations_in_progress", "Number of long running operations in progress.", labelNames: new[] { "operation_type" });
 
-    // The metric will not be unpublished as long as this lease is kept.
+    // The metric will not be deleted as long as this lease is kept.
     await inProgress.WithLeaseAsync(async inProgressInstance =>
     {
         // Long-running operation, which we track via the "in progress" gauge.

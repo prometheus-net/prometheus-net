@@ -37,7 +37,7 @@
         /// Returns a factory that creates metrics with a managed lifetime.
         /// </summary>
         /// <param name="expiresAfter">
-        /// Metrics created from this factory will expire after this time span elapses, enabling automatic unpublishing of unused metrics.
+        /// Metrics created from this factory will expire after this time span elapses, enabling automatic deletion of unused metrics.
         /// The expiration timer is reset to zero for the duration of any active lifetime-extension lease that is taken on a specific metric.
         /// </param>
         public static IManagedLifetimeMetricFactory WithManagedLifetime(TimeSpan expiresAfter) =>
