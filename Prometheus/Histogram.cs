@@ -104,8 +104,9 @@ namespace Prometheus
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
-                    // borrow the current exemplar.
-                    ObservedExemplar cp = Interlocked.CompareExchange(ref _exemplars[i], ObservedExemplar.Empty, _exemplars[i]);
+                    // Borrow the current exemplar. We take ownership of the exemplar for the duration of the write.
+                    ObservedExemplar exemplar = Interlocked.Exchange(ref _exemplars[i], ObservedExemplar.Empty);
+
                     cumulativeCount += _bucketCounts[i].Value;
                     await serializer.WriteMetricPointAsync(
                         Parent.NameBytes,
@@ -113,15 +114,19 @@ namespace Prometheus
                         _leLabels[i],
                         cancel,
                         cumulativeCount,
-                        cp,
+                        exemplar,
                         suffix: BucketSuffix);
-                    
-                    if (cp != ObservedExemplar.Empty)
+
+                    if (exemplar != ObservedExemplar.Empty)
                     {
-                        // attempt to return the exemplar to the pool unless a new one has arrived.
-                        var prev = Interlocked.CompareExchange(ref _exemplars[i], cp, ObservedExemplar.Empty);
-                        if (prev != ObservedExemplar.Empty) // a new exemplar is present so we return ours back to the pool. 
-                            ObservedExemplar.ReturnPooled(cp);
+                        // Return the exemplar unless a new one has arrived, in which case we discard the old one we were holding.
+                        var foundExemplar = Interlocked.CompareExchange(ref _exemplars[i], exemplar, ObservedExemplar.Empty);
+
+                        if (foundExemplar != ObservedExemplar.Empty)
+                        {
+                            // A new exemplar had already been written, so we could not return the borrowed one. That's perfectly fine - discard it.
+                            ObservedExemplar.ReturnPooledIfNotEmpty(exemplar);
+                        }
                     }
                 }
             }
@@ -129,13 +134,13 @@ namespace Prometheus
             public double Sum => _sum.Value;
             public long Count => _bucketCounts.Sum(b => b.Value);
 
-            public void Observe(double val, params Exemplar.LabelPair[] exemplar) => ObserveInternal(val, 1, exemplar);
+            public void Observe(double val, params Exemplar.LabelPair[] exemplarLabels) => ObserveInternal(val, 1, exemplarLabels);
 
             public void Observe(double val) => Observe(val, 1);
 
             public void Observe(double val, long count) => ObserveInternal(val, count);
 
-            private void ObserveInternal(double val, long count, params Exemplar.LabelPair[] exemplar)
+            private void ObserveInternal(double val, long count, params Exemplar.LabelPair[] exemplarLabels)
             {
                 if (double.IsNaN(val))
                 {
@@ -147,12 +152,11 @@ namespace Prometheus
                     if (val <= _upperBounds[i])
                     {
                         _bucketCounts[i].Add(count);
-                        if (exemplar is { Length: > 0 })
+
+                        if (exemplarLabels is { Length: > 0 })
                         {
-                            var observedExemplar = ObservedExemplar.CreatePooled(exemplar, val);
-                            var current = Interlocked.Exchange(ref _exemplars[i], observedExemplar);
-                            if (current != ObservedExemplar.Empty)
-                                ObservedExemplar.ReturnPooled(current);
+                            var exemplar = ObservedExemplar.CreatePooled(exemplarLabels, val);
+                            ObservedExemplar.ReturnPooledIfNotEmpty(Interlocked.Exchange(ref _exemplars[i], exemplar));
                         }
 
                         break;

@@ -108,7 +108,7 @@ namespace Prometheus
             }
 
             await _stream.Value.WriteAsync(RightBraceSpace, 0, RightBraceSpace.Length, cancel);
-            await WriteValue(exemplar.Val, cancel);
+            await WriteValue(exemplar.Value, cancel);
             await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
             await WriteValue(exemplar.Timestamp, cancel);
         }
