@@ -21,7 +21,7 @@ server.Start();
 var recordsProcessed = Metrics.CreateCounter("sample_records_processed_total", "Total number of records processed.");
 
 // The key from an exemplar key-value pair should be created once and reused to minimize memory allocations.
-var recordIdKey = Exemplar.Key("record-id");
+var recordIdKey = Exemplar.Key("record_id");
 
 _ = Task.Run(async delegate
 {
