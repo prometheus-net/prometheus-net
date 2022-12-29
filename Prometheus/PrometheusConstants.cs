@@ -9,7 +9,7 @@ namespace Prometheus
         public const string OpenMetricsContentType = "application/openmetrics-text";
 
         public const string TextContentTypeWithVersionAndEncoding = TextContentType + "; version=0.0.4; charset=utf-8";
-        public const string OpenMetricsContentTypeWithVersionAndEncoding = OpenMetricsContentType + "; version=0.0.1; charset=utf-8";
+        public const string OpenMetricsContentTypeWithVersionAndEncoding = OpenMetricsContentType + "; version=1.0.0; charset=utf-8";
 
         // ASP.NET requires a MediaTypeHeaderValue object
         public static readonly MediaTypeHeaderValue ExporterContentTypeValue = MediaTypeHeaderValue.Parse(TextContentTypeWithVersionAndEncoding);
