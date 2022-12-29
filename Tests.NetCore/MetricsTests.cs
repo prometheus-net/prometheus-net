@@ -347,20 +347,20 @@ namespace Prometheus.Tests
             Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("my!metric", "help"));
             Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("%", "help"));
             Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("5a", "help"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a:3", "help"));
 
             _metrics.CreateGauge("abc", "help");
             _metrics.CreateGauge("myMetric2", "help");
-            _metrics.CreateGauge("a:3", "help");
         }
 
         [TestMethod]
         public void label_names()
         {
-            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my-metric"));
-            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my!metric"));
-            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my%metric"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my-label"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my!label"));
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my%label"));
             Assert.ThrowsException<ArgumentException>(() => _metrics.CreateHistogram("a", "help1", "le"));
-            _metrics.CreateGauge("a", "help1", "my:metric");
+            Assert.ThrowsException<ArgumentException>(() => _metrics.CreateHistogram("a", "help1", "my:label"));
             _metrics.CreateGauge("b", "help1", "good_name");
 
             Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("c", "help1", "__reserved"));
