@@ -7,6 +7,7 @@ global:
 
 remote_write:
 - url: https://prometheus-prod-01-eu-west-0.grafana.net/api/prom/push
+  send_exemplars: true
   basic_auth:
     username: $GRAFANA_USER
     password: $GRAFANA_API_KEY

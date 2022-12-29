@@ -13,8 +13,8 @@ RUN tdnf install -y \
 
 ################### Based on https://github.com/prometheus/prometheus/blob/main/Dockerfile
 
-ARG PROMETHEUS_PACKAGE_NAME=prometheus-2.37.1.linux-amd64
-RUN wget --no-verbose -O prometheus.tar.gz https://github.com/prometheus/prometheus/releases/download/v2.37.1/$PROMETHEUS_PACKAGE_NAME.tar.gz
+ARG PROMETHEUS_PACKAGE_NAME=prometheus-2.41.0.linux-amd64
+RUN wget --no-verbose -O prometheus.tar.gz https://github.com/prometheus/prometheus/releases/download/v2.41.0/$PROMETHEUS_PACKAGE_NAME.tar.gz
 RUN tar xvfz prometheus.tar.gz
 RUN cp /$PROMETHEUS_PACKAGE_NAME/prometheus /bin/
 RUN cp /$PROMETHEUS_PACKAGE_NAME/promtool /bin/
