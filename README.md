@@ -327,16 +327,16 @@ Exemplars facilitate [distributed tracing](https://learn.microsoft.com/en-us/dot
 By default, prometheus-net will create an exemplar with the `trace_id` and `span_id` labels from the current .NET distributed tracing context (`Activity.Current`). To override this, provide your own exemplar when updating the value of the metric:
 
 ```csharp
-private static readonly Counter RecordsProcessed = Metrics.CreateCounter("sample_records_processed_total", "Total number of records processed.");
-
-...
+private static readonly Counter RecordsProcessed = Metrics
+    .CreateCounter("sample_records_processed_total", "Total number of records processed.");
 
 // The key from an exemplar key-value pair should be created once and reused to minimize memory allocations.
-var recordIdKey = Exemplar.Key("record_id");
+private static readonly Exemplar.LabelKey RecordIdKey = Exemplar.Key("record_id");
+...
 
 foreach (var record in recordsToProcess)
 {
-    var recordIdKeyValuePair = recordIdKey.WithValue(record.Id.ToString());
+    var recordIdKeyValuePair = RecordIdKey.WithValue(record.Id.ToString());
     RecordsProcessed.Inc(recordIdKeyValuePair);
 }
 ```
