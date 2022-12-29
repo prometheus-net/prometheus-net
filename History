@@ -1,3 +1,6 @@
+* 8.0.0
+- Added OpenMetrics exposition format support (#388).
+- Added exemplar support (#388).
 * 7.1.0
 - Added back .NET Standard 2.0 support as some customers had a hard dependency on .NET Standard 2.0 (despite not being a documented feature even earlier).
 - Added (Observable)UpDownCounter support to MeterAdapter (.NET 7 specific feature).
