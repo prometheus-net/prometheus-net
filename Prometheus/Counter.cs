@@ -14,8 +14,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
 
         private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
-            // Borrow the current exemplar. We take ownership of the exemplar for the duration of the write.
-            ObservedExemplar exemplar = Interlocked.Exchange(ref _observedExemplar, ObservedExemplar.Empty);
+            var exemplar = BorrowExemplar(ref _observedExemplar);
 
             await serializer.WriteMetricPointAsync(
                 Parent.NameBytes,
@@ -25,17 +24,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
                 Value,
                 exemplar);
 
-            if (exemplar != ObservedExemplar.Empty)
-            {
-                // Return the exemplar unless a new one has arrived, in which case we discard the old one we were holding.
-                var foundExemplar = Interlocked.CompareExchange(ref _observedExemplar, exemplar, ObservedExemplar.Empty);
-
-                if (foundExemplar != ObservedExemplar.Empty)
-                {
-                    // A new exemplar had already been written, so we could not return the borrowed one. That's perfectly fine - discard it.
-                    ObservedExemplar.ReturnPooledIfNotEmpty(exemplar);
-                }
-            }
+            ReturnBorrowedExemplar(ref _observedExemplar, exemplar);
         }
 
         public void Inc(params Exemplar.LabelPair[] exemplarLabels)

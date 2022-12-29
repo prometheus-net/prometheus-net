@@ -83,4 +83,32 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     // Same as above, just only called if we really need to serialize this metric (if publish is true).
     private protected abstract Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel);
+
+    /// <summary>
+    /// Borrows an exemplar temporarily, to be later returned via ReturnBorrowedExemplar.
+    /// Borrowing ensures that no other thread is modifying it (as exemplars are not thread-safe).
+    /// You would typically want to do this while serializing the exemplar.
+    /// </summary>
+    internal ObservedExemplar BorrowExemplar(ref ObservedExemplar storage)
+    {
+        return Interlocked.Exchange(ref storage, ObservedExemplar.Empty);
+    }
+
+    /// <summary>
+    /// Returns a borrowed exemplar to storage or the object pool, with correct handling for cases where it is Empty.
+    /// </summary>
+    internal void ReturnBorrowedExemplar(ref ObservedExemplar storage, ObservedExemplar borrowed)
+    {
+        if (borrowed == ObservedExemplar.Empty)
+            return;
+
+        // Return the exemplar unless a new one has arrived, in which case we discard the old one we were holding.
+        var foundExemplar = Interlocked.CompareExchange(ref storage, borrowed, ObservedExemplar.Empty);
+
+        if (foundExemplar != ObservedExemplar.Empty)
+        {
+            // A new exemplar had already been written, so we could not return the borrowed one. That's perfectly fine - discard it.
+            ObservedExemplar.ReturnPooledIfNotEmpty(borrowed);
+        }
+    }
 }

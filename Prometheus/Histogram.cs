@@ -104,8 +104,7 @@ namespace Prometheus
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
-                    // Borrow the current exemplar. We take ownership of the exemplar for the duration of the write.
-                    ObservedExemplar exemplar = Interlocked.Exchange(ref _exemplars[i], ObservedExemplar.Empty);
+                    var exemplar = BorrowExemplar(ref _exemplars[i]);
 
                     cumulativeCount += _bucketCounts[i].Value;
                     await serializer.WriteMetricPointAsync(
@@ -117,17 +116,7 @@ namespace Prometheus
                         exemplar,
                         suffix: BucketSuffix);
 
-                    if (exemplar != ObservedExemplar.Empty)
-                    {
-                        // Return the exemplar unless a new one has arrived, in which case we discard the old one we were holding.
-                        var foundExemplar = Interlocked.CompareExchange(ref _exemplars[i], exemplar, ObservedExemplar.Empty);
-
-                        if (foundExemplar != ObservedExemplar.Empty)
-                        {
-                            // A new exemplar had already been written, so we could not return the borrowed one. That's perfectly fine - discard it.
-                            ObservedExemplar.ReturnPooledIfNotEmpty(exemplar);
-                        }
-                    }
+                    ReturnBorrowedExemplar(ref _exemplars[i], exemplar);
                 }
             }
 
