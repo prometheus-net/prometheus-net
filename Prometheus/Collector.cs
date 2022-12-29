@@ -21,6 +21,8 @@ namespace Prometheus
         /// </summary>
         public string Help { get; }
 
+        internal byte[] HelpBytes { get;  }
+
         /// <summary>
         /// Names of the instance-specific labels (name-value pairs) that apply to this metric.
         /// When the values are added to the names, you get a <see cref="ChildBase"/> instance.
@@ -38,6 +40,8 @@ namespace Prometheus
         internal LabelSequence StaticLabels;
 
         internal abstract MetricType Type { get; }
+        
+        internal byte[] TypeBytes { get;  }
 
         internal abstract int ChildCount { get; }
         internal abstract int TimeseriesCount { get; }
@@ -62,7 +66,11 @@ namespace Prometheus
             
             Name = name;
             NameBytes = PrometheusConstants.ExportEncoding.GetBytes(Name);
+            TypeBytes = PrometheusConstants.ExportEncoding.GetBytes(Type.ToString().ToLowerInvariant());
             Help = help;
+            HelpBytes = String.IsNullOrWhiteSpace(help)
+                ? Array.Empty<byte>()
+                : PrometheusConstants.ExportEncoding.GetBytes(help);
             InstanceLabelNames = instanceLabelNames;
             StaticLabels = staticLabels;
 
@@ -245,7 +253,7 @@ namespace Prometheus
         {
             EnsureUnlabelledMetricCreatedIfNoLabels();
 
-            await serializer.WriteFamilyDeclarationAsync(_familyHeaderLines, cancel);
+            await serializer.WriteFamilyDeclarationAsync(Name, NameBytes, HelpBytes, Type, TypeBytes, cancel);
 
             foreach (var child in _labelledMetrics.Values)
                 await child.CollectAndSerializeAsync(serializer, cancel);

@@ -50,13 +50,18 @@ namespace Prometheus
                 : base(parent, instanceLabels, flattenedLabels, publish)
             {
                 Parent = parent;
-
+                
                 _upperBounds = Parent._buckets;
                 _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
                 _leLabels = new CanonicalLabel[_upperBounds.Length];
                 for (var i = 0; i < Parent._buckets.Length; i++)
                 {
                     _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, Parent._buckets[i]);
+                }
+                _exemplars = new ObservedExemplar[_upperBounds.Length];
+                for (var i = 0; i < _upperBounds.Length; i++)
+                {
+                    _exemplars[i] = ObservedExemplar.Empty;
                 }
             }
 
@@ -70,6 +75,7 @@ namespace Prometheus
             private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
             private static readonly byte[] BucketSuffix = PrometheusConstants.ExportEncoding.GetBytes("bucket");
             private static readonly byte[] LeLabelName = PrometheusConstants.ExportEncoding.GetBytes("le");
+            private readonly ObservedExemplar[] _exemplars;
 
             private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
                 CancellationToken cancel)
@@ -83,6 +89,7 @@ namespace Prometheus
                     CanonicalLabel.Empty,
                     cancel,
                     _sum.Value,
+                    ObservedExemplar.Empty,
                     suffix: SumSuffix);
                 await serializer.WriteMetricPointAsync(
                     Parent.NameBytes,
@@ -90,12 +97,15 @@ namespace Prometheus
                     CanonicalLabel.Empty,
                     cancel,
                     _bucketCounts.Sum(b => b.Value),
+                    ObservedExemplar.Empty,
                     suffix: CountSuffix);
 
                 var cumulativeCount = 0L;
 
                 for (var i = 0; i < _bucketCounts.Length; i++)
                 {
+                    // borrow the current exemplar.
+                    ObservedExemplar cp = Interlocked.CompareExchange(ref _exemplars[i], ObservedExemplar.Empty, _exemplars[i]);
                     cumulativeCount += _bucketCounts[i].Value;
                     await serializer.WriteMetricPointAsync(
                         Parent.NameBytes,
@@ -103,16 +113,29 @@ namespace Prometheus
                         _leLabels[i],
                         cancel,
                         cumulativeCount,
+                        cp,
                         suffix: BucketSuffix);
+                    
+                    if (cp != ObservedExemplar.Empty)
+                    {
+                        // attempt to return the exemplar to the pool unless a new one has arrived.
+                        var prev = Interlocked.CompareExchange(ref _exemplars[i], cp, ObservedExemplar.Empty);
+                        if (prev != ObservedExemplar.Empty) // a new exemplar is present so we return ours back to the pool. 
+                            ObservedExemplar.ReturnPooled(cp);
+                    }
                 }
             }
 
             public double Sum => _sum.Value;
             public long Count => _bucketCounts.Sum(b => b.Value);
 
+            public void Observe(double val, params Exemplar.LabelPair[] exemplar) => ObserveInternal(val, 1, exemplar);
+
             public void Observe(double val) => Observe(val, 1);
 
-            public void Observe(double val, long count)
+            public void Observe(double val, long count) => ObserveInternal(val, count);
+
+            private void ObserveInternal(double val, long count, params Exemplar.LabelPair[] exemplar)
             {
                 if (double.IsNaN(val))
                 {
@@ -124,6 +147,14 @@ namespace Prometheus
                     if (val <= _upperBounds[i])
                     {
                         _bucketCounts[i].Add(count);
+                        if (exemplar is { Length: > 0 })
+                        {
+                            var observedExemplar = ObservedExemplar.CreatePooled(exemplar, val);
+                            var current = Interlocked.Exchange(ref _exemplars[i], observedExemplar);
+                            if (current != ObservedExemplar.Empty)
+                                ObservedExemplar.ReturnPooled(current);
+                        }
+
                         break;
                     }
                 }
@@ -138,6 +169,7 @@ namespace Prometheus
         public long Count => Unlabelled.Count;
         public void Observe(double val) => Unlabelled.Observe(val, 1);
         public void Observe(double val, long count) => Unlabelled.Observe(val, count);
+        public void Observe(double val, params Exemplar.LabelPair[] exemplar) => Unlabelled.Observe(val, exemplar);
         public void Publish() => Unlabelled.Publish();
         public void Unpublish() => Unlabelled.Unpublish();
 

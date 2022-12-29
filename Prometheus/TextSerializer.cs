@@ -15,16 +15,31 @@ namespace Prometheus
         private static readonly byte[] LeftBrace = { (byte)'{' };
         private static readonly byte[] RightBraceSpace = { (byte)'}', (byte)' ' };
         private static readonly byte[] Space = { (byte)' ' };
+        private static readonly byte[] SpaceHashSpaceLeftBrace = { (byte)' ', (byte)'#', (byte)' ', (byte)'{' };
         private static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
-
-        public TextSerializer(Stream stream)
+        private static readonly byte[] NegativeInfinity = PrometheusConstants.ExportEncoding.GetBytes("-Inf");
+        private static readonly byte[] NotANumber = PrometheusConstants.ExportEncoding.GetBytes("NaN");
+        private static readonly byte[] PositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1.0");
+        private static readonly byte[] Zero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
+        private static readonly byte[] NegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
+        private static readonly byte[] EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
+        private static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
+        private static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
+        private static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
+        
+        private static readonly char[] DotEChar = { '.', 'e' };
+        
+        public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.Text)
         {
+            _fmt = fmt;
             _stream = new Lazy<Stream>(() => stream);
         }
 
         // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
-        public TextSerializer(Func<Stream> streamFactory)
+        public TextSerializer(Func<Stream> streamFactory,
+            ExpositionFormat fmt = ExpositionFormat.Text)
         {
+            _fmt = fmt;
             _stream = new Lazy<Stream>(streamFactory);
         }
 
@@ -39,23 +54,107 @@ namespace Prometheus
 
         private readonly Lazy<Stream> _stream;
 
-        // # HELP name help
-        // # TYPE name type
-        public async Task WriteFamilyDeclarationAsync(byte[][] headerLines, CancellationToken cancel)
+        public async Task WriteFamilyDeclarationAsync(string name, byte[]nameBytes, byte[] helpBytes, MetricType type, 
+            byte[] typeBytes, CancellationToken cancel)
         {
-            foreach (var line in headerLines)
+            var nameLen = nameBytes.Length; 
+            if (_fmt == ExpositionFormat.OpenMetricsText && type == MetricType.Counter)
             {
-                await _stream.Value.WriteAsync(line, 0, line.Length, cancel);
-                await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
+                if (name.EndsWith("_total"))
+                {
+                    nameLen -= 6; // in OpenMetrics the counter name does not include the _total prefix.
+                }
+                else
+                {
+                    typeBytes = Unknown; // if the total prefix is missing the _total prefix it is out of spec
+                }
             }
+
+            await _stream.Value.WriteAsync(HashHelpSpace, 0, HashHelpSpace.Length, cancel);
+            await _stream.Value.WriteAsync(nameBytes, 0, nameLen, cancel);
+            if (helpBytes.Length > 0)
+            {
+                await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
+                await _stream.Value.WriteAsync(helpBytes, 0, helpBytes.Length, cancel);
+            }
+            await _stream.Value.WriteAsync(NewlineHashTypeSpace, 0, NewlineHashTypeSpace.Length, cancel);
+            await _stream.Value.WriteAsync(nameBytes, 0, nameLen, cancel);
+            await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
+            await _stream.Value.WriteAsync(typeBytes, 0, typeBytes.Length, cancel);
+            await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
+        }
+
+        public async Task WriteEnd(CancellationToken cancel)
+        {
+            if (_fmt == ExpositionFormat.OpenMetricsText)
+                await _stream.Value.WriteAsync(EofNewLine, 0, EofNewLine.Length, cancel);
         }
 
         public async Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
-            CancellationToken cancel,
-            double value, byte[]? suffix = null)
+            CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null)
         {
-            await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, suffix);
-            await WriteValuePartAsync(value, cancel);
+            await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, exemplar, suffix);
+            await WriteValuePartAsync(value, exemplar, cancel);
+        }
+
+        private async Task WriteExemplarAsync(CancellationToken cancel, ObservedExemplar exemplar)
+        {
+            await _stream.Value.WriteAsync(SpaceHashSpaceLeftBrace, 0, SpaceHashSpaceLeftBrace.Length, cancel);
+            for (var i = 0; i < exemplar.Labels!.Length; i++)
+            {
+                if (i > 0)
+                    await _stream.Value.WriteAsync(Comma, 0, Comma.Length, cancel);
+                await WriteLabel(exemplar.Labels[i].KeyBytes, exemplar.Labels[i].ValueBytes, cancel);
+            }
+
+            await _stream.Value.WriteAsync(RightBraceSpace, 0, RightBraceSpace.Length, cancel);
+            await WriteValue(exemplar.Val, cancel);
+            await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
+            await WriteValue(exemplar.Timestamp, cancel);
+        }
+
+        private async Task WriteLabel(byte[] label, byte[] value, CancellationToken cancel)
+        {
+            await _stream.Value.WriteAsync(label, 0, label.Length, cancel);
+            await _stream.Value.WriteAsync(Equal, 0, Equal.Length, cancel);
+            await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
+            await _stream.Value.WriteAsync(value, 0, value.Length, cancel);
+            await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
+        }
+
+        private async Task WriteValue(double value, CancellationToken cancel)
+        {
+            if (_fmt == ExpositionFormat.OpenMetricsText)
+            {
+                switch (value)
+                {
+                    case 0:
+                        await _stream.Value.WriteAsync(Zero, 0, Zero.Length, cancel);
+                        return;
+                    case 1:
+                        await _stream.Value.WriteAsync(PositiveOne, 0, PositiveOne.Length, cancel);
+                        return;
+                    case -1:
+                        await _stream.Value.WriteAsync(NegativeOne, 0, NegativeOne.Length, cancel);
+                        return;
+                    case double.PositiveInfinity:
+                        await _stream.Value.WriteAsync(PositiveInfinity, 0, PositiveInfinity.Length, cancel);
+                        return;
+                    case double.NegativeInfinity:
+                        await _stream.Value.WriteAsync(NegativeInfinity, 0, NegativeInfinity.Length, cancel);
+                        return;
+                    case double.NaN:
+                        await _stream.Value.WriteAsync(NotANumber, 0, NotANumber.Length, cancel);
+                        return;
+                }
+            }
+
+            var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
+            if (_fmt == ExpositionFormat.OpenMetricsText && valueAsString.IndexOfAny(DotEChar)==-1 /* did not contain .|e */)
+                valueAsString += ".0";
+            var numBytes = PrometheusConstants.ExportEncoding
+                .GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
+            await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
         }
 
         // Reuse a buffer to do the UTF-8 encoding.
@@ -63,18 +162,21 @@ namespace Prometheus
         // https://github.com/dotnet/corefx/issues/28379
         // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
         private readonly byte[] _stringBytesBuffer = new byte[32];
+        private readonly ExpositionFormat _fmt;
 
         // 123.456
         // Note: Terminates with a NEWLINE
-        private async Task WriteValuePartAsync(double value, CancellationToken cancel)
+        private async Task WriteValuePartAsync(double value, ObservedExemplar exemplar, CancellationToken cancel)
         {
-            var valueAsString = value.ToString(CultureInfo.InvariantCulture);
-            var numBytes = PrometheusConstants.ExportEncoding
-                .GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
+            await WriteValue(value, cancel);
+            if (_fmt == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
+            {
+                await WriteExemplarAsync(cancel, exemplar);
+            }
 
-            await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
             await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
         }
+        
 
         /// <summary>
         /// Creates a metric identifier, with an optional name postfix and an optional extra label to append to the end.
@@ -82,7 +184,7 @@ namespace Prometheus
         /// Note: Terminates with a SPACE
         /// </summary>
         private async Task WriteIdentifierPartAsync(byte[] name, byte[] flattenedLabels, CancellationToken cancel,
-            CanonicalLabel canonicalLabel, byte[]? suffix = null)
+            CanonicalLabel canonicalLabel, ObservedExemplar observedExemplar, byte[]? suffix = null)
         {
             await _stream.Value.WriteAsync(name, 0, name.Length, cancel);
             if (suffix != null && suffix.Length > 0)
@@ -110,8 +212,12 @@ namespace Prometheus
                     await _stream.Value.WriteAsync(canonicalLabel.Name, 0, canonicalLabel.Name.Length, cancel);
                     await _stream.Value.WriteAsync(Equal, 0, Equal.Length, cancel);
                     await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
-                    await _stream.Value.WriteAsync(canonicalLabel.Prometheus, 0, canonicalLabel.Prometheus.Length,
-                        cancel);
+                    if (_fmt == ExpositionFormat.OpenMetricsText)
+                        await _stream.Value.WriteAsync(
+                            canonicalLabel.OpenMetrics, 0, canonicalLabel.OpenMetrics.Length, cancel);
+                    else
+                        await _stream.Value.WriteAsync(
+                            canonicalLabel.Prometheus, 0, canonicalLabel.Prometheus.Length, cancel);
                     await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
                 }
 
@@ -133,9 +239,12 @@ namespace Prometheus
             if (double.IsPositiveInfinity(value))
                 return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
-            var valueAsString = value.ToString(CultureInfo.InvariantCulture);
-            var bytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
-            return new CanonicalLabel(name, bytes, bytes);
+            var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
+            var prom = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
+
+            return new CanonicalLabel(name, prom, valueAsString.IndexOfAny(DotEChar) != -1 // contained .|e
+                ? prom
+                : PrometheusConstants.ExportEncoding.GetBytes(valueAsString + ".0"));
         }
     }
 }

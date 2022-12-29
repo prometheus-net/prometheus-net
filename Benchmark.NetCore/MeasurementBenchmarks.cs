@@ -30,6 +30,9 @@ public class MeasurementBenchmarks
     [Params(MetricType.Counter, MetricType.Gauge, MetricType.Histogram, MetricType.Summary)]
     public MetricType TargetMetricType { get; set; }
 
+    [Params(true, false)]
+    public bool WithExemplars { get; set; }
+
     private readonly CollectorRegistry _registry;
     private readonly MetricFactory _factory;
 
@@ -37,6 +40,8 @@ public class MeasurementBenchmarks
     private readonly Gauge.Child _gauge;
     private readonly Summary.Child _summary;
     private readonly Histogram.Child _histogram;
+
+    private Exemplar.LabelPair[] _exemplars = Array.Empty<Exemplar.LabelPair>();
 
     public MeasurementBenchmarks()
     {
@@ -66,6 +71,13 @@ public class MeasurementBenchmarks
         _gauge = gaugeTemplate.WithLabels("label value");
         _summary = summaryTemplate.WithLabels("label value");
         _histogram = histogramTemplate.WithLabels("label value");
+    }
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        if (WithExemplars)
+            _exemplars = new[] { Exemplar.Key("traceID").WithValue("bar"), Exemplar.Key("traceID2").WithValue("foo") };
     }
 
     [IterationSetup]
@@ -121,7 +133,7 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _counter.Inc();
+            _counter.Inc(_exemplars);
         }
     }
 
@@ -147,7 +159,7 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _histogram.Observe(i);
+            _histogram.Observe(i, _exemplars);
         }
     }
 

@@ -45,9 +45,14 @@
                 _inner.WithLease(x => x.Observe(val, count), _labelValues);
             }
 
+            public void Observe(double val, params Exemplar.LabelPair[] exemplar)
+            {
+                _inner.WithLease(x => x.Observe(val, exemplar), _labelValues);
+            }
+
             public void Observe(double val)
             {
-                _inner.WithLease(x => x.Observe(val), _labelValues);
+                Observe(val, Array.Empty<Exemplar.LabelPair>());
             }
         }
     }
