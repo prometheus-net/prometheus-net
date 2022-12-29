@@ -60,9 +60,14 @@ public sealed class MetricServerMiddleware
 
     private ProtocolNegotiationResult NegotiateComminucationProtocol(HttpRequest request)
     {
-        var acceptHeader = request.Headers.Accept.ToString();
+        var acceptHeaderValues = request.Headers.Accept.ToString();
 
-        foreach (var candidate in ExtractAcceptableMediaTypes(acceptHeader)
+        // We allow the "Accept" HTTP header to be overridden by the "accept" query string parameter.
+        // This is mainly for development purposes (to make it easier to request OpenMetrics format via browser URL bar).
+        if (request.Query.TryGetValue("accept", out var acceptValuesFromQuery))
+            acceptHeaderValues = string.Join(",", acceptValuesFromQuery);
+
+        foreach (var candidate in ExtractAcceptableMediaTypes(acceptHeaderValues)
                      .OrderByDescending(mt => mt.Quality.GetValueOrDefault(1)))
         {
             if (candidate.MediaType == PrometheusConstants.TextContentType)

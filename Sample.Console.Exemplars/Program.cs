@@ -62,6 +62,7 @@ _ = Task.Run(async delegate
 // Metrics published in this sample:
 // * the custom sample metrics defined above, with exemplars
 // * internal debug metrics from prometheus-net, without exemplars
-Console.WriteLine("Open http://localhost:1234/metrics in a web browser.");
+// Note that the OpenMetrics exposition format must be selected via HTTP header or query string parameter to see exemplars.
+Console.WriteLine("Open http://localhost:1234/metrics?accept=application/openmetrics-text in a web browser.");
 Console.WriteLine("Press enter to exit.");
 Console.ReadLine();

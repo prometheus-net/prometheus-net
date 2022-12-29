@@ -27,7 +27,7 @@ The library targets the following runtimes (and newer):
 * [Static labels](#static-labels)
 * [Exemplars](#exemplars)
 * [When are metrics published?](#when-are-metrics-published)
-* [Unpublishing metrics](#unpublishing-metrics)
+* [Deleting metrics](#deleting-metrics)
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
 * [ASP.NET Core HTTP request metrics](#aspnet-core-http-request-metrics)
 * [ASP.NET Core gRPC request metrics](#aspnet-core-grpc-request-metrics)
@@ -93,7 +93,7 @@ Refer to the sample projects for quick start instructions:
 | [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                   | Client app for the above                                                                                              |
 | [Sample.NetStandard](Sample.NetStandard/ImportantProcess.cs)          | Demonstrates how to reference prometheus-net in a .NET Standard class library                                         |
 | [Sample.Web.DifferentPort](Sample.Web.DifferentPort/Program.cs)       | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
-| [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs) | Demonstrates how to use [automatic metric unpublishing](#unpublishing-metrics)                                        |
+| [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs) | Demonstrates how to use [automatic metric deletion](#deleting-metrics)                                        |
 | [Sample.Web.NetFramework](Sample.Web.NetFramework/Global.asax.cs)     | .NET Framework web app that publishes custom metrics                                                                  |
 
 The rest of this document describes how to use individual features of the library.
@@ -341,6 +341,8 @@ foreach (var record in recordsToProcess)
 }
 ```
 
+Exemplars are only present if the metrics are being scraped by an OpenMetrics-capable client. For development purposes, you can force the library to use the OpenMetrics exposition format by adding `?accept=application/openmetrics-text` to the `/metrics` URL. The Prometheus database automatically negotiates OpenMetrics support when scraping metrics - you do not need to take any special action in production scenarios.
+
 See also, [Sample.Console.Exemplars](Sample.Console.Exemplars/Program.cs).
 
 # When are metrics published?
@@ -363,13 +365,13 @@ private static readonly Gauge UsersLoggedIn = Metrics
 UsersLoggedIn.Set(LoadSessions().Count);
 ```
 
-You can also use `.Publish()` on a metric to mark it as ready to be published without modifying the initial value (e.g. to publish a zero).
+You can also use `.Publish()` on a metric to mark it as ready to be published without modifying the initial value (e.g. to publish a zero). Conversely, you can use `.Unpublish()` to hide a metric temporarily. Note that the metric remains in memory and retains its value.
 
-# Unpublishing metrics
+# Deleting metrics
 
-You can use `.Dispose()` or `.RemoveLabelled()` methods on the metric classes to manually unpublish metrics at any time.
+You can use `.Dispose()` or `.RemoveLabelled()` methods on the metric classes to manually delete metrics at any time.
 
-In some situations, it can be hard to determine when a metric with a specific set of labels becomes irrelevant and needs to be unpublished. The library provides some assistance here by enabling automatic expiration of metrics when they are no longer used.
+In some situations, it can be hard to determine when a metric with a specific set of labels becomes irrelevant and needs to be removed. The library provides some assistance here by enabling automatic expiration of metrics when they are no longer used.
 
 To enable automatic expiration, create the metrics via the metric factory returned by `Metrics.WithManagedLifetime()`. All such metrics will have a fixed expiration time, with the expiration restarting based on certain conditions that indicate the metric is in use.
 
@@ -381,7 +383,7 @@ var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromMinutes(5))
 // With expiring metrics, we get back handles to the metric, not the metric directly.
 var inProgressHandle = expiringMetricFactory
   .CreateGauge("documents_in_progress", "Number of documents currently being processed.",
-    // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
+    // Automatic metric deletion only makes sense if we have a high/unknown cardinality label set,
     // so here is a sample label for each "document provider", whoever that may be.
     labelNames: new[] { "document_provider" });
 
@@ -389,7 +391,7 @@ var inProgressHandle = expiringMetricFactory
 
 public void ProcessDocument(string documentProvider)
 {
-  // Automatic unpublishing will not occur while this lease is held.
+  // Automatic metric deletion will not occur while this lease is held.
   // This will also reset any existing expiration timer for this document provider.
   inProgressHandle.WithLease(metric =>
   {
@@ -409,7 +411,7 @@ var factory = Metrics.WithManagedLifetime(expiresAfter: TimeSpan.FromMinutes(5))
 // With expiring metrics, we get back handles to the metric, not the metric directly.
 var processingStartedHandle = expiringMetricFactory
   .CreateGauge("documents_started_processing_total", "Number of documents for which processing has started.",
-    // Automatic unpublishing only makes sense if we have a high/unknown cardinality label set,
+    // Automatic metric deletion only makes sense if we have a high/unknown cardinality label set,
     // so here is a sample label for each "document provider", whoever that may be.
     labelNames: new[] { "document_provider" });
 
