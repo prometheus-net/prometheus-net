@@ -162,7 +162,7 @@ public sealed class MeterAdapter : IDisposable
             {
                 var handle = _factory.CreateHistogram(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames, new HistogramConfiguration
                 {
-                    // We oursource the bucket definition to the callback in options, as it might need to be different for different instruments.
+                    // We outsource the bucket definition to the callback in options, as it might need to be different for different instruments.
                     Buckets = _options.ResolveHistogramBuckets(instrument)
                 });
 
