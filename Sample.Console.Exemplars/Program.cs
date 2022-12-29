@@ -19,6 +19,10 @@ server.Start();
 
 // Generate some sample data from fake business logic.
 var recordsProcessed = Metrics.CreateCounter("sample_records_processed_total", "Total number of records processed.");
+var recordSizeInPages = Metrics.CreateHistogram("sample_record_size_pages", "Size of a record, in pages.", new HistogramConfiguration
+{
+    Buckets = Histogram.PowersOfTenDividedBuckets(0, 2, 10)
+});
 
 // The key from an exemplar key-value pair should be created once and reused to minimize memory allocations.
 var recordIdKey = Exemplar.Key("record_id");
@@ -29,11 +33,14 @@ _ = Task.Run(async delegate
     {
         // Pretend to process a record approximately every second, just for changing sample data.
         var recordId = Guid.NewGuid();
+        var recordPageCount = Random.Shared.Next(minValue: 5, maxValue: 100);
 
         // We pass the record ID key-value pair when we increment the metric.
         // When the metric data is published to Prometheus, the most recent record ID will be attached to it.
-        var exemplar = recordIdKey.WithValue(recordId.ToString());
-        recordsProcessed.Inc(exemplar);
+        var recordIdKeyValuePair = recordIdKey.WithValue(recordId.ToString());
+
+        recordsProcessed.Inc(recordIdKeyValuePair);
+        recordSizeInPages.Observe(recordPageCount, recordIdKeyValuePair);
 
         await Task.Delay(TimeSpan.FromSeconds(1));
     }
