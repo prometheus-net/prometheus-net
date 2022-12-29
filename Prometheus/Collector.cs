@@ -51,8 +51,8 @@ namespace Prometheus
         // Used by ChildBase.Remove()
         internal abstract void RemoveLabelled(LabelSequence instanceLabels);
 
-        private const string ValidMetricNameExpression = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
-        private const string ValidLabelNameExpression = "^[a-zA-Z_:][a-zA-Z0-9_:]*$";
+        private const string ValidMetricNameExpression = "^[a-zA-Z_][a-zA-Z0-9_]*$";
+        private const string ValidLabelNameExpression = "^[a-zA-Z_][a-zA-Z0-9_]*$";
         private const string ReservedLabelNameExpression = "^__.*$";
 
         private static readonly Regex MetricNameRegex = new Regex(ValidMetricNameExpression, RegexOptions.Compiled);
