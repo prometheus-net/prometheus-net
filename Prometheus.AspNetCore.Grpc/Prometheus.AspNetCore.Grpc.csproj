@@ -21,6 +21,11 @@
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+		<!-- Deterministic builds, as per https://github.com/clairernovotny/DeterministicBuilds -->
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<Compile Include="..\Resources\SolutionAssemblyInfo.cs" Link="SolutionAssemblyInfo.cs" />
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
