@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Prometheus.Tests
@@ -90,6 +91,37 @@ namespace Prometheus.Tests
             counter2.Inc();
 
             Assert.AreEqual(2, counter1.Value);
+        }
+
+        // https://github.com/prometheus-net/prometheus-net/issues/389
+        [TestMethod]
+        public async Task Issue389()
+        {
+            _registry.SetStaticLabels(new Dictionary<string, string> { { "registry", "registry-label-value" } });
+
+            var factory1 = _metrics.WithLabels(new Dictionary<string, string> { { "factory", "factory1" } });
+            var factory2 = _metrics.WithLabels(new Dictionary<string, string> { { "factory", "factory2" } });
+            var factory3 = _metrics.WithLabels(new Dictionary<string, string> { { "factory", "factory3" } });
+
+            var metric1 = factory1.CreateCounter("counter", "");
+            var metric2 = factory2.CreateCounter("counter", "");
+            var metric3 = factory3.CreateCounter("counter", "");
+
+            metric1.Inc();
+            metric2.Inc();
+            metric3.Inc();
+
+            Assert.AreEqual(1, metric1.Value);
+            Assert.AreEqual(1, metric2.Value);
+            Assert.AreEqual(1, metric3.Value);
+
+            var serialized = await _registry.CollectAndSerializeToStringAsync();
+
+            // It should serialize them all as a single family, not multiple families.
+            var lines = serialized.Split('\n');
+            var familyDeclarationLineCount = lines.Count(x => x.StartsWith("# TYPE "));
+
+            Assert.AreEqual(1, familyDeclarationLineCount);
         }
     }
 }

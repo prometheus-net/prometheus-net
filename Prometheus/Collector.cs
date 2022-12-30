@@ -46,7 +46,7 @@ public abstract class Collector
     internal abstract int ChildCount { get; }
     internal abstract int TimeseriesCount { get; }
 
-    internal abstract Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel);
+    internal abstract Task CollectAndSerializeAsync(IMetricsSerializer serializer, bool writeFamilyDeclaration, CancellationToken cancel);
 
     // Used by ChildBase.Remove()
     internal abstract void RemoveLabelled(LabelSequence instanceLabels);
@@ -249,11 +249,13 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
     private readonly byte[][] _familyHeaderLines;
 
-    internal override async Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
+    internal override async Task CollectAndSerializeAsync(IMetricsSerializer serializer, bool writeFamilyDeclaration, CancellationToken cancel)
     {
         EnsureUnlabelledMetricCreatedIfNoLabels();
 
-        await serializer.WriteFamilyDeclarationAsync(Name, NameBytes, HelpBytes, Type, TypeBytes, cancel);
+        // There may be multiple Collectors emitting data for the same family. Only the first will write out the family declaration.
+        if (writeFamilyDeclaration)
+            await serializer.WriteFamilyDeclarationAsync(Name, NameBytes, HelpBytes, Type, TypeBytes, cancel);
 
         foreach (var child in _labelledMetrics.Values)
             await child.CollectAndSerializeAsync(serializer, cancel);

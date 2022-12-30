@@ -20,7 +20,7 @@ namespace Prometheus
 
         public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[] instanceLabelNames, CounterConfiguration? configuration = null)
         {
-            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
+            var identity = new CollectorFamilyIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
 
             // Let's be optimistic and assume that in the typical case, the metric will already exist.
             if (_counters.TryGetValue(identity, out var existing))
@@ -32,7 +32,7 @@ namespace Prometheus
 
         public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[] instanceLabelNames, GaugeConfiguration? configuration = null)
         {
-            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
+            var identity = new CollectorFamilyIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
 
             // Let's be optimistic and assume that in the typical case, the metric will already exist.
             if (_gauges.TryGetValue(identity, out var existing))
@@ -44,7 +44,7 @@ namespace Prometheus
 
         public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[] instanceLabelNames, HistogramConfiguration? configuration = null)
         {
-            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
+            var identity = new CollectorFamilyIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
 
             // Let's be optimistic and assume that in the typical case, the metric will already exist.
             if (_histograms.TryGetValue(identity, out var existing))
@@ -56,7 +56,7 @@ namespace Prometheus
 
         public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[] instanceLabelNames, SummaryConfiguration? configuration = null)
         {
-            var identity = new CollectorIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
+            var identity = new CollectorFamilyIdentity(name, StringSequence.From(instanceLabelNames), StringSequence.Empty);
 
             // Let's be optimistic and assume that in the typical case, the metric will already exist.
             if (_summaries.TryGetValue(identity, out var existing))
@@ -74,10 +74,10 @@ namespace Prometheus
         // We need to reuse existing instances of lifetime-managed metrics because the user might not want to cache it.
         // This somewhat duplicates the metric identity tracking logic in CollectorRegistry but this is intentional, as we really do need to do this work on two layers.
         // We never remove collectors from here as long as the factory is alive. The expectation is that there is not an unbounded set of label names, so this set is non-gigantic.
-        private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeCounter> _counters = new();
-        private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeGauge> _gauges = new();
-        private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeHistogram> _histograms = new();
-        private readonly ConcurrentDictionary<CollectorIdentity, ManagedLifetimeSummary> _summaries = new();
+        private readonly ConcurrentDictionary<CollectorFamilyIdentity, ManagedLifetimeCounter> _counters = new();
+        private readonly ConcurrentDictionary<CollectorFamilyIdentity, ManagedLifetimeGauge> _gauges = new();
+        private readonly ConcurrentDictionary<CollectorFamilyIdentity, ManagedLifetimeHistogram> _histograms = new();
+        private readonly ConcurrentDictionary<CollectorFamilyIdentity, ManagedLifetimeSummary> _summaries = new();
 
         private readonly struct CounterInitializer
         {
@@ -94,7 +94,7 @@ namespace Prometheus
                 Configuration = configuration;
             }
 
-            public ManagedLifetimeCounter CreateInstance(CollectorIdentity identity)
+            public ManagedLifetimeCounter CreateInstance(CollectorFamilyIdentity identity)
             {
                 var metric = Inner.CreateCounter(identity.Name, Help, identity.InstanceLabelNames, Configuration);
                 return new ManagedLifetimeCounter(metric, ExpiresAfter);
@@ -116,7 +116,7 @@ namespace Prometheus
                 Configuration = configuration;
             }
 
-            public ManagedLifetimeGauge CreateInstance(CollectorIdentity identity)
+            public ManagedLifetimeGauge CreateInstance(CollectorFamilyIdentity identity)
             {
                 var metric = Inner.CreateGauge(identity.Name, Help, identity.InstanceLabelNames, Configuration);
                 return new ManagedLifetimeGauge(metric, ExpiresAfter);
@@ -138,7 +138,7 @@ namespace Prometheus
                 Configuration = configuration;
             }
 
-            public ManagedLifetimeHistogram CreateInstance(CollectorIdentity identity)
+            public ManagedLifetimeHistogram CreateInstance(CollectorFamilyIdentity identity)
             {
                 var metric = Inner.CreateHistogram(identity.Name, Help, identity.InstanceLabelNames, Configuration);
                 return new ManagedLifetimeHistogram(metric, ExpiresAfter);
@@ -160,7 +160,7 @@ namespace Prometheus
                 Configuration = configuration;
             }
 
-            public ManagedLifetimeSummary CreateInstance(CollectorIdentity identity)
+            public ManagedLifetimeSummary CreateInstance(CollectorFamilyIdentity identity)
             {
                 var metric = Inner.CreateSummary(identity.Name, Help, identity.InstanceLabelNames, Configuration);
                 return new ManagedLifetimeSummary(metric, ExpiresAfter);

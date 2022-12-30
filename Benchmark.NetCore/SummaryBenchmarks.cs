@@ -70,7 +70,7 @@ namespace Benchmark.NetCore
                 {
                     lastExport = t;
 
-                    await summary.CollectAndSerializeAsync(new TextSerializer(Stream.Null), default);
+                    await summary.CollectAndSerializeAsync(new TextSerializer(Stream.Null), true, default);
                 }
             }
         }

@@ -52,7 +52,7 @@ namespace Prometheus.Tests
             histogram.Observe(3.0);
 
             var serializer = Substitute.For<IMetricsSerializer>();
-            await histogram.CollectAndSerializeAsync(serializer, default);
+            await histogram.CollectAndSerializeAsync(serializer, true, default);
 
             // Sum
             // Count

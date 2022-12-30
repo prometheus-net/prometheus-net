@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Microsoft.Extensions.Configuration;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace Prometheus;
@@ -84,7 +85,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
             if (_staticLabels.Length != 0)
                 throw new InvalidOperationException("Static labels have already been defined - you can only do it once per registry.");
 
-            if (_collectors.Count != 0)
+            if (_families.Count != 0)
                 throw new InvalidOperationException("Metrics have already been added to the registry - cannot define static labels anymore.");
 
             // Keep the lock for the duration of this method to make sure no publishing happens while we are setting labels.
@@ -136,7 +137,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
     /// 
     /// This method is designed to be used with custom output mechanisms that do not use an IMetricServer.
     /// </summary>
-    public Task CollectAndExportAsTextAsync(Stream to, ExpositionFormat format= ExpositionFormat.Text, CancellationToken cancel = default)
+    public Task CollectAndExportAsTextAsync(Stream to, ExpositionFormat format = ExpositionFormat.Text, CancellationToken cancel = default)
     {
         if (to == null)
             throw new ArgumentNullException(nameof(to));
@@ -171,7 +172,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
             _configuration = configuration;
         }
 
-        public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration);
+        public TCollector CreateInstance(LabelSequence _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration);
 
         public delegate TCollector CreateInstanceDelegate(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration);
     }
@@ -183,31 +184,46 @@ public sealed class CollectorRegistry : ICollectorRegistry
         where TCollector : Collector
         where TConfiguration : MetricConfiguration
     {
-        var identity = new CollectorIdentity(initializer.Name, initializer.InstanceLabelNames, initializer.StaticLabels.Names);
-
-        static TCollector Validate(Collector candidate)
-        {
-            // We either created a new collector or found one with a matching identity.
-            // We do some basic validation here to avoid silly API usage mistakes.
-
-            if (!(candidate is TCollector))
-                throw new InvalidOperationException("Collector of a different type with the same identity is already registered.");
-
-            return (TCollector)candidate;
-        }
-
-        // Should we optimize for the case where the collector is already registered? It is unlikely to be very common. However, we still should because:
+        // Should we optimize for the case where the family/collector is already registered? It is unlikely to be very common. However, we still should because:
         // 1) In scenarios where collector re-registration is common, it could be an expensive persistent cost in terms of allocations.
         // 2) In scenarios where collector re-registration is not common, a tiny compute overhead is unlikely to be significant in the big picture, as it only happens once.
-        if (_collectors.TryGetValue(identity, out var existing))
-            return Validate(existing);
 
-        var collector = _collectors.GetOrAdd(identity, initializer.CreateInstance);
+        var family = GetOrAddCollectorFamily(initializer);
 
-        return Validate(collector);
+        var collectorIdentity = initializer.StaticLabels;
+
+        if (family.Collectors.TryGetValue(collectorIdentity, out var existing))
+            return (TCollector)existing;
+
+        return (TCollector)family.Collectors.GetOrAdd(collectorIdentity, initializer.CreateInstance);
     }
 
-    private readonly ConcurrentDictionary<CollectorIdentity, Collector> _collectors = new ConcurrentDictionary<CollectorIdentity, Collector>();
+    private CollectorFamily GetOrAddCollectorFamily<TCollector, TConfiguration>(in CollectorInitializer<TCollector, TConfiguration> initializer)
+        where TCollector : Collector
+        where TConfiguration : MetricConfiguration
+    {
+        var familyIdentity = new CollectorFamilyIdentity(initializer.Name, initializer.InstanceLabelNames, initializer.StaticLabels.Names);
+
+        static CollectorFamily ValidateFamily(CollectorFamily candidate)
+        {
+            // We either created a new collector family or found one with a matching identity.
+            // We do some basic validation here to avoid silly API usage mistakes.
+
+            if (candidate.CollectorType != typeof(TCollector))
+                throw new InvalidOperationException("Collector of a different type with the same identity is already registered.");
+
+            return candidate;
+        }
+
+        if (_families.TryGetValue(familyIdentity, out var existing))
+            return ValidateFamily(existing);
+
+        var collector = _families.GetOrAdd(familyIdentity, new CollectorFamily(typeof(TCollector)));
+        return ValidateFamily(collector);
+    }
+
+    // Each collector family has an identity and any number of collectors within.
+    private readonly ConcurrentDictionary<CollectorFamilyIdentity, CollectorFamily> _families = new();
 
     internal void SetBeforeFirstCollectCallback(Action a)
     {
@@ -246,7 +262,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
         UpdateRegistryMetrics();
 
-        foreach (var collector in _collectors.Values)
+        foreach (var collector in _families.Values)
             await collector.CollectAndSerializeAsync(serializer, cancel);
         await serializer.WriteEnd(cancel);
         await serializer.FlushAsync(cancel);
@@ -315,7 +331,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
     private void UpdateRegistryMetrics()
     {
-        if (_metricFamiliesPerType == null ||_metricInstancesPerType == null || _metricTimeseriesPerType == null)
+        if (_metricFamiliesPerType == null || _metricInstancesPerType == null || _metricTimeseriesPerType == null)
             return; // Debug metrics are not enabled.
 
         foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
@@ -324,11 +340,19 @@ public sealed class CollectorRegistry : ICollectorRegistry
             long instances = 0;
             long timeseries = 0;
 
-            foreach (var collector in _collectors.Values.Where(c => c.Type == type))
+            foreach (var family in _families.Values)
             {
-                families++;
-                instances += collector.ChildCount;
-                timeseries += collector.TimeseriesCount;
+                bool hadMatchingType = false;
+
+                foreach (var collector in family.Collectors.Values.Where(c => c.Type == type))
+                {
+                    hadMatchingType = true;
+                    instances += collector.ChildCount;
+                    timeseries += collector.TimeseriesCount;
+                }
+
+                if (hadMatchingType)
+                    families++;
             }
 
             _metricFamiliesPerType[type].Set(families);
