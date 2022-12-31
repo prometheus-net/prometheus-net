@@ -19,12 +19,38 @@
 		<WarningLevel>9999</WarningLevel>
 
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+
+		<PackageId>prometheus-net.AspNetCore.Grpc</PackageId>
+		<Authors>sandersaares</Authors>
+		<Company>prometheus-net</Company>
+		<Product>prometheus-net</Product>
+		<Description>ASP.NET Core gRPC integration with Prometheus</Description>
+		<Copyright>Copyright © prometheus-net developers</Copyright>
+		<PackageProjectUrl>https://github.com/prometheus-net/prometheus-net</PackageProjectUrl>
+		<PackageIcon>prometheus-net-logo.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/prometheus-net/prometheus-net.git</RepositoryUrl>
+		<PackageTags>metrics prometheus aspnetcore</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<IncludeSymbols>True</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
 		<!-- Deterministic builds, as per https://github.com/clairernovotny/DeterministicBuilds -->
 		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\Resources\prometheus-net-logo.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Include="..\Resources\SolutionAssemblyInfo.cs" Link="SolutionAssemblyInfo.cs" />

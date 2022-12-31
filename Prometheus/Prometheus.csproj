@@ -32,6 +32,21 @@
 		<WarningLevel>9999</WarningLevel>
 
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+
+		<PackageId>prometheus-net</PackageId>
+		<Authors>andrasm,qed-,lakario,sandersaares</Authors>
+		<Company>prometheus-net</Company>
+		<Product>prometheus-net</Product>
+		<Description>.NET client library for the Prometheus monitoring and alerting system</Description>
+		<Copyright>Copyright © prometheus-net developers</Copyright>
+		<PackageProjectUrl>https://github.com/prometheus-net/prometheus-net</PackageProjectUrl>
+		<PackageIcon>prometheus-net-logo.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/prometheus-net/prometheus-net.git</RepositoryUrl>
+		<PackageTags>metrics prometheus</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<IncludeSymbols>True</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
@@ -46,6 +61,17 @@
 	<ItemGroup Condition="'$(TargetFramework)' == 'net462'">
 		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
 		<Reference Include="System.Net.Http" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\Resources\prometheus-net-logo.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 	<ItemGroup>
