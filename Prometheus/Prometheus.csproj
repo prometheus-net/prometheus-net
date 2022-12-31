@@ -33,6 +33,11 @@
 
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 
+		<!-- Source Link config -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+		<!-- NuGet packaging config -->
 		<PackageId>prometheus-net</PackageId>
 		<Authors>andrasm,qed-,lakario,sandersaares</Authors>
 		<Company>prometheus-net</Company>
@@ -42,7 +47,6 @@
 		<PackageProjectUrl>https://github.com/prometheus-net/prometheus-net</PackageProjectUrl>
 		<PackageIcon>prometheus-net-logo.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<RepositoryUrl>https://github.com/prometheus-net/prometheus-net.git</RepositoryUrl>
 		<PackageTags>metrics prometheus</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<IncludeSymbols>True</IncludeSymbols>
@@ -77,6 +81,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Http" Version="3.1.0" />
 		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.0" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
 	</ItemGroup>
 
 </Project>
