@@ -37,7 +37,7 @@ public sealed class MeterAdapter : IDisposable
         _listener.SetMeasurementEventCallback<decimal>(OnMeasurementRecorded);
 
         var regularFactory = Metrics.WithCustomRegistry(_registry);
-        _instrumentsConnected = regularFactory.CreateGauge("prometheus_net_meteradapter_instruments_connected_total", "Number of instruments that are currently connected to the adapter.");
+        _instrumentsConnected = regularFactory.CreateGauge("prometheus_net_meteradapter_instruments_connected", "Number of instruments that are currently connected to the adapter.");
 
         _listener.Start();
 
