@@ -80,6 +80,9 @@ public class MetricPusher : MetricHandler
         // Start the server processing loop asynchronously in the background.
         return Task.Run(async delegate
         {
+            // We do 1 final push after we get cancelled, to ensure that we publish the final state.
+            var pushingFinalState = false;
+
             while (true)
             {
                 // We schedule approximately at the configured interval. There may be some small accumulation for the
@@ -124,9 +127,21 @@ public class MetricPusher : MetricHandler
                     HandleFailedPush(ex);
                 }
 
-                // We stop only after pushing metrics, to ensure that the latest state is flushed when told to stop.
                 if (cancel.IsCancellationRequested)
-                    break;
+                {
+                    if (!pushingFinalState)
+                    {
+                        // Continue for one more loop to push the final state.
+                        // We do this because it might be that we were stopped while in the middle of a push.
+                        pushingFinalState = true;
+                        continue;
+                    }
+                    else
+                    {
+                        // Final push completed, time to pack up our things and go home.
+                        break;
+                    }
+                }
 
                 var sleepTime = _pushInterval - duration.GetElapsedTime();
 
@@ -137,10 +152,11 @@ public class MetricPusher : MetricHandler
                     {
                         await Task.Delay(sleepTime, cancel);
                     }
-                    catch (OperationCanceledException)
+                    catch (OperationCanceledException) when (cancel.IsCancellationRequested)
                     {
                         // The task was cancelled.
                         // We continue the loop here to ensure final state gets pushed.
+                        pushingFinalState = true;
                         continue;
                     }
                 }
