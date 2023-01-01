@@ -19,7 +19,7 @@ namespace Prometheus.Tests
             var histogram = factory.CreateHistogram("xxx", "");
             histogram.Observe(1, Exemplar.Pair("traceID", "123"), Exemplar.Pair("traceID", "1"));
         }
-        
+
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void ObserveExemplarTooManyRunes()
@@ -31,12 +31,46 @@ namespace Prometheus.Tests
             var key2 = "0123456789" + "0123456789" + "0123456789" + "0123456789" + "0123456780"; // 50
             var val1 = "01234567890123"; // 14
             var val2 = "012345678901234"; // 15 (= 129)
-            
+
             var histogram = factory.CreateHistogram("xxx", "");
             histogram.Observe(1, Exemplar.Pair(key1, val1), Exemplar.Pair(key2, val2));
         }
-        
-        
+
+        [TestMethod]
+        public async Task ObserveExemplar_OnlyAddsExemplarToSingleBucket()
+        {
+            var registry = Metrics.NewCustomRegistry();
+            var factory = Metrics.WithCustomRegistry(registry);
+
+            var histogram = factory.CreateHistogram("xxx", "", new HistogramConfiguration
+            {
+                Buckets = new[] { 1.0, 2.0, 3.0 }
+            });
+
+            var canary = "my_value_354867398";
+            var exemplar = Exemplar.Pair("my_key", canary);
+
+            // We expect the exemplar to be added to the specific bucket that the value falls into, not every bucket that gets incremented.
+            // In this case, it would be the 2.0 bucket that the exemplar belongs to (the lowest-valued bucket that gets incremented).
+            // OpenMetrics says "Exemplars SHOULD be put into the bucket with the highest value." but that seems backwards - it would mean
+            // that every exemplar goes into the +Inf bucket, as that is always the highest value of an incremented bucket.
+            histogram.Observe(1.9, exemplar);
+
+            var serialized = await registry.CollectAndSerializeToStringAsync(ExpositionFormat.OpenMetricsText);
+            
+            // We expect to see it there.
+            StringAssert.Contains(serialized, canary);
+
+            // And we expect to see it only once.
+            var firstIndex = serialized.IndexOf(canary);
+            var lastIndex = serialized.LastIndexOf(canary);
+            Assert.AreEqual(firstIndex, lastIndex);
+
+            // And we expect to see it on the correct line.
+            var expectedLine = $@"xxx_bucket{{le=""2.0""}} 1.0 # {{my_key=""{canary}""}}";
+            StringAssert.Contains(serialized, expectedLine);
+        }
+
         [TestMethod]
         public async Task Observe_IncrementsCorrectBucketsAndCountAndSum()
         {
@@ -60,11 +94,11 @@ namespace Prometheus.Tests
             // 2.0
             // 3.0
             // +inf
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2.0,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),0,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),1,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(),2,Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 2.0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 1, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 2, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 2, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
         }
 
         [TestMethod]

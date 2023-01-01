@@ -137,7 +137,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
     /// 
     /// This method is designed to be used with custom output mechanisms that do not use an IMetricServer.
     /// </summary>
-    public Task CollectAndExportAsTextAsync(Stream to, ExpositionFormat format = ExpositionFormat.Text, CancellationToken cancel = default)
+    public Task CollectAndExportAsTextAsync(Stream to, ExpositionFormat format = ExpositionFormat.PrometheusText, CancellationToken cancel = default)
     {
         if (to == null)
             throw new ArgumentNullException(nameof(to));

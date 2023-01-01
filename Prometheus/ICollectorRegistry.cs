@@ -12,6 +12,6 @@
         IEnumerable<KeyValuePair<string, string>> StaticLabels { get; }
         void SetStaticLabels(IDictionary<string, string> labels);
 
-        Task CollectAndExportAsTextAsync(Stream to, ExpositionFormat format = ExpositionFormat.Text, CancellationToken cancel = default);
+        Task CollectAndExportAsTextAsync(Stream to, ExpositionFormat format = ExpositionFormat.PrometheusText, CancellationToken cancel = default);
     }
 }

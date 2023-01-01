@@ -5,7 +5,7 @@ public enum ExpositionFormat
     /// <summary>
     /// The traditional prometheus exposition format.
     /// </summary>
-    Text,
+    PrometheusText,
     /// <summary>
     /// The OpenMetrics text exposition format
     /// </summary>

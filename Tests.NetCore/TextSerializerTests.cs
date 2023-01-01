@@ -291,7 +291,7 @@ boom_bam_total{blah=""foo""} 1.0 # {traceID=""1234"",yaay=""4321""} 1.0 16687799
             return await Run(register, ExpositionFormat.OpenMetricsText);
         }
 
-        public static async Task<TestCase> Run(Action<MetricFactory> register, ExpositionFormat format = ExpositionFormat.Text)
+        public static async Task<TestCase> Run(Action<MetricFactory> register, ExpositionFormat format = ExpositionFormat.PrometheusText)
         {
             var registry = Metrics.NewCustomRegistry();
             var factory = Metrics.WithCustomRegistry(registry);

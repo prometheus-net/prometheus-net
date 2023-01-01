@@ -2,15 +2,14 @@
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Prometheus.Tests
+namespace Prometheus.Tests;
+
+internal static class TestExtensions
 {
-    internal static class TestExtensions
+    public static async Task<string> CollectAndSerializeToStringAsync(this CollectorRegistry registry, ExpositionFormat expositionFormat = ExpositionFormat.PrometheusText)
     {
-        public static async Task<string> CollectAndSerializeToStringAsync(this CollectorRegistry registry)
-        {
-            var buffer = new MemoryStream();
-            await registry.CollectAndExportAsTextAsync(buffer);
-            return Encoding.UTF8.GetString(buffer.ToArray());
-        }
+        var buffer = new MemoryStream();
+        await registry.CollectAndExportAsTextAsync(buffer, expositionFormat);
+        return Encoding.UTF8.GetString(buffer.ToArray());
     }
 }

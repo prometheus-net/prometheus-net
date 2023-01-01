@@ -58,7 +58,7 @@ public static class AspNetMetricServer
                 {
                     try
                     {
-                        await _registry.CollectAndExportAsTextAsync(stream, ExpositionFormat.Text, cancellationToken);
+                        await _registry.CollectAndExportAsTextAsync(stream, ExpositionFormat.PrometheusText, cancellationToken);
                     }
                     finally
                     {

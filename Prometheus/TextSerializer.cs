@@ -29,7 +29,7 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     private static readonly char[] DotEChar = { '.', 'e' };
 
-    public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.Text)
+    public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
         _fmt = fmt;
         _stream = new Lazy<Stream>(() => stream);
@@ -37,7 +37,7 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
     public TextSerializer(Func<Stream> streamFactory,
-        ExpositionFormat fmt = ExpositionFormat.Text)
+        ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
         _fmt = fmt;
         _stream = new Lazy<Stream>(streamFactory);

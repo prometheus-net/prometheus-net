@@ -81,7 +81,7 @@ public sealed class MetricServerMiddleware
             }
         }
 
-        return new ProtocolNegotiationResult(ExpositionFormat.Text, PrometheusConstants.TextContentTypeWithVersionAndEncoding);
+        return new ProtocolNegotiationResult(ExpositionFormat.PrometheusText, PrometheusConstants.TextContentTypeWithVersionAndEncoding);
     }
 
     public async Task Invoke(HttpContext context)
