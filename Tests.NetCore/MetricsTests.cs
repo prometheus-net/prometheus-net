@@ -323,6 +323,14 @@ public sealed class MetricsTests
         StringAssert.Contains(serialized, canary2.ToString());
         StringAssert.Contains(serialized, canary3.ToString());
         StringAssert.Contains(serialized, canary4.ToString());
+
+        // We expect them all to be serialized as different metric instances in the same metric family.
+        var familyDeclaration = "# TYPE name1 gauge";
+        StringAssert.Contains(serialized, familyDeclaration);
+        var firstIndex = serialized.IndexOf(familyDeclaration);
+        var lastIndex = serialized.LastIndexOf(familyDeclaration);
+
+        Assert.AreEqual(firstIndex, lastIndex);
     }
 
     [TestMethod]
@@ -336,7 +344,7 @@ public sealed class MetricsTests
         }
         catch (InvalidOperationException e)
         {
-            Assert.AreEqual("Collector of a different type with the same identity is already registered.", e.Message);
+            Assert.AreEqual("Collector of a different type with the same name is already registered.", e.Message);
         }
     }
 
@@ -357,13 +365,13 @@ public sealed class MetricsTests
     public void label_names()
     {
         Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my-label"));
-        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my!label"));
-        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("a", "help1", "my%label"));
-        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateHistogram("a", "help1", "le"));
-        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateHistogram("a", "help1", "my:label"));
-        _metrics.CreateGauge("b", "help1", "good_name");
+        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("b", "help1", "my!label"));
+        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("c", "help1", "my%label"));
+        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateHistogram("d", "help1", "le"));
+        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateHistogram("e", "help1", "my:label"));
+        _metrics.CreateGauge("f", "help1", "good_name");
 
-        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("c", "help1", "__reserved"));
+        Assert.ThrowsException<ArgumentException>(() => _metrics.CreateGauge("g", "help1", "__reserved"));
     }
 
     [TestMethod]

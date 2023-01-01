@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace Prometheus;
@@ -172,7 +171,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
             _configuration = configuration;
         }
 
-        public TCollector CreateInstance(LabelSequence _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration);
+        public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration);
 
         public delegate TCollector CreateInstanceDelegate(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration);
     }
@@ -190,7 +189,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
         var family = GetOrAddCollectorFamily(initializer);
 
-        var collectorIdentity = initializer.StaticLabels;
+        var collectorIdentity = new CollectorIdentity(initializer.InstanceLabelNames, initializer.StaticLabels);
 
         if (family.Collectors.TryGetValue(collectorIdentity, out var existing))
             return (TCollector)existing;
@@ -202,28 +201,27 @@ public sealed class CollectorRegistry : ICollectorRegistry
         where TCollector : Collector
         where TConfiguration : MetricConfiguration
     {
-        var familyIdentity = new CollectorFamilyIdentity(initializer.Name, initializer.InstanceLabelNames, initializer.StaticLabels.Names);
-
         static CollectorFamily ValidateFamily(CollectorFamily candidate)
         {
             // We either created a new collector family or found one with a matching identity.
             // We do some basic validation here to avoid silly API usage mistakes.
 
             if (candidate.CollectorType != typeof(TCollector))
-                throw new InvalidOperationException("Collector of a different type with the same identity is already registered.");
+                throw new InvalidOperationException("Collector of a different type with the same name is already registered.");
 
             return candidate;
         }
 
-        if (_families.TryGetValue(familyIdentity, out var existing))
+        if (_families.TryGetValue(initializer.Name, out var existing))
             return ValidateFamily(existing);
 
-        var collector = _families.GetOrAdd(familyIdentity, new CollectorFamily(typeof(TCollector)));
+        var collector = _families.GetOrAdd(initializer.Name, new CollectorFamily(typeof(TCollector)));
         return ValidateFamily(collector);
     }
 
-    // Each collector family has an identity and any number of collectors within.
-    private readonly ConcurrentDictionary<CollectorFamilyIdentity, CollectorFamily> _families = new();
+    // Each collector family has an identity (the base name of the metric, in Prometheus format) and any number of collectors within.
+    // Different collectors in the same family may have different sets of labels (static and instance) depending on how they were created.
+    private readonly ConcurrentDictionary<string, CollectorFamily> _families = new();
 
     internal void SetBeforeFirstCollectCallback(Action a)
     {

@@ -6,8 +6,7 @@ internal sealed class CollectorFamily
 {
     public Type CollectorType { get; }
 
-    // Different collectors in the same family are differentiated by different sets of static labels.
-    public ConcurrentDictionary<LabelSequence, Collector> Collectors { get; } = new();
+    public ConcurrentDictionary<CollectorIdentity, Collector> Collectors { get; } = new();
 
     public CollectorFamily(Type collectorType)
     {
