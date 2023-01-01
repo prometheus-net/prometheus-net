@@ -14,10 +14,16 @@ internal interface IMetricsSerializer
         byte[] typeBytes, CancellationToken cancel);
 
     /// <summary>
-    /// Writes out a single metric point
+    /// Writes out a single metric point with a floating point value.
     /// </summary>
     Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
         CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null);
+
+    /// <summary>
+    /// Writes out a single metric point with an integer value.
+    /// </summary>
+    Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+        CancellationToken cancel, long value, ObservedExemplar exemplar, byte[]? suffix = null);
 
     /// <summary>
     /// Writes out terminal lines

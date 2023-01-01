@@ -117,7 +117,7 @@ namespace Prometheus
 
                 var now = DateTime.UtcNow;
 
-                double count;
+                long count;
                 double sum;
                 var values = new List<(double quantile, double value)>(_objectives.Count);
 
@@ -178,7 +178,7 @@ namespace Prometheus
             private IReadOnlyList<QuantileEpsilonPair> _objectives = new List<QuantileEpsilonPair>();
             private double[] _sortedObjectives;
             private double _sum;
-            private ulong _count;
+            private long _count;
             private SampleBuffer _hotBuf;
             private SampleBuffer _coldBuf;
             private QuantileStream[] _streams;

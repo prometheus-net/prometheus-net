@@ -19,9 +19,13 @@ internal sealed class TextSerializer : IMetricsSerializer
     private static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
     private static readonly byte[] NegativeInfinity = PrometheusConstants.ExportEncoding.GetBytes("-Inf");
     private static readonly byte[] NotANumber = PrometheusConstants.ExportEncoding.GetBytes("NaN");
-    private static readonly byte[] PositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1.0");
-    private static readonly byte[] Zero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
-    private static readonly byte[] NegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
+    private static readonly byte[] DotZero = PrometheusConstants.ExportEncoding.GetBytes(".0");
+    private static readonly byte[] FloatPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1.0");
+    private static readonly byte[] FloatZero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
+    private static readonly byte[] FloatNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
+    private static readonly byte[] IntPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1");
+    private static readonly byte[] IntZero = PrometheusConstants.ExportEncoding.GetBytes("0");
+    private static readonly byte[] IntNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1");
     private static readonly byte[] EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
     private static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
     private static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
@@ -31,7 +35,7 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
-        _fmt = fmt;
+        _expositionFormat = fmt;
         _stream = new Lazy<Stream>(() => stream);
     }
 
@@ -39,7 +43,7 @@ internal sealed class TextSerializer : IMetricsSerializer
     public TextSerializer(Func<Stream> streamFactory,
         ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
-        _fmt = fmt;
+        _expositionFormat = fmt;
         _stream = new Lazy<Stream>(streamFactory);
     }
 
@@ -58,7 +62,7 @@ internal sealed class TextSerializer : IMetricsSerializer
         byte[] typeBytes, CancellationToken cancel)
     {
         var nameLen = nameBytes.Length;
-        if (_fmt == ExpositionFormat.OpenMetricsText && type == MetricType.Counter)
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText && type == MetricType.Counter)
         {
             if (name.EndsWith("_total"))
             {
@@ -86,7 +90,7 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     public async Task WriteEnd(CancellationToken cancel)
     {
-        if (_fmt == ExpositionFormat.OpenMetricsText)
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText)
             await _stream.Value.WriteAsync(EofNewLine, 0, EofNewLine.Length, cancel);
     }
 
@@ -94,7 +98,28 @@ internal sealed class TextSerializer : IMetricsSerializer
         CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null)
     {
         await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, exemplar, suffix);
-        await WriteValuePartAsync(value, exemplar, cancel);
+
+        await WriteValue(value, cancel);
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
+        {
+            await WriteExemplarAsync(cancel, exemplar);
+        }
+
+        await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
+    }
+
+    public async Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+        CancellationToken cancel, long value, ObservedExemplar exemplar, byte[]? suffix = null)
+    {
+        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, exemplar, suffix);
+
+        await WriteValue(value, cancel);
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
+        {
+            await WriteExemplarAsync(cancel, exemplar);
+        }
+
+        await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
     }
 
     private async Task WriteExemplarAsync(CancellationToken cancel, ObservedExemplar exemplar)
@@ -124,18 +149,18 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     private async Task WriteValue(double value, CancellationToken cancel)
     {
-        if (_fmt == ExpositionFormat.OpenMetricsText)
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText)
         {
             switch (value)
             {
                 case 0:
-                    await _stream.Value.WriteAsync(Zero, 0, Zero.Length, cancel);
+                    await _stream.Value.WriteAsync(FloatZero, 0, FloatZero.Length, cancel);
                     return;
                 case 1:
-                    await _stream.Value.WriteAsync(PositiveOne, 0, PositiveOne.Length, cancel);
+                    await _stream.Value.WriteAsync(FloatPositiveOne, 0, FloatPositiveOne.Length, cancel);
                     return;
                 case -1:
-                    await _stream.Value.WriteAsync(NegativeOne, 0, NegativeOne.Length, cancel);
+                    await _stream.Value.WriteAsync(FloatNegativeOne, 0, FloatNegativeOne.Length, cancel);
                     return;
                 case double.PositiveInfinity:
                     await _stream.Value.WriteAsync(PositiveInfinity, 0, PositiveInfinity.Length, cancel);
@@ -150,10 +175,36 @@ internal sealed class TextSerializer : IMetricsSerializer
         }
 
         var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
-        if (_fmt == ExpositionFormat.OpenMetricsText && valueAsString.IndexOfAny(DotEChar) == -1 /* did not contain .|e */)
-            valueAsString += ".0";
-        var numBytes = PrometheusConstants.ExportEncoding
-            .GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
+
+        var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
+        await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
+
+        // In certain places (e.g. "le" label) we need floating point values to actually have the decimal point in them for OpenMetrics.
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText && valueAsString.IndexOfAny(DotEChar) == -1 /* did not contain .|e */)
+            await _stream.Value.WriteAsync(DotZero, 0, DotZero.Length, cancel);
+    }
+
+    private async Task WriteValue(long value, CancellationToken cancel)
+    {
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText)
+        {
+            switch (value)
+            {
+                case 0:
+                    await _stream.Value.WriteAsync(IntZero, 0, IntZero.Length, cancel);
+                    return;
+                case 1:
+                    await _stream.Value.WriteAsync(IntPositiveOne, 0, IntPositiveOne.Length, cancel);
+                    return;
+                case -1:
+                    await _stream.Value.WriteAsync(IntNegativeOne, 0, IntNegativeOne.Length, cancel);
+                    return;
+            }
+        }
+
+        var valueAsString = value.ToString("D", CultureInfo.InvariantCulture);
+        
+        var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
         await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
     }
 
@@ -162,21 +213,7 @@ internal sealed class TextSerializer : IMetricsSerializer
     // https://github.com/dotnet/corefx/issues/28379
     // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
     private readonly byte[] _stringBytesBuffer = new byte[32];
-    private readonly ExpositionFormat _fmt;
-
-    // 123.456
-    // Note: Terminates with a NEWLINE
-    private async Task WriteValuePartAsync(double value, ObservedExemplar exemplar, CancellationToken cancel)
-    {
-        await WriteValue(value, cancel);
-        if (_fmt == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
-        {
-            await WriteExemplarAsync(cancel, exemplar);
-        }
-
-        await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
-    }
-
+    private readonly ExpositionFormat _expositionFormat;
 
     /// <summary>
     /// Creates a metric identifier, with an optional name postfix and an optional extra label to append to the end.
@@ -212,7 +249,7 @@ internal sealed class TextSerializer : IMetricsSerializer
                 await _stream.Value.WriteAsync(canonicalLabel.Name, 0, canonicalLabel.Name.Length, cancel);
                 await _stream.Value.WriteAsync(Equal, 0, Equal.Length, cancel);
                 await _stream.Value.WriteAsync(Quote, 0, Quote.Length, cancel);
-                if (_fmt == ExpositionFormat.OpenMetricsText)
+                if (_expositionFormat == ExpositionFormat.OpenMetricsText)
                     await _stream.Value.WriteAsync(
                         canonicalLabel.OpenMetrics, 0, canonicalLabel.OpenMetrics.Length, cancel);
                 else

@@ -67,7 +67,7 @@ namespace Prometheus.Tests
             Assert.AreEqual(firstIndex, lastIndex);
 
             // And we expect to see it on the correct line.
-            var expectedLine = $@"xxx_bucket{{le=""2.0""}} 1.0 # {{my_key=""{canary}""}}";
+            var expectedLine = $@"xxx_bucket{{le=""2.0""}} 1 # {{my_key=""{canary}""}}";
             StringAssert.Contains(serialized, expectedLine);
         }
 
@@ -89,16 +89,18 @@ namespace Prometheus.Tests
             await histogram.CollectAndSerializeAsync(serializer, true, default);
 
             // Sum
-            // Count
-            // 1.0
-            // 2.0
-            // 3.0
-            // +inf
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 2.0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 5.0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+
+            // 1.0 bucket
             await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+
+            // 2.0 bucket
             await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 1, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 2, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 2, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+
+            // Count
+            // 3.0 bucket
+            // +inf bucket
+            await serializer.Received(requiredNumberOfCalls: 3).WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 2, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
         }
 
         [TestMethod]

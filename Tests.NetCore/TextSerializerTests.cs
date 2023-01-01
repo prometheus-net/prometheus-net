@@ -185,10 +185,10 @@ boom_bam_bucket{le=""+Inf""} 1
         result.ShouldBe(@"# HELP boom_bam something
 # TYPE boom_bam histogram
 boom_bam_sum 2.5
-boom_bam_count 2.0
-boom_bam_bucket{le=""1.0""} 1.0
-boom_bam_bucket{le=""2.5""} 2.0
-boom_bam_bucket{le=""+Inf""} 2.0
+boom_bam_count 2
+boom_bam_bucket{le=""1.0""} 1
+boom_bam_bucket{le=""2.5""} 2
+boom_bam_bucket{le=""+Inf""} 2
 # EOF
 ");
     }
@@ -214,12 +214,12 @@ boom_bam_bucket{le=""+Inf""} 2.0
         result.ShouldBe(@"# HELP boom_bam something
 # TYPE boom_bam histogram
 boom_bam_sum 1e+44
-boom_bam_count 4.0
-boom_bam_bucket{le=""1.0""} 1.0 # {traceID=""1""} 1.0 1668779954.714
-boom_bam_bucket{le=""2.5""} 2.0 # {traceID=""2""} 1.5 1668779954.714
-boom_bam_bucket{le=""3.0""} 2.0
-boom_bam_bucket{le=""1e+45""} 4.0 # {traceID=""4""} 1e+44 1668779954.714
-boom_bam_bucket{le=""+Inf""} 4.0
+boom_bam_count 4
+boom_bam_bucket{le=""1.0""} 1 # {traceID=""1""} 1.0 1668779954.714
+boom_bam_bucket{le=""2.5""} 2 # {traceID=""2""} 1.5 1668779954.714
+boom_bam_bucket{le=""3.0""} 2
+boom_bam_bucket{le=""1e+45""} 4 # {traceID=""4""} 1e+44 1668779954.714
+boom_bam_bucket{le=""+Inf""} 4
 # EOF
 ");
     }
