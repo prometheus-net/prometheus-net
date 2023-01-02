@@ -82,7 +82,7 @@ namespace Prometheus
                     _virtualMemorySize.Set(_process.VirtualMemorySize64);
                     _workingSet.Set(_process.WorkingSet64);
                     _privateMemorySize.Set(_process.PrivateMemorySize64);
-                    _cpuTotal.Inc(Math.Max(0, _process.TotalProcessorTime.TotalSeconds - _cpuTotal.Value));
+                    _cpuTotal.IncTo(_process.TotalProcessorTime.TotalSeconds);
                     _openHandles.Set(_process.HandleCount);
                     _numThreads.Set(_process.Threads.Count);
                 }
