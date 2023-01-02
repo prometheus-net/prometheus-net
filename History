@@ -5,7 +5,7 @@
 - Publish symbol packages and add Source Link support for easier debugging experience.
 - Fix defect where metrics with different labels could overwrite each other in specific circumstances with multiple metric factories in use (#389).
 - Ensure even harder that MetricPusher flushes the final state before stopping (#383 and #384)
-- Simplify DotNetStats built-in collector code for ease of readability and more best practices (#365)
+- Simplify DotNetStats built-in collector code for ease of readability and more best practices (#365, #364)
 * 7.1.0
 - Added back .NET Standard 2.0 support as some customers had a hard dependency on .NET Standard 2.0 (despite not being a documented feature even earlier).
 - Added (Observable)UpDownCounter support to MeterAdapter (.NET 7 specific feature).
