@@ -27,35 +27,36 @@ var recordSizeInPages = Metrics.CreateHistogram("sample_record_size_pages", "Siz
 
 var totalSleepTime = Metrics.CreateCounter("sample_sleep_seconds_total", "Total amount of time spent sleeping.");
 
-// The key from an exemplar key-value pair should be created once and reused to minimize memory allocations.
+// CUSTOM EXEMPLAR: The key from an exemplar key-value pair should be created once and reused to minimize memory allocations.
 var recordIdKey = Exemplar.Key("record_id");
 
 _ = Task.Run(async delegate
 {
     while (true)
     {
+        // DEFAULT EXEMPLAR: We expose the trace_id and span_id for distributed tracing, based on Activity.Current.
+        // Activity.Current is often automatically inherited from incoming HTTP requests if using OpenTelemetry tracing with ASP.NET Core.
+        // Here, we manually create and start an activity for sample purposes, without relying on the platform managing the activity context.
+        // See https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-concepts
+        using (var activity = new Activity("Pausing before record processing").Start())
+        {
+            var sleepStopwatch = Stopwatch.StartNew();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // The trace_id and span_id from the current Activity are exposed as the exemplar by default.
+            totalSleepTime.Inc(sleepStopwatch.Elapsed.TotalSeconds);
+        }
+
         // Pretend to process a record approximately every second, just for changing sample data.
         var recordId = Guid.NewGuid();
         var recordPageCount = Random.Shared.Next(minValue: 5, maxValue: 100);
 
-        // We pass the record ID key-value pair when we increment the metric.
+        // CUSTOM EXEMPLAR: We pass the record ID key-value pair when we increment the metric.
         // When the metric data is published to Prometheus, the most recent record ID will be attached to it.
         var recordIdKeyValuePair = recordIdKey.WithValue(recordId.ToString());
 
         recordsProcessed.Inc(recordIdKeyValuePair);
         recordSizeInPages.Observe(recordPageCount, recordIdKeyValuePair);
-
-        // The activity is often automatically inherited from incoming HTTP requests if using OpenTelemetry tracing in ASP.NET Core.
-        // Here, we manually create and start an activity for sample purposes, without relying on the platform managing the activity context.
-        // See https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-concepts
-        using (var activity = new Activity("Taking a break from record processing").Start())
-        {
-            var sleepStopwatch = Stopwatch.StartNew();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // If you do not specify an exemplar yourself, the trace_id and span_id from the current Activity are automatically used.
-            totalSleepTime.Inc(sleepStopwatch.Elapsed.TotalSeconds);
-        }
     }
 });
 
