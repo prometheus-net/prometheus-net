@@ -322,14 +322,17 @@ requestsHandled.WithLabels("200").Inc();
 
 # Exemplars
 
-Exemplars facilitate [distributed tracing](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-concepts), by attaching related trace IDs to metrics. This enables a metrics GUI to cross-references [traces](https://opentelemetry.io/docs/concepts/signals/traces/) that explain how the metric got the value it has.
+Exemplars facilitate [distributed tracing](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-concepts), by attaching related trace IDs to metrics. This enables a metrics visualization app to cross-reference [traces](https://opentelemetry.io/docs/concepts/signals/traces/) that explain how the metric got the value it has.
 
-By default, prometheus-net will create an exemplar with the `trace_id` and `span_id` labels from the current .NET distributed tracing context (`Activity.Current`). If using OpenTelemetry tracing with ASP.NET Core, the trace context from the `traceparent` HTTP request header will be used to automatically assign `Activity.Current`.
+![](Exemplars.png)
+
+See also, [Grafana fundamentals - introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/).
+
+By default, prometheus-net will create an exemplar with the `trace_id` and `span_id` labels based on the current distributed tracing context (`Activity.Current`). If using OpenTelemetry tracing with ASP.NET Core, the `traceparent` HTTP request header will be used to automatically assign `Activity.Current`.
 
 ```csharp
 private static readonly Counter TotalSleepTime = Metrics
     .CreateCounter("sample_sleep_seconds_total", "Total amount of time spent sleeping.");
-
 ...
 
 // You only need to create the Activity if one is not automatically assigned (e.g. by ASP.NET Core).
@@ -367,9 +370,12 @@ foreach (var record in recordsToProcess)
 ```
 
 > **Warning**
-> Exemplars are limited to 128 bytes - they are meant to contain IDs for cross-referencing with trace databases, not as a replacement for trace databases.
+> Exemplars are limited to 128 ASCII characters (counting both keys and values) - they are meant to contain IDs for cross-referencing with trace databases, not as a replacement for trace databases.
 
-Exemplars are only published if the metrics are being scraped by an OpenMetrics-capable client. For development purposes, you can force the library to use the OpenMetrics exposition format by adding `?accept=application/openmetrics-text` to the `/metrics` URL. The Prometheus database automatically negotiates OpenMetrics support when scraping metrics - you do not need to apply any special scraping configuration in production scenarios (you may need to enable exemplar storage, though, as it is still an experimental Prometheus feature as of time of writing this sentence).
+Exemplars are only published if the metrics are being scraped by an OpenMetrics-capable client. For development purposes, you can force the library to use the OpenMetrics exposition format by adding `?accept=application/openmetrics-text` to the `/metrics` URL.
+
+> **Note**
+> The Prometheus database automatically negotiates OpenMetrics support when scraping metrics - you do not need to apply any special scraping configuration in production scenarios. You may need to enable exemplar storage, though, as it is still an experimental Prometheus feature as of time of writing this.
 
 See also, [Sample.Console.Exemplars](Sample.Console.Exemplars/Program.cs).
 
