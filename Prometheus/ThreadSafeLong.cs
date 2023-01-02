@@ -1,49 +1,48 @@
 ﻿using System.Globalization;
 
-namespace Prometheus
+namespace Prometheus;
+
+internal struct ThreadSafeLong
 {
-    internal struct ThreadSafeLong
+    private long _value;
+
+    public ThreadSafeLong(long value)
     {
-        private long _value;
+        _value = value;
+    }
 
-        public ThreadSafeLong(long value)
+    public long Value
+    {
+        get
         {
-            _value = value;
+            return Interlocked.Read(ref _value);
         }
-
-        public long Value
+        set
         {
-            get
-            {
-                return Interlocked.Read(ref _value);
-            }
-            set
-            {
-                Interlocked.Exchange(ref _value, value);
-            }
+            Interlocked.Exchange(ref _value, value);
         }
+    }
 
-        public void Add(long increment)
-        {
-            Interlocked.Add(ref _value, increment);
-        }
+    public void Add(long increment)
+    {
+        Interlocked.Add(ref _value, increment);
+    }
 
-        public override string ToString()
-        {
-            return Value.ToString(CultureInfo.InvariantCulture);
-        }
+    public override string ToString()
+    {
+        return Value.ToString(CultureInfo.InvariantCulture);
+    }
 
-        public override bool Equals(object? obj)
-        {
-            if (obj is ThreadSafeLong)
-                return Value.Equals(((ThreadSafeLong)obj).Value);
+    public override bool Equals(object? obj)
+    {
+        if (obj is ThreadSafeLong)
+            return Value.Equals(((ThreadSafeLong)obj).Value);
 
-            return Value.Equals(obj);
-        }
+        return Value.Equals(obj);
+    }
 
-        public override int GetHashCode()
-        {
-            return Value.GetHashCode();
-        }
+    public override int GetHashCode()
+    {
+        return Value.GetHashCode();
     }
 }

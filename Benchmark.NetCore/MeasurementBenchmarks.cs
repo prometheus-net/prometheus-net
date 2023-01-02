@@ -12,7 +12,7 @@ namespace Benchmark.NetCore;
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [InvocationCount(1)] // The implementation does not support multiple invocations.
-[MinIterationCount(50), MaxIterationCount(100)] // Help stabilize measurements.
+[MinIterationCount(50), MaxIterationCount(200)] // Help stabilize measurements.
 public class MeasurementBenchmarks
 {
     public enum MetricType
@@ -23,7 +23,7 @@ public class MeasurementBenchmarks
         Summary
     }
 
-    [Params(100_000)]
+    [Params(200_000)]
     public int MeasurementCount { get; set; }
 
     [Params(1, 16)]

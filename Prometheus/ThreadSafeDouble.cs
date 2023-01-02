@@ -1,92 +1,91 @@
 ﻿using System.Globalization;
 
-namespace Prometheus
+namespace Prometheus;
+
+internal struct ThreadSafeDouble
 {
-    internal struct ThreadSafeDouble
+    private long _value;
+
+    public ThreadSafeDouble(double value)
     {
-        private long _value;
+        _value = BitConverter.DoubleToInt64Bits(value);
+    }
 
-        public ThreadSafeDouble(double value)
+    public double Value
+    {
+        get
         {
-            _value = BitConverter.DoubleToInt64Bits(value);
+            return BitConverter.Int64BitsToDouble(Interlocked.Read(ref _value));
         }
-
-        public double Value
+        set
         {
-            get
-            {
-                return BitConverter.Int64BitsToDouble(Interlocked.Read(ref _value));
-            }
-            set
-            {
-                Interlocked.Exchange(ref _value, BitConverter.DoubleToInt64Bits(value));
-            }
+            Interlocked.Exchange(ref _value, BitConverter.DoubleToInt64Bits(value));
         }
+    }
 
-        public void Add(double increment)
+    public void Add(double increment)
+    {
+        while (true)
         {
-            while (true)
-            {
-                long initialValue = _value;
-                double computedValue = BitConverter.Int64BitsToDouble(initialValue) + increment;
+            long initialValue = Volatile.Read(ref _value);
+            double computedValue = BitConverter.Int64BitsToDouble(initialValue) + increment;
 
-                if (initialValue == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(computedValue), initialValue))
-                    return;
-            }
+            if (initialValue == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(computedValue), initialValue))
+                return;
         }
+    }
 
-        /// <summary>
-        /// Sets the value to this, unless the existing value is already greater.
-        /// </summary>
-        public void IncrementTo(double to)
+    /// <summary>
+    /// Sets the value to this, unless the existing value is already greater.
+    /// </summary>
+    public void IncrementTo(double to)
+    {
+        while (true)
         {
-            while (true)
-            {
-                long initialRaw = _value;
-                double initialValue = BitConverter.Int64BitsToDouble(initialRaw);
+            long initialRaw = Volatile.Read(ref _value);
+            double initialValue = BitConverter.Int64BitsToDouble(initialRaw);
 
-                if (initialValue >= to)
-                    return; // Already greater.
+            if (initialValue >= to)
+                return; // Already greater.
 
-                if (initialRaw == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(to), initialRaw))
-                    return;
-            }
+            if (initialRaw == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(to), initialRaw))
+                return;
         }
+    }
 
-        /// <summary>
-        /// Sets the value to this, unless the existing value is already smaller.
-        /// </summary>
-        public void DecrementTo(double to)
+    /// <summary>
+    /// Sets the value to this, unless the existing value is already smaller.
+    /// </summary>
+    public void DecrementTo(double to)
+    {
+        while (true)
         {
-            while (true)
-            {
-                long initialRaw = _value;
-                double initialValue = BitConverter.Int64BitsToDouble(initialRaw);
+            long initialRaw = Volatile.Read(ref _value);
+            double initialValue = BitConverter.Int64BitsToDouble(initialRaw);
 
-                if (initialValue <= to)
-                    return; // Already greater.
+            if (initialValue <= to)
+                return; // Already smaller.
 
-                if (initialRaw == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(to), initialRaw))
-                    return;
-            }
+            if (initialRaw == Interlocked.CompareExchange(ref _value, BitConverter.DoubleToInt64Bits(to), initialRaw))
+                return;
         }
+    }
 
-        public override string ToString()
-        {
-            return Value.ToString(CultureInfo.InvariantCulture);
-        }
+    public override string ToString()
+    {
+        return Value.ToString(CultureInfo.InvariantCulture);
+    }
 
-        public override bool Equals(object? obj)
-        {
-            if (obj is ThreadSafeDouble)
-                return Value.Equals(((ThreadSafeDouble)obj).Value);
+    public override bool Equals(object? obj)
+    {
+        if (obj is ThreadSafeDouble)
+            return Value.Equals(((ThreadSafeDouble)obj).Value);
 
-            return Value.Equals(obj);
-        }
+        return Value.Equals(obj);
+    }
 
-        public override int GetHashCode()
-        {
-            return Value.GetHashCode();
-        }
+    public override int GetHashCode()
+    {
+        return Value.GetHashCode();
     }
 }
