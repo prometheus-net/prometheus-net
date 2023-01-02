@@ -57,8 +57,7 @@ namespace Prometheus
             // .net specific metrics
             _totalMemory = metrics.CreateGauge("dotnet_total_memory_bytes", "Total known allocated memory");
 
-            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            _startTime.Set((_process.StartTime.ToUniversalTime() - epoch).TotalSeconds);
+            _startTime.SetToTimeUtc(_process.StartTime);
         }
 
         // The Process class is not thread-safe so let's synchronize the updates to avoid data tearing.
