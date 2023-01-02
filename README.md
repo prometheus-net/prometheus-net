@@ -375,7 +375,7 @@ foreach (var record in recordsToProcess)
 Exemplars are only published if the metrics are being scraped by an OpenMetrics-capable client. For development purposes, you can force the library to use the OpenMetrics exposition format by adding `?accept=application/openmetrics-text` to the `/metrics` URL.
 
 > **Note**
-> The Prometheus database automatically negotiates OpenMetrics support when scraping metrics - you do not need to apply any special scraping configuration in production scenarios. You may need to enable exemplar storage, though, as it is still an experimental Prometheus feature as of time of writing this.
+> The Prometheus database automatically negotiates OpenMetrics support when scraping metrics - you do not need to apply any special scraping configuration in production scenarios. You may need to [enable exemplar storage](https://prometheus.io/docs/prometheus/latest/feature_flags/#exemplars-storage), though..
 
 See also, [Sample.Console.Exemplars](Sample.Console.Exemplars/Program.cs).
 
