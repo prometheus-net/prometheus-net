@@ -11,6 +11,8 @@ namespace Benchmark.NetCore;
 /// </remarks>
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
+[InvocationCount(1)] // The implementation does not support multiple invocations.
+[MinIterationCount(50), MaxIterationCount(100)] // Help stabilize measurements.
 public class MeasurementBenchmarks
 {
     public enum MetricType
@@ -41,7 +43,7 @@ public class MeasurementBenchmarks
     private readonly Summary.Child _summary;
     private readonly Histogram.Child _histogram;
 
-    private Exemplar.LabelPair[] _exemplars = Array.Empty<Exemplar.LabelPair>();
+    private Exemplar.LabelPair[] _exemplar = Array.Empty<Exemplar.LabelPair>();
 
     public MeasurementBenchmarks()
     {
@@ -77,7 +79,7 @@ public class MeasurementBenchmarks
     public void GlobalSetup()
     {
         if (WithExemplars)
-            _exemplars = new[] { Exemplar.Key("traceID").WithValue("bar"), Exemplar.Key("traceID2").WithValue("foo") };
+            _exemplar = new[] { Exemplar.Key("traceID").WithValue("bar"), Exemplar.Key("traceID2").WithValue("foo") };
     }
 
     [IterationSetup]
@@ -133,7 +135,7 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _counter.Inc(_exemplars);
+            _counter.Inc(_exemplar);
         }
     }
 
@@ -159,7 +161,7 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _histogram.Observe(i, _exemplars);
+            _histogram.Observe(i, _exemplar);
         }
     }
 
