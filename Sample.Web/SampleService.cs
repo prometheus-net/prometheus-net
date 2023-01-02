@@ -76,7 +76,7 @@ public sealed class SampleService : BackgroundService
             WinsByEndpoint.WithLabels(googleUrl).Inc(exemplar);
             LossesByEndpoint.WithLabels(microsoftUrl).Inc(exemplar);
         }
-        else if (googleStopwatch.Elapsed < microsoftStopwatch.Elapsed)
+        else if (googleStopwatch.Elapsed > microsoftStopwatch.Elapsed)
         {
             WinsByEndpoint.WithLabels(microsoftUrl).Inc(exemplar);
             LossesByEndpoint.WithLabels(googleUrl).Inc(exemplar);
