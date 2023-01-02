@@ -73,10 +73,7 @@ namespace Prometheus
                     _process.Refresh();
 
                     for (var gen = 0; gen <= GC.MaxGeneration; gen++)
-                    {
-                        var collectionCount = _collectionCounts[gen];
-                        collectionCount.Inc(GC.CollectionCount(gen) - collectionCount.Value);
-                    }
+                        _collectionCounts[gen].IncTo(GC.CollectionCount(gen));
 
                     _totalMemory.Set(GC.GetTotalMemory(false));
                     _virtualMemorySize.Set(_process.VirtualMemorySize64);
