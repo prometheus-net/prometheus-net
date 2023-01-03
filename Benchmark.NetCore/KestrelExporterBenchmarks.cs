@@ -16,7 +16,8 @@ public class AspNetCoreExporterBenchmarks
     static AspNetCoreExporterBenchmarks()
     {
         // We use the global singleton metrics registry here, so just populate it with some data.
-        for (var i = 0; i < 1000; i++)
+        // Not too much data - we care more about the overhead and do not want to just inflate the numbers.
+        for (var i = 0; i < 5; i++)
             Metrics.CreateGauge("dummy_metric_" + i, "For benchmark purposes", "label1", "label2", "label3").WithLabels("1", "2", "3").Inc();
     }
 
@@ -51,11 +52,18 @@ public class AspNetCoreExporterBenchmarks
         public void Configure(IApplicationBuilder app)
         {
             app.UseRouting();
+
             app.UseHttpMetrics();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapMetrics();
+
+                endpoints.MapGet("ok", context =>
+                {
+                    context.Response.StatusCode = 200;
+                    return Task.CompletedTask;
+                });
             });
         }
     }
@@ -64,5 +72,11 @@ public class AspNetCoreExporterBenchmarks
     public async Task GetMetrics()
     {
         await _client.GetAsync("/metrics");
+    }
+
+    [Benchmark]
+    public async Task Get200Ok()
+    {
+        await _client.GetAsync("/ok");
     }
 }
