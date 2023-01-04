@@ -93,7 +93,7 @@ Refer to the sample projects for quick start instructions:
 | [Sample.Grpc.Client](Sample.Grpc.Client/Program.cs)                   | Client app for the above                                                                                              |
 | [Sample.NetStandard](Sample.NetStandard/ImportantProcess.cs)          | Demonstrates how to reference prometheus-net in a .NET Standard class library                                         |
 | [Sample.Web.DifferentPort](Sample.Web.DifferentPort/Program.cs)       | Demonstrates how to set up the metric exporter on a different port from the main web API (e.g. for security purposes) |
-| [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs) | Demonstrates how to use [automatic metric deletion](#deleting-metrics)                                        |
+| [Sample.Web.MetricExpiration](Sample.Web.MetricExpiration/Program.cs) | Demonstrates how to use [automatic metric deletion](#deleting-metrics)                                                |
 | [Sample.Web.NetFramework](Sample.Web.NetFramework/Global.asax.cs)     | .NET Framework web app that publishes custom metrics                                                                  |
 
 The rest of this document describes how to use individual features of the library.
@@ -821,44 +821,21 @@ See also, [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs).
 
 A suite of benchmarks is included if you wish to explore the performance characteristics of the app. Simply build and run the `Benchmarks.NetCore` project in Release mode.
 
-As an example of the performance of measuring data using prometheus-net, we have the results of the MeasurementBenchmarks here:
-
-```
-BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.2006/21H2/November2021Update)
-AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
-.NET SDK=7.0.100-rc.1.22431.12
-  [Host]     : .NET 6.0.9 (6.0.922.41905), X64 RyuJIT AVX2
-
-| MeasurementCount | ThreadCount | TargetMetricType |           Mean | Lock Contentions | Allocated |
-|------------------|-------------|------------------|---------------:|-----------------:|----------:|
-| 100000           | 1           | Counter          |       406.4 us |                - |     480 B |
-| 100000           | 1           | Gauge            |       207.8 us |                - |     480 B |
-| 100000           | 1           | Histogram        |     1,416.5 us |                - |     480 B |
-| 100000           | 1           | Summary          |    42,601.8 us |                - |     480 B |
-| 100000           | 16          | Counter          |   176,601.2 us |          13.0000 |     480 B |
-| 100000           | 16          | Gauge            |    31,241.0 us |          14.0000 |     480 B |
-| 100000           | 16          | Histogram        |   179,327.9 us |          14.0000 |     480 B |
-| 100000           | 16          | Summary          | 1,017,871.1 us |       10332.0000 |     480 B |
-```
-
-> **Note**
-> The 480 byte allocation is benchmark harness overhead. Metric measurements do not allocate memory.
-
-Converting this to more everyday units:
+As an example of the performance of measuring data using prometheus-net, we have the results of the MeasurementBenchmarks here, converted into measurements per second:
 
 | Metric type | Concurrency | Measurements per second |
 |-------------|------------:|------------------------:|
-| Counter     |    1 thread |             246 million |
-| Gauge       |    1 thread |             481 million |
-| Histogram   |    1 thread |              71 million |
+| Gauge       |    1 thread |             539 million |
+| Counter     |    1 thread |              57 million |
+| Histogram   |    1 thread |              56 million |
 | Summary     |    1 thread |               2 million |
-| Counter     |  16 threads |               9 million |
-| Gauge       |  16 threads |              51 million |
-| Histogram   |  16 threads |               9 million |
+| Gauge       |  16 threads |              56 million |
+| Counter     |  16 threads |              10 million |
+| Histogram   |  16 threads |               7 million |
 | Summary     |  16 threads |               2 million |
 
 > **Note**
-> All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. If you have more than 1 metric in your app, multithreaded performance will likely be similar to single-threaded performance.
+> All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. In real-world apps with the load spread across multiple metrics, you can expect even better performance.
 
 # Community projects
 

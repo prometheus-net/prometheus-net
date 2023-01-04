@@ -73,13 +73,23 @@ public class MeasurementBenchmarks
         _gauge = gaugeTemplate.WithLabels("label value");
         _summary = summaryTemplate.WithLabels("label value");
         _histogram = histogramTemplate.WithLabels("label value");
+
+        // We take a single measurement, to warm things up and avoid any first-call impact.
+        _counter.Inc();
+        _gauge.Set(1);
+        _summary.Observe(1);
+        _histogram.Observe(1);
     }
 
     [GlobalSetup]
     public void GlobalSetup()
     {
         if (WithExemplars)
+        {
+            // You often do need to allocate new exemplar key-value pairs to measure data from new contexts but this benchmark
+            // exists to indicate the pure measurement performance independent of this, so we reuse an exemplar.
             _exemplar = new[] { Exemplar.Key("traceID").WithValue("bar"), Exemplar.Key("traceID2").WithValue("foo") };
+        }
     }
 
     [IterationSetup]
