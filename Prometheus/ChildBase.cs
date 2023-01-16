@@ -121,6 +121,6 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         if (exemplar is { Length: > 0 })
             return exemplar;
 
-        return _exemplarBehavior.DefaultExemplarProvider?.Invoke(Parent, value) ?? Exemplar.Empty;
+        return _exemplarBehavior.DefaultExemplarProvider?.Invoke(Parent, value) ?? Exemplar.None;
     }
 }

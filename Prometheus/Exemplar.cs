@@ -7,7 +7,7 @@ namespace Prometheus;
 
 public static class Exemplar
 {
-    public static readonly LabelPair[] Empty = Array.Empty<LabelPair>();
+    public static readonly LabelPair[] None = Array.Empty<LabelPair>();
 
     /// <summary>
     /// An exemplar label key.
@@ -97,6 +97,6 @@ public static class Exemplar
 #endif
 
         // Trace context based exemplars are only supported in .NET Core, not .NET Framework.
-        return Empty;
+        return None;
     }
 }

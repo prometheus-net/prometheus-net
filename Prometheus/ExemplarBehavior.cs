@@ -16,4 +16,9 @@ public sealed class ExemplarBehavior
     {
         DefaultExemplarProvider = (_, _) => Exemplar.FromTraceContext()
     };
+
+    public static ExemplarBehavior NoExemplars() => new ExemplarBehavior
+    {
+        DefaultExemplarProvider = (_, _) => Exemplar.None
+    };
 }

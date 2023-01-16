@@ -26,6 +26,7 @@
 	<ItemGroup>
 		<PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.10" />
+		<PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.4.0-rc.2" />
 	</ItemGroup>
 
 	<ItemGroup>

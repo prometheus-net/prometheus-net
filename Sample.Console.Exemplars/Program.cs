@@ -29,7 +29,7 @@ var recordSizeInPages = Metrics.CreateHistogram("sample_record_size_pages", "Siz
 static Exemplar.LabelPair[] RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
 {
     if (value < 0.1)
-        return Exemplar.Empty;
+        return Exemplar.None;
 
     return Exemplar.FromTraceContext();
 }
