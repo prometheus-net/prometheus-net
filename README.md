@@ -861,23 +861,12 @@ As an example of the performance of measuring data using prometheus-net, we have
 > **Note**
 > All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. In real-world apps with the load spread across multiple metrics, you can expect even better performance.
 
-Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have a benchmark to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. In the following benchmark we have 100 metrics of a particular type, for which we take 100 000 measurements, which are divided into 100 individual timeseries.
+Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made.
 
-```text
-|                Method |           Sdk |         Mean |    Allocated |
-|---------------------- |-------------- |-------------:|-------------:|
-|   CounterMeasurements | PrometheusNet |    78.468 ms |        384 B |
-|   CounterMeasurements | OpenTelemetry | 1,346.181 ms |  3 889 472 B |
-| HistogramMeasurements | PrometheusNet |   208.221 ms |        384 B |
-| HistogramMeasurements | OpenTelemetry | 1,416.000 ms |  7 522 320 B |
-|        SetupBenchmark | PrometheusNet |    45.729 ms | 49 337 312 B |
-|        SetupBenchmark | OpenTelemetry |     2.713 ms | 28 491 544 B |
-```
-
-As you can see:
-
-* prometheus-net consumes slightly more resources when the metrics are being first set up (preallocating data for later use) and is effectively allocation-free and relatively fast when recording measurements.
-* OpenTelemetry consumes slightly fewer resources when the metrics are being first set up and allocates significantly more memory and consumed significantly more CPU time when recording measurements.
+![](Docs/SdkComparison-MeasurementCpuUsage.png)
+![](Docs/SdkComparison-MeasurementMemoryUsage.png)
+![](Docs/SdkComparison-SetupCpuUsage.png)
+![](Docs/SdkComparison-SetupMemoryUsage.png)
 
 > **Note**
 > As authors of this SDK are not necessarily experts in use of other SDKs, please feel free to submit pull requests with benchmark improvements to better highlight the strengths or weaknesses here.
