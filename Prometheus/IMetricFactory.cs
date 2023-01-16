@@ -39,5 +39,11 @@ namespace Prometheus
         /// The expiration timer is reset to zero for the duration of any active lifetime-extension lease that is taken on a specific metric.
         /// </param>
         IManagedLifetimeMetricFactory WithManagedLifetime(TimeSpan expiresAfter);
+
+        /// <summary>
+        /// Allows you to configure how exemplars are applied to published metrics. If null, uses default behavior (see <see cref="ExemplarBehavior"/>).
+        /// This is inherited by all metrics by default, although may be overridden in the configuration of an individual metric.
+        /// </summary>
+        ExemplarBehavior? ExemplarBehavior { get; set; }
     }
 }

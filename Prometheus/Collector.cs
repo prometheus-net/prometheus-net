@@ -218,7 +218,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         // Order of labels is 1) instance labels; 2) static labels.
         var flattenedLabels = instanceLabels.Concat(StaticLabels);
 
-        return NewChild(instanceLabels, flattenedLabels, publish: !_suppressInitialValue);
+        return NewChild(instanceLabels, flattenedLabels, publish: !_suppressInitialValue, _exemplarBehavior);
     }
 
     /// <summary>
@@ -226,10 +226,11 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     /// </summary>
     internal LabelSequence[] GetAllInstanceLabels() => _labelledMetrics.Select(p => p.Key).ToArray();
 
-    internal Collector(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue)
+    internal Collector(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, ExemplarBehavior exemplarBehavior)
         : base(name, help, instanceLabelNames, staticLabels)
     {
         _suppressInitialValue = suppressInitialValue;
+        _exemplarBehavior = exemplarBehavior;
 
         _unlabelledLazy = GetUnlabelledLazyInitializer();
 
@@ -245,7 +246,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     /// <summary>
     /// Creates a new instance of the child collector type.
     /// </summary>
-    private protected abstract TChild NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish);
+    private protected abstract TChild NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior);
 
     private readonly byte[][] _familyHeaderLines;
 
@@ -274,4 +275,6 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         if (!_unlabelledLazy.IsValueCreated && !LabelNames.Any())
             GetOrAddLabelled(LabelSequence.Empty);
     }
+
+    private readonly ExemplarBehavior _exemplarBehavior;
 }

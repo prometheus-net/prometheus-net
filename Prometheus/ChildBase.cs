@@ -1,7 +1,3 @@
-#if NET6_0_OR_GREATER
-using System.Diagnostics;
-#endif
-
 namespace Prometheus;
 
 /// <summary>
@@ -9,14 +5,17 @@ namespace Prometheus;
 /// </summary>
 public abstract class ChildBase : ICollectorChild, IDisposable
 {
-    internal ChildBase(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+    internal ChildBase(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
     {
         Parent = parent;
         InstanceLabels = instanceLabels;
         FlattenedLabels = flattenedLabels;
         FlattenedLabelsBytes = PrometheusConstants.ExportEncoding.GetBytes(flattenedLabels.Serialize());
         _publish = publish;
+        _exemplarBehavior = exemplarBehavior;
     }
+
+    private readonly ExemplarBehavior _exemplarBehavior;
 
     /// <summary>
     /// Marks the metric as one to be published, even if it might otherwise be suppressed.
@@ -116,31 +115,12 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         }
     }
 
-    // Based on https://opentelemetry.io/docs/reference/specification/compatibility/prometheus_and_openmetrics/
-    private static readonly Exemplar.LabelKey TraceIdKey = Exemplar.Key("trace_id");
-    private static readonly Exemplar.LabelKey SpanIdKey = Exemplar.Key("span_id");
-
-    /// <summary>
-    /// Returns either the provided exemplar (if any) or the default exemplar.
-    /// The default exemplar consists of "trace_id" and "span_id" from the current trace context (.NET Core only).
-    /// </summary>
-    protected internal Exemplar.LabelPair[] ExemplarOrDefault(Exemplar.LabelPair[] exemplar)
+    protected Exemplar.LabelPair[] ExemplarOrDefault(Exemplar.LabelPair[] exemplar, double value)
     {
-        // A custom exemplar was provided - just use it.
-        if (exemplar is { Length: > 0 }) { return exemplar; }
+        // If a custom exemplar was provided for the observation, just use it.
+        if (exemplar is { Length: > 0 })
+            return exemplar;
 
-#if NET6_0_OR_GREATER
-        var activity = Activity.Current;
-        if (activity != null)
-        {
-            // Based on https://opentelemetry.io/docs/reference/specification/compatibility/prometheus_and_openmetrics/
-            var traceIdLabel = TraceIdKey.WithValue(activity.TraceId.ToString());
-            var spanIdLabel = SpanIdKey.WithValue(activity.SpanId.ToString());
-
-            return new[] { traceIdLabel, spanIdLabel };
-        }
-#endif
-
-        return Array.Empty<Exemplar.LabelPair>();
+        return _exemplarBehavior.DefaultExemplarProvider?.Invoke(Parent, value) ?? Exemplar.Empty;
     }
 }

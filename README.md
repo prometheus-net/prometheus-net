@@ -352,7 +352,31 @@ This will be published as the following metric point:
 sample_sleep_seconds_total 251.03833569999986 # {trace_id="08ad1c8cec52bf5284538abae7e6d26a",span_id="4761a4918922879b"} 1.0010688 1672634812.125
 ```
 
-You can override the default exemplar by providing your own when updating the value of the metric:
+You can customize the default exemplar provider via `IMetricFactory.ExemplarBehavior` or `CounterConfiguration.ExemplarBehavior` and `HistogramConfiguration.ExemplarBehavior`, which allow you to provide your own method to generate exemplars:
+
+```csharp
+// For the next histogram we only want to record exemplars for values larger than 0.1 (i.e. when record processing goes slowly).
+static Exemplar.LabelPair[] RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
+{
+    if (value < 0.1)
+        return Exemplar.Empty;
+
+    return Exemplar.FromTraceContext();
+}
+
+var recordProcessingDuration = Metrics
+    .CreateHistogram("sample_record_processing_duration_seconds", "How long it took to process a record, in seconds.",
+    new HistogramConfiguration
+    {
+        Buckets = Histogram.PowersOfTenDividedBuckets(-4, 1, 5),
+        ExemplarBehavior = new()
+        {
+            DefaultExemplarProvider = RecordExemplarForSlowRecordProcessingDuration
+        }
+    });
+```
+
+You can also override any default exemplar logic by providing your own exemplar when updating the value of the metric:
 
 ```csharp
 private static readonly Counter RecordsProcessed = Metrics

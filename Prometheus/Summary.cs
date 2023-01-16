@@ -32,12 +32,13 @@ namespace Prometheus
             string help,
             StringSequence instanceLabelNames,
             LabelSequence staticLabels,
+            ExemplarBehavior exemplarBehavior,
             bool suppressInitialValue = false,
             IReadOnlyList<QuantileEpsilonPair>? objectives = null,
             TimeSpan? maxAge = null,
             int? ageBuckets = null,
             int? bufCap = null)
-            : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue)
+            : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue, exemplarBehavior)
         {
             _objectives = objectives ?? DefObjectivesArray;
             _maxAge = maxAge ?? DefMaxAge;
@@ -60,17 +61,17 @@ namespace Prometheus
                 throw new ArgumentException($"{QuantileLabel} is a reserved label name");
         }
 
-        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
         {
-            return new Child(this, instanceLabels, flattenedLabels, publish);
+            return new Child(this, instanceLabels, flattenedLabels, publish, exemplarBehavior);
         }
 
         internal override MetricType Type => MetricType.Summary;
 
         public sealed class Child : ChildBase, ISummary
         {
-            internal Child(Summary parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
-                : base(parent, instanceLabels, flattenedLabels, publish)
+            internal Child(Summary parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
+                : base(parent, instanceLabels, flattenedLabels, publish, exemplarBehavior)
             {
                 _objectives = parent._objectives;
                 _maxAge = parent._maxAge;

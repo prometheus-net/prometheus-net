@@ -11,8 +11,8 @@ namespace Prometheus
         private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
         private readonly double[] _buckets;
 
-        internal Histogram(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, double[]? buckets)
-            : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue)
+        internal Histogram(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, double[]? buckets, ExemplarBehavior exemplarBehavior)
+            : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue, exemplarBehavior)
         {
             if (instanceLabelNames.Contains("le"))
             {
@@ -39,15 +39,15 @@ namespace Prometheus
             }
         }
 
-        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+        private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
         {
-            return new Child(this, instanceLabels, flattenedLabels, publish);
+            return new Child(this, instanceLabels, flattenedLabels, publish, exemplarBehavior);
         }
 
         public sealed class Child : ChildBase, IHistogram
         {
-            internal Child(Histogram parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
-                : base(parent, instanceLabels, flattenedLabels, publish)
+            internal Child(Histogram parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
+                : base(parent, instanceLabels, flattenedLabels, publish, exemplarBehavior)
             {
                 Parent = parent;
                 
@@ -136,7 +136,7 @@ namespace Prometheus
                     return;
                 }
 
-                exemplarLabels = ExemplarOrDefault(exemplarLabels);
+                exemplarLabels = ExemplarOrDefault(exemplarLabels, val);
 
                 for (int i = 0; i < _upperBounds.Length; i++)
                 {

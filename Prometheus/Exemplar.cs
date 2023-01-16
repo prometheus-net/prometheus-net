@@ -1,9 +1,14 @@
-﻿using System.Text;
+﻿#if NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
+using System.Text;
 
 namespace Prometheus;
 
 public static class Exemplar
 {
+    public static readonly LabelPair[] Empty = Array.Empty<LabelPair>();
+
     /// <summary>
     /// An exemplar label key.
     /// </summary>
@@ -70,5 +75,28 @@ public static class Exemplar
     public static LabelPair Pair(string key, string value)
     {
         return Key(key).WithValue(value);
+    }
+
+    // Based on https://opentelemetry.io/docs/reference/specification/compatibility/prometheus_and_openmetrics/
+    private static readonly LabelKey DefaultTraceIdKey = Key("trace_id");
+    private static readonly LabelKey DefaultSpanIdKey = Key("span_id");
+
+    public static LabelPair[] FromTraceContext() => FromTraceContext(DefaultTraceIdKey, DefaultSpanIdKey);
+
+    public static LabelPair[] FromTraceContext(LabelKey traceIdKey, LabelKey spanIdKey)
+    {
+#if NET6_0_OR_GREATER
+        var activity = Activity.Current;
+        if (activity != null)
+        {
+            var traceIdLabel = traceIdKey.WithValue(activity.TraceId.ToString());
+            var spanIdLabel = spanIdKey.WithValue(activity.SpanId.ToString());
+
+            return new[] { traceIdLabel, spanIdLabel };
+        }
+#endif
+
+        // Trace context based exemplars are only supported in .NET Core, not .NET Framework.
+        return Empty;
     }
 }

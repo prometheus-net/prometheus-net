@@ -156,12 +156,14 @@ public sealed class CollectorRegistry : ICollectorRegistry
         private readonly StringSequence _instanceLabelNames;
         private readonly LabelSequence _staticLabels;
         private readonly TConfiguration _configuration;
+        // This is already resolved to inherit from any parent or defaults.
+        private readonly ExemplarBehavior _exemplarBehavior;
 
         public string Name => _name;
         public StringSequence InstanceLabelNames => _instanceLabelNames;
         public LabelSequence StaticLabels => _staticLabels;
 
-        public CollectorInitializer(CreateInstanceDelegate createInstance, string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration)
+        public CollectorInitializer(CreateInstanceDelegate createInstance, string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior)
         {
             _createInstance = createInstance;
             _name = name;
@@ -169,11 +171,12 @@ public sealed class CollectorRegistry : ICollectorRegistry
             _instanceLabelNames = instanceLabelNames;
             _staticLabels = staticLabels;
             _configuration = configuration;
+            _exemplarBehavior = exemplarBehavior;
         }
 
-        public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration);
+        public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration, _exemplarBehavior);
 
-        public delegate TCollector CreateInstanceDelegate(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration);
+        public delegate TCollector CreateInstanceDelegate(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior);
     }
 
     /// <summary>

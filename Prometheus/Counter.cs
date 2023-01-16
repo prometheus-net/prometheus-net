@@ -4,8 +4,8 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
 {
     public sealed class Child : ChildBase, ICounter
     {
-        internal Child(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
-            : base(parent, instanceLabels, flattenedLabels, publish)
+        internal Child(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
+            : base(parent, instanceLabels, flattenedLabels, publish, exemplarBehavior)
         {
         }
 
@@ -37,7 +37,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
             if (increment < 0.0)
                 throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
 
-            exemplarLabels = ExemplarOrDefault(exemplarLabels);
+            exemplarLabels = ExemplarOrDefault(exemplarLabels, increment);
 
             if (exemplarLabels is { Length: > 0 })
             {
@@ -59,13 +59,13 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
     }
 
 
-    private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+    private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
     {
-        return new Child(this, instanceLabels, flattenedLabels, publish);
+        return new Child(this, instanceLabels, flattenedLabels, publish, exemplarBehavior);
     }
 
-    internal Counter(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue)
-        : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue)
+    internal Counter(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, ExemplarBehavior exemplarBehavior)
+        : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue, exemplarBehavior)
     {
     }
 

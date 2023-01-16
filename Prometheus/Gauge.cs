@@ -4,8 +4,8 @@ public sealed class Gauge : Collector<Gauge.Child>, IGauge
 {
     public sealed class Child : ChildBase, IGauge
     {
-        internal Child(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
-            : base(parent, instanceLabels, flattenedLabels, publish)
+        internal Child(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
+            : base(parent, instanceLabels, flattenedLabels, publish, exemplarBehavior)
         {
         }
 
@@ -49,13 +49,13 @@ public sealed class Gauge : Collector<Gauge.Child>, IGauge
         public double Value => _value.Value;
     }
 
-    private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish)
+    private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
     {
-        return new Child(this, instanceLabels, flattenedLabels, publish);
+        return new Child(this, instanceLabels, flattenedLabels, publish, exemplarBehavior);
     }
 
-    internal Gauge(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue)
-        : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue)
+    internal Gauge(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, ExemplarBehavior exemplarBehavior)
+        : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue, exemplarBehavior)
     {
     }
 

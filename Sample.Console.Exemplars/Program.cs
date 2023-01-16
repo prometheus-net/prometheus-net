@@ -25,6 +25,24 @@ var recordSizeInPages = Metrics.CreateHistogram("sample_record_size_pages", "Siz
     Buckets = Histogram.PowersOfTenDividedBuckets(0, 2, 10)
 });
 
+// SAMPLED EXEMPLAR: For the next histogram we only want to record exemplars for values larger than 0.1 (i.e. when record processing goes slowly).
+static Exemplar.LabelPair[] RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
+{
+    if (value < 0.1)
+        return Exemplar.Empty;
+
+    return Exemplar.FromTraceContext();
+}
+
+var recordProcessingDuration = Metrics.CreateHistogram("sample_record_processing_duration_seconds", "How long it took to process a record, in seconds.", new HistogramConfiguration
+{
+    Buckets = Histogram.PowersOfTenDividedBuckets(-4, 1, 5),
+    ExemplarBehavior = new()
+    {
+        DefaultExemplarProvider = RecordExemplarForSlowRecordProcessingDuration
+    }
+});
+
 var totalSleepTime = Metrics.CreateCounter("sample_sleep_seconds_total", "Total amount of time spent sleeping.");
 
 // CUSTOM EXEMPLAR: The key from an exemplar key-value pair should be created once and reused to minimize memory allocations.
@@ -46,6 +64,8 @@ _ = Task.Run(async delegate
             // The trace_id and span_id from the current Activity are exposed as the exemplar by default.
             totalSleepTime.Inc(sleepStopwatch.Elapsed.TotalSeconds);
         }
+
+        using var processingDurationTimer = recordProcessingDuration.NewTimer();
 
         // Pretend to process a record approximately every second, just for changing sample data.
         var recordId = Guid.NewGuid();
