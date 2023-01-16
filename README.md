@@ -861,7 +861,7 @@ As an example of the performance of measuring data using prometheus-net, we have
 > **Note**
 > All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. In real-world apps with the load spread across multiple metrics, you can expect even better performance.
 
-Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made.
+Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. Both SDKs are evaluated in single-threaded mode under a comparable workload and enabled feature set.
 
 ![](Docs/SdkComparison-MeasurementCpuUsage.png)
 ![](Docs/SdkComparison-MeasurementMemoryUsage.png)
