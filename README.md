@@ -843,7 +843,7 @@ See also, [Sample.Console.DotNetMeters](Sample.Console.DotNetMeters/Program.cs).
 
 # Benchmarks
 
-A suite of benchmarks is included if you wish to explore the performance characteristics of the app. Simply build and run the `Benchmarks.NetCore` project in Release mode.
+A suite of benchmarks is included if you wish to explore the performance characteristics of the library. Simply build and run the `Benchmarks.NetCore` project in Release mode.
 
 As an example of the performance of measuring data using prometheus-net, we have the results of the MeasurementBenchmarks here, converted into measurements per second:
 
