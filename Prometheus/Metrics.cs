@@ -12,8 +12,11 @@
         /// The default registry where all metrics are registered by default.
         /// </summary>
         public static CollectorRegistry DefaultRegistry { get; private set; }
-
-        private static MetricFactory _defaultFactory;
+        
+        /// <summary>
+        /// The default metric factory use to create collectors.
+        /// </summary>
+        public static MetricFactory DefaultFactory { get; private set; }
 
         /// <summary>
         /// Creates a new registry. You may want to use multiple registries if you want to
@@ -41,79 +44,79 @@
         /// The expiration timer is reset to zero for the duration of any active lifetime-extension lease that is taken on a specific metric.
         /// </param>
         public static IManagedLifetimeMetricFactory WithManagedLifetime(TimeSpan expiresAfter) =>
-            _defaultFactory.WithManagedLifetime(expiresAfter);
+            DefaultFactory.WithManagedLifetime(expiresAfter);
 
         /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
         public static Counter CreateCounter(string name, string help, CounterConfiguration? configuration = null) =>
-            _defaultFactory.CreateCounter(name, help, configuration);
+            DefaultFactory.CreateCounter(name, help, configuration);
 
         /// <summary>
         /// Gauges can have any numeric value and change arbitrarily.
         /// </summary>
         public static Gauge CreateGauge(string name, string help, GaugeConfiguration? configuration = null) =>
-            _defaultFactory.CreateGauge(name, help, configuration);
+            DefaultFactory.CreateGauge(name, help, configuration);
 
         /// <summary>
         /// Summaries track the trends in events over time (10 minutes by default).
         /// </summary>
         public static Summary CreateSummary(string name, string help, SummaryConfiguration? configuration = null) =>
-            _defaultFactory.CreateSummary(name, help, configuration);
+            DefaultFactory.CreateSummary(name, help, configuration);
 
         /// <summary>
         /// Histograms track the size and number of events in buckets.
         /// </summary>
         public static Histogram CreateHistogram(string name, string help, HistogramConfiguration? configuration = null) =>
-            _defaultFactory.CreateHistogram(name, help, configuration);
+            DefaultFactory.CreateHistogram(name, help, configuration);
 
         /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
         public static Counter CreateCounter(string name, string help, string[] labelNames, CounterConfiguration? configuration = null) =>
-            _defaultFactory.CreateCounter(name, help, labelNames, configuration);
+            DefaultFactory.CreateCounter(name, help, labelNames, configuration);
 
         /// <summary>
         /// Gauges can have any numeric value and change arbitrarily.
         /// </summary>
         public static Gauge CreateGauge(string name, string help, string[] labelNames, GaugeConfiguration? configuration = null) =>
-            _defaultFactory.CreateGauge(name, help, labelNames, configuration);
+            DefaultFactory.CreateGauge(name, help, labelNames, configuration);
 
         /// <summary>
         /// Summaries track the trends in events over time (10 minutes by default).
         /// </summary>
         public static Summary CreateSummary(string name, string help, string[] labelNames, SummaryConfiguration? configuration = null) =>
-            _defaultFactory.CreateSummary(name, help, labelNames, configuration);
+            DefaultFactory.CreateSummary(name, help, labelNames, configuration);
 
         /// <summary>
         /// Histograms track the size and number of events in buckets.
         /// </summary>
         public static Histogram CreateHistogram(string name, string help, string[] labelNames, HistogramConfiguration? configuration = null) =>
-            _defaultFactory.CreateHistogram(name, help, labelNames, configuration);
+            DefaultFactory.CreateHistogram(name, help, labelNames, configuration);
 
         /// <summary>
         /// Counters only increase in value and reset to zero when the process restarts.
         /// </summary>
         public static Counter CreateCounter(string name, string help, params string[] labelNames) =>
-            _defaultFactory.CreateCounter(name, help, labelNames);
+            DefaultFactory.CreateCounter(name, help, labelNames);
 
         /// <summary>
         /// Gauges can have any numeric value and change arbitrarily.
         /// </summary>
         public static Gauge CreateGauge(string name, string help, params string[] labelNames) =>
-            _defaultFactory.CreateGauge(name, help, labelNames);
+            DefaultFactory.CreateGauge(name, help, labelNames);
 
         /// <summary>
         /// Summaries track the trends in events over time (10 minutes by default).
         /// </summary>
         public static Summary CreateSummary(string name, string help, params string[] labelNames) =>
-            _defaultFactory.CreateSummary(name, help, labelNames);
+            DefaultFactory.CreateSummary(name, help, labelNames);
 
         /// <summary>
         /// Histograms track the size and number of events in buckets.
         /// </summary>
         public static Histogram CreateHistogram(string name, string help, params string[] labelNames) =>
-            _defaultFactory.CreateHistogram(name, help, labelNames);
+            DefaultFactory.CreateHistogram(name, help, labelNames);
 
         static Metrics()
         {
@@ -122,7 +125,7 @@
             // Configures defaults to their default behaviors, can be overridden by user if they desire (before first collection).
             SuppressDefaultMetrics(SuppressDefaultMetricOptions.SuppressNone);
 
-            _defaultFactory = new MetricFactory(DefaultRegistry);
+            DefaultFactory = new MetricFactory(DefaultRegistry);
         }
 
         /// <summary>
