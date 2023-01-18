@@ -14,7 +14,7 @@
         public static CollectorRegistry DefaultRegistry { get; private set; }
         
         /// <summary>
-        /// The default metric factory use to create collectors.
+        /// The default metric factory used to create collectors.
         /// </summary>
         public static MetricFactory DefaultFactory { get; private set; }
 
