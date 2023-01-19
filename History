@@ -8,6 +8,7 @@
 - Simplify DotNetStats built-in collector code for ease of readability and more best practices (#365, #364)
 - Slightly improve Counter performance under concurrent load.
 - Reduce memory allocations performed during ASP.NET Core HTTP request tracking.
+- By default, EventCounterAdapter will only listen to a small predefined set of general-purpose useful event sources, to minimize resource consumption in the default configuration. A custom event source filter must now be provided to enable listening for additional event sources.
 * 7.1.0
 - Added back .NET Standard 2.0 support as some customers had a hard dependency on .NET Standard 2.0 (despite not being a documented feature even earlier).
 - Added (Observable)UpDownCounter support to MeterAdapter (.NET 7 specific feature).

@@ -30,7 +30,7 @@ namespace Prometheus
 
             _eventSourcesConnected = _metricFactory.CreateGauge("prometheus_net_eventcounteradapter_sources_connected_total", "Number of event sources that are currently connected to the adapter.");
 
-            _listener = new Listener(OnEventSourceCreated, ConfigureEventSource, OnEventWritten);
+            _listener = new Listener(ShouldUseEventSource, ConfigureEventSource, OnEventWritten);
         }
 
         public void Dispose()
@@ -47,7 +47,7 @@ namespace Prometheus
         // We never decrease it in the current implementation but perhaps might in a future implementation, so might as well make it a gauge.
         private readonly Gauge _eventSourcesConnected;
 
-        private bool OnEventSourceCreated(EventSource source)
+        private bool ShouldUseEventSource(EventSource source)
         {
             bool connect = _options.EventSourceFilterPredicate(source.Name);
 
@@ -151,11 +151,11 @@ namespace Prometheus
         private sealed class Listener : EventListener
         {
             public Listener(
-                Func<EventSource, bool> onEventSourceCreated,
+                Func<EventSource, bool> shouldUseEventSource,
                 Func<EventSource, EventCounterAdapterEventSourceSettings> configureEventSosurce,
                 Action<EventWrittenEventArgs> onEventWritten)
             {
-                _onEventSourceCreated = onEventSourceCreated;
+                _shouldUseEventSource = shouldUseEventSource;
                 _configureEventSosurce = configureEventSosurce;
                 _onEventWritten = onEventWritten;
 
@@ -167,13 +167,13 @@ namespace Prometheus
 
             private readonly List<EventSource> _preRegisteredEventSources = new List<EventSource>();
 
-            private readonly Func<EventSource, bool> _onEventSourceCreated;
+            private readonly Func<EventSource, bool> _shouldUseEventSource;
             private readonly Func<EventSource, EventCounterAdapterEventSourceSettings> _configureEventSosurce;
             private readonly Action<EventWrittenEventArgs> _onEventWritten;
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (_onEventSourceCreated == null)
+                if (_shouldUseEventSource == null)
                 {
                     // The way this EventListener thing works is rather strange. Immediately in the base class constructor, before we
                     // have even had time to wire up our subclass, it starts calling OnEventSourceCreated for all already-existing event sources...
@@ -182,7 +182,7 @@ namespace Prometheus
                     return;
                 }
 
-                if (!_onEventSourceCreated(eventSource))
+                if (!_shouldUseEventSource(eventSource))
                     return;
 
                 try
@@ -207,5 +207,18 @@ namespace Prometheus
                 _onEventWritten(eventData);
             }
         }
+
+        /// <summary>
+        /// By default we enable event sources that start with any of these strings. This is a manually curated list to try enable some useful ones
+        /// without just enabling everything under the sky (because .NET has no way to say "enable only the event counters", you have to enable all diagnostic events).
+        /// </summary>
+        private static readonly IReadOnlyList<string> DefaultEventSourcePrefixes = new[]
+        {
+            "System.Runtime",
+            "Microsoft-AspNetCore-",
+            "System.Net"
+        };
+
+        public static readonly Func<string, bool> DefaultEventSourceFilterPredicate = name => DefaultEventSourcePrefixes.Any(x => name.StartsWith(x, StringComparison.Ordinal));
     }
 }
