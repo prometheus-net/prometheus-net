@@ -44,7 +44,7 @@
                 Inc(increment:1, exemplar: exemplar);
             }
 
-            public void Inc(double increment = 1,  params Exemplar.LabelPair[] exemplar)
+            public void Inc(double increment = 1, params Exemplar.LabelPair[] exemplar)
             {
                 _inner.WithLease(x => x.Inc(increment, exemplar), _labelValues);
             }

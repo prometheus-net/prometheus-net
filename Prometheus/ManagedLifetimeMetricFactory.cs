@@ -18,6 +18,11 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
     private readonly MetricFactory _inner;
     private readonly TimeSpan _expiresAfter;
 
+    public IManagedLifetimeMetricFactory WithLabels(IDictionary<string, string> labels)
+    {
+        return new LabelEnrichingManagedLifetimeMetricFactory(this, labels);
+    }
+
     public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[] instanceLabelNames, CounterConfiguration? configuration = null)
     {
         var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames));
