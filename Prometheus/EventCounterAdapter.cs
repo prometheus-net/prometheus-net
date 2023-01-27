@@ -31,6 +31,8 @@ namespace Prometheus
 
             _eventSourcesConnected = _metricFactory.CreateGauge("prometheus_net_eventcounteradapter_sources_connected_total", "Number of event sources that are currently connected to the adapter.");
 
+            EventCounterAdapterMemoryWarden.EnsureStarted();
+
             _listener = new Listener(ShouldUseEventSource, ConfigureEventSource, options.UpdateInterval, OnEventWritten);
         }
 
