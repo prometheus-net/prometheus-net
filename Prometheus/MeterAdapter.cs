@@ -24,7 +24,7 @@ public sealed class MeterAdapter : IDisposable
         _factory = (ManagedLifetimeMetricFactory)Metrics.WithCustomRegistry(_options.Registry)
             .WithManagedLifetime(expiresAfter: options.MetricsExpireAfter);
 
-        _inheritedStaticLabelNames = _factory.GetAllStaticLabelNames().ToArray();
+        _inheritedStaticLabelNames = ((ManagedLifetimeMetricFactory)_factory).GetAllStaticLabelNames().ToArray();
 
         _listener.InstrumentPublished = OnInstrumentPublished;
         _listener.MeasurementsCompleted += OnMeasurementsCompleted;
@@ -56,7 +56,7 @@ public sealed class MeterAdapter : IDisposable
     private readonly MeterAdapterOptions _options;
 
     private readonly CollectorRegistry _registry;
-    private readonly ManagedLifetimeMetricFactory _factory;
+    private readonly IManagedLifetimeMetricFactory _factory;
     private readonly string[] _inheritedStaticLabelNames;
 
     private readonly Gauge _instrumentsConnected;
