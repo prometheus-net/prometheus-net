@@ -27,6 +27,11 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
             ReturnBorrowedExemplar(ref _observedExemplar, exemplar);
         }
 
+        public void Inc(double increment = 1.0)
+        {
+            Inc(increment: increment, Exemplar.None);
+        }
+
         public void Inc(params Exemplar.LabelPair[] exemplarLabels)
         {
             Inc(increment: 1, exemplarLabels: exemplarLabels);
