@@ -76,9 +76,10 @@ internal sealed class TextSerializer : IMetricsSerializer
 
         await _stream.Value.WriteAsync(HashHelpSpace, 0, HashHelpSpace.Length, cancel);
         await _stream.Value.WriteAsync(nameBytes, 0, nameLen, cancel);
+        // The space after the name in "HELP" is mandatory as per ABNF, even if there is no help text.
+        await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
         if (helpBytes.Length > 0)
         {
-            await _stream.Value.WriteAsync(Space, 0, Space.Length, cancel);
             await _stream.Value.WriteAsync(helpBytes, 0, helpBytes.Length, cancel);
         }
         await _stream.Value.WriteAsync(NewlineHashTypeSpace, 0, NewlineHashTypeSpace.Length, cancel);
