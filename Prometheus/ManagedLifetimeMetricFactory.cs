@@ -23,9 +23,9 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
         return new LabelEnrichingManagedLifetimeMetricFactory(this, labels);
     }
 
-    public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[] instanceLabelNames, CounterConfiguration? configuration = null)
+    public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[]? instanceLabelNames, CounterConfiguration? configuration)
     {
-        var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames));
+        var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames ?? Array.Empty<string>()));
 
         // Let's be optimistic and assume that in the typical case, the metric will already exist.
         if (_counters.TryGetValue(identity, out var existing))
@@ -35,9 +35,9 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
         return _counters.GetOrAdd(identity, initializer.CreateInstance);
     }
 
-    public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[] instanceLabelNames, GaugeConfiguration? configuration = null)
+    public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[]? instanceLabelNames, GaugeConfiguration? configuration)
     {
-        var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames));
+        var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames ?? Array.Empty<string>()));
 
         // Let's be optimistic and assume that in the typical case, the metric will already exist.
         if (_gauges.TryGetValue(identity, out var existing))
@@ -47,9 +47,9 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
         return _gauges.GetOrAdd(identity, initializer.CreateInstance);
     }
 
-    public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[] instanceLabelNames, HistogramConfiguration? configuration = null)
+    public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[]? instanceLabelNames, HistogramConfiguration? configuration)
     {
-        var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames));
+        var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames ?? Array.Empty<string>()));
 
         // Let's be optimistic and assume that in the typical case, the metric will already exist.
         if (_histograms.TryGetValue(identity, out var existing))
@@ -59,9 +59,9 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
         return _histograms.GetOrAdd(identity, initializer.CreateInstance);
     }
 
-    public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[] instanceLabelNames, SummaryConfiguration? configuration = null)
+    public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[]? instanceLabelNames, SummaryConfiguration? configuration)
     {
-        var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames));
+        var identity = new ManagedLifetimeMetricIdentity(name, StringSequence.From(instanceLabelNames ?? Array.Empty<string>()));
 
         // Let's be optimistic and assume that in the typical case, the metric will already exist.
         if (_summaries.TryGetValue(identity, out var existing))

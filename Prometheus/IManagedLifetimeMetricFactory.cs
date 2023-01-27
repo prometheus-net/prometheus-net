@@ -14,25 +14,25 @@ public interface IManagedLifetimeMetricFactory
     /// Creates a metric with a lease-extended lifetime.
     /// A timeseries will expire N seconds after the last lease is released, with N determined at factory create-time.
     /// </summary>
-    IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[] labelNames, CounterConfiguration? configuration = null);
+    IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[]? labelNames = null, CounterConfiguration? configuration = null);
 
     /// <summary>
     /// Creates a metric with a lease-extended lifetime.
     /// A timeseries will expire N seconds after the last lease is released, with N determined at factory create-time.
     /// </summary>
-    IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[] labelNames, GaugeConfiguration? configuration = null);
+    IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[]? labelNames = null, GaugeConfiguration? configuration = null);
 
     /// <summary>
     /// Creates a metric with a lease-extended lifetime.
     /// A timeseries will expire N seconds after the last lease is released, with N determined at factory create-time.
     /// </summary>
-    IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[] labelNames, HistogramConfiguration? configuration = null);
+    IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[]? labelNames = null, HistogramConfiguration? configuration = null);
 
     /// <summary>
     /// Creates a metric with a lease-extended lifetime.
     /// A timeseries will expire N seconds after the last lease is released, with N determined at factory create-time.
     /// </summary>
-    IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[] labelNames, SummaryConfiguration? configuration = null);
+    IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[]? labelNames = null, SummaryConfiguration? configuration = null);
 
     /// <summary>
     /// Returns a new metric factory that will add the specified labels to any metrics created using it.

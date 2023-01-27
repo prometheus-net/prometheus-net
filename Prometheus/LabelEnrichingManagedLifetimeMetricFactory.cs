@@ -28,9 +28,9 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
     private readonly string[] _enrichWithLabelNames;
     private readonly string[] _enrichWithLabelValues;
 
-    public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[] labelNames, CounterConfiguration? configuration = null)
+    public IManagedLifetimeMetricHandle<ICounter> CreateCounter(string name, string help, string[]? instanceLabelNames, CounterConfiguration? configuration)
     {
-        var combinedLabelNames = WithEnrichedLabelNames(labelNames);
+        var combinedLabelNames = WithEnrichedLabelNames(instanceLabelNames ?? Array.Empty<string>());
         var innerHandle = _inner.CreateCounter(name, help, combinedLabelNames, configuration);
 
         // 1-1 relationship between instance of inner handle and our labeling handle.
@@ -41,9 +41,9 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
     private LabelEnrichingManagedLifetimeCounter CreateCounterCore(IManagedLifetimeMetricHandle<ICounter> inner) => new LabelEnrichingManagedLifetimeCounter(inner, _enrichWithLabelValues);
     private readonly ConcurrentDictionary<IManagedLifetimeMetricHandle<ICounter>, LabelEnrichingManagedLifetimeCounter> _counters = new();
 
-    public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[] labelNames, GaugeConfiguration? configuration = null)
+    public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[]? instanceLabelNames, GaugeConfiguration? configuration)
     {
-        var combinedLabelNames = WithEnrichedLabelNames(labelNames);
+        var combinedLabelNames = WithEnrichedLabelNames(instanceLabelNames ?? Array.Empty<string>());
         var innerHandle = _inner.CreateGauge(name, help, combinedLabelNames, configuration);
 
         // 1-1 relationship between instance of inner handle and our labeling handle.
@@ -54,9 +54,9 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
     private LabelEnrichingManagedLifetimeGauge CreateGaugeCore(IManagedLifetimeMetricHandle<IGauge> inner) => new LabelEnrichingManagedLifetimeGauge(inner, _enrichWithLabelValues);
     private readonly ConcurrentDictionary<IManagedLifetimeMetricHandle<IGauge>, LabelEnrichingManagedLifetimeGauge> _gauges = new();
 
-    public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[] labelNames, HistogramConfiguration? configuration = null)
+    public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[]? instanceLabelNames, HistogramConfiguration? configuration)
     {
-        var combinedLabelNames = WithEnrichedLabelNames(labelNames);
+        var combinedLabelNames = WithEnrichedLabelNames(instanceLabelNames ?? Array.Empty<string>());
         var innerHandle = _inner.CreateHistogram(name, help, combinedLabelNames, configuration);
 
         // 1-1 relationship between instance of inner handle and our labeling handle.
@@ -67,9 +67,9 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
     private LabelEnrichingManagedLifetimeHistogram CreateHistogramCore(IManagedLifetimeMetricHandle<IHistogram> inner) => new LabelEnrichingManagedLifetimeHistogram(inner, _enrichWithLabelValues);
     private readonly ConcurrentDictionary<IManagedLifetimeMetricHandle<IHistogram>, LabelEnrichingManagedLifetimeHistogram> _histograms = new();
 
-    public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[] labelNames, SummaryConfiguration? configuration = null)
+    public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[]? instanceLabelNames, SummaryConfiguration? configuration)
     {
-        var combinedLabelNames = WithEnrichedLabelNames(labelNames);
+        var combinedLabelNames = WithEnrichedLabelNames(instanceLabelNames ?? Array.Empty<string>());
         var innerHandle = _inner.CreateSummary(name, help, combinedLabelNames, configuration);
 
         // 1-1 relationship between instance of inner handle and our labeling handle.
