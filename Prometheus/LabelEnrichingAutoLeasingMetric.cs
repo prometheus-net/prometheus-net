@@ -12,7 +12,7 @@ internal sealed class LabelEnrichingAutoLeasingMetric<TMetric> : ICollector<TMet
     private readonly ICollector<TMetric> _inner;
     private readonly string[] _enrichedLabelValues;
 
-    public TMetric Unlabelled => _inner.Unlabelled;
+    public TMetric Unlabelled => _inner.WithLabels(_enrichedLabelValues);
     public string Name => _inner.Name;
     public string Help => _inner.Help;
 
