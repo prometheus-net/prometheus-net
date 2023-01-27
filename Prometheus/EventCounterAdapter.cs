@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Globalization;
 
 namespace Prometheus
 {
@@ -30,7 +31,7 @@ namespace Prometheus
 
             _eventSourcesConnected = _metricFactory.CreateGauge("prometheus_net_eventcounteradapter_sources_connected_total", "Number of event sources that are currently connected to the adapter.");
 
-            _listener = new Listener(ShouldUseEventSource, ConfigureEventSource, OnEventWritten);
+            _listener = new Listener(ShouldUseEventSource, ConfigureEventSource, options.UpdateInterval, OnEventWritten);
         }
 
         public void Dispose()
@@ -153,10 +154,12 @@ namespace Prometheus
             public Listener(
                 Func<EventSource, bool> shouldUseEventSource,
                 Func<EventSource, EventCounterAdapterEventSourceSettings> configureEventSosurce,
+                TimeSpan updateInterval,
                 Action<EventWrittenEventArgs> onEventWritten)
             {
                 _shouldUseEventSource = shouldUseEventSource;
                 _configureEventSosurce = configureEventSosurce;
+                _updateInterval = updateInterval;
                 _onEventWritten = onEventWritten;
 
                 foreach (var eventSource in _preRegisteredEventSources)
@@ -169,6 +172,7 @@ namespace Prometheus
 
             private readonly Func<EventSource, bool> _shouldUseEventSource;
             private readonly Func<EventSource, EventCounterAdapterEventSourceSettings> _configureEventSosurce;
+            private readonly TimeSpan _updateInterval;
             private readonly Action<EventWrittenEventArgs> _onEventWritten;
 
             protected override void OnEventSourceCreated(EventSource eventSource)
@@ -191,7 +195,7 @@ namespace Prometheus
 
                     EnableEvents(eventSource, options.MinimumLevel, options.MatchKeywords, new Dictionary<string, string?>()
                     {
-                        ["EventCounterIntervalSec"] = "1"
+                        ["EventCounterIntervalSec"] = ((int)Math.Max(1, _updateInterval.TotalSeconds)).ToString(CultureInfo.InvariantCulture),
                     });
                 }
                 catch (Exception ex)
