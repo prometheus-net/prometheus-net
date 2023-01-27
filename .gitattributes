@@ -3,6 +3,9 @@
 ###############################################################################
 * text=auto
 
+# Linux scripts should have Linux file endings.
+*.sh text eol=lf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
