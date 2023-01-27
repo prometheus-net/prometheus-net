@@ -219,7 +219,8 @@ namespace Prometheus
         private static readonly IReadOnlyList<string> DefaultEventSourcePrefixes = new[]
         {
             "System.Runtime",
-            "Microsoft-AspNetCore-",
+            "Microsoft-AspNetCore",
+            "Microsoft.AspNetCore",
             "System.Net"
         };
 
