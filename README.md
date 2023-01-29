@@ -851,13 +851,13 @@ As an example of the performance of measuring data using prometheus-net, we have
 
 | Metric type | Concurrency | Measurements per second |
 |-------------|------------:|------------------------:|
-| Gauge       |    1 thread |             539 million |
-| Counter     |    1 thread |              57 million |
-| Histogram   |    1 thread |              56 million |
+| Gauge       |    1 thread |             521 million |
+| Counter     |    1 thread |              87 million |
+| Histogram   |    1 thread |              46 million |
 | Summary     |    1 thread |               2 million |
-| Gauge       |  16 threads |              56 million |
+| Gauge       |  16 threads |              55 million |
 | Counter     |  16 threads |              10 million |
-| Histogram   |  16 threads |               7 million |
+| Histogram   |  16 threads |              14 million |
 | Summary     |  16 threads |               2 million |
 
 > **Note**
