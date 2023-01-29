@@ -56,13 +56,13 @@ public sealed class SampleService : BackgroundService
 
         var googleTask = Task.Run(async delegate
         {
-            await httpClient.GetAsync(googleUrl, cancel);
+            using var response = await httpClient.GetAsync(googleUrl, cancel);
             googleStopwatch.Stop();
         }, cancel);
 
         var microsoftTask = Task.Run(async delegate
         {
-            await httpClient.GetAsync(microsoftUrl, cancel);
+            using var response = await httpClient.GetAsync(microsoftUrl, cancel);
             microsoftStopwatch.Stop();
         }, cancel);
 
