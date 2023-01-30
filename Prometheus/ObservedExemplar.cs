@@ -23,7 +23,7 @@ internal sealed class ObservedExemplar
 
     internal static INowProvider NowProvider = new RealNowProvider();
 
-    public ExemplarLabelSet? Labels { get; private set; }
+    public Exemplar? Labels { get; private set; }
     public double Value { get; private set; }
     public double Timestamp { get; private set; }
 
@@ -49,7 +49,7 @@ internal sealed class ObservedExemplar
 
     public bool IsValid => Labels != null;
 
-    private void Update(ExemplarLabelSet labels, double value)
+    private void Update(Exemplar labels, double value)
     {
         Debug.Assert(this != Empty, "Do not mutate the sentinel");
 
@@ -84,7 +84,7 @@ internal sealed class ObservedExemplar
     /// <remarks>
     /// Takes ownership of the labels and will destroy them when the instance is returned to the pool.
     /// </remarks>
-    public static ObservedExemplar CreatePooled(ExemplarLabelSet labels, double value)
+    public static ObservedExemplar CreatePooled(Exemplar labels, double value)
     {
         var instance = Pool.Get();
         instance.Update(labels, value);

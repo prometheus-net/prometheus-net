@@ -10,7 +10,7 @@ public interface ICounter : ICollectorChild
     /// If null, the default exemplar provider associated with the metric is asked to provide an exemplar.
     /// Pass Exemplar.None to explicitly record an observation without an exemplar.
     /// </param>
-    void Inc(ExemplarLabelSet? exemplar);
+    void Inc(Exemplar? exemplar);
 
     /// <summary>
     /// Increment a counter
@@ -21,7 +21,7 @@ public interface ICounter : ICollectorChild
     /// If null, the default exemplar provider associated with the metric is asked to provide an exemplar.
     /// Pass Exemplar.None to explicitly record an observation without an exemplar.
     /// </param>
-    void Inc(double increment = 1, ExemplarLabelSet? exemplar = null);
+    void Inc(double increment = 1, Exemplar? exemplar = null);
 
     void IncTo(double targetValue);
 

@@ -25,7 +25,7 @@ internal sealed class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<
         finally
         {
             // We pass either null (== use default exemplar provider) or None (== do not record exemplar).
-            ExemplarLabelSet? exemplar = _options.ExemplarPredicate(context) ? null : Exemplar.None;
+            Exemplar? exemplar = _options.ExemplarPredicate(context) ? null : Exemplar.None;
             
             CreateChild(context).Observe(stopWatch.GetElapsedTime().TotalSeconds, exemplar);
         }

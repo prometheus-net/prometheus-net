@@ -23,7 +23,7 @@ internal sealed class HttpRequestCountMiddleware : HttpRequestMiddlewareBase<ICo
         finally
         {
             // We pass either null (== use default exemplar provider) or None (== do not record exemplar).
-            ExemplarLabelSet? exemplar = _options.ExemplarPredicate(context) ? null : Exemplar.None;
+            Exemplar? exemplar = _options.ExemplarPredicate(context) ? null : Exemplar.None;
 
             CreateChild(context).Inc(exemplar);
         }

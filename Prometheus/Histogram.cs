@@ -121,13 +121,13 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
         public double Sum => _sum.Value;
         public long Count => _bucketCounts.Sum(b => b.Value);
 
-        public void Observe(double val, ExemplarLabelSet? exemplarLabels) => ObserveInternal(val, 1, exemplarLabels);
+        public void Observe(double val, Exemplar? exemplarLabels) => ObserveInternal(val, 1, exemplarLabels);
 
         public void Observe(double val) => Observe(val, 1);
 
         public void Observe(double val, long count) => ObserveInternal(val, count, null);
 
-        private void ObserveInternal(double val, long count, ExemplarLabelSet? exemplarLabels)
+        private void ObserveInternal(double val, long count, Exemplar? exemplarLabels)
         {
             if (double.IsNaN(val))
             {
@@ -165,7 +165,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
     public long Count => Unlabelled.Count;
     public void Observe(double val) => Unlabelled.Observe(val, 1);
     public void Observe(double val, long count) => Unlabelled.Observe(val, count);
-    public void Observe(double val, ExemplarLabelSet? exemplar) => Unlabelled.Observe(val, exemplar);
+    public void Observe(double val, Exemplar? exemplar) => Unlabelled.Observe(val, exemplar);
     public void Publish() => Unlabelled.Publish();
     public void Unpublish() => Unlabelled.Unpublish();
 

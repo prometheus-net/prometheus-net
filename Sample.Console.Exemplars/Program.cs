@@ -26,7 +26,7 @@ var recordSizeInPages = Metrics.CreateHistogram("sample_record_size_pages", "Siz
 });
 
 // SAMPLED EXEMPLAR: For the next histogram we only want to record exemplars for values larger than 0.1 (i.e. when record processing goes slowly).
-static ExemplarLabelSet RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
+static Exemplar RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
 {
     if (value < 0.1)
         return Exemplar.None;

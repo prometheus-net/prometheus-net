@@ -20,7 +20,7 @@ public interface IHistogram : IObserver
     /// If null, the default exemplar provider associated with the metric is asked to provide an exemplar.
     /// Pass Exemplar.None to explicitly record an observation without an exemplar.
     /// </param>
-    void Observe(double val, ExemplarLabelSet? exemplar = null);
+    void Observe(double val, Exemplar? exemplar = null);
     
     /// <summary>
     /// Gets the sum of all observed events.

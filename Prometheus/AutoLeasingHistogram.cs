@@ -45,7 +45,7 @@ internal sealed class AutoLeasingHistogram : ICollector<IHistogram>
             _inner.WithLease(x => x.Observe(val, count), _labelValues);
         }
 
-        public void Observe(double val, ExemplarLabelSet? exemplar)
+        public void Observe(double val, Exemplar? exemplar)
         {
             _inner.WithLease(x => x.Observe(val, exemplar), _labelValues);
         }

@@ -5,4 +5,4 @@
 /// </summary>
 /// <param name="metric">The metric instance for which an exemplar is being provided.</param>
 /// <param name="value">Context-dependent - for counters, the increment; for histograms, the observed value.</param>
-public delegate ExemplarLabelSet ExemplarProvider(Collector metric, double value);
+public delegate Exemplar ExemplarProvider(Collector metric, double value);

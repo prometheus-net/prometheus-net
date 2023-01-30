@@ -115,7 +115,7 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         }
     }
 
-    protected ExemplarLabelSet ExemplarOrDefault(ExemplarLabelSet? exemplar, double value)
+    protected Exemplar ExemplarOrDefault(Exemplar? exemplar, double value)
     {
         // If any non-null value is provided, we use it as exemplar.
         // Only a null value causes us to ask the default exemplar provider.
