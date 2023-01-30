@@ -47,7 +47,7 @@ namespace Prometheus.HttpMetrics
         /// The factory to use for creating the default metric for this middleware.
         /// Not used if a custom metric is already provided in options.
         /// </summary>
-        protected MetricFactory MetricFactory { get; }
+        protected IMetricFactory MetricFactory { get; }
 
         private readonly List<HttpRouteParameterMapping> _additionalRouteParameters;
         private readonly List<HttpCustomLabel> _customLabels;
@@ -64,7 +64,7 @@ namespace Prometheus.HttpMetrics
 
         protected HttpRequestMiddlewareBase(HttpMetricsOptionsBase options, TCollector? customMetric)
         {
-            MetricFactory = Metrics.WithCustomRegistry(options.Registry ?? Metrics.DefaultRegistry);
+            MetricFactory = options.MetricFactory ?? Metrics.WithCustomRegistry(options.Registry ?? Metrics.DefaultRegistry);
 
             _additionalRouteParameters = options.AdditionalRouteParameters ?? new List<HttpRouteParameterMapping>(0);
             _customLabels = options.CustomLabels ?? new List<HttpCustomLabel>(0);

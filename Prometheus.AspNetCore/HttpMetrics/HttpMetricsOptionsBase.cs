@@ -32,9 +32,19 @@ namespace Prometheus.HttpMetrics
 
         /// <summary>
         /// Allows you to override the registry used to create the default metric instance.
-        /// Value is ignored if you specify a custom metric instance in the options.
         /// </summary>
+        /// <remarks>
+        /// Value is ignored if you specify a custom metric instance or metric factory in the options (instance overrides factory overrides registry).
+        /// </remarks>
         public CollectorRegistry? Registry { get; set; }
+
+        /// <summary>
+        /// Allows you to override the metric factory used to create the default metric instance.
+        /// </summary>
+        /// <remarks>
+        /// Value is ignored if you specify a custom metric instance in the options (instance overrides factory overrides registry).
+        /// </remarks>
+        public IMetricFactory? MetricFactory { get; set; }
 
         /// <summary>
         /// If set, the "page" label will be considered one of the built-in default labels.

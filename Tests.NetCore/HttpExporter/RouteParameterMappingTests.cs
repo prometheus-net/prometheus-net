@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Prometheus.HttpMetrics;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -61,6 +62,51 @@ namespace Prometheus.Tests.HttpExporter
                 TestController,
                 TestEndpoint
             }, child.InstanceLabels.Values.ToArray());
+        }
+
+        [TestMethod]
+        public void DefaultMetric_WithCustomFactory_AppliesStandardLabelsAndFactoryLabels()
+        {
+            SetupHttpContext(_context, TestStatusCode, TestMethod, TestAction, TestController);
+
+            var labelName = "static_label_1";
+            var labelValue = "static_label_value_1";
+
+            var factory = Metrics.WithCustomRegistry(_registry)
+                .WithLabels(new Dictionary<string, string>
+                {
+                    { labelName, labelValue }
+                });
+
+            var middleware = new HttpRequestCountMiddleware(_next, new HttpRequestCountOptions
+            {
+                Registry = _registry,
+                MetricFactory = factory
+            });
+            var child = (ChildBase)middleware.CreateChild(_context);
+
+            CollectionAssert.AreEquivalent(DefaultLabelNamesPlusEndpoint, child.InstanceLabels.Names.ToArray());
+            CollectionAssert.AreEquivalent(new[]
+            {
+                TestStatusCode.ToString(),
+                TestMethod,
+                TestAction,
+                TestController,
+                TestEndpoint
+            }, child.InstanceLabels.Values.ToArray());
+
+            var expectedFlattenedLabelNames = new[] { labelName }.Concat(DefaultLabelNamesPlusEndpoint).ToArray();
+            var expectedFlattenedLabelValues = new[] { labelValue }.Concat(new[]
+            {
+                TestStatusCode.ToString(),
+                TestMethod,
+                TestAction,
+                TestController,
+                TestEndpoint
+            }).ToArray();
+
+            CollectionAssert.AreEquivalent(expectedFlattenedLabelNames, child.FlattenedLabels.Names.ToArray());
+            CollectionAssert.AreEquivalent(expectedFlattenedLabelValues, child.FlattenedLabels.Values.ToArray());
         }
 
         [TestMethod]
