@@ -828,7 +828,7 @@ The level of detail obtained from this is rather low - only the total count for 
 
 You can configure the integration using `Metrics.ConfigureEventCounterAdapter()`.
 
-By default, prometheus-net will only publish a small predefined set of general-purpose useful event counters to minimize resource consumption in the default configuration. A custom event source filter must now be provided in the configuration to enable publishing of additional event counters.
+By default, prometheus-net will only publish [the well-known .NET EventCounters](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/available-counters) to minimize resource consumption in the default configuration. A custom event source filter must be provided in the configuration to enable publishing of additional event counters.
 
 See also, [Sample.Console](Sample.Console/Program.cs).
 
