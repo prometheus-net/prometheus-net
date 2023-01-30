@@ -356,7 +356,7 @@ You can customize the default exemplar provider via `IMetricFactory.ExemplarBeha
 
 ```csharp
 // For the next histogram we only want to record exemplars for values larger than 0.1 (i.e. when record processing goes slowly).
-static Exemplar.LabelPair[] RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
+static Exemplar RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
 {
     if (value < 0.1)
         return Exemplar.None;
@@ -388,8 +388,8 @@ private static readonly Exemplar.LabelKey RecordIdKey = Exemplar.Key("record_id"
 
 foreach (var record in recordsToProcess)
 {
-    var recordIdKeyValuePair = RecordIdKey.WithValue(record.Id.ToString());
-    RecordsProcessed.Inc(recordIdKeyValuePair);
+    var exemplar = Exemplar.From(RecordIdKey.WithValue(record.Id.ToString()));
+    RecordsProcessed.Inc(exemplar);
 }
 ```
 
