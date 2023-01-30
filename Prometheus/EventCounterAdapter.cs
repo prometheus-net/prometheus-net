@@ -10,13 +10,6 @@ namespace Prometheus
     /// </summary>
     /// <remarks>
     /// All .NET event counters are transformed into Prometheus metrics with translated names.
-    /// 
-    /// There appear to be different types of "incrementing" counters in .NET:
-    /// * some "incrementing" counters publish the increment value ("+5")
-    /// * some "incrementing" counters are just gauges that publish a "current" value
-    /// 
-    /// It is not possible for us to really determine which is which, so for incrementing event counters we publish both a gauge (with latest value) and counter (with total value).
-    /// Which one you use for which .NET event counter depends on how the authors of the event counter made it - one of them will be wrong!
     /// </remarks>
     public sealed class EventCounterAdapter : IDisposable
     {
