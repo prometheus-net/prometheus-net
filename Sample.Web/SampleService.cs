@@ -68,7 +68,7 @@ public sealed class SampleService : BackgroundService
 
         await Task.WhenAll(googleTask, microsoftTask);
 
-        var exemplar = Exemplar.Pair("traceID", "1234");
+        var exemplar = Exemplar.From(Exemplar.Pair("traceID", "1234"));
         
         // Determine the winner and report the change in score.
         if (googleStopwatch.Elapsed < microsoftStopwatch.Elapsed)

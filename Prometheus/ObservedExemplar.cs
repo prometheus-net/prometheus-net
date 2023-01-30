@@ -6,7 +6,7 @@ namespace Prometheus;
 /// <summary>
 /// Internal representation of an Exemplar ready to be serialized.
 /// </summary>
-internal class ObservedExemplar
+internal sealed class ObservedExemplar
 {
     /// <summary>
     /// OpenMetrics places a length limit of 128 runes on the exemplar (sum of all key value pairs).
@@ -23,7 +23,7 @@ internal class ObservedExemplar
 
     internal static INowProvider NowProvider = new RealNowProvider();
 
-    public Exemplar.LabelPair[]? Labels { get; private set; }
+    public ExemplarLabelSet? Labels { get; private set; }
     public double Value { get; private set; }
     public double Timestamp { get; private set; }
 
@@ -49,18 +49,18 @@ internal class ObservedExemplar
 
     public bool IsValid => Labels != null;
 
-    private void Update(Exemplar.LabelPair[] labels, double value)
+    private void Update(ExemplarLabelSet labels, double value)
     {
         Debug.Assert(this != Empty, "Do not mutate the sentinel");
 
         var totalRuneCount = 0;
         for (var i = 0; i < labels.Length; i++)
         {
-            totalRuneCount += labels[i].RuneCount;
+            totalRuneCount += labels.Buffer[i].RuneCount;
             for (var j = 0; j < labels.Length; j++)
             {
                 if (i == j) continue;
-                if (Equal(labels[i].KeyBytes, labels[j].KeyBytes))
+                if (Equal(labels.Buffer[i].KeyBytes, labels.Buffer[j].KeyBytes))
                     throw new ArgumentException("Exemplar contains duplicate keys.");
             }
         }
@@ -81,10 +81,13 @@ internal class ObservedExemplar
         return x == 0;
     }
 
-    public static ObservedExemplar CreatePooled(Exemplar.LabelPair[] labelPairs, double value)
+    /// <remarks>
+    /// Takes ownership of the labels and will destroy them when the instance is returned to the pool.
+    /// </remarks>
+    public static ObservedExemplar CreatePooled(ExemplarLabelSet labels, double value)
     {
         var instance = Pool.Get();
-        instance.Update(labelPairs, value);
+        instance.Update(labels, value);
         return instance;
     }
 
@@ -94,5 +97,8 @@ internal class ObservedExemplar
             return; // We never put the "Empty" instance into the pool. Do the check here to avoid repeating it any time we return instances to the pool.
 
         Pool.Return(instance);
+
+        if (instance.Labels.HasValue)
+            instance.Labels.Value.ReturnToPoolIfNotEmpty();
     }
 }

@@ -27,17 +27,17 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
             ReturnBorrowedExemplar(ref _observedExemplar, exemplar);
         }
 
-        public void Inc(double increment = 1.0)
+        public void Inc(double increment)
         {
             Inc(increment: increment, Exemplar.None);
         }
 
-        public void Inc(params Exemplar.LabelPair[] exemplarLabels)
+        public void Inc(ExemplarLabelSet? exemplarLabels)
         {
             Inc(increment: 1, exemplarLabels: exemplarLabels);
         }
 
-        public void Inc(double increment = 1.0, params Exemplar.LabelPair[] exemplarLabels)
+        public void Inc(double increment = 1.0, ExemplarLabelSet? exemplarLabels = null)
         {
             if (increment < 0.0)
                 throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
@@ -46,7 +46,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
 
             if (exemplarLabels is { Length: > 0 })
             {
-                var exemplar = ObservedExemplar.CreatePooled(exemplarLabels, increment);
+                var exemplar = ObservedExemplar.CreatePooled(exemplarLabels.Value, increment);
                 ObservedExemplar.ReturnPooledIfNotEmpty(Interlocked.Exchange(ref _observedExemplar, exemplar));
             }
 
@@ -74,19 +74,19 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
     {
     }
 
-    public void Inc(double increment = 1) => Unlabelled.Inc(increment);
+    public void Inc(double increment) => Unlabelled.Inc(increment);
     public void IncTo(double targetValue) => Unlabelled.IncTo(targetValue);
     public double Value => Unlabelled.Value;
 
     public void Publish() => Unlabelled.Publish();
     public void Unpublish() => Unlabelled.Unpublish();
 
-    public void Inc(params Exemplar.LabelPair[] exemplar)
+    public void Inc(ExemplarLabelSet? exemplar)
     {
         Inc(increment: 1, exemplar: exemplar);
     }
 
-    public void Inc(double increment = 1, params Exemplar.LabelPair[] exemplar) =>
+    public void Inc(double increment = 1, ExemplarLabelSet? exemplar = null) =>
         Unlabelled.Inc(increment, exemplar);
 
     internal override MetricType Type => MetricType.Counter;

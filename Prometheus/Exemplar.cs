@@ -7,7 +7,10 @@ namespace Prometheus;
 
 public static class Exemplar
 {
-    public static readonly LabelPair[] None = Array.Empty<LabelPair>();
+    /// <summary>
+    /// An exemplar value that indicates no exemplar is to be recorded.
+    /// </summary>
+    public static readonly ExemplarLabelSet None = ExemplarLabelSet.Empty;
 
     /// <summary>
     /// An exemplar label key.
@@ -77,13 +80,76 @@ public static class Exemplar
         return Key(key).WithValue(value);
     }
 
+    public static ExemplarLabelSet From(LabelPair labelPair1, LabelPair labelPair2, LabelPair labelPair3, LabelPair labelPair4, LabelPair labelPair5, LabelPair labelPair6)
+    {
+        var exemplar = ExemplarLabelSet.AllocateFromPool(length: 6);
+        exemplar.Buffer[0] = labelPair1;
+        exemplar.Buffer[1] = labelPair2;
+        exemplar.Buffer[2] = labelPair3;
+        exemplar.Buffer[3] = labelPair4;
+        exemplar.Buffer[4] = labelPair5;
+        exemplar.Buffer[5] = labelPair6;
+
+        return exemplar;
+    }
+
+    public static ExemplarLabelSet From(LabelPair labelPair1, LabelPair labelPair2, LabelPair labelPair3, LabelPair labelPair4, LabelPair labelPair5)
+    {
+        var exemplar = ExemplarLabelSet.AllocateFromPool(length: 5);
+        exemplar.Buffer[0] = labelPair1;
+        exemplar.Buffer[1] = labelPair2;
+        exemplar.Buffer[2] = labelPair3;
+        exemplar.Buffer[3] = labelPair4;
+        exemplar.Buffer[4] = labelPair5;
+
+        return exemplar;
+    }
+
+    public static ExemplarLabelSet From(LabelPair labelPair1, LabelPair labelPair2, LabelPair labelPair3, LabelPair labelPair4)
+    {
+        var exemplar = ExemplarLabelSet.AllocateFromPool(length: 4);
+        exemplar.Buffer[0] = labelPair1;
+        exemplar.Buffer[1] = labelPair2;
+        exemplar.Buffer[2] = labelPair3;
+        exemplar.Buffer[3] = labelPair4;
+
+        return exemplar;
+    }
+
+    public static ExemplarLabelSet From(LabelPair labelPair1, LabelPair labelPair2, LabelPair labelPair3)
+    {
+        var exemplar = ExemplarLabelSet.AllocateFromPool(length: 3);
+        exemplar.Buffer[0] = labelPair1;
+        exemplar.Buffer[1] = labelPair2;
+        exemplar.Buffer[2] = labelPair3;
+
+        return exemplar;
+    }
+
+    public static ExemplarLabelSet From(LabelPair labelPair1, LabelPair labelPair2)
+    {
+        var exemplar = ExemplarLabelSet.AllocateFromPool(length: 2);
+        exemplar.Buffer[0] = labelPair1;
+        exemplar.Buffer[1] = labelPair2;
+
+        return exemplar;
+    }
+
+    public static ExemplarLabelSet From(LabelPair labelPair1)
+    {
+        var exemplar = ExemplarLabelSet.AllocateFromPool(length: 1);
+        exemplar.Buffer[0] = labelPair1;
+
+        return exemplar;
+    }
+
     // Based on https://opentelemetry.io/docs/reference/specification/compatibility/prometheus_and_openmetrics/
     private static readonly LabelKey DefaultTraceIdKey = Key("trace_id");
     private static readonly LabelKey DefaultSpanIdKey = Key("span_id");
 
-    public static LabelPair[] FromTraceContext() => FromTraceContext(DefaultTraceIdKey, DefaultSpanIdKey);
+    public static ExemplarLabelSet FromTraceContext() => FromTraceContext(DefaultTraceIdKey, DefaultSpanIdKey);
 
-    public static LabelPair[] FromTraceContext(LabelKey traceIdKey, LabelKey spanIdKey)
+    public static ExemplarLabelSet FromTraceContext(LabelKey traceIdKey, LabelKey spanIdKey)
     {
 #if NET6_0_OR_GREATER
         var activity = Activity.Current;
@@ -92,7 +158,7 @@ public static class Exemplar
             var traceIdLabel = traceIdKey.WithValue(activity.TraceId.ToString());
             var spanIdLabel = spanIdKey.WithValue(activity.SpanId.ToString());
 
-            return new[] { traceIdLabel, spanIdLabel };
+            return From(traceIdLabel, spanIdLabel);
         }
 #endif
 

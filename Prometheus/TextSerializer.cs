@@ -126,11 +126,11 @@ internal sealed class TextSerializer : IMetricsSerializer
     private async Task WriteExemplarAsync(CancellationToken cancel, ObservedExemplar exemplar)
     {
         await _stream.Value.WriteAsync(SpaceHashSpaceLeftBrace, 0, SpaceHashSpaceLeftBrace.Length, cancel);
-        for (var i = 0; i < exemplar.Labels!.Length; i++)
+        for (var i = 0; i < exemplar.Labels!.Value.Length; i++)
         {
             if (i > 0)
                 await _stream.Value.WriteAsync(Comma, 0, Comma.Length, cancel);
-            await WriteLabel(exemplar.Labels[i].KeyBytes, exemplar.Labels[i].ValueBytes, cancel);
+            await WriteLabel(exemplar.Labels!.Value.Buffer[i].KeyBytes, exemplar.Labels!.Value.Buffer[i].ValueBytes, cancel);
         }
 
         await _stream.Value.WriteAsync(RightBraceSpace, 0, RightBraceSpace.Length, cancel);

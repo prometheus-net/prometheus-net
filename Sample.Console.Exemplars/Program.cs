@@ -26,7 +26,7 @@ var recordSizeInPages = Metrics.CreateHistogram("sample_record_size_pages", "Siz
 });
 
 // SAMPLED EXEMPLAR: For the next histogram we only want to record exemplars for values larger than 0.1 (i.e. when record processing goes slowly).
-static Exemplar.LabelPair[] RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
+static ExemplarLabelSet RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
 {
     if (value < 0.1)
         return Exemplar.None;
@@ -73,10 +73,10 @@ _ = Task.Run(async delegate
 
         // CUSTOM EXEMPLAR: We pass the record ID key-value pair when we increment the metric.
         // When the metric data is published to Prometheus, the most recent record ID will be attached to it.
-        var recordIdKeyValuePair = recordIdKey.WithValue(recordId.ToString());
+        var exemplar = Exemplar.From(recordIdKey.WithValue(recordId.ToString()));
 
-        recordsProcessed.Inc(recordIdKeyValuePair);
-        recordSizeInPages.Observe(recordPageCount, recordIdKeyValuePair);
+        recordsProcessed.Inc(exemplar);
+        recordSizeInPages.Observe(recordPageCount, exemplar);
     }
 });
 

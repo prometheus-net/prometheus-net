@@ -115,11 +115,12 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         }
     }
 
-    protected Exemplar.LabelPair[] ExemplarOrDefault(Exemplar.LabelPair[] exemplar, double value)
+    protected ExemplarLabelSet ExemplarOrDefault(ExemplarLabelSet? exemplar, double value)
     {
-        // If a custom exemplar was provided for the observation, just use it.
-        if (exemplar is { Length: > 0 })
-            return exemplar;
+        // If any non-null value is provided, we use it as exemplar.
+        // Only a null value causes us to ask the default exemplar provider.
+        if (exemplar.HasValue)
+            return exemplar.Value;
 
         return _exemplarBehavior.DefaultExemplarProvider?.Invoke(Parent, value) ?? Exemplar.None;
     }

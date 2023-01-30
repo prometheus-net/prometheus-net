@@ -1,44 +1,45 @@
 using Microsoft.AspNetCore.Http;
 
-namespace Prometheus.HttpMetrics
+namespace Prometheus.HttpMetrics;
+
+internal sealed class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<ICollector<IHistogram>, IHistogram>
 {
-    internal sealed class HttpRequestDurationMiddleware : HttpRequestMiddlewareBase<ICollector<IHistogram>, IHistogram>
+    private readonly RequestDelegate _next;
+    private readonly HttpRequestDurationOptions _options;
+
+    public HttpRequestDurationMiddleware(RequestDelegate next, HttpRequestDurationOptions options)
+        : base(options, options?.Histogram)
     {
-        private readonly RequestDelegate _next;
-
-        public HttpRequestDurationMiddleware(RequestDelegate next, HttpRequestDurationOptions options)
-            : base(options, options?.Histogram)
-        {
-            _next = next ?? throw new ArgumentNullException(nameof(next));
-        }
-
-        public async Task Invoke(HttpContext context)
-        {
-            var stopWatch = ValueStopwatch.StartNew();
-
-            // We need to write this out in long form instead of using a timer because routing data in
-            // ASP.NET Core 2 is only available *after* executing the next request delegate.
-            // So we would not have the right labels if we tried to create the child early on.
-            try
-            {
-                await _next(context);
-            }
-            finally
-            {
-                CreateChild(context).Observe(stopWatch.GetElapsedTime().TotalSeconds);
-            }
-        }
-
-        protected override string[] BaselineLabels => HttpRequestLabelNames.Default;
-
-        protected override ICollector<IHistogram> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateHistogram(
-            "http_request_duration_seconds",
-            "The duration of HTTP requests processed by an ASP.NET Core application.",
-            labelNames,
-            new HistogramConfiguration
-            {
-                // 1 ms to 32K ms buckets
-                Buckets = Histogram.ExponentialBuckets(0.001, 2, 16),
-            });
+        _next = next ?? throw new ArgumentNullException(nameof(next));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
     }
+
+    public async Task Invoke(HttpContext context)
+    {
+        var stopWatch = ValueStopwatch.StartNew();
+
+        try
+        {
+            await _next(context);
+        }
+        finally
+        {
+            // We pass either null (== use default exemplar provider) or None (== do not record exemplar).
+            ExemplarLabelSet? exemplar = _options.ExemplarPredicate(context) ? null : Exemplar.None;
+            
+            CreateChild(context).Observe(stopWatch.GetElapsedTime().TotalSeconds, exemplar);
+        }
+    }
+
+    protected override string[] BaselineLabels => HttpRequestLabelNames.Default;
+
+    protected override ICollector<IHistogram> CreateMetricInstance(string[] labelNames) => MetricFactory.CreateHistogram(
+        "http_request_duration_seconds",
+        "The duration of HTTP requests processed by an ASP.NET Core application.",
+        labelNames,
+        new HistogramConfiguration
+        {
+            // 1 ms to 32K ms buckets
+            Buckets = Histogram.ExponentialBuckets(0.001, 2, 16),
+        });
 }

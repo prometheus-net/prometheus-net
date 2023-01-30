@@ -43,7 +43,16 @@ public class MeasurementBenchmarks
     private readonly Summary.Child _summary;
     private readonly Histogram.Child _histogram;
 
-    private Exemplar.LabelPair[] _exemplar = Array.Empty<Exemplar.LabelPair>();
+    private readonly Exemplar.LabelKey _traceIdKey = Exemplar.Key("trace_id");
+    private readonly Exemplar.LabelKey _spanIdKey = Exemplar.Key("span_id");
+
+    // We preallocate the exemplar values to avoid measuring the random()->string serialization as part of the benchmark.
+    // What we care about measuring is the overhead of processing the exemplar, not of generating/serializing it.
+    private readonly string _traceIdValue = "7f825eb926a90af6961ace5f9a239945";
+    private readonly string _spanIdValue = "a77603af408a13ec";
+
+    private Exemplar.LabelPair _traceIdLabel;
+    private Exemplar.LabelPair _spanIdLabel;
 
     public MeasurementBenchmarks()
     {
@@ -84,12 +93,11 @@ public class MeasurementBenchmarks
     [GlobalSetup]
     public void GlobalSetup()
     {
-        if (WithExemplars)
-        {
-            // You often do need to allocate new exemplar key-value pairs to measure data from new contexts but this benchmark
-            // exists to indicate the pure measurement performance independent of this, so we reuse an exemplar.
-            _exemplar = new[] { Exemplar.Key("traceID").WithValue("bar"), Exemplar.Key("traceID2").WithValue("foo") };
-        }
+        // There is an unavoidable string->bytes encoding overhead from this.
+        // As it is fixed overhead based on user data size, we pre-encode the strings here to avoid them influencing the benchmark results.
+        // We only preallocate the strings, however (creating the LabelPairs). We still do as much of the exemplar "processing" inline as feasible, to be realistic.
+        _traceIdLabel = _traceIdKey.WithValue(_traceIdValue);
+        _spanIdLabel = _spanIdKey.WithValue(_spanIdValue);
     }
 
     [IterationSetup]
@@ -145,7 +153,8 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _counter.Inc(_exemplar);
+            var exemplar = WithExemplars ? Exemplar.From(_traceIdLabel, _spanIdLabel) : Exemplar.None;
+            _counter.Inc(exemplar);
         }
     }
 
@@ -171,7 +180,8 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _histogram.Observe(i, _exemplar);
+            var exemplar = WithExemplars ? Exemplar.From(_traceIdLabel, _spanIdLabel) : Exemplar.None;
+            _histogram.Observe(i, exemplar);
         }
     }
 

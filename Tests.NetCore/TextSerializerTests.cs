@@ -203,10 +203,10 @@ boom_bam_bucket{le=""+Inf""} 2
                 Buckets = new[] { 1, 2.5, 3, Math.Pow(10, 45) }
             });
 
-            counter.Observe(1, Exemplar.Pair("traceID", "1"));
-            counter.Observe(1.5, Exemplar.Pair("traceID", "2"));
-            counter.Observe(4, Exemplar.Pair("traceID", "3"));
-            counter.Observe(Math.Pow(10, 44), Exemplar.Pair("traceID", "4"));
+            counter.Observe(1, Exemplar.From(Exemplar.Pair("traceID", "1")));
+            counter.Observe(1.5, Exemplar.From(Exemplar.Pair("traceID", "2")));
+            counter.Observe(4, Exemplar.From(Exemplar.Pair("traceID", "3")));
+            counter.Observe(Math.Pow(10, 44), Exemplar.From(Exemplar.Pair("traceID", "4")));
         });
 
         // This asserts histogram OpenMetrics form with exemplars and also using numbers which are large enough for
@@ -235,7 +235,7 @@ boom_bam_bucket{le=""+Inf""} 4
             });
 
             counter.WithLabels("foo").Inc(1,
-                Exemplar.Pair("traceID", "1234"), Exemplar.Pair("yaay", "4321"));
+                Exemplar.From(Exemplar.Pair("traceID", "1234"), Exemplar.Pair("yaay", "4321")));
         });
         // This asserts that multi-labeled exemplars work as well not supplying a _total suffix in the counter name.
         result.ShouldBe(@"# HELP boom_bam 
@@ -256,7 +256,7 @@ boom_bam{blah=""foo""} 1.0 # {traceID=""1234"",yaay=""4321""} 1.0 1668779954.714
             });
 
             counter.WithLabels("foo").Inc(1,
-                Exemplar.Pair("traceID", "1234"), Exemplar.Pair("yaay", "4321"));
+                Exemplar.From(Exemplar.Pair("traceID", "1234"), Exemplar.Pair("yaay", "4321")));
         });
         // This tests the shape of OpenMetrics when _total suffix is supplied
         result.ShouldBe(@"# HELP boom_bam 

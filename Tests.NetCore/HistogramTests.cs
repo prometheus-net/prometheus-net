@@ -17,7 +17,7 @@ namespace Prometheus.Tests
             var factory = Metrics.WithCustomRegistry(registry);
 
             var histogram = factory.CreateHistogram("xxx", "");
-            histogram.Observe(1, Exemplar.Pair("traceID", "123"), Exemplar.Pair("traceID", "1"));
+            histogram.Observe(1, Exemplar.From(Exemplar.Pair("traceID", "123"), Exemplar.Pair("traceID", "1")));
         }
 
         [TestMethod]
@@ -33,7 +33,7 @@ namespace Prometheus.Tests
             var val2 = "012345678901234"; // 15 (= 129)
 
             var histogram = factory.CreateHistogram("xxx", "");
-            histogram.Observe(1, Exemplar.Pair(key1, val1), Exemplar.Pair(key2, val2));
+            histogram.Observe(1, Exemplar.From(Exemplar.Pair(key1, val1), Exemplar.Pair(key2, val2)));
         }
 
         [TestMethod]
@@ -48,7 +48,7 @@ namespace Prometheus.Tests
             });
 
             var canary = "my_value_354867398";
-            var exemplar = Exemplar.Pair("my_key", canary);
+            var exemplar = Exemplar.From(Exemplar.Pair("my_key", canary));
 
             // We expect the exemplar to be added to the specific bucket that the value falls into, not every bucket that gets incremented.
             // In this case, it would be the 2.0 bucket that the exemplar belongs to (the lowest-valued bucket that gets incremented).

@@ -63,7 +63,7 @@ namespace Benchmark.NetCore
         [GlobalSetup]
         public void GenerateData()
         {
-            var exemplar = Exemplar.Key("traceID").WithValue("bar");
+            var exemplar = Exemplar.From(Exemplar.Key("traceID").WithValue("bar"));
             for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
                 for (var variantIndex = 0; variantIndex < _variantCount; variantIndex++)
                 {
