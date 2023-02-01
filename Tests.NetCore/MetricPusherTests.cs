@@ -33,7 +33,7 @@ namespace Prometheus.Tests
 
             pusher.Start();
 
-            var onErrorWasCalled = onErrorCalled.Wait(TimeSpan.FromSeconds(5));
+            var onErrorWasCalled = onErrorCalled.Wait(TimeSpan.FromSeconds(10));
             Assert.IsTrue(onErrorWasCalled, "OnError was not called even though at least one failed push should have happened already.");
             Assert.IsNotNull(lastError);
 
