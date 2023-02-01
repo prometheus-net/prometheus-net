@@ -14,7 +14,7 @@
         public static CollectorRegistry DefaultRegistry { get; private set; }
         
         /// <summary>
-        /// The default metric factory used to create collectors.
+        /// The default metric factory used to create collectors in the default registry.
         /// </summary>
         public static MetricFactory DefaultFactory { get; private set; }
 
@@ -155,7 +155,7 @@
 #endif
                 };
 
-                options.Configure(DefaultRegistry, configureCallbacks);
+                options.ApplyToDefaultRegistry(configureCallbacks);
             });
         }
 

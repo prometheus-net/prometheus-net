@@ -25,4 +25,9 @@ public sealed class EventCounterAdapterOptions
     public TimeSpan UpdateInterval { get; set; } = TimeSpan.FromSeconds(10);
 
     public CollectorRegistry Registry { get; set; } = Metrics.DefaultRegistry;
+
+    /// <summary>
+    /// If set, the value in Registry is ignored and this factory is instead used to create all the metrics.
+    /// </summary>
+    public IMetricFactory? MetricFactory { get; set; } = Metrics.DefaultFactory;
 }

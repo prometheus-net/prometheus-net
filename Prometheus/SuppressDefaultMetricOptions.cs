@@ -64,17 +64,15 @@
         }
 
         /// <summary>
-        /// Configures the target registry based on the requested defaults behavior.
+        /// Configures the default metrics registry based on the requested defaults behavior.
         /// </summary>
-        internal void Configure(CollectorRegistry registry, ConfigurationCallbacks configurationCallbacks)
+        internal void ApplyToDefaultRegistry(ConfigurationCallbacks configurationCallbacks)
         {
-            // We include some metrics by default, just to give some output when a user first uses the library.
-            // These are not designed to be super meaningful/useful metrics.
             if (!SuppressProcessMetrics)
-                DotNetStats.Register(registry);
+                DotNetStats.RegisterDefault();
 
             if (!SuppressDebugMetrics)
-                registry.StartCollectingRegistryMetrics();
+                Metrics.DefaultRegistry.StartCollectingRegistryMetrics();
 
 #if NET
             if (!SuppressEventCounters)

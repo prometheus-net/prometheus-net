@@ -28,6 +28,11 @@ public sealed class MeterAdapterOptions
     public CollectorRegistry Registry { get; set; } = Metrics.DefaultRegistry;
 
     /// <summary>
+    /// If set, the value in Registry is ignored and this factory is instead used to create all the metrics.
+    /// </summary>
+    public IMetricFactory? MetricFactory { get; set; } = Metrics.DefaultFactory;
+
+    /// <summary>
     /// Enables you to define custom buckets for histogram-typed metrics.
     /// </summary>
     public Func<Instrument, double[]> ResolveHistogramBuckets { get; set; } = _ => DefaultHistogramBuckets;

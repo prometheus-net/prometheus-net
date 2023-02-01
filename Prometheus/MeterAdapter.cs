@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Diagnostics.Tracing;
 using System.Text;
 
 namespace Prometheus;
@@ -21,8 +20,9 @@ public sealed class MeterAdapter : IDisposable
         _options = options;
 
         _registry = options.Registry;
-        _factory = (ManagedLifetimeMetricFactory)Metrics.WithCustomRegistry(_options.Registry)
-            .WithManagedLifetime(expiresAfter: options.MetricsExpireAfter);
+
+        var baseFactory = options.MetricFactory ?? Metrics.WithCustomRegistry(_options.Registry);
+        _factory = (ManagedLifetimeMetricFactory)baseFactory.WithManagedLifetime(expiresAfter: options.MetricsExpireAfter);
 
         _inheritedStaticLabelNames = ((ManagedLifetimeMetricFactory)_factory).GetAllStaticLabelNames().ToArray();
 

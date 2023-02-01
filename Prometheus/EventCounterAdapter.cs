@@ -20,7 +20,7 @@ public sealed class EventCounterAdapter : IDisposable
     private EventCounterAdapter(EventCounterAdapterOptions options)
     {
         _options = options;
-        _metricFactory = Metrics.WithCustomRegistry(_options.Registry);
+        _metricFactory = _options.MetricFactory ?? Metrics.WithCustomRegistry(_options.Registry);
 
         _eventSourcesConnected = _metricFactory.CreateGauge("prometheus_net_eventcounteradapter_sources_connected_total", "Number of event sources that are currently connected to the adapter.");
 
