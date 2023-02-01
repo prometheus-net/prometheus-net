@@ -26,6 +26,7 @@ The library targets the following runtimes (and newer):
 * [Labels](#labels)
 * [Static labels](#static-labels)
 * [Exemplars](#exemplars)
+* [Limiting exemplar volume](#limiting-exemplar-volume)
 * [When are metrics published?](#when-are-metrics-published)
 * [Deleting metrics](#deleting-metrics)
 * [ASP.NET Core exporter middleware](#aspnet-core-exporter-middleware)
@@ -352,31 +353,7 @@ This will be published as the following metric point:
 sample_sleep_seconds_total 251.03833569999986 # {trace_id="08ad1c8cec52bf5284538abae7e6d26a",span_id="4761a4918922879b"} 1.0010688 1672634812.125
 ```
 
-You can customize the default exemplar provider via `IMetricFactory.ExemplarBehavior` or `CounterConfiguration.ExemplarBehavior` and `HistogramConfiguration.ExemplarBehavior`, which allow you to provide your own method to generate exemplars:
-
-```csharp
-// For the next histogram we only want to record exemplars for values larger than 0.1 (i.e. when record processing goes slowly).
-static Exemplar RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
-{
-    if (value < 0.1)
-        return Exemplar.None;
-
-    return Exemplar.FromTraceContext();
-}
-
-var recordProcessingDuration = Metrics
-    .CreateHistogram("sample_record_processing_duration_seconds", "How long it took to process a record, in seconds.",
-    new HistogramConfiguration
-    {
-        Buckets = Histogram.PowersOfTenDividedBuckets(-4, 1, 5),
-        ExemplarBehavior = new()
-        {
-            DefaultExemplarProvider = RecordExemplarForSlowRecordProcessingDuration
-        }
-    });
-```
-
-You can also override any default exemplar logic by providing your own exemplar when updating the value of the metric:
+You can override any default exemplar logic by providing your own exemplar when updating the value of the metric:
 
 ```csharp
 private static readonly Counter RecordsProcessed = Metrics
@@ -402,6 +379,47 @@ Exemplars are only published if the metrics are being scraped by an OpenMetrics-
 > The Prometheus database automatically negotiates OpenMetrics support when scraping metrics - you do not need to apply any special scraping configuration in production scenarios. You may need to [enable exemplar storage](https://prometheus.io/docs/prometheus/latest/feature_flags/#exemplars-storage), though.
 
 See also, [Sample.Console.Exemplars](Sample.Console.Exemplars/Program.cs).
+
+# Limiting exemplar volume
+
+Exemplars can be expensive to store in the metrics database. For this reason, it can be useful to only record exemplars for "interesting" metric values.
+
+You can customize the default exemplar provider via `IMetricFactory.ExemplarBehavior` or `CounterConfiguration.ExemplarBehavior` and `HistogramConfiguration.ExemplarBehavior`, which allow you to provide your own method to generate exemplars and to filter which values/metrics exemplars are recorded for:
+
+```csharp
+// For the next histogram we only want to record exemplars for values larger than 0.1 (i.e. when record processing goes slowly).
+static Exemplar RecordExemplarForSlowRecordProcessingDuration(Collector metric, double value)
+{
+    if (value < 0.1)
+        return Exemplar.None;
+
+    return Exemplar.FromTraceContext();
+}
+
+var recordProcessingDuration = Metrics
+    .CreateHistogram("sample_record_processing_duration_seconds", "How long it took to process a record, in seconds.",
+    new HistogramConfiguration
+    {
+        Buckets = Histogram.PowersOfTenDividedBuckets(-4, 1, 5),
+        ExemplarBehavior = new()
+        {
+            DefaultExemplarProvider = RecordExemplarForSlowRecordProcessingDuration
+        }
+    });
+```
+
+For the ASP.NET Core HTTP server metrics, you can further fine-tune exemplar recording by inspecting the HTTP request and response:
+
+```csharp
+app.UseHttpMetrics(options =>
+{
+    options.ConfigureMeasurements(measurementOptions =>
+    {
+        // Only measure exemplar if the HTTP response status code is not "OK".
+        measurementOptions.ExemplarPredicate = context => context.Response.StatusCode != HttpStatusCode.Ok;
+    });
+});
+```
 
 # When are metrics published?
 
@@ -549,7 +567,7 @@ public void Configure(IApplicationBuilder app, ...)
 
 By default, metrics are collected separately for each response status code (200, 201, 202, 203, ...). You can considerably reduce the size of the data set by only preserving information about the first digit of the status code:
 
-```
+```csharp
 app.UseHttpMetrics(options =>
 {
     // This will preserve only the first digit of the status code.

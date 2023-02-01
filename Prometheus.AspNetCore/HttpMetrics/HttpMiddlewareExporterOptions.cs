@@ -72,4 +72,14 @@ public sealed class HttpMiddlewareExporterOptions
         RequestCount.MetricFactory = metricFactory;
         RequestDuration.MetricFactory = metricFactory;
     }
+
+    /// <summary>
+    /// Configures the options that are shared between all metrics exposed by the HTTP server exporter.
+    /// </summary>
+    public void ConfigureMeasurements(Action<HttpMetricsOptionsBase> configure)
+    {
+        configure(InProgress);
+        configure(RequestCount);
+        configure(RequestDuration);
+    }
 }
