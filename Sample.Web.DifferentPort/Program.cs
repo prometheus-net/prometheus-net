@@ -16,7 +16,7 @@ builder.Services.AddRazorPages();
 //
 // Metrics published:
 // * built-in process metrics giving basic information about the .NET runtime (enabled by default)
-// * metrics from .NET Event Counters (enabled by default)
+// * metrics from .NET Event Counters (enabled by default, updated every 10 seconds)
 // * metrics from .NET Meters (enabled by default)
 // * metrics about requests handled by the web app (configured below)
 builder.Services.AddMetricServer(options =>
