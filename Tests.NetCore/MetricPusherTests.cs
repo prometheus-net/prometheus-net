@@ -27,7 +27,7 @@ namespace Prometheus.Tests
                 // Small interval to ensure that we exit fast.
                 IntervalMilliseconds = 100,
                 // Nothing listening there, should throw error right away.
-                Endpoint = "https://127.0.0.1:1",
+                Endpoint = "https://127.0.0.1:0",
                 OnError = OnError
             });
 
