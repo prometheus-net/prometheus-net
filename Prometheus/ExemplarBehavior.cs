@@ -12,6 +12,12 @@ public sealed class ExemplarBehavior
     /// </summary>
     public ExemplarProvider? DefaultExemplarProvider { get; set; }
 
+    /// <summary>
+    /// A new exemplar will only be recorded for a timeseries if at least this much time has passed since the previous exemplar was recorded.
+    /// This can be used to limit the rate of publishing unique exemplars. By default we do not have any limit - a new exemplar always overwrites the old one.
+    /// </summary>
+    public TimeSpan NewExemplarMinInterval { get; set; } = TimeSpan.Zero;
+
     internal static readonly ExemplarBehavior Default = new ExemplarBehavior
     {
         DefaultExemplarProvider = (_, _) => Exemplar.FromTraceContext()

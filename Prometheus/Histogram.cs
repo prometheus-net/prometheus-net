@@ -127,14 +127,15 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
         public void Observe(double val, long count) => ObserveInternal(val, count, null);
 
-        private void ObserveInternal(double val, long count, Exemplar? exemplarLabels)
+        private void ObserveInternal(double val, long count, Exemplar? exemplar)
         {
             if (double.IsNaN(val))
             {
                 return;
             }
 
-            exemplarLabels = ExemplarOrDefault(exemplarLabels, val);
+            if (!exemplar.HasValue)
+                exemplar = GetDefaultExemplar(val);
 
             for (int i = 0; i < _upperBounds.Length; i++)
             {
@@ -142,13 +143,9 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 {
                     _bucketCounts[i].Add(count);
 
-                    if (exemplarLabels is { Length: > 0 })
-                    {
-                        // CreatePooled() takes ownership of the exemplarLabels and will return them to pool when the time is right.
-                        var exemplar = ObservedExemplar.CreatePooled(exemplarLabels.Value, val);
-                        ObservedExemplar.ReturnPooledIfNotEmpty(Interlocked.Exchange(ref _exemplars[i], exemplar));
-                    }
-
+                    if (exemplar.HasValue)
+                        RecordExemplar(exemplar.Value, ref _exemplars[i], val);
+                   
                     break;
                 }
             }

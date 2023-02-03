@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Prometheus;
 
 /// <summary>
@@ -115,13 +117,49 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         }
     }
 
-    protected Exemplar ExemplarOrDefault(Exemplar? exemplar, double value)
+    internal void RecordExemplar(Exemplar exemplar, ref ObservedExemplar storage, double observedValue)
     {
-        // If any non-null value is provided, we use it as exemplar.
-        // Only a null value causes us to ask the default exemplar provider.
-        if (exemplar.HasValue)
-            return exemplar.Value;
+        if (exemplar.Length == 0)
+            return;
 
+        // We do the "is allowed" check only if we really have an exemplar to record, to minimize the performance impact on users who do not use exemplars.
+        // If you are using exemplars, you are already paying for a lot of value serialization overhead, so this is insignificant.
+        // Whereas if you are not using exemplars, the difference from this simple check can be substantial.
+        if (!IsRecordingNewExemplarAllowed())
+        {
+            // We will not record the exemplar but must still release the resources to the pool.
+            exemplar.ReturnToPoolIfNotEmpty();
+            return;
+        }
+
+        // ObservedExemplar takes ownership of the Exemplar and will return its resources to the pool when the time is right.
+        var observedExemplar = ObservedExemplar.CreatePooled(exemplar, observedValue);
+        ObservedExemplar.ReturnPooledIfNotEmpty(Interlocked.Exchange(ref storage, observedExemplar));
+        MarkNewExemplarHasBeenRecorded();
+    }
+
+    protected Exemplar GetDefaultExemplar(double value)
+    {
         return _exemplarBehavior.DefaultExemplarProvider?.Invoke(Parent, value) ?? Exemplar.None;
+    }
+
+    // May be replaced in test code.
+    internal static Func<long> ExemplarRecordingTimestampProvider = DefaultExemplarRecordingTimestampProvider;
+    internal static long DefaultExemplarRecordingTimestampProvider() => Stopwatch.GetTimestamp();
+
+    // Stopwatch timetamp of when we last recorded an exemplar. We do not use ObservedExemplar.Timestamp because we do not want to
+    // read from an existing ObservedExemplar when we are writing to our metrics (to avoid the synchronization overhead).
+    // We start at a deep enough negative value to not cause funny behavior near zero point (only likely in tests, really).
+    private ThreadSafeLong _exemplarLastRecordedTimestamp = new(TimeSpan.FromDays(-10).Ticks);
+
+    protected bool IsRecordingNewExemplarAllowed()
+    {
+        return _exemplarBehavior.NewExemplarMinInterval <= TimeSpan.Zero
+            || TimeSpan.FromTicks(ExemplarRecordingTimestampProvider() - _exemplarLastRecordedTimestamp.Value) >= _exemplarBehavior.NewExemplarMinInterval;
+    }
+
+    protected void MarkNewExemplarHasBeenRecorded()
+    {
+        _exemplarLastRecordedTimestamp.Value = ExemplarRecordingTimestampProvider();
     }
 }

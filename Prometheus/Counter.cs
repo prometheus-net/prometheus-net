@@ -32,25 +32,24 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
             Inc(increment: increment, Exemplar.None);
         }
 
-        public void Inc(Exemplar? exemplarLabels)
+        public void Inc(Exemplar? exemplar)
         {
-            Inc(increment: 1, exemplarLabels: exemplarLabels);
+            Inc(increment: 1, exemplar: exemplar);
         }
 
-        public void Inc(double increment = 1.0, Exemplar? exemplarLabels = null)
+        public void Inc(double increment = 1.0, Exemplar? exemplar = null)
         {
             if (increment < 0.0)
                 throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
 
-            exemplarLabels = ExemplarOrDefault(exemplarLabels, increment);
+            if (!exemplar.HasValue)
+                exemplar = GetDefaultExemplar(increment);
 
-            if (exemplarLabels is { Length: > 0 })
-            {
-                var exemplar = ObservedExemplar.CreatePooled(exemplarLabels.Value, increment);
-                ObservedExemplar.ReturnPooledIfNotEmpty(Interlocked.Exchange(ref _observedExemplar, exemplar));
-            }
+            if (exemplar.HasValue)
+                RecordExemplar(exemplar.Value, ref _observedExemplar, increment);
 
             _value.Add(increment);
+
             Publish();
         }
 
