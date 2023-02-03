@@ -318,7 +318,24 @@ public sealed class CollectorRegistry : ICollectorRegistry
             _metricInstancesPerType[type] = _metricInstances.WithLabels(typeName);
             _metricTimeseriesPerType[type] = _metricTimeseries.WithLabels(typeName);
         }
+
+        _startedCollectingRegistryMetrics.SetResult(true);
     }
+
+    /// <summary>
+    /// Registers a callback to be called when registry debug metrics are enabled.
+    /// If the debug metrics have already been enabled, the callback is called immediately.
+    /// </summary>
+    internal void OnStartCollectingRegistryMetrics(Action callback)
+    {
+        _startedCollectingRegistryMetrics.Task.ContinueWith(delegate
+        {
+            callback();
+            return Task.CompletedTask;
+        });
+    }
+
+    private readonly TaskCompletionSource<object> _startedCollectingRegistryMetrics = new();
 
     private const string MetricTypeDebugLabel = "metric_type";
 

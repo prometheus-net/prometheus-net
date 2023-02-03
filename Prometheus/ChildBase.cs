@@ -138,6 +138,8 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         var observedExemplar = ObservedExemplar.CreatePooled(exemplar, observedValue);
         ObservedExemplar.ReturnPooledIfNotEmpty(Interlocked.Exchange(ref storage, observedExemplar));
         MarkNewExemplarHasBeenRecorded();
+
+        ExemplarsRecorded?.Inc();
     }
 
     protected Exemplar GetDefaultExemplar(double value)
@@ -172,5 +174,17 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     protected void MarkNewExemplarHasBeenRecorded()
     {
         _exemplarLastRecordedTimestamp.Value = ExemplarRecordingTimestampProvider();
+    }
+
+
+    // This is only set if and when debug metrics are enabled in the default registry.
+    private static volatile Counter? ExemplarsRecorded;
+
+    static ChildBase()
+    {
+        Metrics.DefaultRegistry.OnStartCollectingRegistryMetrics(delegate
+        {
+            ExemplarsRecorded = Metrics.CreateCounter("prometheus_net_exemplars_recorded_total", "Number of exemplars that were accepted into in-memory storage in the prometheus-net SDK.");
+        });
     }
 }

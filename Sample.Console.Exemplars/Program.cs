@@ -73,10 +73,10 @@ _ = Task.Run(async delegate
 
         // CUSTOM EXEMPLAR: We pass the record ID key-value pair when we increment the metric.
         // When the metric data is published to Prometheus, the most recent record ID will be attached to it.
-        var exemplar = Exemplar.From(recordIdKey.WithValue(recordId.ToString()));
+        var exemplarLabelPair = recordIdKey.WithValue(recordId.ToString());
 
-        recordsProcessed.Inc(exemplar);
-        recordSizeInPages.Observe(recordPageCount, exemplar);
+        recordsProcessed.Inc(Exemplar.From(exemplarLabelPair));
+        recordSizeInPages.Observe(recordPageCount, Exemplar.From(exemplarLabelPair));
     }
 });
 
