@@ -233,22 +233,12 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         _exemplarBehavior = exemplarBehavior;
 
         _unlabelledLazy = GetUnlabelledLazyInitializer();
-
-        _familyHeaderLines = new byte[][]
-        {
-            string.IsNullOrWhiteSpace(help)
-                ? PrometheusConstants.ExportEncoding.GetBytes($"# HELP {name}")
-                : PrometheusConstants.ExportEncoding.GetBytes($"# HELP {name} {help}"),
-            PrometheusConstants.ExportEncoding.GetBytes($"# TYPE {name} {Type.ToString().ToLowerInvariant()}")
-        };
     }
 
     /// <summary>
     /// Creates a new instance of the child collector type.
     /// </summary>
     private protected abstract TChild NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior);
-
-    private readonly byte[][] _familyHeaderLines;
 
     internal override async Task CollectAndSerializeAsync(IMetricsSerializer serializer, bool writeFamilyDeclaration, CancellationToken cancel)
     {
