@@ -134,8 +134,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 return;
             }
 
-            if (!exemplar.HasValue)
-                exemplar = GetDefaultExemplar(val);
+            exemplar ??= GetDefaultExemplar(val);
 
             for (int i = 0; i < _upperBounds.Length; i++)
             {
@@ -143,8 +142,8 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 {
                     _bucketCounts[i].Add(count);
 
-                    if (exemplar.HasValue)
-                        RecordExemplar(exemplar.Value, ref _exemplars[i], val);
+                    if (exemplar != null)
+                        RecordExemplar(exemplar, ref _exemplars[i], val);
                    
                     break;
                 }

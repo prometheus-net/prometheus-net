@@ -42,11 +42,10 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
             if (increment < 0.0)
                 throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
 
-            if (!exemplar.HasValue)
-                exemplar = GetDefaultExemplar(increment);
+            exemplar ??= GetDefaultExemplar(increment);
 
-            if (exemplar.HasValue)
-                RecordExemplar(exemplar.Value, ref _observedExemplar, increment);
+            if (exemplar != null)
+                RecordExemplar(exemplar, ref _observedExemplar, increment);
 
             _value.Add(increment);
 

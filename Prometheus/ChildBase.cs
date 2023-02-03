@@ -122,6 +122,8 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         if (exemplar.Length == 0)
             return;
 
+        exemplar.MarkAsConsumed();
+
         // We do the "is allowed" check only if we really have an exemplar to record, to minimize the performance impact on users who do not use exemplars.
         // If you are using exemplars, you are already paying for a lot of value serialization overhead, so this is insignificant.
         // Whereas if you are not using exemplars, the difference from this simple check can be substantial.

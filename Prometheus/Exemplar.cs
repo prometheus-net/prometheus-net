@@ -1,6 +1,5 @@
 ﻿#if NET6_0_OR_GREATER
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 #endif
 using System.Text;
@@ -11,7 +10,7 @@ namespace Prometheus;
 /// <summary>
 /// A fully-formed exemplar, describing a set of label name-value pairs.
 /// 
-/// One-time use only - when you pass this value to a prometheus-net method, it will consume and destroy the value.
+/// One-time use only - when you pass an instance to a prometheus-net method, it will take ownership of it.
 /// 
 /// You should preallocate and cache:
 /// 1. The exemplar keys created via Exemplar.Key().
@@ -19,10 +18,10 @@ namespace Prometheus;
 /// 
 /// From the key-value pairs you can create one-use Exemplar values using Exemplar.From().
 /// </summary>
-public struct Exemplar
+public sealed class Exemplar
 {
     /// <summary>
-    /// An exemplar value that indicates no exemplar is to be recorded for a given observation.
+    /// Indicates that no exemplar is to be recorded for a given observation.
     /// </summary>
     public static readonly Exemplar None = new Exemplar(Array.Empty<LabelPair>(), 0);
 
@@ -182,10 +181,22 @@ public struct Exemplar
         return None;
     }
 
-    internal Exemplar(LabelPair[] buffer, int length)
+    public Exemplar()
+    {
+        Buffer = Array.Empty<LabelPair>();
+    }
+
+    private Exemplar(LabelPair[] buffer, int length)
     {
         Buffer = buffer;
         Length = length;
+    }
+
+    internal void Update(LabelPair[] buffer, int length)
+    {
+        Buffer = buffer;
+        Length = length;
+        _consumed = false;
     }
 
     /// <summary>
@@ -197,6 +208,8 @@ public struct Exemplar
     /// Number of label pairs from the buffer to use.
     /// </summary>
     internal int Length { get; private set; }
+
+    private static readonly ObjectPool<Exemplar> ExemplarPool = ObjectPool.Create<Exemplar>();
 
     internal static Exemplar AllocateFromPool(int length)
     {
@@ -210,20 +223,33 @@ public struct Exemplar
         var buffer = new LabelPair[length];
 #endif
 
-        return new Exemplar(buffer, length);
+        var instance = ExemplarPool.Get();
+        instance.Update(buffer, length);
+        return instance;
     }
 
     internal void ReturnToPoolIfNotEmpty()
     {
         if (Length == 0)
-            return;
+            return; // Only the None instance can have a length of 0.
 
 #if NET
         ArrayPool<LabelPair>.Shared.Return(Buffer);
 #endif
 
-        // Just for safety, in case it gets accidentally reused.
-        Buffer = Array.Empty<LabelPair>();
         Length = 0;
+        Buffer = Array.Empty<LabelPair>();
+
+        ExemplarPool.Return(this);
+    }
+
+    private volatile bool _consumed;
+
+    internal void MarkAsConsumed()
+    {
+        if (_consumed)
+            throw new InvalidOperationException($"An instance of {nameof(Exemplar)} was reused. You must obtain a new instance via Exemplar.From() for each observation.");
+
+        _consumed = true;
     }
 }

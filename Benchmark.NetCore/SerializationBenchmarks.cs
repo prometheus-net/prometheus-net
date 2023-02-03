@@ -1,89 +1,88 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Prometheus;
 
-namespace Benchmark.NetCore
+namespace Benchmark.NetCore;
+
+[MemoryDiagnoser]
+public class SerializationBenchmarks
 {
-    [MemoryDiagnoser]
-    public class SerializationBenchmarks
+    // Metric -> Variant -> Label values
+    private static readonly string[][][] _labelValueRows;
+
+    private const int _metricCount = 100;
+    private const int _variantCount = 100;
+    private const int _labelCount = 5;
+
+    private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
+
+    static SerializationBenchmarks()
     {
-        // Metric -> Variant -> Label values
-        private static readonly string[][][] _labelValueRows;
+        _labelValueRows = new string[_metricCount][][];
 
-        private const int _metricCount = 100;
-        private const int _variantCount = 100;
-        private const int _labelCount = 5;
-
-        private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
-
-        static SerializationBenchmarks()
+        for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
         {
-            _labelValueRows = new string[_metricCount][][];
+            var variants = new string[_variantCount][];
+            _labelValueRows[metricIndex] = variants;
 
-            for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
+            for (var variantIndex = 0; variantIndex < _variantCount; variantIndex++)
             {
-                var variants = new string[_variantCount][];
-                _labelValueRows[metricIndex] = variants;
+                var values = new string[_labelCount];
+                _labelValueRows[metricIndex][variantIndex] = values;
 
-                for (var variantIndex = 0; variantIndex < _variantCount; variantIndex++)
-                {
-                    var values = new string[_labelCount];
-                    _labelValueRows[metricIndex][variantIndex] = values;
-
-                    for (var labelIndex = 0; labelIndex < _labelCount; labelIndex++)
-                        values[labelIndex] = $"metric{metricIndex:D2}_label{labelIndex:D2}_variant{variantIndex:D2}";
-                }
+                for (var labelIndex = 0; labelIndex < _labelCount; labelIndex++)
+                    values[labelIndex] = $"metric{metricIndex:D2}_label{labelIndex:D2}_variant{variantIndex:D2}";
             }
         }
+    }
 
-        private readonly CollectorRegistry _registry = Metrics.NewCustomRegistry();
-        private readonly Counter[] _counters;
-        private readonly Gauge[] _gauges;
-        private readonly Summary[] _summaries;
-        private readonly Histogram[] _histograms;
+    private readonly CollectorRegistry _registry = Metrics.NewCustomRegistry();
+    private readonly Counter[] _counters;
+    private readonly Gauge[] _gauges;
+    private readonly Summary[] _summaries;
+    private readonly Histogram[] _histograms;
 
-        public SerializationBenchmarks()
+    public SerializationBenchmarks()
+    {
+        _counters = new Counter[_metricCount];
+        _gauges = new Gauge[_metricCount];
+        _summaries = new Summary[_metricCount];
+        _histograms = new Histogram[_metricCount];
+
+        var factory = Metrics.WithCustomRegistry(_registry);
+
+        // Just use 1st variant for the keys (all we care about are that there is some name-like value in there).
+        for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
         {
-            _counters = new Counter[_metricCount];
-            _gauges = new Gauge[_metricCount];
-            _summaries = new Summary[_metricCount];
-            _histograms = new Histogram[_metricCount];
+            _counters[metricIndex] = factory.CreateCounter($"counter{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
+            _gauges[metricIndex] = factory.CreateGauge($"gauge{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
+            _summaries[metricIndex] = factory.CreateSummary($"summary{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
+            _histograms[metricIndex] = factory.CreateHistogram($"histogram{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
+        }
+    }
 
-            var factory = Metrics.WithCustomRegistry(_registry);
-
-            // Just use 1st variant for the keys (all we care about are that there is some name-like value in there).
-            for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
+    [GlobalSetup]
+    public void GenerateData()
+    {
+        var exemplarLabelPair = Exemplar.Key("traceID").WithValue("bar");
+        for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
+            for (var variantIndex = 0; variantIndex < _variantCount; variantIndex++)
             {
-                _counters[metricIndex] = factory.CreateCounter($"counter{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
-                _gauges[metricIndex] = factory.CreateGauge($"gauge{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
-                _summaries[metricIndex] = factory.CreateSummary($"summary{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
-                _histograms[metricIndex] = factory.CreateHistogram($"histogram{metricIndex:D2}", _help, _labelValueRows[metricIndex][0]);
+                _counters[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Inc(Exemplar.From(exemplarLabelPair));
+                _gauges[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Inc();
+                _summaries[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex);
+                _histograms[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex, Exemplar.From(exemplarLabelPair));
             }
-        }
+    }
 
-        [GlobalSetup]
-        public void GenerateData()
-        {
-            var exemplar = Exemplar.From(Exemplar.Key("traceID").WithValue("bar"));
-            for (var metricIndex = 0; metricIndex < _metricCount; metricIndex++)
-                for (var variantIndex = 0; variantIndex < _variantCount; variantIndex++)
-                {
-                    _counters[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Inc(exemplar);
-                    _gauges[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Inc();
-                    _summaries[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex);
-                    _histograms[metricIndex].Labels(_labelValueRows[metricIndex][variantIndex]).Observe(variantIndex, exemplar);
-                }
-        }
-
-        [Benchmark]
-        public async Task CollectAndSerialize()
-        {
-            await _registry.CollectAndSerializeAsync(new TextSerializer(Stream.Null), default);
-        }
-        
-        [Benchmark]
-        public async Task CollectAndSerializeOpenMetrics()
-        {
-            await _registry.CollectAndSerializeAsync(new TextSerializer(Stream.Null, ExpositionFormat.OpenMetricsText), default);
-        }
+    [Benchmark]
+    public async Task CollectAndSerialize()
+    {
+        await _registry.CollectAndSerializeAsync(new TextSerializer(Stream.Null), default);
+    }
+    
+    [Benchmark]
+    public async Task CollectAndSerializeOpenMetrics()
+    {
+        await _registry.CollectAndSerializeAsync(new TextSerializer(Stream.Null, ExpositionFormat.OpenMetricsText), default);
     }
 }

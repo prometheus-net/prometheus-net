@@ -103,4 +103,16 @@ public class CounterTests
             ChildBase.ExemplarRecordingTimestampProvider = ChildBase.DefaultExemplarRecordingTimestampProvider;
         }
     }
+
+    [TestMethod]
+    public void ObserveExemplar_ReusingInstance_Throws()
+    {
+        var counter = _metrics.CreateCounter("xxx", "");
+
+        var exemplar = Exemplar.From(Exemplar.Pair("foo", "bar"));
+
+        counter.Inc(exemplar);
+
+        Assert.ThrowsException<InvalidOperationException>(() => counter.Inc(exemplar));
+    }
 }

@@ -96,9 +96,7 @@ internal sealed class ObservedExemplar
         if (object.ReferenceEquals(instance, Empty))
             return; // We never put the "Empty" instance into the pool. Do the check here to avoid repeating it any time we return instances to the pool.
 
+        instance.Labels?.ReturnToPoolIfNotEmpty();
         Pool.Return(instance);
-
-        if (instance.Labels.HasValue)
-            instance.Labels.Value.ReturnToPoolIfNotEmpty();
     }
 }
