@@ -384,7 +384,11 @@ See also, [Sample.Console.Exemplars](Sample.Console.Exemplars/Program.cs).
 
 Exemplars can be expensive to store in the metrics database. For this reason, it can be useful to only record exemplars for "interesting" metric values.
 
-You can customize the default exemplar provider via `IMetricFactory.ExemplarBehavior` or `CounterConfiguration.ExemplarBehavior` and `HistogramConfiguration.ExemplarBehavior`, which allow you to provide your own method to generate exemplars and to filter which values/metrics exemplars are recorded for:
+You can use `ExemplarBehavior.NewExemplarMinInterval` to define a minimum interval between exemplars - a new exemplar will only be recorded if this much time has passed. This can be useful to limit the rate of publishing unique exemplars.
+
+You can customize the default exemplar provider via `IMetricFactory.ExemplarBehavior` or `CounterConfiguration.ExemplarBehavior` and `HistogramConfiguration.ExemplarBehavior`, which allows you to provide your own method to generate exemplars and to filter which values/metrics exemplars are recorded for:
+
+Example of a custom exemplar provider used together with exemplar rate limiting:
 
 ```csharp
 // For the next histogram we only want to record exemplars for values larger than 0.1 (i.e. when record processing goes slowly).
@@ -403,7 +407,9 @@ var recordProcessingDuration = Metrics
         Buckets = Histogram.PowersOfTenDividedBuckets(-4, 1, 5),
         ExemplarBehavior = new()
         {
-            DefaultExemplarProvider = RecordExemplarForSlowRecordProcessingDuration
+            DefaultExemplarProvider = RecordExemplarForSlowRecordProcessingDuration,
+            // Even if we have interesting data more often, do not record it to conserve exemplar storage.
+            NewExemplarMinInterval = TimeSpan.FromMinutes(5)
         }
     });
 ```
