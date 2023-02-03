@@ -91,7 +91,7 @@ public class CounterTests
             StringAssert.Contains(serialized, firstData);
 
             // Wait for enough time to elapse - now it should work.
-            timestamp = interval.Ticks;
+            timestamp = (long)(interval.Ticks / ChildBase.StopwatchTicksToDateTimeTicksFactor);
 
             counter.Inc(Exemplar.From(Exemplar.Pair(thirdData, thirdData)));
 

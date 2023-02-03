@@ -5,6 +5,11 @@
 // NuGet packages required:
 // * prometheus-net.AspNetCore
 
+Metrics.DefaultFactory.ExemplarBehavior = new ExemplarBehavior
+{
+    NewExemplarMinInterval = TimeSpan.FromSeconds(30)
+};
+
 // Start the metrics server on your preferred port number.
 using var server = new KestrelMetricServer(port: 1234);
 server.Start();
@@ -14,10 +19,12 @@ var recordsProcessed = Metrics.CreateCounter("sample_records_processed_total", "
 
 _ = Task.Run(async delegate
 {
+    var index = 0;
+
     while (true)
     {
         // Pretend to process a record approximately every second, just for changing sample data.
-        recordsProcessed.Inc();
+        recordsProcessed.Inc(Exemplar.From(Exemplar.Pair("foo", (++index).ToString())));
 
         await Task.Delay(TimeSpan.FromSeconds(1));
     }

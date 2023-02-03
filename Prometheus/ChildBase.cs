@@ -154,10 +154,19 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     // We start at a deep enough negative value to not cause funny behavior near zero point (only likely in tests, really).
     private ThreadSafeLong _exemplarLastRecordedTimestamp = new(TimeSpan.FromDays(-10).Ticks);
 
+    // Internal for use in tests.
+    internal static readonly double StopwatchTicksToDateTimeTicksFactor = TimeSpan.TicksPerSecond * 1.0 / Stopwatch.Frequency;
+
     protected bool IsRecordingNewExemplarAllowed()
     {
-        return _exemplarBehavior.NewExemplarMinInterval <= TimeSpan.Zero
-            || TimeSpan.FromTicks(ExemplarRecordingTimestampProvider() - _exemplarLastRecordedTimestamp.Value) >= _exemplarBehavior.NewExemplarMinInterval;
+        if (_exemplarBehavior.NewExemplarMinInterval <= TimeSpan.Zero)
+            return true;
+
+        // Stopwatch.GetTimestamp() is not guaranteed to use the same "tick" units as DateTime/TimeSpan.
+        var elapsedStopwatchTicks = ExemplarRecordingTimestampProvider() - _exemplarLastRecordedTimestamp.Value;
+        var elapsedDateTimeTicks = (long)(elapsedStopwatchTicks * StopwatchTicksToDateTimeTicksFactor);
+
+        return TimeSpan.FromTicks(elapsedDateTimeTicks) >= _exemplarBehavior.NewExemplarMinInterval;
     }
 
     protected void MarkNewExemplarHasBeenRecorded()
