@@ -48,8 +48,8 @@ public sealed class Exemplar
         /// </summary>
         public LabelPair WithValue(string value)
         {
-            var asciiBytes = Encoding.ASCII.GetBytes(value);
-            return new LabelPair(Bytes, asciiBytes, RuneCount + asciiBytes.Length);
+            var valueBytes = Encoding.ASCII.GetBytes(value);
+            return new LabelPair(Bytes, valueBytes, RuneCount + valueBytes.Length);
         }
     }
 
@@ -95,7 +95,7 @@ public sealed class Exemplar
         return Key(key).WithValue(value);
     }
 
-    public static Exemplar From(LabelPair labelPair1, LabelPair labelPair2, LabelPair labelPair3, LabelPair labelPair4, LabelPair labelPair5, LabelPair labelPair6)
+    public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4, in LabelPair labelPair5, in LabelPair labelPair6)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 6);
         exemplar.Buffer[0] = labelPair1;
@@ -108,7 +108,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
-    public static Exemplar From(LabelPair labelPair1, LabelPair labelPair2, LabelPair labelPair3, LabelPair labelPair4, LabelPair labelPair5)
+    public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4, in LabelPair labelPair5)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 5);
         exemplar.Buffer[0] = labelPair1;
@@ -120,7 +120,7 @@ public sealed class Exemplar
         return exemplar;
     }
     
-    public static Exemplar From(LabelPair labelPair1, LabelPair labelPair2, LabelPair labelPair3, LabelPair labelPair4)
+    public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 4);
         exemplar.Buffer[0] = labelPair1;
@@ -131,7 +131,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
-    public static Exemplar From(LabelPair labelPair1, LabelPair labelPair2, LabelPair labelPair3)
+    public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 3);
         exemplar.Buffer[0] = labelPair1;
@@ -141,7 +141,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
-    public static Exemplar From(LabelPair labelPair1, LabelPair labelPair2)
+    public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 2);
         exemplar.Buffer[0] = labelPair1;
@@ -150,7 +150,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
-    public static Exemplar From(LabelPair labelPair1)
+    public static Exemplar From(in LabelPair labelPair1)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 1);
         exemplar.Buffer[0] = labelPair1;
@@ -164,7 +164,7 @@ public sealed class Exemplar
 
     public static Exemplar FromTraceContext() => FromTraceContext(DefaultTraceIdKey, DefaultSpanIdKey);
 
-    public static Exemplar FromTraceContext(LabelKey traceIdKey, LabelKey spanIdKey)
+    public static Exemplar FromTraceContext(in LabelKey traceIdKey, in LabelKey spanIdKey)
     {
 #if NET6_0_OR_GREATER
         var activity = Activity.Current;
