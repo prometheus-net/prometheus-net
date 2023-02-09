@@ -29,7 +29,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
 
         public void Inc(double increment = 1.0)
         {
-            Inc(increment: increment, Exemplar.None);
+            Inc(increment: increment, null);
         }
 
         public void Inc(Exemplar? exemplar)

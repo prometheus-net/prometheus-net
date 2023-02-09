@@ -52,7 +52,7 @@ internal sealed class AutoLeasingHistogram : ICollector<IHistogram>
 
         public void Observe(double val)
         {
-            Observe(val, Exemplar.None);
+            Observe(val, null);
         }
     }
 }
