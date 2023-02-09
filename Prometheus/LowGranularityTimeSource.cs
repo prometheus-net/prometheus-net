@@ -18,7 +18,7 @@ internal static class LowGranularityTimeSource
 
         if (LastTickCount != currentTickCount)
         {
-            LastUnixSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1e3;
+            LastUnixSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
             LastTickCount = currentTickCount;
         }
 
