@@ -74,8 +74,8 @@ public class CounterTests
             }
         });
 
-        long timestamp = 0;
-        ChildBase.ExemplarRecordingTimestampProvider = () => timestamp;
+        double timestampSeconds = 0;
+        ChildBase.ExemplarRecordingTimestampProvider = () => timestampSeconds;
         
         try
         {
@@ -91,7 +91,7 @@ public class CounterTests
             StringAssert.Contains(serialized, firstData);
 
             // Wait for enough time to elapse - now it should work.
-            timestamp = (long)(interval.Ticks / ChildBase.StopwatchTicksToDateTimeTicksFactor);
+            timestampSeconds = interval.TotalSeconds;
 
             counter.Inc(Exemplar.From(Exemplar.Pair(thirdData, thirdData)));
 

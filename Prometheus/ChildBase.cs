@@ -148,27 +148,22 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     }
 
     // May be replaced in test code.
-    internal static Func<long> ExemplarRecordingTimestampProvider = DefaultExemplarRecordingTimestampProvider;
-    internal static long DefaultExemplarRecordingTimestampProvider() => Stopwatch.GetTimestamp();
+    internal static Func<double> ExemplarRecordingTimestampProvider = DefaultExemplarRecordingTimestampProvider;
+    internal static double DefaultExemplarRecordingTimestampProvider() => LowGranularityTimeSource.GetSecondsFromUnixEpoch();
 
-    // Stopwatch timetamp of when we last recorded an exemplar. We do not use ObservedExemplar.Timestamp because we do not want to
+    // Timetamp of when we last recorded an exemplar. We do not use ObservedExemplar.Timestamp because we do not want to
     // read from an existing ObservedExemplar when we are writing to our metrics (to avoid the synchronization overhead).
     // We start at a deep enough negative value to not cause funny behavior near zero point (only likely in tests, really).
-    private ThreadSafeLong _exemplarLastRecordedTimestamp = new(TimeSpan.FromDays(-10).Ticks);
-
-    // Internal for use in tests.
-    internal static readonly double StopwatchTicksToDateTimeTicksFactor = TimeSpan.TicksPerSecond * 1.0 / Stopwatch.Frequency;
+    private ThreadSafeDouble _exemplarLastRecordedTimestamp = new(-100_000_000);
 
     protected bool IsRecordingNewExemplarAllowed()
     {
         if (_exemplarBehavior.NewExemplarMinInterval <= TimeSpan.Zero)
             return true;
 
-        // Stopwatch.GetTimestamp() is not guaranteed to use the same "tick" units as DateTime/TimeSpan.
-        var elapsedStopwatchTicks = ExemplarRecordingTimestampProvider() - _exemplarLastRecordedTimestamp.Value;
-        var elapsedDateTimeTicks = (long)(elapsedStopwatchTicks * StopwatchTicksToDateTimeTicksFactor);
+        var elapsedSeconds = ExemplarRecordingTimestampProvider() - _exemplarLastRecordedTimestamp.Value;
 
-        return TimeSpan.FromTicks(elapsedDateTimeTicks) >= _exemplarBehavior.NewExemplarMinInterval;
+        return elapsedSeconds >= _exemplarBehavior.NewExemplarMinInterval.TotalSeconds;
     }
 
     protected void MarkNewExemplarHasBeenRecorded()

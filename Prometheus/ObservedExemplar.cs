@@ -21,7 +21,8 @@ internal sealed class ObservedExemplar
 
     public static readonly ObservedExemplar Empty = new();
 
-    internal static INowProvider NowProvider = new RealNowProvider();
+    internal static Func<double> NowProvider = DefaultNowProvider;
+    internal static double DefaultNowProvider() => LowGranularityTimeSource.GetSecondsFromUnixEpoch();
 
     public Exemplar? Labels { get; private set; }
     public double Value { get; private set; }
@@ -32,19 +33,6 @@ internal sealed class ObservedExemplar
         Labels = null;
         Value = 0;
         Timestamp = 0;
-    }
-
-    internal interface INowProvider
-    {
-        double Now();
-    }
-
-    private sealed class RealNowProvider : INowProvider
-    {
-        public double Now()
-        {
-            return DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1e3;
-        }
     }
 
     public bool IsValid => Labels != null;
@@ -70,7 +58,7 @@ internal sealed class ObservedExemplar
 
         Labels = labels;
         Value = value;
-        Timestamp = NowProvider.Now();
+        Timestamp = NowProvider();
     }
 
     private static bool ByteArraysEqual(byte[] a, byte[] b)

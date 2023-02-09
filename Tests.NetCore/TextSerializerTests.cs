@@ -12,7 +12,13 @@ public class TextSerializerTests
     [ClassInitialize]
     public static void BeforeClass(TestContext testContext)
     {
-        ObservedExemplar.NowProvider = new TestNowProvider();
+        ObservedExemplar.NowProvider = () => TestNow;
+    }
+
+    [ClassCleanup]
+    public static void AfterClass()
+    {
+        ObservedExemplar.NowProvider = ObservedExemplar.DefaultNowProvider;
     }
 
     [TestMethod]
@@ -266,14 +272,7 @@ boom_bam_total{blah=""foo""} 1.0 # {traceID=""1234"",yaay=""4321""} 1.0 16687799
 ");
     }
 
-    private class TestNowProvider : ObservedExemplar.INowProvider
-    {
-        public readonly double TestNow = 1668779954.714;
-        public double Now()
-        {
-            return TestNow;
-        }
-    }
+    private const double TestNow = 1668779954.714;
 
     private class TestCase
     {
