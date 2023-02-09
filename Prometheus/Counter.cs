@@ -27,7 +27,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
             ReturnBorrowedExemplar(ref _observedExemplar, exemplar);
         }
 
-        public void Inc(double increment)
+        public void Inc(double increment = 1.0)
         {
             Inc(increment: increment, Exemplar.None);
         }
@@ -37,7 +37,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
             Inc(increment: 1, exemplar: exemplar);
         }
 
-        public void Inc(double increment = 1.0, Exemplar? exemplar = null)
+        public void Inc(double increment, Exemplar? exemplar)
         {
             if (increment < 0.0)
                 throw new ArgumentOutOfRangeException(nameof(increment), "Counter value cannot decrease.");
@@ -72,20 +72,15 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
     {
     }
 
-    public void Inc(double increment) => Unlabelled.Inc(increment);
+    public void Inc(double increment = 1.0) => Unlabelled.Inc(increment);
     public void IncTo(double targetValue) => Unlabelled.IncTo(targetValue);
     public double Value => Unlabelled.Value;
 
     public void Publish() => Unlabelled.Publish();
     public void Unpublish() => Unlabelled.Unpublish();
 
-    public void Inc(Exemplar? exemplar)
-    {
-        Inc(increment: 1, exemplar: exemplar);
-    }
-
-    public void Inc(double increment = 1, Exemplar? exemplar = null) =>
-        Unlabelled.Inc(increment, exemplar);
+    public void Inc(Exemplar? exemplar) => Inc(increment: 1, exemplar: exemplar);
+    public void Inc(double increment, Exemplar? exemplar) => Unlabelled.Inc(increment, exemplar);
 
     internal override MetricType Type => MetricType.Counter;
 

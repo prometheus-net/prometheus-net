@@ -39,9 +39,14 @@ internal sealed class AutoLeasingCounter : ICollector<ICounter>
 
         public double Value => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
 
+        public void Inc(double increment)
+        {
+            Inc(increment, null);
+        }
+
         public void Inc(Exemplar? exemplar)
         {
-            Inc(increment:1, exemplar: exemplar);
+            Inc(increment: 1, exemplar: exemplar);
         }
 
         public void Inc(double increment, Exemplar? exemplar)
