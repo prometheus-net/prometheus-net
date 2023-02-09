@@ -29,11 +29,29 @@ public class MeasurementBenchmarks
     [Params(1, 16)]
     public int ThreadCount { get; set; }
 
-    [Params(MetricType.Counter, MetricType.Gauge, MetricType.Histogram, MetricType.Summary)]
+    [Params(MetricType.Counter, /*MetricType.Gauge,*/ MetricType.Histogram/*, MetricType.Summary*/)]
     public MetricType TargetMetricType { get; set; }
 
-    [Params(true, false)]
-    public bool WithExemplars { get; set; }
+    [Params(ExemplarMode.Auto, ExemplarMode.None, ExemplarMode.Provided)]
+    public ExemplarMode Exemplars { get; set; }
+
+    public enum ExemplarMode
+    {
+        /// <summary>
+        /// No user-supplied exemplar but the default behavior is allowed to execute (and fail to provide an exemplar).
+        /// </summary>
+        Auto,
+
+        /// <summary>
+        /// Explicitly indicating that no exemplar is to be used.
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// Explicitly providing an exemplar.
+        /// </summary>
+        Provided
+    }
 
     private readonly CollectorRegistry _registry;
     private readonly MetricFactory _factory;
@@ -103,6 +121,14 @@ public class MeasurementBenchmarks
     [IterationSetup]
     public void Setup()
     {
+        _getExemplar = Exemplars switch
+        {
+            ExemplarMode.Auto => () => null,
+            ExemplarMode.None => () => Exemplar.None,
+            ExemplarMode.Provided => () =>Exemplar.From(_traceIdLabel, _spanIdLabel),
+            _ => throw new NotImplementedException(),
+        };
+
         // We reuse the same registry for each iteration, as this represents typical (warmed up) usage.
 
         _threadReadyToStart = new ManualResetEventSlim[ThreadCount];
@@ -153,8 +179,7 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            var exemplar = WithExemplars ? Exemplar.From(_traceIdLabel, _spanIdLabel) : Exemplar.None;
-            _counter.Inc(exemplar);
+            _counter.Inc(_getExemplar());
         }
     }
 
@@ -180,8 +205,7 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            var exemplar = WithExemplars ? Exemplar.From(_traceIdLabel, _spanIdLabel) : Exemplar.None;
-            _histogram.Observe(i, exemplar);
+            _histogram.Observe(i, _getExemplar());
         }
     }
 
@@ -206,4 +230,14 @@ public class MeasurementBenchmarks
         for (var i = 0; i < _threads.Length; i++)
             _threads[i].Join();
     }
+
+    private Exemplar GetExemplar() => Exemplars switch
+    {
+        ExemplarMode.Auto => null,
+        ExemplarMode.None => Exemplar.None,
+        ExemplarMode.Provided => Exemplar.From(_traceIdLabel, _spanIdLabel),
+        _ => throw new NotImplementedException(),
+    };
+
+    private Func<Exemplar> _getExemplar;
 }
