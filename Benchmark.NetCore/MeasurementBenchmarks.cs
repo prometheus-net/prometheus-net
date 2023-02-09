@@ -121,14 +121,6 @@ public class MeasurementBenchmarks
     [IterationSetup]
     public void Setup()
     {
-        _getExemplar = Exemplars switch
-        {
-            ExemplarMode.Auto => () => null,
-            ExemplarMode.None => () => Exemplar.None,
-            ExemplarMode.Provided => () =>Exemplar.From(_traceIdLabel, _spanIdLabel),
-            _ => throw new NotImplementedException(),
-        };
-
         // We reuse the same registry for each iteration, as this represents typical (warmed up) usage.
 
         _threadReadyToStart = new ManualResetEventSlim[ThreadCount];
@@ -172,6 +164,8 @@ public class MeasurementBenchmarks
 
     private void MeasurementThreadCounter(object state)
     {
+        var exemplarProvider = GetExemplarProvider();
+
         var threadIndex = (int)state;
 
         _threadReadyToStart[threadIndex].Set();
@@ -179,7 +173,7 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _counter.Inc(_getExemplar());
+            _counter.Inc(exemplarProvider());
         }
     }
 
@@ -198,6 +192,8 @@ public class MeasurementBenchmarks
 
     private void MeasurementThreadHistogram(object state)
     {
+        var exemplarProvider = GetExemplarProvider();
+
         var threadIndex = (int)state;
 
         _threadReadyToStart[threadIndex].Set();
@@ -205,7 +201,7 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _histogram.Observe(i, _getExemplar());
+            _histogram.Observe(i, exemplarProvider());
         }
     }
 
@@ -231,13 +227,11 @@ public class MeasurementBenchmarks
             _threads[i].Join();
     }
 
-    private Exemplar GetExemplar() => Exemplars switch
+    private Func<Exemplar> GetExemplarProvider() => Exemplars switch
     {
-        ExemplarMode.Auto => null,
-        ExemplarMode.None => Exemplar.None,
-        ExemplarMode.Provided => Exemplar.From(_traceIdLabel, _spanIdLabel),
+        ExemplarMode.Auto => () => null,
+        ExemplarMode.None => () => Exemplar.None,
+        ExemplarMode.Provided => () => Exemplar.From(_traceIdLabel, _spanIdLabel),
         _ => throw new NotImplementedException(),
     };
-
-    private Func<Exemplar> _getExemplar;
 }

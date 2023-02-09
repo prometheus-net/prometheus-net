@@ -60,7 +60,7 @@ internal sealed class ObservedExemplar
             for (var j = 0; j < labels.Length; j++)
             {
                 if (i == j) continue;
-                if (Equal(labels.Buffer[i].KeyBytes, labels.Buffer[j].KeyBytes))
+                if (ByteArraysEqual(labels.Buffer[i].KeyBytes, labels.Buffer[j].KeyBytes))
                     throw new ArgumentException("Exemplar contains duplicate keys.");
             }
         }
@@ -73,12 +73,14 @@ internal sealed class ObservedExemplar
         Timestamp = NowProvider.Now();
     }
 
-    private static bool Equal(byte[] a, byte[] b)
+    private static bool ByteArraysEqual(byte[] a, byte[] b)
     {
-        // see https://www.syncfusion.com/succinctly-free-ebooks/application-security-in-net-succinctly/comparing-byte-arrays
-        var x = a.Length ^ b.Length;
-        for (var i = 0; i < a.Length && i < b.Length; ++i) x |= a[i] ^ b[i];
-        return x == 0;
+        if (a.Length != b.Length) return false;
+
+        for (var i = 0; i < a.Length; i++)
+            if (a[i] != b[i]) return false;
+
+        return true;
     }
 
     /// <remarks>
