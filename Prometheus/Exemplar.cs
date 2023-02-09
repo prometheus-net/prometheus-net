@@ -17,6 +17,7 @@ namespace Prometheus;
 /// 2. Exemplar key-value pairs created vvia key.WithValue() or Exemplar.Pair().
 /// 
 /// From the key-value pairs you can create one-use Exemplar values using Exemplar.From().
+/// You can clone Exemplar instances using Exemplar.Clone() - each clone can only be used once!
 /// </summary>
 public sealed class Exemplar
 {
@@ -248,8 +249,21 @@ public sealed class Exemplar
     internal void MarkAsConsumed()
     {
         if (_consumed)
-            throw new InvalidOperationException($"An instance of {nameof(Exemplar)} was reused. You must obtain a new instance via Exemplar.From() for each observation.");
+            throw new InvalidOperationException($"An instance of {nameof(Exemplar)} was reused. You must obtain a new instance via Exemplar.From() or Exemplar.Clone() for each metric value observation.");
 
         _consumed = true;
+    }
+
+    /// <summary>
+    /// Clones the exemplar so it can be reused - each copy can only be used once!
+    /// </summary>
+    public Exemplar Clone()
+    {
+        if (_consumed)
+            throw new InvalidOperationException($"An instance of {nameof(Exemplar)} cannot be cloned after it has already been used.");
+
+        var clone = AllocateFromPool(Length);
+        Array.Copy(Buffer, clone.Buffer, Length);
+        return clone;
     }
 }

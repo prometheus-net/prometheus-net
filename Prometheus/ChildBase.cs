@@ -139,7 +139,8 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         ObservedExemplar.ReturnPooledIfNotEmpty(Interlocked.Exchange(ref storage, observedExemplar));
         MarkNewExemplarHasBeenRecorded();
 
-        ExemplarsRecorded?.Inc();
+        // We cannot record an exemplar every time we record an exemplar!
+        ExemplarsRecorded?.Inc(Exemplar.None);
     }
 
     protected Exemplar GetDefaultExemplar(double value)
