@@ -1,8 +1,8 @@
 ﻿namespace Prometheus;
 
-public sealed class EventCounterAdapterOptions
+public sealed record EventCounterAdapterOptions
 {
-    public static readonly EventCounterAdapterOptions Default = new();
+    public static EventCounterAdapterOptions Default => new();
 
     /// <summary>
     /// By default we subscribe to a predefined set of generally useful event counters but this allows you to specify a custom filter by event source name.

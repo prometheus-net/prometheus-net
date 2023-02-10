@@ -378,4 +378,9 @@ public sealed class CollectorRegistry : ICollectorRegistry
             _metricTimeseriesPerType[type].Set(timeseries);
         }
     }
+
+    // We only allow integration adapters to be started once per registry with the default configuration, to prevent double-counting values.
+    // This is useful because we switched on adapters by default in 7.0.0 but if someone has manual .StartListening() calls from before, they would now count metrics double.
+    internal bool PreventMeterAdapterRegistrationWithDefaultOptions;
+    internal bool PreventEventCounterAdapterRegistrationWithDefaultOptions;
 }

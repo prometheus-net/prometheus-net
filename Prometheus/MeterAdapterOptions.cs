@@ -3,9 +3,9 @@ using System.Diagnostics.Metrics;
 
 namespace Prometheus;
 
-public sealed class MeterAdapterOptions
+public sealed record MeterAdapterOptions
 {
-    public static readonly MeterAdapterOptions Default = new();
+    public static MeterAdapterOptions Default => new();
 
     // This is unlikely to be suitable for all cases, so you will want to customize it per-instrument.
     public static readonly double[] DefaultHistogramBuckets = Histogram.ExponentialBuckets(0.01, 2, 25);

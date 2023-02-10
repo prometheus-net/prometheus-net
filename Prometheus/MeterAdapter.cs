@@ -11,9 +11,24 @@ namespace Prometheus;
 /// </summary>
 public sealed class MeterAdapter : IDisposable
 {
-    public static IDisposable StartListening() => new MeterAdapter(MeterAdapterOptions.Default);
+    public static IDisposable StartListening() => StartListening(MeterAdapterOptions.Default);
 
-    public static IDisposable StartListening(MeterAdapterOptions options) => new MeterAdapter(options);
+    public static IDisposable StartListening(MeterAdapterOptions options)
+    {
+        // If we are re-registering an adapter with the default options, just pretend and move on.
+        // The purpose of this code is to avoid double-counting metrics if the adapter is registered twice with the default options.
+        // This could happen because in 7.0.0 we added automatic registration of the adapters on startup, but the user might still
+        // have a manual registration active from 6.0.0 days. We do this small thing here to make upgrading less hassle.
+        if (options == MeterAdapterOptions.Default)
+        {
+            if (options.Registry.PreventMeterAdapterRegistrationWithDefaultOptions)
+                return new NoopDisposable();
+
+            options.Registry.PreventMeterAdapterRegistrationWithDefaultOptions = true;
+        }
+
+        return new MeterAdapter(options);
+    }
 
     private MeterAdapter(MeterAdapterOptions options)
     {

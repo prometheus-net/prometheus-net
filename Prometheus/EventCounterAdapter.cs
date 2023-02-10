@@ -13,9 +13,24 @@ namespace Prometheus;
 /// </remarks>
 public sealed class EventCounterAdapter : IDisposable
 {
-    public static IDisposable StartListening() => new EventCounterAdapter(EventCounterAdapterOptions.Default);
+    public static IDisposable StartListening() => StartListening(EventCounterAdapterOptions.Default);
 
-    public static IDisposable StartListening(EventCounterAdapterOptions options) => new EventCounterAdapter(options);
+    public static IDisposable StartListening(EventCounterAdapterOptions options)
+    {
+        // If we are re-registering an adapter with the default options, just pretend and move on.
+        // The purpose of this code is to avoid double-counting metrics if the adapter is registered twice with the default options.
+        // This could happen because in 7.0.0 we added automatic registration of the adapters on startup, but the user might still
+        // have a manual registration active from 6.0.0 days. We do this small thing here to make upgrading less hassle.
+        if (options == EventCounterAdapterOptions.Default)
+        {
+            if (options.Registry.PreventEventCounterAdapterRegistrationWithDefaultOptions)
+                return new NoopDisposable();
+
+            options.Registry.PreventEventCounterAdapterRegistrationWithDefaultOptions = true;
+        }
+
+        return new EventCounterAdapter(options);
+    }
 
     private EventCounterAdapter(EventCounterAdapterOptions options)
     {
