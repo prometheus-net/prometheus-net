@@ -136,6 +136,14 @@ public sealed class CollectorRegistry : ICollectorRegistry
     /// 
     /// This method is designed to be used with custom output mechanisms that do not use an IMetricServer.
     /// </summary>
+    public Task CollectAndExportAsTextAsync(Stream to, CancellationToken cancel = default)
+        => CollectAndExportAsTextAsync(to, ExpositionFormat.PrometheusText, cancel);
+
+    /// <summary>
+    /// Collects all metrics and exports them in text document format to the provided stream.
+    /// 
+    /// This method is designed to be used with custom output mechanisms that do not use an IMetricServer.
+    /// </summary>
     public Task CollectAndExportAsTextAsync(Stream to, ExpositionFormat format = ExpositionFormat.PrometheusText, CancellationToken cancel = default)
     {
         if (to == null)
