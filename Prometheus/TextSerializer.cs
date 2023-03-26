@@ -1,4 +1,7 @@
-﻿using System.Globalization;
+﻿using System.Buffers;
+using System.Buffers.Text;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Prometheus;
 
@@ -32,6 +35,10 @@ internal sealed class TextSerializer : IMetricsSerializer
     private static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
 
     private static readonly char[] DotEChar = { '.', 'e' };
+
+    // Avoid paying the field initializer cost:
+    // https://endjin.com/blog/2023/02/dotnet-csharp-11-utf8-string-literals
+    private static ReadOnlySpan<byte> DotEBytes => ".e"u8;
 
     public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
@@ -175,13 +182,19 @@ internal sealed class TextSerializer : IMetricsSerializer
             }
         }
 
-        var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
+        // Utf8Formatter.TryFormat always uses invariant culture
+        // This saves the intermediary string allocation.
+        if (!Utf8Formatter.TryFormat(value, _stringBytesBuffer, out var numBytes, new StandardFormat('g')))
+        {
+            // something went wrong. Fall back to manually creating the string.
+            var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
+            numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
+        }
 
-        var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
         await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
 
         // In certain places (e.g. "le" label) we need floating point values to actually have the decimal point in them for OpenMetrics.
-        if (_expositionFormat == ExpositionFormat.OpenMetricsText && valueAsString.IndexOfAny(DotEChar) == -1 /* did not contain .|e */)
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText && _stringBytesBuffer.AsSpan().IndexOfAny(DotEBytes) == -1 /* did not contain .|e */)
             await _stream.Value.WriteAsync(DotZero, 0, DotZero.Length, cancel);
     }
 
@@ -203,9 +216,15 @@ internal sealed class TextSerializer : IMetricsSerializer
             }
         }
 
-        var valueAsString = value.ToString("D", CultureInfo.InvariantCulture);
-        
-        var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
+        // Utf8Formatter.TryFormat always uses invariant culture
+        // This saves the intermediary string allocation.
+        if (!Utf8Formatter.TryFormat(value, _stringBytesBuffer, out var numBytes, new StandardFormat('D')))
+        {
+            // something went wrong. Fall back to manually creating the string.
+            var valueAsString = value.ToString("D", CultureInfo.InvariantCulture);
+            numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
+        }
+
         await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
     }
 
@@ -272,14 +291,48 @@ internal sealed class TextSerializer : IMetricsSerializer
     /// the same.
     /// see: https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#considerations-canonical-numbers
     /// </summary>
-    internal static CanonicalLabel EncodeValueAsCanonicalLabel(byte[] name, double value)
+    internal static CanonicalLabel EncodeValueAsCanonicalLabel(byte[] name, double value, Span<byte> buffer)
     {
         if (double.IsPositiveInfinity(value))
             return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
+        // Utf8Formatter.TryFormat always uses invariant culture
+        // This saves the intermediary string allocation.
+        if (Utf8Formatter.TryFormat(value, buffer, out var numBytes, new StandardFormat('g')))
+        {
+            // Copy the byte buffer into a new array for passing to CanonicalLabel
+            var prometheusBytes = buffer.Slice(0, numBytes).ToArray();
+            var openMetricsBytes = prometheusBytes;
+
+            // Identify whether the original value is floating-point, by checking for presence of the 'e' or '.' characters.
+            if (prometheusBytes.AsSpan().IndexOfAny(DotEBytes) == -1)
+            {
+                var targetLength = prometheusBytes.Length + 2;
+
+                openMetricsBytes = new byte[targetLength];
+                Array.Copy(prometheusBytes, openMetricsBytes, numBytes);
+
+                // OpenMetrics requires labels containing numeric values to be expressed in floating point format.
+                // If all we find is an integer, we add a ".0" to the end to make it a floating point value.
+                openMetricsBytes[numBytes] = DotZero[0];
+                openMetricsBytes[numBytes + 1] = DotZero[1];
+            }
+
+            return new CanonicalLabel(name, prometheusBytes, openMetricsBytes);
+        }
+        else
+        {
+            return EncodeValueAsCanonicalLabelSlow(name, value);
+        }
+    }
+
+    // Avoid inlining the unlikely branch;
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static CanonicalLabel EncodeValueAsCanonicalLabelSlow(byte[] name, double value)
+    {
+        // something went wrong. Fall back to manually creating the string.
         var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
         var prometheusBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
-
         var openMetricsBytes = prometheusBytes;
 
         // Identify whether the original value is floating-point, by checking for presence of the 'e' or '.' characters.

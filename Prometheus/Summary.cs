@@ -94,11 +94,15 @@ namespace Prometheus
                 _headStream = _streams[0];
 
                 _quantileLabels = new CanonicalLabel[_objectives.Count];
+
+                // create a reusable buffer outside of the loop to avoid double-to-bytes intermediary string allocations
+                Span<byte> buffer = stackalloc byte[32];
+
                 for (var i = 0; i < _objectives.Count; i++)
                 {
                     _sortedObjectives[i] = _objectives[i].Quantile;
                     _quantileLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(
-                        QuantileLabelName, _objectives[i].Quantile);
+                        QuantileLabelName, _objectives[i].Quantile, buffer);
                 }
 
                 Array.Sort(_sortedObjectives);
