@@ -194,7 +194,7 @@ internal sealed class TextSerializer : IMetricsSerializer
         await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
 
         // In certain places (e.g. "le" label) we need floating point values to actually have the decimal point in them for OpenMetrics.
-        if (_expositionFormat == ExpositionFormat.OpenMetricsText && _stringBytesBuffer.AsSpan().IndexOfAny(DotEBytes) == -1 /* did not contain .|e */)
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText && _stringBytesBuffer.AsSpan(0, numBytes).IndexOfAny(DotEBytes) == -1 /* did not contain .|e */)
             await _stream.Value.WriteAsync(DotZero, 0, DotZero.Length, cancel);
     }
 
