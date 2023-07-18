@@ -150,8 +150,8 @@ public sealed class MeterAdapter : IDisposable
             {
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
-                // A measurement is the current value.
-                handle.WithLease(x => x.IncTo(value), labelValues);
+                // A measurement is the current value. We transform it into a Set() to allow the counter to reset itself (unusual but who are we to say no).
+                handle.WithLease(x => x.Set(value), labelValues);
             }
 #if NET7_0_OR_GREATER
             else if (instrument is UpDownCounter<T>)

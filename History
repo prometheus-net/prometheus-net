@@ -1,3 +1,4 @@
+- Allow ObservableCounter<T> to be reset. Previously, the MeterAdapter output got stuck on its previous maximum if the underlying Meter reset its value to a lower value. Now we transform the value 1:1.
 * 8.0.0
 - Added OpenMetrics exposition format support (#388).
 - Added exemplar support for Counter and Histogram (#388).
