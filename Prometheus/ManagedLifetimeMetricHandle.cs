@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 namespace Prometheus;
 
@@ -96,12 +96,14 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         private readonly Action<TChild> _remove;
 
         private readonly object _lock = new();
-        private int _leaseCount = 0;
-
-        // Taking or releasing a lease will always start a new epoch. The expiration timer simply checks whether the epoch changes between two ticks.
-        // If the epoch changes, it must mean there was some lease-related activity and it will do nothing. If the epoch remains the same and the lease
-        // count is 0, the metric has expired and will be removed.
-        private int _epoch = 0;
+        // We count the number of Lease and Release calls, this allows us to determine whether
+        // 1. there are any active leases (when _leaseCount != _releaseCount)
+        // 2. whether there was any activity during the last timer iteration
+        
+        // If both conditions are false, the metric has expired and will be removed.
+        private long _leaseCount = 0;
+        // 1 cache line padding - 64 bytes
+        private long _releaseCount = 0;
 
         // We start the expiration timer the first time a lease is taken.
         private bool _timerStarted;
@@ -127,55 +129,45 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 
         private void TakeLeaseCore()
         {
-            lock (_lock)
-            {
-                EnsureExpirationTimerStarted();
-
-                _leaseCount++;
-                unchecked { _epoch++; }
-            }
+            EnsureExpirationTimerStarted();
+            Interlocked.Increment(ref _leaseCount);
         }
 
         private void ReleaseLease()
         {
-            lock (_lock)
-            {
-                _leaseCount--;
-                unchecked { _epoch++; }
-            }
+            Interlocked.Increment(ref _releaseCount);
         }
 
         private void EnsureExpirationTimerStarted()
         {
-            if (_timerStarted)
+            if (Volatile.Read(ref _timerStarted))
                 return;
 
-            _timerStarted = true;
+            lock(_lock)
+            {
+                if (_timerStarted)
+                    return;
+                _timerStarted = true;
 
-            _ = Task.Run(ExecuteExpirationTimer);
+                _ = Task.Run(ExecuteExpirationTimer);
+            }
         }
 
         private async Task ExecuteExpirationTimer()
         {
             while (true)
             {
-                int epochBeforeDelay;
-                
-                lock (_lock)
-                    epochBeforeDelay = _epoch;
+                long leaseCountBeforeDelay = _leaseCount;
 
                 // We iterate on the expiration interval. This means that the real lifetime of a metric may be up to 2x the expiration interval.
                 // This is fine - we are intentionally loose here, to avoid the timer logic being scheduled too aggressively. Approximate is good enough.
                 await _delayer.Delay(_expiresAfter);
 
-                lock (_lock)
-                {
-                    if (_leaseCount != 0)
-                        continue; // Will not expire if there are active leases.
+                if (_leaseCount != _releaseCount)
+                    continue; // Will not expire if there are active leases.
 
-                    if (_epoch != epochBeforeDelay)
-                        continue; // Will not expire if some leasing activity happened during this interval.
-                }
+                if (_leaseCount != leaseCountBeforeDelay)
+                    continue; // Will not expire if some leasing activity happened during this interval.
 
                 // Expired!
                 //
