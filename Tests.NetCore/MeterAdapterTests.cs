@@ -43,16 +43,18 @@ namespace Prometheus.Tests
             });
         }
 
-        private FakeSerializer SerializeMetrics()
+        private FakeSerializer SerializeMetrics(CollectorRegistry registry)
         {
             var serializer = new FakeSerializer();
-            _registry.CollectAndSerializeAsync(serializer, default).Wait();
+            registry.CollectAndSerializeAsync(serializer, default).Wait();
             return serializer;
         }
 
-        private double GetValue(string meterName, params (string name, string value)[] labels)
+        private double GetValue(string meterName, params (string name, string value)[] labels) =>
+            GetValue(_registry, meterName, labels);
+        private double GetValue(CollectorRegistry registry, string meterName, params (string name, string value)[] labels)
         {
-            var serializer = SerializeMetrics();
+            var serializer = SerializeMetrics(registry);
             if (serializer.Data.Count == 0)
                 throw new Exception("No metrics found");
             var labelsString = string.Join(",", labels.Select(l => $"{l.name}=\"{l.value}\""));
@@ -108,6 +110,34 @@ namespace Prometheus.Tests
         {
             _intCounter.Add(1, new ("my-label", 1), new ("Another.Label", 1));
             Assert.AreEqual(1, GetValue("test_int_counter", ("another_label", "1"), ("my_label", "1")));
+        }
+
+
+        [TestMethod]
+        public void MultipleInstances()
+        {
+            _intCounter.Add(1000);
+
+            var registry2 = Metrics.NewCustomRegistry();
+            var metrics2 = Metrics.WithCustomRegistry(registry2);
+            var adapter2 = MeterAdapter.StartListening(new MeterAdapterOptions {
+                InstrumentFilterPredicate = instrument => {
+                    return instrument.Meter == _meter;
+                },
+                Registry = registry2,
+                MetricFactory = metrics2,
+                ResolveHistogramBuckets = instrument => new double[] { 1, 2, 3, 4 },
+            });
+
+            _intCounter.Add(1);
+            Assert.AreEqual(1001, GetValue("test_int_counter"));
+            Assert.AreEqual(1, GetValue(registry2, "test_int_counter"));
+
+            adapter2.Dispose();
+
+            _intCounter.Add(1);
+            Assert.AreEqual(1002, GetValue("test_int_counter"));
+            Assert.AreEqual(1, GetValue(registry2, "test_int_counter"));
         }
 
 
