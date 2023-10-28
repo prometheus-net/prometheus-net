@@ -11,7 +11,7 @@ namespace Prometheus
 
         public PrometheusHealthCheckPublisher(PrometheusHealthCheckPublisherOptions? options)
         {
-            _checkStatus = options?.Gauge ?? new PrometheusHealthCheckPublisherOptions().Gauge;
+            _checkStatus = options?.Gauge ?? new PrometheusHealthCheckPublisherOptions().GetDefaultGauge();
         }
 
         public Task PublishAsync(HealthReport report, CancellationToken cancellationToken)
