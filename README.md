@@ -643,19 +643,21 @@ The exposed metrics include:
 * Duration of HTTP client requests (from start of request to end of reading response headers).
 * Duration of HTTP client responses (from start of request to end of reading response body).
 
-Example `Startup.cs` modification to enable these metrics:
+Example `Startup.cs` modification to enable these metrics for all HttpClients registered in the service collection:
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {
     // ...
 
-    services.AddHttpClient(Options.DefaultName)
-        .UseHttpClientMetrics();
+    services.UseHttpClientMetrics();
 
     // ...
 }
 ```
+
+> **Note**
+> You can also register HTTP client metrics only for a specific HttpClient by calling `services.AddHttpClient(...).UseHttpClientMetrics()`.
 
 See also, [Sample.Web](Sample.Web/Program.cs).
 

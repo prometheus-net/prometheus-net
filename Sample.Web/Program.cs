@@ -12,7 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 // Define an HTTP client that reports metrics about its usage, to be used by a sample background service.
-builder.Services.AddHttpClient(SampleService.HttpClientName).UseHttpClientMetrics();
+builder.Services.AddHttpClient(SampleService.HttpClientName);
+
+// Export metrics from all HTTP clients registered in services
+builder.Services.UseHttpClientMetrics();
 
 // A sample service that uses the above HTTP client.
 builder.Services.AddHostedService<SampleService>();
