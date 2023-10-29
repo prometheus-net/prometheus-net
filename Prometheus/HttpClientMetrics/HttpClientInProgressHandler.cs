@@ -11,6 +11,7 @@ namespace Prometheus.HttpClientMetrics
         {
             using (CreateChild(request, null).TrackInProgress())
             {
+                // Returns when the response HEADERS are seen.
                 return await base.SendAsync(request, cancellationToken);
             }
         }
