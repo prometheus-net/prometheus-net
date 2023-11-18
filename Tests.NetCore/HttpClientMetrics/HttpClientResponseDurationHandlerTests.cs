@@ -27,8 +27,8 @@ namespace Prometheus.Tests.HttpClientMetrics
             var client = new HttpClient(handler);
             await client.GetAsync(ConnectivityCheck.Url);
 
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
-            Assert.IsTrue(handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Sum > 0);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
+            Assert.IsTrue(handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Sum > 0);
         }
 
         [TestMethod]
@@ -51,19 +51,19 @@ namespace Prometheus.Tests.HttpClientMetrics
             var requestTask = client.GetAsync(ConnectivityCheck.Url, HttpCompletionOption.ResponseHeadersRead);
 
             // There should be no duration metric recorded unless the task is completed.
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
 
             mockHttpClientHandler.Complete();
 
             // There should be no duration metric recorded unless the response is actually read or disposed.
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
 
             var response = await requestTask;
 
             await response.Content.ReadAsStringAsync();
 
             // Now that we have finished reading it, it should show up.
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
         }
 
         [TestMethod]
@@ -86,19 +86,19 @@ namespace Prometheus.Tests.HttpClientMetrics
             var requestTask = client.GetAsync(ConnectivityCheck.Url, HttpCompletionOption.ResponseHeadersRead);
 
             // There should be no duration metric recorded unless the task is completed.
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
 
             mockHttpClientHandler.Complete();
 
             // There should be no duration metric recorded unless the response is actually read or disposed.
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
 
             var response = await requestTask;
 
             response.Dispose();
 
             // Now that we have disposed it, it should show up.
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
         }
 
         private class MockHttpClientHandler : HttpClientHandler

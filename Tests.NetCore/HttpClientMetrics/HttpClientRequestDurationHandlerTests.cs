@@ -27,8 +27,8 @@ namespace Prometheus.Tests.HttpClientMetrics
             var client = new HttpClient(handler);
             await client.GetAsync(ConnectivityCheck.Url);
 
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
-            Assert.IsTrue(handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Sum > 0);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
+            Assert.IsTrue(handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Sum > 0);
         }
 
         [TestMethod]
@@ -51,10 +51,10 @@ namespace Prometheus.Tests.HttpClientMetrics
             client.GetAsync(ConnectivityCheck.Url);
 
             // There should be no duration metric recorded unless the task is completed
-            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
+            Assert.AreEqual(0, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
 
             mockHttpClientHandler.Complete();
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Count);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Count);
         }
 
         private class MockHttpClientHandler : HttpClientHandler
