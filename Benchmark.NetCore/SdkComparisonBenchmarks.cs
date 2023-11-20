@@ -1,10 +1,28 @@
-﻿using System.Diagnostics;
-using System.Diagnostics.Metrics;
+﻿using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Metrics;
 using Prometheus;
 
 namespace Benchmark.NetCore;
+
+/*
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK 8.0.100-rc.2.23502.2
+  [Host]     : .NET 7.0.13 (7.0.1323.51816), X64 RyuJIT AVX2
+  DefaultJob : .NET 7.0.13 (7.0.1323.51816), X64 RyuJIT AVX2
+  Job-AGCLMW : .NET 7.0.13 (7.0.1323.51816), X64 RyuJIT AVX2
+
+
+| Method                        | Job        | MaxIterationCount | Mean        | Error       | StdDev      | Gen0     | Gen1     | Allocated |
+|------------------------------ |----------- |------------------ |------------:|------------:|------------:|---------:|---------:|----------:|
+| PromNetCounter                | DefaultJob | Default           |    771.5 us |     5.54 us |     4.91 us |        - |        - |       1 B |
+| PromNetHistogram              | DefaultJob | Default           |  2,747.5 us |    27.86 us |    26.06 us |        - |        - |       3 B |
+| OTelCounter                   | DefaultJob | Default           | 14,470.8 us |    54.28 us |    48.12 us |        - |        - |      12 B |
+| OTelHistogram                 | DefaultJob | Default           | 15,856.9 us |   193.51 us |   181.01 us |        - |        - |      25 B |
+| PromNetHistogramForAdHocLabel | Job-AGCLMW | 16                |  8,804.0 us | 1,083.49 us | 1,013.49 us | 500.0000 | 234.3750 | 3184062 B |
+| OTelHistogramForAdHocLabel    | Job-AGCLMW | 16                |    580.8 us |     6.08 us |     5.69 us |  14.6484 |        - |   96001 B |
+*/
 
 /// <summary>
 /// We compare pure measurement (not serializing the data) with prometheus-net SDK and OpenTelemetry .NET SDK.
@@ -14,6 +32,7 @@ namespace Benchmark.NetCore;
 /// * Metrics are initialized once on application startup.
 /// * Metrics typically measure "sessions" - there are sets of metrics that are related through shared identifiers and a shared lifetime (e.g. HTTP request),
 ///   with all the identifiers for the metrics created when the sesison is initialized (e.g. when the HTTP connection is established).
+/// * Metrics typically are also used report SLI (Service Level Indicator); these involve emitting a lot of unique dimension values, for example: CustomerId.
 /// 
 /// Excluded from measurement:
 /// * Meter setup (because meters are created once on application setup and not impactful later).
@@ -27,9 +46,6 @@ namespace Benchmark.NetCore;
 [MemoryDiagnoser]
 public class SdkComparisonBenchmarks
 {
-    private const int CounterCount = 100;
-    private const int HistogramCount = 100;
-
     // Unique sets of label/tag values per metric. You can think of each one as a "session" we are reporting data for.
     private const int TimeseriesPerMetric = 100;
 
@@ -46,15 +62,6 @@ public class SdkComparisonBenchmarks
     {
         for (var i = 0; i < SessionIds.Length; i++)
             SessionIds[i] = Guid.NewGuid().ToString();
-    }
-
-    [Params(MetricsSdk.PrometheusNet, MetricsSdk.OpenTelemetry)]
-    public MetricsSdk Sdk { get; set; }
-
-    public enum MetricsSdk
-    {
-        PrometheusNet,
-        OpenTelemetry
     }
 
     /// <summary>
@@ -76,13 +83,21 @@ public class SdkComparisonBenchmarks
         /// </summary>
         public abstract void ObserveHistogram(double value);
 
+        /// <summary>
+        /// Records an observation with one random label value as ad-hoc using a Histogram.
+        /// </summary>
+        public abstract void ObserveHistogramWithAnAdHocLabelValue(double value);
+
         public virtual void Dispose() { }
     }
 
     private sealed class PrometheusNetMetricsContext : MetricsContext
     {
-        private readonly List<Prometheus.Counter.Child> _counterInstances = new(CounterCount * TimeseriesPerMetric);
-        private readonly List<Histogram.Child> _histogramInstances = new(HistogramCount * TimeseriesPerMetric);
+        private readonly List<Counter.Child> _counterInstances = new(TimeseriesPerMetric);
+        private readonly List<Histogram.Child> _histogramInstances = new(TimeseriesPerMetric);
+        private readonly Histogram _histogramForAdHocLabels;
+
+        private readonly KestrelMetricServer _server;
 
         public PrometheusNetMetricsContext()
         {
@@ -92,21 +107,22 @@ public class SdkComparisonBenchmarks
             // Do not emit any exemplars in this benchmark, as they are not yet equally supported by the SDKs.
             factory.ExemplarBehavior = ExemplarBehavior.NoExemplars();
 
-            for (var counterIndex = 0; counterIndex < CounterCount; counterIndex++)
-            {
-                var counter = factory.CreateCounter("counter_" + counterIndex, "", LabelNames);
+            var counter = factory.CreateCounter("counter", "", LabelNames);
 
-                for (var i = 0; i < TimeseriesPerMetric; i++)
-                    _counterInstances.Add(counter.WithLabels(Label1Value, Label2Value, SessionIds[i]));
-            }
+            for (var i = 0; i < TimeseriesPerMetric; i++)
+                _counterInstances.Add(counter.WithLabels(Label1Value, Label2Value, SessionIds[i]));
 
-            for (var histogramIndex = 0; histogramIndex < HistogramCount; histogramIndex++)
-            {
-                var histogram = factory.CreateHistogram("histogram_" + histogramIndex, "", LabelNames);
+            var histogram = factory.CreateHistogram("histogram", "", LabelNames);
 
-                for (var i = 0; i < TimeseriesPerMetric; i++)
-                    _histogramInstances.Add(histogram.WithLabels(Label1Value, Label2Value, SessionIds[i]));
-            }
+            _histogramForAdHocLabels = factory.CreateHistogram("histogramForAdHocLabels", "", LabelNames);
+
+            for (var i = 0; i < TimeseriesPerMetric; i++)
+                _histogramInstances.Add(histogram.WithLabels(Label1Value, Label2Value, SessionIds[i]));
+
+            // `AddPrometheusHttpListener` of OpenTelemetry creates an HttpListener.
+            // Start a listener/server for Proemetheus Benchmarks for a fair comparison.
+            _server = new KestrelMetricServer(port: 1234);
+            _server.Start();
         }
 
         public override void ObserveCounter(double value)
@@ -120,6 +136,18 @@ public class SdkComparisonBenchmarks
             foreach (var histogram in _histogramInstances)
                 histogram.Observe(value);
         }
+
+        public override void ObserveHistogramWithAnAdHocLabelValue(double value)
+        {
+            _histogramForAdHocLabels.WithLabels(Label1Value, Label2Value, Guid.NewGuid().ToString()).Observe(value);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            _server.Dispose();
+        }
     }
 
     private sealed class OpenTelemetryMetricsContext : MetricsContext
@@ -129,10 +157,9 @@ public class SdkComparisonBenchmarks
         private readonly Meter _meter;
         private readonly MeterProvider _provider;
 
-        private readonly List<Counter<double>> _counters = new(CounterCount);
-        private readonly List<Histogram<double>> _histograms = new(HistogramCount);
-
-        private readonly List<TagList> _sessions = new(TimeseriesPerMetric);
+        private readonly Counter<double> _counter;
+        private readonly Histogram<double> _histogram;
+        private readonly Histogram<double> _histogramForAdHocLabels;
 
         public OpenTelemetryMetricsContext()
         {
@@ -140,44 +167,47 @@ public class SdkComparisonBenchmarks
             // at least for the "setup" benchmark which keeps getting slower every time we call it with the same metric name.
             _meter = new Meter(MeterBaseName + Guid.NewGuid());
 
+            _counter = _meter.CreateCounter<double>("counter");
+
+            _histogram = _meter.CreateHistogram<double>("histogram");
+
+            _histogramForAdHocLabels = _meter.CreateHistogram<double>("histogramForAdHocLabels");
+
             _provider = OpenTelemetry.Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusExporter()
+                .AddView("histogram", new OpenTelemetry.Metrics.HistogramConfiguration() { RecordMinMax = false})
                 .AddMeter(_meter.Name)
+                .AddPrometheusHttpListener()
                 .Build();
-
-            for (var i = 0; i < CounterCount; i++)
-                _counters.Add(_meter.CreateCounter<double>("counter_" + i));
-
-            for (var i = 0; i < HistogramCount; i++)
-                _histograms.Add(_meter.CreateHistogram<double>("histogram_" + i));
-
-            for (var i = 0; i < TimeseriesPerMetric; i++)
-            {
-                var tag1 = new KeyValuePair<string, object>(LabelNames[0], Label1Value);
-                var tag2 = new KeyValuePair<string, object>(LabelNames[1], Label2Value);
-                var tag3 = new KeyValuePair<string, object>(LabelNames[2], SessionIds[i]);
-
-                var tagList = new TagList(new[] { tag1, tag2, tag3 });
-                _sessions.Add(tagList);
-            }
         }
 
         public override void ObserveCounter(double value)
         {
-            foreach (var session in _sessions)
+            for (int i = 0; i < SessionIds.Length; i++)
             {
-                foreach (var counter in _counters)
-                    counter.Add(value, session);
+                var tag1 = new KeyValuePair<string, object>(LabelNames[0], Label1Value);
+                var tag2 = new KeyValuePair<string, object>(LabelNames[1], Label2Value);
+                var tag3 = new KeyValuePair<string, object>(LabelNames[2], SessionIds[i]);
+                _counter.Add(value, tag1, tag2, tag3);
             }
         }
 
         public override void ObserveHistogram(double value)
         {
-            foreach (var session in _sessions)
+            for (int i = 0; i < SessionIds.Length; i++)
             {
-                foreach (var histogram in _histograms)
-                    histogram.Record(value, session);
+                var tag1 = new KeyValuePair<string, object>(LabelNames[0], Label1Value);
+                var tag2 = new KeyValuePair<string, object>(LabelNames[1], Label2Value);
+                var tag3 = new KeyValuePair<string, object>(LabelNames[2], SessionIds[i]);
+                _histogram.Record(value, tag1, tag2, tag3);
             }
+        }
+
+        public override void ObserveHistogramWithAnAdHocLabelValue(double value)
+        {
+            var tag1 = new KeyValuePair<string, object>(LabelNames[0], Label1Value);
+            var tag2 = new KeyValuePair<string, object>(LabelNames[1], Label2Value);
+            var tag3 = new KeyValuePair<string, object>(LabelNames[2], Guid.NewGuid().ToString());
+            _histogramForAdHocLabels.Record(value, tag1, tag2, tag3);
         }
 
         public override void Dispose()
@@ -190,45 +220,65 @@ public class SdkComparisonBenchmarks
 
     private MetricsContext _context;
 
-    [IterationSetup]
-    public void Setup()
+    [GlobalSetup(Targets = new string[] {nameof(OTelCounter), nameof(OTelHistogram), nameof(OTelHistogramForAdHocLabel)})]
+    public void OpenTelemetrySetup()
     {
-        _context = Sdk switch
-        {
-            MetricsSdk.PrometheusNet => new PrometheusNetMetricsContext(),
-            MetricsSdk.OpenTelemetry => new OpenTelemetryMetricsContext(),
-            _ => throw new NotImplementedException(),
-        };
+        _context = new OpenTelemetryMetricsContext();
+    }
+
+    [GlobalSetup(Targets = new string[] { nameof(PromNetCounter), nameof(PromNetHistogram), nameof(PromNetHistogramForAdHocLabel) })]
+    public void PrometheusNetSetup()
+    {
+        _context = new PrometheusNetMetricsContext();
     }
 
     [Benchmark]
-    public void CounterMeasurements()
+    public void PromNetCounter()
     {
         for (var observation = 0; observation < ObservationCount; observation++)
             _context.ObserveCounter(observation);
     }
 
     [Benchmark]
-    public void HistogramMeasurements()
+    public void PromNetHistogram()
     {
         for (var observation = 0; observation < ObservationCount; observation++)
             _context.ObserveHistogram(observation);
     }
 
-    [IterationCleanup]
-    public void Cleanup()
+    [Benchmark]
+    [MaxIterationCount(16)] // Need to set a lower iteration count as this benchmarks allocates a lot memory and takes too long to complete with the default number of iterations.
+    public void PromNetHistogramForAdHocLabel()
     {
-        _context.Dispose();
+        for (var observation = 0; observation < ObservationCount; observation++)
+            _context.ObserveHistogramWithAnAdHocLabelValue(observation);
     }
 
     [Benchmark]
-    public void SetupBenchmark()
+    public void OTelCounter()
     {
-        // Here we just do the setup again, but this time as part of the measured data set, to compare the setup cost between SDKs.
+        for (var observation = 0; observation < ObservationCount; observation++)
+            _context.ObserveCounter(observation);
+    }
 
-        // We need to dispose of the automatically created context, in case there are any SDK-level singleton resources (which we do not want to accidentally reuse).
+    [Benchmark]
+    public void OTelHistogram()
+    {
+        for (var observation = 0; observation < ObservationCount; observation++)
+            _context.ObserveHistogram(observation);
+    }
+
+    [Benchmark]
+    [MaxIterationCount(16)] // Set the same number of iteration count as the corresponding PromNet benchmark.
+    public void OTelHistogramForAdHocLabel()
+    {
+        for (var observation = 0; observation < ObservationCount; observation++)
+            _context.ObserveHistogramWithAnAdHocLabelValue(observation);
+    }
+
+    [GlobalCleanup]
+    public void Cleanup()
+    {
         _context.Dispose();
-
-        Setup();
     }
 }
