@@ -165,7 +165,7 @@ public class SdkComparisonBenchmarks
         public OpenTelemetryMetricsContext()
         {
             // We use a randomized name every time because otherwise there appears to be some "shared state" between benchmark invocations,
-            // at least for the "setup" benchmark which keeps getting slower every time we call it with the same metric name.
+            // at least for the "setup" part which keeps getting slower every time we call it with the same metric name.
             _meter = new Meter(MeterBaseName + Guid.NewGuid());
 
             _counter = _meter.CreateCounter<double>("counter");
