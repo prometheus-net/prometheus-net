@@ -883,7 +883,7 @@ As an example of the performance of measuring data using prometheus-net, we have
 | Summary     |    1 thread |               2 million |
 | Gauge       |  16 threads |              53 million |
 | Counter     |  16 threads |               9 million |
-| Histogram   |  16 threads |              14 million |
+| Histogram   |  16 threads |               5 million |
 | Summary     |  16 threads |               2 million |
 
 > **Note**
