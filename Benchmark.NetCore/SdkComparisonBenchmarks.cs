@@ -6,22 +6,22 @@ using Prometheus;
 namespace Benchmark.NetCore;
 
 /*
-BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
-Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK 8.0.100-rc.2.23502.2
-  [Host]     : .NET 7.0.13 (7.0.1323.51816), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.13 (7.0.1323.51816), X64 RyuJIT AVX2
-  Job-AGCLMW : .NET 7.0.13 (7.0.1323.51816), X64 RyuJIT AVX2
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.22621.2715/22H2/2022Update/SunValley2)
+AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
+.NET SDK 8.0.100
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  Job-IZHPUA : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-| Method                        | Job        | MaxIterationCount | Mean        | Error       | StdDev      | Gen0     | Gen1     | Allocated |
-|------------------------------ |----------- |------------------ |------------:|------------:|------------:|---------:|---------:|----------:|
-| PromNetCounter                | DefaultJob | Default           |    771.5 us |     5.54 us |     4.91 us |        - |        - |       1 B |
-| PromNetHistogram              | DefaultJob | Default           |  2,747.5 us |    27.86 us |    26.06 us |        - |        - |       3 B |
-| OTelCounter                   | DefaultJob | Default           | 14,470.8 us |    54.28 us |    48.12 us |        - |        - |      12 B |
-| OTelHistogram                 | DefaultJob | Default           | 15,856.9 us |   193.51 us |   181.01 us |        - |        - |      25 B |
-| PromNetHistogramForAdHocLabel | Job-AGCLMW | 16                |  8,804.0 us | 1,083.49 us | 1,013.49 us | 500.0000 | 234.3750 | 3184062 B |
-| OTelHistogramForAdHocLabel    | Job-AGCLMW | 16                |    580.8 us |     6.08 us |     5.69 us |  14.6484 |        - |   96001 B |
+| Method                        | Job        | MaxIterationCount | Mean        | Error     | StdDev    | Gen0     | Gen1     | Allocated |
+|------------------------------ |----------- |------------------ |------------:|----------:|----------:|---------:|---------:|----------:|
+| PromNetCounter                | DefaultJob | Default           |    232.0 us |   1.90 us |   1.78 us |        - |        - |         - |
+| PromNetHistogram              | DefaultJob | Default           |  1,200.4 us |   8.11 us |   7.19 us |        - |        - |       2 B |
+| OTelCounter                   | DefaultJob | Default           | 10,879.7 us |  47.76 us |  44.67 us |        - |        - |      11 B |
+| OTelHistogram                 | DefaultJob | Default           | 12,310.7 us |  57.24 us |  50.75 us |        - |        - |      24 B |
+| PromNetHistogramForAdHocLabel | Job-IZHPUA | 16                |  5,765.7 us | 372.36 us | 330.09 us | 187.5000 | 171.8750 | 3184106 B |
+| OTelHistogramForAdHocLabel    | Job-IZHPUA | 16                |    348.7 us |   3.01 us |   2.67 us |   5.3711 |        - |   96000 B |
 */
 
 /// <summary>

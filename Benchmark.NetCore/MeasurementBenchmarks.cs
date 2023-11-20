@@ -29,7 +29,7 @@ public class MeasurementBenchmarks
     [Params(1, 16)]
     public int ThreadCount { get; set; }
 
-    [Params(MetricType.Counter, /*MetricType.Gauge,*/ MetricType.Histogram/*, MetricType.Summary*/)]
+    [Params(MetricType.Counter, MetricType.Gauge, MetricType.Histogram, MetricType.Summary)]
     public MetricType TargetMetricType { get; set; }
 
     [Params(ExemplarMode.Auto, ExemplarMode.None, ExemplarMode.Provided)]

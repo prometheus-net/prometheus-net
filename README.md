@@ -877,27 +877,35 @@ As an example of the performance of measuring data using prometheus-net, we have
 
 | Metric type | Concurrency | Measurements per second |
 |-------------|------------:|------------------------:|
-| Gauge       |    1 thread |             521 million |
-| Counter     |    1 thread |              87 million |
-| Histogram   |    1 thread |              46 million |
+| Gauge       |    1 thread |             519 million |
+| Counter     |    1 thread |             134 million |
+| Histogram   |    1 thread |              69 million |
 | Summary     |    1 thread |               2 million |
-| Gauge       |  16 threads |              55 million |
-| Counter     |  16 threads |              10 million |
+| Gauge       |  16 threads |              53 million |
+| Counter     |  16 threads |               9 million |
 | Histogram   |  16 threads |              14 million |
 | Summary     |  16 threads |               2 million |
 
 > **Note**
 > All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. In real-world apps with the load spread across multiple metrics, you can expect even better performance.
 
-Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. Both SDKs are evaluated in single-threaded mode under a comparable workload and enabled feature set.
+Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. Both SDKs are evaluated in single-threaded mode under a comparable workload and enabled feature set. A representative result is here:
 
-![](Docs/SdkComparison-MeasurementCpuUsage.png)
-![](Docs/SdkComparison-MeasurementMemoryUsage.png)
-![](Docs/SdkComparison-SetupCpuUsage.png)
-![](Docs/SdkComparison-SetupMemoryUsage.png)
+```text
+BenchmarkDotNet v0.13.10, Windows 11 (10.0.22621.2715/22H2/2022Update/SunValley2)
+AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
+  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
-> **Note**
-> As authors of this SDK are not necessarily experts in use of other SDKs, please feel free to submit pull requests with benchmark improvements to better highlight the strengths or weaknesses here.
+
+| Method                        | Mean        | Gen0     | Gen1     | Allocated |
+|------------------------------ |------------:|---------:|---------:|----------:|
+| PromNetCounter                |    232.0 us |        - |        - |         - |
+| OTelCounter                   | 10,879.7 us |        - |        - |      11 B |
+| PromNetHistogram              |  1,200.4 us |        - |        - |       2 B |
+| OTelHistogram                 | 12,310.7 us |        - |        - |      24 B |
+| PromNetHistogramForAdHocLabel |  5,765.7 us | 187.5000 | 171.8750 | 3184106 B |
+| OTelHistogramForAdHocLabel    |    348.7 us |   5.3711 |        - |   96000 B |
+```
 
 # Community projects
 
