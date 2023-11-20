@@ -120,7 +120,9 @@ public class SdkComparisonBenchmarks
                 _histogramInstances.Add(histogram.WithLabels(Label1Value, Label2Value, SessionIds[i]));
 
             // `AddPrometheusHttpListener` of OpenTelemetry creates an HttpListener.
-            // Start a listener/server for Proemetheus Benchmarks for a fair comparison.
+            // Start a listener/server for Prometheus Benchmarks for a fair comparison.
+            // We listen on 127.0.0.1:<random free port> to avoid firewall prompts (we do not expect to receive any traffic).
+            _server = new KestrelMetricServer("127.0.0.1", port: 0);
             _server = new KestrelMetricServer(port: 1234);
             _server.Start();
         }
@@ -164,7 +166,7 @@ public class SdkComparisonBenchmarks
         public OpenTelemetryMetricsContext()
         {
             // We use a randomized name every time because otherwise there appears to be some "shared state" between benchmark invocations,
-            // at least for the "setup" benchmark which keeps getting slower every time we call it with the same metric name.
+            // at least for the "setup" part which keeps getting slower every time we call it with the same metric name.
             _meter = new Meter(MeterBaseName + Guid.NewGuid());
 
             _counter = _meter.CreateCounter<double>("counter");
