@@ -120,8 +120,9 @@ public class SdkComparisonBenchmarks
                 _histogramInstances.Add(histogram.WithLabels(Label1Value, Label2Value, SessionIds[i]));
 
             // `AddPrometheusHttpListener` of OpenTelemetry creates an HttpListener.
-            // Start a listener/server for Proemetheus Benchmarks for a fair comparison.
-            _server = new KestrelMetricServer(port: 1234);
+            // Start a listener/server for Prometheus benchmarks for a fair comparison.
+            // We listen on 127.0.0.1:<random free port> to avoid firewall prompts (we do not expect to receive any traffic).
+            _server = new KestrelMetricServer("127.0.0.1", port: 0);
             _server.Start();
         }
 
