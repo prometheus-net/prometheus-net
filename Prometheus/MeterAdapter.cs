@@ -159,7 +159,7 @@ public sealed class MeterAdapter : IDisposable
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the increment.
-                handle.WithLease(x => x.Inc(value));
+                handle.WithLease(x => x.Inc(value), labelValues);
             }
 #endif
             else if (instrument is ObservableGauge<T>
