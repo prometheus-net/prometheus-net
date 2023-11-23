@@ -40,8 +40,8 @@ public abstract class Collector
     internal LabelSequence StaticLabels;
 
     internal abstract MetricType Type { get; }
-    
-    internal byte[] TypeBytes { get;  }
+
+    internal byte[] TypeBytes { get; }
 
     internal abstract int ChildCount { get; }
     internal abstract int TimeseriesCount { get; }
@@ -66,7 +66,7 @@ public abstract class Collector
         
         Name = name;
         NameBytes = PrometheusConstants.ExportEncoding.GetBytes(Name);
-        TypeBytes = PrometheusConstants.ExportEncoding.GetBytes(Type.ToString().ToLowerInvariant());
+        TypeBytes = TextSerializer.MetricTypeToBytes[Type];
         Help = help;
         HelpBytes = String.IsNullOrWhiteSpace(help)
             ? Array.Empty<byte>()
