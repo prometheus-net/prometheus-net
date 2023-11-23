@@ -14,14 +14,14 @@ AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
   Job-IZHPUA : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-| Method                        | Job        | MaxIterationCount | Mean        | Error     | StdDev    | Gen0     | Gen1     | Allocated |
-|------------------------------ |----------- |------------------ |------------:|----------:|----------:|---------:|---------:|----------:|
-| PromNetCounter                | DefaultJob | Default           |    232.0 us |   1.90 us |   1.78 us |        - |        - |         - |
-| PromNetHistogram              | DefaultJob | Default           |  1,200.4 us |   8.11 us |   7.19 us |        - |        - |       2 B |
-| OTelCounter                   | DefaultJob | Default           | 10,879.7 us |  47.76 us |  44.67 us |        - |        - |      11 B |
-| OTelHistogram                 | DefaultJob | Default           | 12,310.7 us |  57.24 us |  50.75 us |        - |        - |      24 B |
-| PromNetHistogramForAdHocLabel | Job-IZHPUA | 16                |  5,765.7 us | 372.36 us | 330.09 us | 187.5000 | 171.8750 | 3184106 B |
-| OTelHistogramForAdHocLabel    | Job-IZHPUA | 16                |    348.7 us |   3.01 us |   2.67 us |   5.3711 |        - |   96000 B |
+| Method                        | Job        | MaxIterationCount | Mean        | Error     | StdDev    | Gen0    | Gen1    | Allocated |
+|------------------------------ |----------- |------------------ |------------:|----------:|----------:|--------:|--------:|----------:|
+| PromNetCounter                | DefaultJob | Default           |    237.1 us |   1.71 us |   1.43 us |       - |       - |         - |
+| PromNetHistogram              | DefaultJob | Default           |  1,236.2 us |   9.99 us |   8.86 us |       - |       - |       2 B |
+| OTelCounter                   | DefaultJob | Default           | 10,981.5 us |  64.49 us |  57.17 us |       - |       - |      11 B |
+| OTelHistogram                 | DefaultJob | Default           | 12,078.9 us | 126.10 us | 117.95 us |       - |       - |      24 B |
+| PromNetHistogramForAdHocLabel | Job-NDQITE | 16                |  1,877.7 us | 104.83 us |  87.54 us | 50.7813 | 48.8281 |  872701 B |
+| OTelHistogramForAdHocLabel    | Job-NDQITE | 16                |    354.0 us |   4.05 us |   3.78 us |  5.3711 |       - |   96000 B |
 */
 
 /// <summary>

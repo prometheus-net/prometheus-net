@@ -897,14 +897,14 @@ AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
   [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-| Method                        | Mean        | Gen0     | Gen1     | Allocated |
-|------------------------------ |------------:|---------:|---------:|----------:|
-| PromNetCounter                |    232.0 us |        - |        - |         - |
-| OTelCounter                   | 10,879.7 us |        - |        - |      11 B |
-| PromNetHistogram              |  1,200.4 us |        - |        - |       2 B |
-| OTelHistogram                 | 12,310.7 us |        - |        - |      24 B |
-| PromNetHistogramForAdHocLabel |  5,765.7 us | 187.5000 | 171.8750 | 3184106 B |
-| OTelHistogramForAdHocLabel    |    348.7 us |   5.3711 |        - |   96000 B |
+| Method                        | Mean        | Gen0    | Gen1    | Allocated |
+|------------------------------ |------------:|--------:|--------:|----------:|
+| PromNetCounter                |    237.1 us |       - |       - |         - |
+| PromNetHistogram              |  1,236.2 us |       - |       - |       2 B |
+| OTelCounter                   | 10,981.5 us |       - |       - |      11 B |
+| OTelHistogram                 | 12,078.9 us |       - |       - |      24 B |
+| PromNetHistogramForAdHocLabel |  1,877.7 us | 50.7813 | 48.8281 |  872701 B |
+| OTelHistogramForAdHocLabel    |    354.0 us |  5.3711 |       - |   96000 B |
 ```
 
 # Community projects
