@@ -278,7 +278,7 @@ internal sealed class TextSerializer : IMetricsSerializer
             return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
 #if NET
-        Span<char> buffer = stackalloc char[128];
+        Span<char> buffer = stackalloc char[32];
 
         if (!value.TryFormat(buffer, out var charsWritten, "g", CultureInfo.InvariantCulture))
             throw new Exception("Failed to encode floating point value as string.");
