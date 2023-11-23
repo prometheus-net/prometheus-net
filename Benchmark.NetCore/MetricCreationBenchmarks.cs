@@ -8,6 +8,7 @@ namespace Benchmark.NetCore
     /// creating a brand new set of metrics for each scrape. So let's benchmark this scenario.
     /// </summary>
     [MemoryDiagnoser]
+    [EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
     public class MetricCreationBenchmarks
     {
         /// <summary>

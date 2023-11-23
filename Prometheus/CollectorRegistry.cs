@@ -232,7 +232,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
     // Each collector family has an identity (the base name of the metric, in Prometheus format) and any number of collectors within.
     // Different collectors in the same family may have different sets of labels (static and instance) depending on how they were created.
-    private readonly ConcurrentDictionary<string, CollectorFamily> _families = new();
+    private readonly ConcurrentDictionary<string, CollectorFamily> _families = new(StringComparer.Ordinal);
 
     internal void SetBeforeFirstCollectCallback(Action a)
     {
