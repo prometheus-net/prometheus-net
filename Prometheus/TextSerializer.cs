@@ -31,6 +31,14 @@ internal sealed class TextSerializer : IMetricsSerializer
     internal static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
     internal static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
 
+    internal static readonly Dictionary<MetricType, byte[]> MetricTypeToBytes = new()
+    {
+        { MetricType.Gauge, PrometheusConstants.ExportEncoding.GetBytes("gauge") },
+        { MetricType.Counter, PrometheusConstants.ExportEncoding.GetBytes("counter") },
+        { MetricType.Histogram, PrometheusConstants.ExportEncoding.GetBytes("histogram") },
+        { MetricType.Summary, PrometheusConstants.ExportEncoding.GetBytes("summary") },
+    };
+
     private static readonly char[] DotEChar = { '.', 'e' };
 
     public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.PrometheusText)
