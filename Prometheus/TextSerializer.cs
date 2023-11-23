@@ -183,6 +183,23 @@ internal sealed class TextSerializer : IMetricsSerializer
             }
         }
 
+#if NET
+        static bool RequiresDotZero(char[] buffer, int length)
+        {
+            return buffer.AsSpan(0..length).IndexOfAny(DotEChar) == -1; /* did not contain .|e */
+        }
+
+        // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
+        if (!value.TryFormat(_stringCharsBuffer, out var charsWritten, "g", CultureInfo.InvariantCulture))
+            throw new Exception("Failed to encode floating point value as string.");
+
+        var encodedBytes = PrometheusConstants.ExportEncoding.GetBytes(_stringCharsBuffer, 0, charsWritten, _stringBytesBuffer, 0);
+        await _stream.Value.WriteAsync(_stringBytesBuffer, 0, encodedBytes, cancel);
+
+        // In certain places (e.g. "le" label) we need floating point values to actually have the decimal point in them for OpenMetrics.
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText && RequiresDotZero(_stringCharsBuffer, charsWritten))
+            await _stream.Value.WriteAsync(DotZero, 0, DotZero.Length, cancel);
+#else
         var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
 
         var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
@@ -191,6 +208,7 @@ internal sealed class TextSerializer : IMetricsSerializer
         // In certain places (e.g. "le" label) we need floating point values to actually have the decimal point in them for OpenMetrics.
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && valueAsString.IndexOfAny(DotEChar) == -1 /* did not contain .|e */)
             await _stream.Value.WriteAsync(DotZero, 0, DotZero.Length, cancel);
+#endif
     }
 
     private async Task WriteValue(long value, CancellationToken cancel)
@@ -211,17 +229,24 @@ internal sealed class TextSerializer : IMetricsSerializer
             }
         }
 
+#if NET
+        if (!value.TryFormat(_stringCharsBuffer, out var charsWritten, "D", CultureInfo.InvariantCulture))
+            throw new Exception("Failed to encode integer value as string.");
+
+        var encodedBytes = PrometheusConstants.ExportEncoding.GetBytes(_stringCharsBuffer, 0, charsWritten, _stringBytesBuffer, 0);
+        await _stream.Value.WriteAsync(_stringBytesBuffer, 0, encodedBytes, cancel);
+#else
         var valueAsString = value.ToString("D", CultureInfo.InvariantCulture);
-        
         var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
         await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
+#endif
     }
 
-    // Reuse a buffer to do the UTF-8 encoding.
-    // Maybe one day also ValueStringBuilder but that would be .NET Core only.
-    // https://github.com/dotnet/corefx/issues/28379
+    // Reuse a buffer to do the serialization and UTF-8 encoding.
     // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
+    private readonly char[] _stringCharsBuffer = new char[32];
     private readonly byte[] _stringBytesBuffer = new byte[32];
+
     private readonly ExpositionFormat _expositionFormat;
 
     /// <summary>
@@ -286,6 +311,7 @@ internal sealed class TextSerializer : IMetricsSerializer
             return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
 #if NET
+        // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
         Span<char> buffer = stackalloc char[32];
 
         if (!value.TryFormat(buffer, out var charsWritten, "g", CultureInfo.InvariantCulture))
@@ -319,7 +345,7 @@ internal sealed class TextSerializer : IMetricsSerializer
             // It is already a floating-point value in Prometheus representation - reuse same bytes for OpenMetrics.
             openMetricsBytes = prometheusBytes;
         }
-        
+
 #else
         var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
         var prometheusBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
