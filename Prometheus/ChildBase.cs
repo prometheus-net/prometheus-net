@@ -12,7 +12,7 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         Parent = parent;
         InstanceLabels = instanceLabels;
         FlattenedLabels = flattenedLabels;
-        FlattenedLabelsBytes = PrometheusConstants.ExportEncoding.GetBytes(flattenedLabels.Serialize());
+        FlattenedLabelsBytes = flattenedLabels.Serialize();
         _publish = publish;
         _exemplarBehavior = exemplarBehavior;
     }
