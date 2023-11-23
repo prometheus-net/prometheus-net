@@ -7,29 +7,29 @@ namespace Prometheus;
 /// </remarks>
 internal sealed class TextSerializer : IMetricsSerializer
 {
-    private static readonly byte[] NewLine = { (byte)'\n' };
-    private static readonly byte[] Quote = { (byte)'"' };
-    private static readonly byte[] Equal = { (byte)'=' };
-    private static readonly byte[] Comma = { (byte)',' };
-    private static readonly byte[] Underscore = { (byte)'_' };
-    private static readonly byte[] LeftBrace = { (byte)'{' };
-    private static readonly byte[] RightBraceSpace = { (byte)'}', (byte)' ' };
-    private static readonly byte[] Space = { (byte)' ' };
-    private static readonly byte[] SpaceHashSpaceLeftBrace = { (byte)' ', (byte)'#', (byte)' ', (byte)'{' };
-    private static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
-    private static readonly byte[] NegativeInfinity = PrometheusConstants.ExportEncoding.GetBytes("-Inf");
-    private static readonly byte[] NotANumber = PrometheusConstants.ExportEncoding.GetBytes("NaN");
-    private static readonly byte[] DotZero = PrometheusConstants.ExportEncoding.GetBytes(".0");
-    private static readonly byte[] FloatPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1.0");
-    private static readonly byte[] FloatZero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
-    private static readonly byte[] FloatNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
-    private static readonly byte[] IntPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1");
-    private static readonly byte[] IntZero = PrometheusConstants.ExportEncoding.GetBytes("0");
-    private static readonly byte[] IntNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1");
-    private static readonly byte[] EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
-    private static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
-    private static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
-    private static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
+    internal static readonly byte[] NewLine = { (byte)'\n' };
+    internal static readonly byte[] Quote = { (byte)'"' };
+    internal static readonly byte[] Equal = { (byte)'=' };
+    internal static readonly byte[] Comma = { (byte)',' };
+    internal static readonly byte[] Underscore = { (byte)'_' };
+    internal static readonly byte[] LeftBrace = { (byte)'{' };
+    internal static readonly byte[] RightBraceSpace = { (byte)'}', (byte)' ' };
+    internal static readonly byte[] Space = { (byte)' ' };
+    internal static readonly byte[] SpaceHashSpaceLeftBrace = { (byte)' ', (byte)'#', (byte)' ', (byte)'{' };
+    internal static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
+    internal static readonly byte[] NegativeInfinity = PrometheusConstants.ExportEncoding.GetBytes("-Inf");
+    internal static readonly byte[] NotANumber = PrometheusConstants.ExportEncoding.GetBytes("NaN");
+    internal static readonly byte[] DotZero = PrometheusConstants.ExportEncoding.GetBytes(".0");
+    internal static readonly byte[] FloatPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1.0");
+    internal static readonly byte[] FloatZero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
+    internal static readonly byte[] FloatNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
+    internal static readonly byte[] IntPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1");
+    internal static readonly byte[] IntZero = PrometheusConstants.ExportEncoding.GetBytes("0");
+    internal static readonly byte[] IntNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1");
+    internal static readonly byte[] EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
+    internal static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
+    internal static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
+    internal static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
 
     private static readonly char[] DotEChar = { '.', 'e' };
 
