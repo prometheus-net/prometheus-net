@@ -1,4 +1,5 @@
-﻿using Prometheus.SummaryImpl;
+﻿using System.Buffers;
+using Prometheus.SummaryImpl;
 
 namespace Prometheus
 {
@@ -120,55 +121,65 @@ namespace Prometheus
 
                 long count;
                 double sum;
-                var values = new List<(double quantile, double value)>(_objectives.Count);
 
-                lock (_bufLock)
+                var values = ArrayPool<(double quantile, double value)>.Shared.Rent(_objectives.Count);
+                var valuesIndex = 0;
+
+                try
                 {
-                    lock (_lock)
+
+                    lock (_bufLock)
                     {
-                        // Swap bufs even if hotBuf is empty to set new hotBufExpTime.
-                        SwapBufs(now);
-                        FlushColdBuf();
-
-                        count = _count;
-                        sum = _sum;
-
-                        for (var i = 0; i < _sortedObjectives.Length; i++)
+                        lock (_lock)
                         {
-                            var quantile = _sortedObjectives[i];
-                            var value = _headStream.Count == 0 ? double.NaN : _headStream.Query(quantile);
+                            // Swap bufs even if hotBuf is empty to set new hotBufExpTime.
+                            SwapBufs(now);
+                            FlushColdBuf();
 
-                            values.Add((quantile, value));
+                            count = _count;
+                            sum = _sum;
+
+                            for (var i = 0; i < _sortedObjectives.Length; i++)
+                            {
+                                var quantile = _sortedObjectives[i];
+                                var value = _headStream.Count == 0 ? double.NaN : _headStream.Query(quantile);
+
+                                values[valuesIndex++] = (quantile, value);
+                            }
                         }
                     }
-                }
 
-                await serializer.WriteMetricPointAsync(
-                    Parent.NameBytes,
-                    FlattenedLabelsBytes,
-                    CanonicalLabel.Empty,
-                    cancel, 
-                    sum,
-                    ObservedExemplar.Empty,
-                    suffix: SumSuffix);
-                await serializer.WriteMetricPointAsync(
-                    Parent.NameBytes,
-                    FlattenedLabelsBytes,
-                    CanonicalLabel.Empty,
-                    cancel, 
-                    count,
-                    ObservedExemplar.Empty,
-                    suffix: CountSuffix);
-
-                for (var i = 0; i < values.Count; i++)
-                {
                     await serializer.WriteMetricPointAsync(
                         Parent.NameBytes,
                         FlattenedLabelsBytes,
-                        _quantileLabels[i],
-                        cancel, 
-                        values[i].value,
-                        ObservedExemplar.Empty);
+                        CanonicalLabel.Empty,
+                        cancel,
+                        sum,
+                        ObservedExemplar.Empty,
+                        suffix: SumSuffix);
+                    await serializer.WriteMetricPointAsync(
+                        Parent.NameBytes,
+                        FlattenedLabelsBytes,
+                        CanonicalLabel.Empty,
+                        cancel,
+                        count,
+                        ObservedExemplar.Empty,
+                        suffix: CountSuffix);
+
+                    for (var i = 0; i < _objectives.Count; i++)
+                    {
+                        await serializer.WriteMetricPointAsync(
+                            Parent.NameBytes,
+                            FlattenedLabelsBytes,
+                            _quantileLabels[i],
+                            cancel,
+                            values[i].value,
+                            ObservedExemplar.Empty);
+                    }
+                }
+                finally
+                {
+                    ArrayPool<(double quantile, double value)>.Shared.Return(values);
                 }
             }
 
