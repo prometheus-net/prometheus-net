@@ -7,7 +7,13 @@ namespace Prometheus;
 public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 {
     private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
+
     private readonly double[] _buckets;
+
+    // These labels go together with the buckets, so we do not need to allocate them for every child.
+    private readonly CanonicalLabel[] _leLabels;
+
+    private static readonly byte[] LeLabelName = PrometheusConstants.ExportEncoding.GetBytes("le");
 
     internal Histogram(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, double[]? buckets, ExemplarBehavior exemplarBehavior)
         : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue, exemplarBehavior)
@@ -16,6 +22,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
         {
             throw new ArgumentException("'le' is a reserved label name");
         }
+
         _buckets = buckets ?? DefaultBuckets;
 
         if (_buckets.Length == 0)
@@ -35,6 +42,12 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 throw new ArgumentException("Bucket values must be increasing");
             }
         }
+
+        _leLabels = new CanonicalLabel[_buckets.Length];
+        for (var i = 0; i < _buckets.Length; i++)
+        {
+            _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, _buckets[i]);
+        }
     }
 
     private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
@@ -48,14 +61,10 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
             : base(parent, instanceLabels, flattenedLabels, publish, exemplarBehavior)
         {
             Parent = parent;
-            
+
             _upperBounds = Parent._buckets;
             _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
-            _leLabels = new CanonicalLabel[_upperBounds.Length];
-            for (var i = 0; i < Parent._buckets.Length; i++)
-            {
-                _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, Parent._buckets[i]);
-            }
+
             _exemplars = new ObservedExemplar[_upperBounds.Length];
             for (var i = 0; i < _upperBounds.Length; i++)
             {
@@ -68,11 +77,9 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
         private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
         private readonly ThreadSafeLong[] _bucketCounts;
         private readonly double[] _upperBounds;
-        private readonly CanonicalLabel[] _leLabels;
         private static readonly byte[] SumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
         private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
         private static readonly byte[] BucketSuffix = PrometheusConstants.ExportEncoding.GetBytes("bucket");
-        private static readonly byte[] LeLabelName = PrometheusConstants.ExportEncoding.GetBytes("le");
         private readonly ObservedExemplar[] _exemplars;
 
         private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
@@ -108,7 +115,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 await serializer.WriteMetricPointAsync(
                     Parent.NameBytes,
                     FlattenedLabelsBytes,
-                    _leLabels[i],
+                    Parent._leLabels[i],
                     cancel,
                     cumulativeCount,
                     exemplar,
@@ -144,7 +151,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
                     if (exemplar != null)
                         RecordExemplar(exemplar, ref _exemplars[i], val);
-                   
+
                     break;
                 }
             }
