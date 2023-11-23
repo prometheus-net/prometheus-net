@@ -101,7 +101,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 FlattenedLabelsBytes,
                 CanonicalLabel.Empty,
                 cancel,
-                _bucketCounts.Sum(b => b.Value),
+                Count,
                 ObservedExemplar.Empty,
                 suffix: CountSuffix);
 
@@ -126,7 +126,19 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
         }
 
         public double Sum => _sum.Value;
-        public long Count => _bucketCounts.Sum(b => b.Value);
+
+        public long Count
+        {
+            get
+            {
+                long total = 0;
+
+                foreach (var count in _bucketCounts)
+                    total += count.Value;
+
+                return total;
+            }
+        }
 
         public void Observe(double val, Exemplar? exemplarLabels) => ObserveInternal(val, 1, exemplarLabels);
 
