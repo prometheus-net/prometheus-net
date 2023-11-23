@@ -210,7 +210,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         if (_labelledMetrics.TryGetValue(instanceLabels, out var metric))
             return metric;
 
-        return _labelledMetrics.GetOrAdd(instanceLabels, CreateLabelledChild);
+        return _labelledMetrics.GetOrAdd(instanceLabels, _createdLabelledChildFunc);
     }
 
     private TChild CreateLabelledChild(LabelSequence instanceLabels)
@@ -220,6 +220,9 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
         return NewChild(instanceLabels, flattenedLabels, publish: !_suppressInitialValue, _exemplarBehavior);
     }
+
+    // Cache the delegate to avoid allocating a new one every time in GetOrAddLabelled.
+    private readonly Func<LabelSequence, TChild> _createdLabelledChildFunc;
 
     /// <summary>
     /// For tests that want to see what instance-level label values were used when metrics were created.
@@ -233,6 +236,8 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         _exemplarBehavior = exemplarBehavior;
 
         _unlabelledLazy = GetUnlabelledLazyInitializer();
+
+        _createdLabelledChildFunc = CreateLabelledChild;
     }
 
     /// <summary>
