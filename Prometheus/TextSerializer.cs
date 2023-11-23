@@ -277,6 +277,42 @@ internal sealed class TextSerializer : IMetricsSerializer
         if (double.IsPositiveInfinity(value))
             return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
+#if NET
+        Span<char> buffer = stackalloc char[128];
+
+        if (!value.TryFormat(buffer, out var charsWritten, "g", CultureInfo.InvariantCulture))
+            throw new Exception("Failed to encode floating point value as string.");
+
+        var prometheusChars = buffer[0..charsWritten];
+
+        var prometheusByteCount = PrometheusConstants.ExportEncoding.GetByteCount(prometheusChars);
+        var prometheusBytes = new byte[prometheusByteCount];
+
+        if (PrometheusConstants.ExportEncoding.GetBytes(prometheusChars, prometheusBytes) != prometheusByteCount)
+            throw new Exception("Internal error: counting the same bytes twice got us a different value.");
+
+        var openMetricsByteCount = prometheusByteCount;
+        byte[] openMetricsBytes;
+
+        // Identify whether the written characters are expressed as floating-point, by checking for presence of the 'e' or '.' characters.
+        if (prometheusChars.IndexOfAny(DotEChar) == -1)
+        {
+            // Prometheus defaults to integer-formatting without a decimal point, if possible.
+            // OpenMetrics requires labels containing numeric values to be expressed in floating point format.
+            // If all we find is an integer, we add a ".0" to the end to make it a floating point value.
+            openMetricsByteCount += 2;
+
+            openMetricsBytes = new byte[openMetricsByteCount];
+            Array.Copy(prometheusBytes, openMetricsBytes, prometheusByteCount);
+            Array.Copy(DotZero, 0, openMetricsBytes, prometheusByteCount, DotZero.Length);
+        }
+        else
+        {
+            // It is already a floating-point value in Prometheus representation - reuse same bytes for OpenMetrics.
+            openMetricsBytes = prometheusBytes;
+        }
+        
+#else
         var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
         var prometheusBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
 
@@ -289,6 +325,7 @@ internal sealed class TextSerializer : IMetricsSerializer
             // If all we find is an integer, we add a ".0" to the end to make it a floating point value.
             openMetricsBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString + ".0");
         }
+#endif
 
         return new CanonicalLabel(name, prometheusBytes, openMetricsBytes);
     }
