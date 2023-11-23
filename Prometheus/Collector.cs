@@ -208,12 +208,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         // NOTE: We do not try to find a metric instance with the same set of label names but in a DIFFERENT order.
         // Order of labels matterns in data creation, although does not matter when the exported data set is imported later.
         // If we somehow end up registering the same metric with the same label names in different order, we will publish it twice, in two orders...
-        // That is not ideal but also not that big of a deal to do a lookup every time a metric instance is registered.
-
-        // Don't allocate lambda for GetOrAdd in the common case that the labeled metrics exist.
-        if (_labelledMetrics.TryGetValue(instanceLabels, out var metric))
-            return metric;
-
+        // That is not ideal but also not that big of a deal to justify a lookup every time a metric instance is registered.
         return _labelledMetrics.GetOrAdd(instanceLabels, _createdLabelledChildFunc);
     }
 
