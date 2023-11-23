@@ -77,7 +77,11 @@ public abstract class Collector
         FlattenedLabelNames = instanceLabelNames.Concat(staticLabels.Names);
 
         // Used to check uniqueness.
+#if NET
+        var uniqueLabelNames = new HashSet<string>(FlattenedLabelNames.Length, StringComparer.Ordinal);
+#else
         var uniqueLabelNames = new HashSet<string>(StringComparer.Ordinal);
+#endif
 
         var labelNameEnumerator = FlattenedLabelNames.GetEnumerator();
         while (labelNameEnumerator.MoveNext())
