@@ -17,9 +17,10 @@ internal sealed class CollectorFamily
     {
         bool isFirst = true;
 
-        foreach (var collector in Collectors.Values)
+        // Iterate the pairs to avoid a defensive copy.
+        foreach (var pair in Collectors)
         {
-            await collector.CollectAndSerializeAsync(serializer, isFirst, cancel);
+            await pair.Value.CollectAndSerializeAsync(serializer, isFirst, cancel);
             isFirst = false;
         }
     }
