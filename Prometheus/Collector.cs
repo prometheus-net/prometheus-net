@@ -13,15 +13,15 @@ public abstract class Collector
     /// The metric name, e.g. http_requests_total.
     /// </summary>
     public string Name { get; }
-    
-    internal byte[] NameBytes { get;  }
+
+    internal byte[] NameBytes { get; }
 
     /// <summary>
     /// The help text describing the metric for a human audience.
     /// </summary>
     public string Help { get; }
 
-    internal byte[] HelpBytes { get;  }
+    internal byte[] HelpBytes { get; }
 
     /// <summary>
     /// Names of the instance-specific labels (name-value pairs) that apply to this metric.
@@ -63,7 +63,7 @@ public abstract class Collector
     {
         if (!MetricNameRegex.IsMatch(name))
             throw new ArgumentException($"Metric name '{name}' does not match regex '{ValidMetricNameExpression}'.");
-        
+
         Name = name;
         NameBytes = PrometheusConstants.ExportEncoding.GetBytes(Name);
         TypeBytes = TextSerializer.MetricTypeToBytes[Type];
@@ -252,8 +252,11 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         if (writeFamilyDeclaration)
             await serializer.WriteFamilyDeclarationAsync(Name, NameBytes, HelpBytes, Type, TypeBytes, cancel);
 
-        foreach (var child in _labelledMetrics.Values)
-            await child.CollectAndSerializeAsync(serializer, cancel);
+        // We iterate the pairs to avoid allocating a temporary array from .Values.
+        foreach (var pair in _labelledMetrics)
+        {
+            await pair.Value.CollectAndSerializeAsync(serializer, cancel);
+        }
     }
 
     private readonly bool _suppressInitialValue;
