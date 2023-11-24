@@ -44,7 +44,6 @@ AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
 /// Both SDKs support it as an optimization (though OpenTelemetry forces it for counters) but let's try keep the logic here simple and exclude it for now.
 /// </remarks>
 [MemoryDiagnoser]
-[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
 public class SdkComparisonBenchmarks
 {
     // Unique sets of label/tag values per metric. You can think of each one as a "session" we are reporting data for.
