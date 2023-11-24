@@ -7,8 +7,6 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 {
     internal ChildBase(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
     {
-        _flattenedLabelsFunc = FlattenedLabelsFactory;
-
         Parent = parent;
         InstanceLabels = instanceLabels;
         FlattenedLabels = flattenedLabels;
@@ -65,10 +63,10 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     /// </summary>
     internal LabelSequence FlattenedLabels { get; }
 
-    internal byte[] FlattenedLabelsBytes => LazyInitializer.EnsureInitialized(ref _flattenedLabelsBytes, _flattenedLabelsFunc)!;
+    internal byte[] FlattenedLabelsBytes => NonCapturingLazyInitializer.EnsureInitialized(ref _flattenedLabelsBytes, this, _assignFlattenedLabelsBytesFunc)!;
     private byte[]? _flattenedLabelsBytes;
-    private readonly Func<byte[]> _flattenedLabelsFunc;
-    private byte[] FlattenedLabelsFactory() => FlattenedLabels.Serialize();
+    private static readonly Action<ChildBase> _assignFlattenedLabelsBytesFunc;
+    private static void AssignFlattenedLabelsBytes(ChildBase instance) => instance._flattenedLabelsBytes = instance.FlattenedLabels.Serialize();
 
     internal readonly Collector Parent;
 
@@ -180,6 +178,8 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     static ChildBase()
     {
+        _assignFlattenedLabelsBytesFunc = AssignFlattenedLabelsBytes;
+
         Metrics.DefaultRegistry.OnStartCollectingRegistryMetrics(delegate
         {
             ExemplarsRecorded = Metrics.CreateCounter("prometheus_net_exemplars_recorded_total", "Number of exemplars that were accepted into in-memory storage in the prometheus-net SDK.");
