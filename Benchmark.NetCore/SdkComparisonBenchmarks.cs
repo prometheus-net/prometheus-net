@@ -44,6 +44,7 @@ AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
 /// Both SDKs support it as an optimization (though OpenTelemetry forces it for counters) but let's try keep the logic here simple and exclude it for now.
 /// </remarks>
 [MemoryDiagnoser]
+[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
 public class SdkComparisonBenchmarks
 {
     // Unique sets of label/tag values per metric. You can think of each one as a "session" we are reporting data for.
@@ -97,7 +98,7 @@ public class SdkComparisonBenchmarks
         private readonly List<Histogram.Child> _histogramInstances = new(TimeseriesPerMetric);
         private readonly Histogram _histogramForAdHocLabels;
 
-        private readonly KestrelMetricServer _server;
+        private readonly IMetricServer _server;
 
         public PrometheusNetMetricsContext()
         {
@@ -120,10 +121,9 @@ public class SdkComparisonBenchmarks
                 _histogramInstances.Add(histogram.WithLabels(Label1Value, Label2Value, SessionIds[i]));
 
             // `AddPrometheusHttpListener` of OpenTelemetry creates an HttpListener.
-            // Start a listener/server for Prometheus Benchmarks for a fair comparison.
-            // We listen on 127.0.0.1:<random free port> to avoid firewall prompts (we do not expect to receive any traffic).
-            _server = new KestrelMetricServer("127.0.0.1", port: 0);
-            _server = new KestrelMetricServer(port: 1234);
+            // Start an equivalent listener for Prometheus to ensure a fair comparison.
+            // We listen on 127.0.0.1 to avoid firewall prompts (randomly chosen port - we do not expect to receive any traffic).
+            _server = new MetricServer("127.0.0.1", port: 8051);
             _server.Start();
         }
 
@@ -176,7 +176,7 @@ public class SdkComparisonBenchmarks
             _histogramForAdHocLabels = _meter.CreateHistogram<double>("histogramForAdHocLabels");
 
             _provider = OpenTelemetry.Sdk.CreateMeterProviderBuilder()
-                .AddView("histogram", new OpenTelemetry.Metrics.HistogramConfiguration() { RecordMinMax = false})
+                .AddView("histogram", new OpenTelemetry.Metrics.HistogramConfiguration() { RecordMinMax = false })
                 .AddMeter(_meter.Name)
                 .AddPrometheusHttpListener()
                 .Build();
@@ -222,7 +222,7 @@ public class SdkComparisonBenchmarks
 
     private MetricsContext _context;
 
-    [GlobalSetup(Targets = new string[] {nameof(OTelCounter), nameof(OTelHistogram), nameof(OTelHistogramForAdHocLabel)})]
+    [GlobalSetup(Targets = new string[] { nameof(OTelCounter), nameof(OTelHistogram), nameof(OTelHistogramForAdHocLabel) })]
     public void OpenTelemetrySetup()
     {
         _context = new OpenTelemetryMetricsContext();
