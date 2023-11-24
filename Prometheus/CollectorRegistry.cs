@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Buffers;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace Prometheus;
@@ -220,16 +221,41 @@ public sealed class CollectorRegistry : ICollectorRegistry
             return candidate;
         }
 
-        if (_families.TryGetValue(initializer.Name, out var existing))
-            return ValidateFamily(existing);
+        // First try to get the family with only a read lock, with the assumption that it might already exist and therefore we do not need an expensive write lock.
+        _familiesLock.EnterReadLock();
 
-        var collector = _families.GetOrAdd(initializer.Name, new CollectorFamily(typeof(TCollector)));
-        return ValidateFamily(collector);
+        try
+        {
+            if (_families.TryGetValue(initializer.Name, out var existing))
+                return ValidateFamily(existing);
+        }
+        finally
+        {
+            _familiesLock.ExitReadLock();
+        }
+
+        // It does not exist. OK, just create it.
+        _familiesLock.EnterWriteLock();
+
+        try
+        {
+            if (_families.TryGetValue(initializer.Name, out var existing))
+                return ValidateFamily(existing);
+
+            var newFamily = new CollectorFamily(typeof(TCollector));
+            _families.Add(initializer.Name, newFamily);
+            return newFamily;
+        }
+        finally
+        {
+            _familiesLock.ExitWriteLock();
+        }
     }
 
     // Each collector family has an identity (the base name of the metric, in Prometheus format) and any number of collectors within.
     // Different collectors in the same family may have different sets of labels (static and instance) depending on how they were created.
-    private readonly ConcurrentDictionary<string, CollectorFamily> _families = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, CollectorFamily> _families = new(StringComparer.Ordinal);
+    private readonly ReaderWriterLockSlim _familiesLock = new();
 
     internal void SetBeforeFirstCollectCallback(Action a)
     {
@@ -268,8 +294,37 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
         UpdateRegistryMetrics();
 
-        foreach (var collector in _families.Values)
-            await collector.CollectAndSerializeAsync(serializer, cancel);
+        // This could potentially take nontrivial time, as we are serializing to a stream (potentially, a network stream).
+        // Therefore we operate on a defensive copy in a reused buffer.
+        CollectorFamily[] buffer;
+
+        _familiesLock.EnterReadLock();
+
+        var familiesCount = _families.Count;
+        buffer = ArrayPool<CollectorFamily>.Shared.Rent(familiesCount);
+
+        try
+        {
+            try
+            {
+                _families.Values.CopyTo(buffer, 0);
+            }
+            finally
+            {
+                _familiesLock.ExitReadLock();
+            }
+
+            for (var i = 0; i < familiesCount; i++)
+            {
+                var family = buffer[i];
+                await family.CollectAndSerializeAsync(serializer, cancel);
+            }
+        }
+        finally
+        {
+            ArrayPool<CollectorFamily>.Shared.Return(buffer, clearArray: true);
+        }
+
         await serializer.WriteEnd(cancel);
         await serializer.FlushAsync(cancel);
     }
