@@ -154,7 +154,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
     // We pass this thing to GetOrAdd to avoid allocating a collector or a closure.
     // This reduces memory usage in situations where the collector is already registered.
-    internal readonly struct CollectorInitializer<TCollector, TConfiguration>
+    internal readonly ref struct CollectorInitializer<TCollector, TConfiguration>
         where TCollector : Collector
         where TConfiguration : MetricConfiguration
     {
@@ -182,7 +182,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
             _exemplarBehavior = exemplarBehavior;
         }
 
-        public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration, _exemplarBehavior);
+        public TCollector CreateInstance() => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration, _exemplarBehavior);
 
         public delegate TCollector CreateInstanceDelegate(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior);
     }
@@ -202,10 +202,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
         var collectorIdentity = new CollectorIdentity(initializer.InstanceLabelNames, initializer.StaticLabels);
 
-        if (family.Collectors.TryGetValue(collectorIdentity, out var existing))
-            return (TCollector)existing;
-
-        return (TCollector)family.Collectors.GetOrAdd(collectorIdentity, initializer.CreateInstance);
+        return (TCollector)family.GetOrAdd(collectorIdentity, initializer);
     }
 
     private CollectorFamily GetOrAddCollectorFamily<TCollector, TConfiguration>(in CollectorInitializer<TCollector, TConfiguration> initializer)
@@ -370,12 +367,15 @@ public sealed class CollectorRegistry : ICollectorRegistry
             {
                 bool hadMatchingType = false;
 
-                foreach (var collector in family.Collectors.Values.Where(c => c.Type == type))
+                family.ForEachCollector(collector =>
                 {
+                    if (collector.Type != type)
+                        return;
+
                     hadMatchingType = true;
                     instances += collector.ChildCount;
                     timeseries += collector.TimeseriesCount;
-                }
+                });
 
                 if (hadMatchingType)
                     families++;
