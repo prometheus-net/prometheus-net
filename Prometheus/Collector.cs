@@ -19,30 +19,31 @@ public abstract class Collector
     /// </summary>
     public string Name { get; }
 
-    internal byte[] NameBytes => LazyInitializer.EnsureInitialized(ref _nameBytesValue, _nameBytesFunc)!;
-    private byte[]? _nameBytesValue;
-    private readonly Func<byte[]> _nameBytesFunc;
-    private byte[] NameBytesFactory() => PrometheusConstants.ExportEncoding.GetBytes(Name);
+    internal byte[] NameBytes => NonCapturingLazyInitializer.EnsureInitialized(ref _nameBytes, this, _assignNameBytesFunc)!;
+    private byte[]? _nameBytes;
+    private static readonly Action<Collector> _assignNameBytesFunc;
+    private static void AssignNameBytes(Collector instance) => instance._nameBytes = PrometheusConstants.ExportEncoding.GetBytes(instance.Name);
 
     /// <summary>
     /// The help text describing the metric for a human audience.
     /// </summary>
     public string Help { get; }
 
-    internal byte[] HelpBytes => LazyInitializer.EnsureInitialized(ref _helpBytesValue, _helpBytesFunc)!;
-    private byte[]? _helpBytesValue;
-    private readonly Func<byte[]> _helpBytesFunc;
-    private byte[] HelpBytesFactory() => string.IsNullOrWhiteSpace(Help) ? Array.Empty<byte>() : PrometheusConstants.ExportEncoding.GetBytes(Help);
+    internal byte[] HelpBytes => NonCapturingLazyInitializer.EnsureInitialized(ref _helpBytes, this, _assignHelpBytesFunc)!;
+    private byte[]? _helpBytes;
+    private static readonly Action<Collector> _assignHelpBytesFunc;
+    private static void AssignHelpBytes(Collector instance) =>
+        instance._helpBytes = string.IsNullOrWhiteSpace(instance.Help) ? [] : PrometheusConstants.ExportEncoding.GetBytes(instance.Help);
 
     /// <summary>
     /// Names of the instance-specific labels (name-value pairs) that apply to this metric.
     /// When the values are added to the names, you get a <see cref="ChildBase"/> instance.
     /// Does not include any static label names (from metric configuration, factory or registry).
     /// </summary>
-    public string[] LabelNames => LazyInitializer.EnsureInitialized(ref _labelNamesValue, _labelNamesFunc)!;
-    private string[]? _labelNamesValue;
-    private readonly Func<string[]> _labelNamesFunc;
-    private string[] LabelNamesFactory() => InstanceLabelNames.ToArray();
+    public string[] LabelNames => NonCapturingLazyInitializer.EnsureInitialized(ref _labelNames, this, _assignLabelNamesFunc)!;
+    private string[]? _labelNames;
+    private static readonly Action<Collector> _assignLabelNamesFunc;
+    private static void AssignLabelNames(Collector instance) => instance._labelNames = instance.InstanceLabelNames.ToArray();
 
     internal StringSequence InstanceLabelNames;
     internal StringSequence FlattenedLabelNames;
@@ -73,14 +74,17 @@ public abstract class Collector
     private static readonly Regex LabelNameRegex = new Regex(ValidLabelNameExpression, RegexOptions.Compiled);
     private static readonly Regex ReservedLabelRegex = new Regex(ReservedLabelNameExpression, RegexOptions.Compiled);
 
+    static Collector()
+    {
+        _assignNameBytesFunc = AssignNameBytes;
+        _assignHelpBytesFunc = AssignHelpBytes;
+        _assignLabelNamesFunc = AssignLabelNames;
+    }
+
     internal Collector(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels)
     {
         if (!MetricNameRegex.IsMatch(name))
             throw new ArgumentException($"Metric name '{name}' does not match regex '{ValidMetricNameExpression}'.");
-
-        _nameBytesFunc = NameBytesFactory;
-        _helpBytesFunc = HelpBytesFactory;
-        _labelNamesFunc = LabelNamesFactory;
 
         Name = name;
         TypeBytes = TextSerializer.MetricTypeToBytes[Type];
