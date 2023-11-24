@@ -7,6 +7,11 @@ namespace Prometheus;
 /// <summary>
 /// Base class for metrics, defining the basic informative API and the internal API.
 /// </summary>
+/// <remarks>
+/// Many of the fields are lazy-initialized to ensure we only perform the memory allocation if and when we actually use them.
+/// For some, it means rarely used members are never allocated at all (e.g. if you never inspect the set of label names, they are never allocated).
+/// For others, it means they are allocated at first time of use (e.g. serialization-related fields are allocated when serializing the first time).
+/// </remarks>
 public abstract class Collector
 {
     /// <summary>
@@ -14,21 +19,30 @@ public abstract class Collector
     /// </summary>
     public string Name { get; }
 
-    internal byte[] NameBytes { get; }
+    internal byte[] NameBytes => LazyInitializer.EnsureInitialized(ref _nameBytesValue, _nameBytesFunc)!;
+    private byte[]? _nameBytesValue;
+    private readonly Func<byte[]> _nameBytesFunc;
+    private byte[] NameBytesFactory() => PrometheusConstants.ExportEncoding.GetBytes(Name);
 
     /// <summary>
     /// The help text describing the metric for a human audience.
     /// </summary>
     public string Help { get; }
 
-    internal byte[] HelpBytes { get; }
+    internal byte[] HelpBytes => LazyInitializer.EnsureInitialized(ref _helpBytesValue, _helpBytesFunc)!;
+    private byte[]? _helpBytesValue;
+    private readonly Func<byte[]> _helpBytesFunc;
+    private byte[] HelpBytesFactory() => string.IsNullOrWhiteSpace(Help) ? Array.Empty<byte>() : PrometheusConstants.ExportEncoding.GetBytes(Help);
 
     /// <summary>
     /// Names of the instance-specific labels (name-value pairs) that apply to this metric.
     /// When the values are added to the names, you get a <see cref="ChildBase"/> instance.
     /// Does not include any static label names (from metric configuration, factory or registry).
     /// </summary>
-    public string[] LabelNames => _instanceLabelNamesAsArrayLazy.Value;
+    public string[] LabelNames => LazyInitializer.EnsureInitialized(ref _labelNamesValue, _labelNamesFunc)!;
+    private string[]? _labelNamesValue;
+    private readonly Func<string[]> _labelNamesFunc;
+    private string[] LabelNamesFactory() => InstanceLabelNames.ToArray();
 
     internal StringSequence InstanceLabelNames;
     internal StringSequence FlattenedLabelNames;
@@ -64,13 +78,13 @@ public abstract class Collector
         if (!MetricNameRegex.IsMatch(name))
             throw new ArgumentException($"Metric name '{name}' does not match regex '{ValidMetricNameExpression}'.");
 
+        _nameBytesFunc = NameBytesFactory;
+        _helpBytesFunc = HelpBytesFactory;
+        _labelNamesFunc = LabelNamesFactory;
+
         Name = name;
-        NameBytes = PrometheusConstants.ExportEncoding.GetBytes(Name);
         TypeBytes = TextSerializer.MetricTypeToBytes[Type];
         Help = help;
-        HelpBytes = String.IsNullOrWhiteSpace(help)
-            ? Array.Empty<byte>()
-            : PrometheusConstants.ExportEncoding.GetBytes(help);
         InstanceLabelNames = instanceLabelNames;
         StaticLabels = staticLabels;
 
@@ -98,15 +112,6 @@ public abstract class Collector
         // Here we check for label name collision, ensuring that the same label name is not defined twice on any label inheritance level.
         if (uniqueLabelNames.Count != FlattenedLabelNames.Length)
             throw new InvalidOperationException("The set of label names includes duplicates: " + string.Join(", ", FlattenedLabelNames.ToArray()));
-
-        _instanceLabelNamesAsArrayLazy = new Lazy<string[]>(GetInstanceLabelNamesAsStringArray);
-    }
-
-    private readonly Lazy<string[]> _instanceLabelNamesAsArrayLazy;
-
-    private string[] GetInstanceLabelNamesAsStringArray()
-    {
-        return InstanceLabelNames.ToArray();
     }
 
     internal static void ValidateLabelName(string labelName)
@@ -374,7 +379,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
         // If there are no label names then clearly this metric is supposed to be used unlabelled, so create it.
         // Otherwise, we allow unlabelled metrics to be used if the user explicitly does it but omit them by default.
-        if (!_unlabelledLazy.IsValueCreated && !LabelNames.Any())
+        if (!_unlabelledLazy.IsValueCreated && InstanceLabelNames.Length == 0)
             GetOrAddLabelled(LabelSequence.Empty);
     }
 
