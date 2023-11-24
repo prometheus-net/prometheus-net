@@ -10,7 +10,7 @@ internal readonly struct LabelSequence : IEquatable<LabelSequence>
     public readonly StringSequence Names;
     public readonly StringSequence Values;
 
-    public int Length { get; }
+    public int Length => Names.Length;
 
     private LabelSequence(StringSequence names, StringSequence values)
     {
@@ -19,8 +19,6 @@ internal readonly struct LabelSequence : IEquatable<LabelSequence>
 
         Names = names;
         Values = values;
-
-        Length = names.Length;
 
         _hashCode = CalculateHashCode();
     }
