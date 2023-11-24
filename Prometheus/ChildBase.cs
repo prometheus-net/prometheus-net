@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Prometheus;
 
 /// <summary>
@@ -9,10 +7,11 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 {
     internal ChildBase(Collector parent, LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
     {
+        _flattenedLabelsFunc = FlattenedLabelsFactory;
+
         Parent = parent;
         InstanceLabels = instanceLabels;
         FlattenedLabels = flattenedLabels;
-        FlattenedLabelsBytes = flattenedLabels.Serialize();
         _publish = publish;
         _exemplarBehavior = exemplarBehavior;
     }
@@ -66,7 +65,10 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     /// </summary>
     internal LabelSequence FlattenedLabels { get; }
 
-    internal byte[] FlattenedLabelsBytes { get; }
+    internal byte[] FlattenedLabelsBytes => LazyInitializer.EnsureInitialized(ref _flattenedLabelsBytes, _flattenedLabelsFunc)!;
+    private byte[]? _flattenedLabelsBytes;
+    private readonly Func<byte[]> _flattenedLabelsFunc;
+    private byte[] FlattenedLabelsFactory() => FlattenedLabels.Serialize();
 
     internal readonly Collector Parent;
 
