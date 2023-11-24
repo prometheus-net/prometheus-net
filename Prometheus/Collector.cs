@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using System.Buffers;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 
@@ -126,7 +126,8 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     where TChild : ChildBase
 {
     // Keyed by the instance labels (not by flattened labels!).
-    private readonly ConcurrentDictionary<LabelSequence, TChild> _labelledMetrics = new();
+    private readonly Dictionary<LabelSequence, TChild> _children = new();
+    private readonly ReaderWriterLockSlim _childrenLock = new();
 
     // Lazy-initialized since not every collector will use a child with no labels.
     // Lazy instance will be replaced if the unlabelled timeseries is removed.
@@ -167,7 +168,16 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
     internal override void RemoveLabelled(LabelSequence labels)
     {
-        _labelledMetrics.TryRemove(labels, out _);
+        _childrenLock.EnterWriteLock();
+
+        try
+        {
+            _children.Remove(labels);
+        }
+        finally
+        {
+            _childrenLock.ExitWriteLock();
+        }
 
         if (labels.Length == 0)
         {
@@ -182,7 +192,22 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         return new Lazy<TChild>(() => GetOrAddLabelled(LabelSequence.Empty));
     }
 
-    internal override int ChildCount => _labelledMetrics.Count;
+    internal override int ChildCount
+    {
+        get
+        {
+            _childrenLock.EnterReadLock();
+
+            try
+            {
+                return _children.Count;
+            }
+            finally
+            {
+                _childrenLock.ExitReadLock();
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the instance-specific label values of all labelled instances of the collector.
@@ -193,13 +218,38 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     /// </summary>
     public IEnumerable<string[]> GetAllLabelValues()
     {
-        foreach (var labels in _labelledMetrics.Keys)
-        {
-            if (labels.Length == 0)
-                continue; // We do not return the "unlabelled" label set.
+        // We are yielding here so make a defensive copy so we do not hold locks for a long time.
+        // We reuse this buffer, so it should be relatively harmless in the long run.
+        LabelSequence[] buffer;
 
-            // Defensive copy.
-            yield return labels.Values.ToArray();
+        _childrenLock.EnterReadLock();
+
+        var childCount = _children.Count;
+        buffer = ArrayPool<LabelSequence>.Shared.Rent(childCount);
+
+        try
+        {
+            try
+            {
+                _children.Keys.CopyTo(buffer, 0);
+            }
+            finally
+            {
+                _childrenLock.ExitReadLock();
+            }
+
+            foreach (var labels in buffer)
+            {
+                if (labels.Length == 0)
+                    continue; // We do not return the "unlabelled" label set.
+
+                // Defensive copy.
+                yield return labels.Values.ToArray();
+            }
+        }
+        finally
+        {
+            ArrayPool<LabelSequence>.Shared.Return(buffer);
         }
     }
 
@@ -209,7 +259,36 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         // Order of labels matterns in data creation, although does not matter when the exported data set is imported later.
         // If we somehow end up registering the same metric with the same label names in different order, we will publish it twice, in two orders...
         // That is not ideal but also not that big of a deal to justify a lookup every time a metric instance is registered.
-        return _labelledMetrics.GetOrAdd(instanceLabels, _createdLabelledChildFunc);
+
+        // First try to find an existing instance. This is the fast path, if we are re-looking-up an existing one.
+        _childrenLock.EnterReadLock();
+
+        try
+        {
+            if (_children.TryGetValue(instanceLabels, out var existing))
+                return existing;
+        }
+        finally
+        {
+            _childrenLock.ExitReadLock();
+        }
+
+        // If no existing one found, grab the write lock and create a new one if needed.
+        _childrenLock.EnterWriteLock();
+
+        try
+        {
+            if (_children.TryGetValue(instanceLabels, out var existing))
+                return existing;
+
+            var newChild = _createdLabelledChildFunc(instanceLabels);
+            _children.Add(instanceLabels, newChild);
+            return newChild;
+        }
+        finally
+        {
+            _childrenLock.ExitWriteLock();
+        }
     }
 
     private TChild CreateLabelledChild(LabelSequence instanceLabels)
@@ -225,8 +304,9 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
     /// <summary>
     /// For tests that want to see what instance-level label values were used when metrics were created.
+    /// This is for testing only, so does not respect locks - do not use this in concurrent context.
     /// </summary>
-    internal LabelSequence[] GetAllInstanceLabels() => _labelledMetrics.Select(p => p.Key).ToArray();
+    internal LabelSequence[] GetAllInstanceLabelsUnsafe() => _children.Keys.ToArray();
 
     internal Collector(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, ExemplarBehavior exemplarBehavior)
         : base(name, help, instanceLabelNames, staticLabels)
@@ -252,10 +332,35 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         if (writeFamilyDeclaration)
             await serializer.WriteFamilyDeclarationAsync(Name, NameBytes, HelpBytes, Type, TypeBytes, cancel);
 
-        // We iterate the pairs to avoid allocating a temporary array from .Values.
-        foreach (var pair in _labelledMetrics)
+        // This could potentially take nontrivial time, as we are serializing to a stream (potentially, a network stream).
+        // Therefore we operate on a defensive copy in a reused buffer.
+        TChild[] buffer;
+
+        _childrenLock.EnterReadLock();
+
+        var childCount = _children.Count;
+        buffer = ArrayPool<TChild>.Shared.Rent(childCount);
+
+        try
         {
-            await pair.Value.CollectAndSerializeAsync(serializer, cancel);
+            try
+            {
+                _children.Values.CopyTo(buffer, 0);
+            }
+            finally
+            {
+                _childrenLock.ExitReadLock();
+            }
+
+            for (var i = 0; i < childCount; i++)
+            {
+                var child = buffer[i];
+                await child.CollectAndSerializeAsync(serializer, cancel);
+            }
+        }
+        finally
+        {
+            ArrayPool<TChild>.Shared.Return(buffer, clearArray: true);
         }
     }
 
