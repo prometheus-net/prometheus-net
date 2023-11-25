@@ -1,4 +1,6 @@
 ﻿using System.Buffers;
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Prometheus;
 
@@ -12,19 +14,64 @@ internal sealed class CollectorFamily
     public CollectorFamily(Type collectorType)
     {
         CollectorType = collectorType;
+        _collectAndSerializeFunc = CollectAndSerialize;
     }
 
-    internal async Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
+#if NET
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+    internal async ValueTask CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
+    {
+        var operation = _serializeFamilyOperationPool.Get();
+        operation.Serializer = serializer;
+
+        await ForEachCollectorAsync(CollectAndSerialize, operation, cancel);
+
+        _serializeFamilyOperationPool.Return(operation);
+    }
+
+    /// <summary>
+    /// We use these reusable operation wrappers to avoid capturing variables when serializing, to keep memory usage down while serializing.
+    /// </summary>
+    private sealed class SerializeFamilyOperation
     {
         // The first family member we serialize requires different serialization from the others.
-        bool isFirst = true;
+        public bool IsFirst;
+        public IMetricsSerializer? Serializer;
 
-        await ForEachCollectorAsync(async (collector, c) =>
+        public SerializeFamilyOperation() => Reset();
+
+        public void Reset()
         {
-            await collector.CollectAndSerializeAsync(serializer, isFirst, cancel);
-            isFirst = false;
-        }, cancel);
+            IsFirst = true;
+            Serializer = null;
+        }
     }
+
+    // We have a bunch of families that get serialized often - no reason to churn the GC with a bunch of allocations if we can easily reuse it.
+    private static readonly ObjectPool<SerializeFamilyOperation> _serializeFamilyOperationPool = ObjectPool.Create(new SerializeFamilyOperationPoolingPolicy());
+
+    private sealed class SerializeFamilyOperationPoolingPolicy : PooledObjectPolicy<SerializeFamilyOperation>
+    {
+        public override SerializeFamilyOperation Create() => new();
+
+        public override bool Return(SerializeFamilyOperation obj)
+        {
+            obj.Reset();
+            return true;
+        }
+    }
+
+#if NET
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+    private async ValueTask CollectAndSerialize(Collector collector, SerializeFamilyOperation operation, CancellationToken cancel)
+    {
+        await collector.CollectAndSerializeAsync(operation.Serializer!, operation.IsFirst, cancel);
+        operation.IsFirst = false;
+    }
+
+    private readonly Func<Collector, SerializeFamilyOperation, CancellationToken, ValueTask> _collectAndSerializeFunc;
 
     internal Collector GetOrAdd<TCollector, TConfiguration>(CollectorIdentity identity, in CollectorRegistry.CollectorInitializer<TCollector, TConfiguration> initializer)
         where TCollector : Collector
@@ -77,7 +124,11 @@ internal sealed class CollectorFamily
         }
     }
 
-    internal async Task ForEachCollectorAsync(Func<Collector, CancellationToken, Task> func, CancellationToken cancel)
+#if NET
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+    internal async ValueTask ForEachCollectorAsync<TArg>(Func<Collector, TArg, CancellationToken, ValueTask> func, TArg arg, CancellationToken cancel)
+        where TArg : class
     {
         // This could potentially take nontrivial time, as we are serializing to a stream (potentially, a network stream).
         // Therefore we operate on a defensive copy in a reused buffer.
@@ -102,7 +153,7 @@ internal sealed class CollectorFamily
             for (var i = 0; i < collectorCount; i++)
             {
                 var collector = buffer[i];
-                await func(collector, cancel);
+                await func(collector, arg, cancel);
             }
         }
         finally

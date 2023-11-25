@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace Prometheus;
@@ -61,7 +62,7 @@ public abstract class Collector
     internal abstract int ChildCount { get; }
     internal abstract int TimeseriesCount { get; }
 
-    internal abstract Task CollectAndSerializeAsync(IMetricsSerializer serializer, bool writeFamilyDeclaration, CancellationToken cancel);
+    internal abstract ValueTask CollectAndSerializeAsync(IMetricsSerializer serializer, bool writeFamilyDeclaration, CancellationToken cancel);
 
     // Used by ChildBase.Remove()
     internal abstract void RemoveLabelled(LabelSequence instanceLabels);
@@ -333,7 +334,10 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     /// </summary>
     private protected abstract TChild NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior);
 
-    internal override async Task CollectAndSerializeAsync(IMetricsSerializer serializer, bool writeFamilyDeclaration, CancellationToken cancel)
+#if NET
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+    internal override async ValueTask CollectAndSerializeAsync(IMetricsSerializer serializer, bool writeFamilyDeclaration, CancellationToken cancel)
     {
         EnsureUnlabelledMetricCreatedIfNoLabels();
 

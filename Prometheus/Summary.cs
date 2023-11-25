@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Runtime.CompilerServices;
 using Prometheus.SummaryImpl;
 
 namespace Prometheus
@@ -110,7 +111,10 @@ namespace Prometheus
             private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
             private static readonly byte[] QuantileLabelName = PrometheusConstants.ExportEncoding.GetBytes("quantile");
 
-            private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
+#if NET
+            [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+            private protected override async ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer,
                 CancellationToken cancel)
             {
                 // We output sum.
@@ -127,7 +131,6 @@ namespace Prometheus
 
                 try
                 {
-
                     lock (_bufLock)
                     {
                         lock (_lock)

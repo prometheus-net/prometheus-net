@@ -11,9 +11,9 @@ public sealed class Gauge : Collector<Gauge.Child>, IGauge
 
         private ThreadSafeDouble _value;
 
-        private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+        private protected override ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
-            await serializer.WriteMetricPointAsync(
+            return serializer.WriteMetricPointAsync(
                 Parent.NameBytes, FlattenedLabelsBytes, CanonicalLabel.Empty, cancel, Value, ObservedExemplar.Empty);
         }
 
