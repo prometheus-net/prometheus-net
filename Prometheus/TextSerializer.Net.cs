@@ -31,7 +31,7 @@ internal sealed class TextSerializer : IMetricsSerializer
     internal static readonly ReadOnlyMemory<byte> EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
     internal static readonly ReadOnlyMemory<byte> HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
     internal static readonly ReadOnlyMemory<byte> NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
-    internal static readonly ReadOnlyMemory<byte> Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
+    internal static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
 
     internal static readonly byte[] PositiveInfinityBytes = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
 
@@ -91,6 +91,10 @@ internal sealed class TextSerializer : IMetricsSerializer
             if (name.EndsWith("_total"))
             {
                 nameLen -= 6; // in OpenMetrics the counter name does not include the _total prefix.
+            }
+            else
+            {
+                typeBytes = Unknown; // if the total prefix is missing the _total prefix it is out of spec
             }
         }
 
