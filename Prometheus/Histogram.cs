@@ -81,7 +81,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 if (bytesUntilNextAlignedPosition % sizeof(double) != 0)
                     throw new Exception("Unreachable code reached - all double[] allocations are expected to be at least 8-aligned.");
 
-                _bucketsAlignmentBufferOffset = (int)(pointerTooFarByBytes / sizeof(double));
+                _bucketsAlignmentBufferOffset = (int)(bytesUntilNextAlignedPosition / sizeof(double));
             }
 
             Array.Copy(_buckets, 0, _bucketsAlignmentBuffer, _bucketsAlignmentBufferOffset, _buckets.Length);
