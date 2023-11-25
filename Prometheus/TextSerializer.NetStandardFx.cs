@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿#if !NET
+using System.Globalization;
 
 namespace Prometheus;
 
@@ -31,6 +32,8 @@ internal sealed class TextSerializer : IMetricsSerializer
     internal static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
     internal static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
 
+    internal static readonly byte[] PositiveInfinityBytes = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
+
     internal static readonly Dictionary<MetricType, byte[]> MetricTypeToBytes = new()
     {
         { MetricType.Gauge, PrometheusConstants.ExportEncoding.GetBytes("gauge") },
@@ -44,7 +47,7 @@ internal sealed class TextSerializer : IMetricsSerializer
     public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
         _expositionFormat = fmt;
-        _stream = new Lazy<Stream>(() => stream);
+        _stream = new Lazy<Stream>(() => AddStreamBuffering(stream));
     }
 
     // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
@@ -52,7 +55,18 @@ internal sealed class TextSerializer : IMetricsSerializer
         ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
         _expositionFormat = fmt;
-        _stream = new Lazy<Stream>(streamFactory);
+        _stream = new Lazy<Stream>(() => AddStreamBuffering(streamFactory()));
+    }
+
+    /// <summary>
+    /// Ensures that writes to the stream are buffered, meaning we do not emit individual "write 1 byte" calls to the stream.
+    /// This has been rumored by some users to be relevant in their scenarios (though never with solid evidence or repro steps).
+    /// However, we can easily simulate this via the serialization benchmark through named pipes - they are super slow if writing
+    /// individual characters. It is a reasonable assumption that this limitation is also true elsewhere, at least on some OS/platform.
+    /// </summary>
+    private Stream AddStreamBuffering(Stream inner)
+    {
+        return new BufferedStream(inner);
     }
 
     public async Task FlushAsync(CancellationToken cancel)
@@ -66,7 +80,7 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     private readonly Lazy<Stream> _stream;
 
-    public async Task WriteFamilyDeclarationAsync(string name, byte[] nameBytes, byte[] helpBytes, MetricType type,
+    public async ValueTask WriteFamilyDeclarationAsync(string name, byte[] nameBytes, byte[] helpBytes, MetricType type,
         byte[] typeBytes, CancellationToken cancel)
     {
         var nameLen = nameBytes.Length;
@@ -75,10 +89,6 @@ internal sealed class TextSerializer : IMetricsSerializer
             if (name.EndsWith("_total"))
             {
                 nameLen -= 6; // in OpenMetrics the counter name does not include the _total prefix.
-            }
-            else
-            {
-                typeBytes = Unknown; // if the total prefix is missing the _total prefix it is out of spec
             }
         }
 
@@ -97,16 +107,16 @@ internal sealed class TextSerializer : IMetricsSerializer
         await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
     }
 
-    public async Task WriteEnd(CancellationToken cancel)
+    public async ValueTask WriteEnd(CancellationToken cancel)
     {
         if (_expositionFormat == ExpositionFormat.OpenMetricsText)
             await _stream.Value.WriteAsync(EofNewLine, 0, EofNewLine.Length, cancel);
     }
 
-    public async Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+    public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
         CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null)
     {
-        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, exemplar, suffix);
+        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, suffix);
 
         await WriteValue(value, cancel);
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
@@ -117,10 +127,10 @@ internal sealed class TextSerializer : IMetricsSerializer
         await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
     }
 
-    public async Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+    public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
         CancellationToken cancel, long value, ObservedExemplar exemplar, byte[]? suffix = null)
     {
-        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, exemplar, suffix);
+        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, suffix);
 
         await WriteValue(value, cancel);
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
@@ -183,23 +193,6 @@ internal sealed class TextSerializer : IMetricsSerializer
             }
         }
 
-#if NET
-        static bool RequiresDotZero(char[] buffer, int length)
-        {
-            return buffer.AsSpan(0..length).IndexOfAny(DotEChar) == -1; /* did not contain .|e */
-        }
-
-        // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
-        if (!value.TryFormat(_stringCharsBuffer, out var charsWritten, "g", CultureInfo.InvariantCulture))
-            throw new Exception("Failed to encode floating point value as string.");
-
-        var encodedBytes = PrometheusConstants.ExportEncoding.GetBytes(_stringCharsBuffer, 0, charsWritten, _stringBytesBuffer, 0);
-        await _stream.Value.WriteAsync(_stringBytesBuffer, 0, encodedBytes, cancel);
-
-        // In certain places (e.g. "le" label) we need floating point values to actually have the decimal point in them for OpenMetrics.
-        if (_expositionFormat == ExpositionFormat.OpenMetricsText && RequiresDotZero(_stringCharsBuffer, charsWritten))
-            await _stream.Value.WriteAsync(DotZero, 0, DotZero.Length, cancel);
-#else
         var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
 
         var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
@@ -208,7 +201,6 @@ internal sealed class TextSerializer : IMetricsSerializer
         // In certain places (e.g. "le" label) we need floating point values to actually have the decimal point in them for OpenMetrics.
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && valueAsString.IndexOfAny(DotEChar) == -1 /* did not contain .|e */)
             await _stream.Value.WriteAsync(DotZero, 0, DotZero.Length, cancel);
-#endif
     }
 
     private async Task WriteValue(long value, CancellationToken cancel)
@@ -229,17 +221,9 @@ internal sealed class TextSerializer : IMetricsSerializer
             }
         }
 
-#if NET
-        if (!value.TryFormat(_stringCharsBuffer, out var charsWritten, "D", CultureInfo.InvariantCulture))
-            throw new Exception("Failed to encode integer value as string.");
-
-        var encodedBytes = PrometheusConstants.ExportEncoding.GetBytes(_stringCharsBuffer, 0, charsWritten, _stringBytesBuffer, 0);
-        await _stream.Value.WriteAsync(_stringBytesBuffer, 0, encodedBytes, cancel);
-#else
         var valueAsString = value.ToString("D", CultureInfo.InvariantCulture);
         var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
         await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
-#endif
     }
 
     // Reuse a buffer to do the serialization and UTF-8 encoding.
@@ -255,7 +239,7 @@ internal sealed class TextSerializer : IMetricsSerializer
     /// Note: Terminates with a SPACE
     /// </summary>
     private async Task WriteIdentifierPartAsync(byte[] name, byte[] flattenedLabels, CancellationToken cancel,
-        CanonicalLabel canonicalLabel, ObservedExemplar observedExemplar, byte[]? suffix = null)
+        CanonicalLabel canonicalLabel, byte[]? suffix = null)
     {
         await _stream.Value.WriteAsync(name, 0, name.Length, cancel);
         if (suffix != null && suffix.Length > 0)
@@ -308,45 +292,8 @@ internal sealed class TextSerializer : IMetricsSerializer
     internal static CanonicalLabel EncodeValueAsCanonicalLabel(byte[] name, double value)
     {
         if (double.IsPositiveInfinity(value))
-            return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
+            return new CanonicalLabel(name, PositiveInfinityBytes, PositiveInfinityBytes);
 
-#if NET
-        // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
-        Span<char> buffer = stackalloc char[32];
-
-        if (!value.TryFormat(buffer, out var charsWritten, "g", CultureInfo.InvariantCulture))
-            throw new Exception("Failed to encode floating point value as string.");
-
-        var prometheusChars = buffer[0..charsWritten];
-
-        var prometheusByteCount = PrometheusConstants.ExportEncoding.GetByteCount(prometheusChars);
-        var prometheusBytes = new byte[prometheusByteCount];
-
-        if (PrometheusConstants.ExportEncoding.GetBytes(prometheusChars, prometheusBytes) != prometheusByteCount)
-            throw new Exception("Internal error: counting the same bytes twice got us a different value.");
-
-        var openMetricsByteCount = prometheusByteCount;
-        byte[] openMetricsBytes;
-
-        // Identify whether the written characters are expressed as floating-point, by checking for presence of the 'e' or '.' characters.
-        if (prometheusChars.IndexOfAny(DotEChar) == -1)
-        {
-            // Prometheus defaults to integer-formatting without a decimal point, if possible.
-            // OpenMetrics requires labels containing numeric values to be expressed in floating point format.
-            // If all we find is an integer, we add a ".0" to the end to make it a floating point value.
-            openMetricsByteCount += 2;
-
-            openMetricsBytes = new byte[openMetricsByteCount];
-            Array.Copy(prometheusBytes, openMetricsBytes, prometheusByteCount);
-            Array.Copy(DotZero, 0, openMetricsBytes, prometheusByteCount, DotZero.Length);
-        }
-        else
-        {
-            // It is already a floating-point value in Prometheus representation - reuse same bytes for OpenMetrics.
-            openMetricsBytes = prometheusBytes;
-        }
-
-#else
         var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
         var prometheusBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);
 
@@ -359,8 +306,8 @@ internal sealed class TextSerializer : IMetricsSerializer
             // If all we find is an integer, we add a ".0" to the end to make it a floating point value.
             openMetricsBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString + ".0");
         }
-#endif
 
         return new CanonicalLabel(name, prometheusBytes, openMetricsBytes);
     }
 }
+#endif

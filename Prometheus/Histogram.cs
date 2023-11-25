@@ -123,7 +123,10 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
         private static readonly byte[] BucketSuffix = PrometheusConstants.ExportEncoding.GetBytes("bucket");
         private readonly ObservedExemplar[] _exemplars;
 
-        private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
+#if NET
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+        private protected override async ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer,
             CancellationToken cancel)
         {
             // We output sum.

@@ -78,16 +78,16 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     /// <remarks>
     /// Subclass must check _publish and suppress output if it is false.
     /// </remarks>
-    internal Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
+    internal ValueTask CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
     {
         if (!Volatile.Read(ref _publish))
-            return Task.CompletedTask;
+            return default;
 
         return CollectAndSerializeImplAsync(serializer, cancel);
     }
 
     // Same as above, just only called if we really need to serialize this metric (if publish is true).
-    private protected abstract Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel);
+    private protected abstract ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel);
 
     /// <summary>
     /// Borrows an exemplar temporarily, to be later returned via ReturnBorrowedExemplar.
