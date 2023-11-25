@@ -6,13 +6,7 @@ namespace Benchmark.NetCore;
 /// <summary>
 /// We take a bunch of measurements of each type of metric and show the cost.
 /// </summary>
-/// <remarks>
-/// Total measurements = MeasurementCount * ThreadCount
-/// </remarks>
 [MemoryDiagnoser]
-[ThreadingDiagnoser]
-[InvocationCount(1)] // The implementation does not support multiple invocations.
-[MinIterationCount(50), MaxIterationCount(200)] // Help stabilize measurements.
 public class MeasurementBenchmarks
 {
     public enum MetricType
@@ -23,14 +17,8 @@ public class MeasurementBenchmarks
         Summary
     }
 
-    [Params(200_000)]
+    [Params(1_000_000)]
     public int MeasurementCount { get; set; }
-
-    [Params(1, 16)]
-    public int ThreadCount { get; set; }
-
-    [Params(MetricType.Counter, MetricType.Gauge, MetricType.Histogram, MetricType.Summary)]
-    public MetricType TargetMetricType { get; set; }
 
     [Params(ExemplarMode.Auto, ExemplarMode.None, ExemplarMode.Provided)]
     public ExemplarMode Exemplars { get; set; }
@@ -60,6 +48,7 @@ public class MeasurementBenchmarks
     private readonly Gauge.Child _gauge;
     private readonly Summary.Child _summary;
     private readonly Histogram.Child _histogram;
+    private readonly Histogram.Child _wideHistogram;
 
     private readonly Exemplar.LabelKey _traceIdKey = Exemplar.Key("trace_id");
     private readonly Exemplar.LabelKey _spanIdKey = Exemplar.Key("span_id");
@@ -71,6 +60,12 @@ public class MeasurementBenchmarks
 
     private Exemplar.LabelPair _traceIdLabel;
     private Exemplar.LabelPair _spanIdLabel;
+
+    /// <summary>
+    /// The max value we observe for histograms, to give us coverage of all the histogram buckets
+    /// but not waste 90% of the benchmark on incrementing the +Inf bucket.
+    /// </summary>
+    private const int HistogramMaxValue = 32 * 1024;
 
     public MeasurementBenchmarks()
     {
@@ -92,7 +87,12 @@ public class MeasurementBenchmarks
         var histogramTemplate = _factory.CreateHistogram("histogram", "test histogram", new[] { "label" }, new HistogramConfiguration
         {
             // 1 ms to 32K ms, 16 buckets. Same as used in HTTP metrics by default.
-            Buckets = Histogram.ExponentialBuckets(0.001, 2, 16)
+            Buckets = Prometheus.Histogram.ExponentialBuckets(0.001, 2, 16)
+        });
+
+        var wideHistogramTemplate = _factory.CreateHistogram("wide_histogram", "test histogram", new[] { "label" }, new HistogramConfiguration
+        {
+            Buckets = Prometheus.Histogram.LinearBuckets(1, HistogramMaxValue / 128, 128)
         });
 
         // We cache the children, as is typical usage.
@@ -100,12 +100,14 @@ public class MeasurementBenchmarks
         _gauge = gaugeTemplate.WithLabels("label value");
         _summary = summaryTemplate.WithLabels("label value");
         _histogram = histogramTemplate.WithLabels("label value");
+        _wideHistogram = wideHistogramTemplate.WithLabels("label value");
 
         // We take a single measurement, to warm things up and avoid any first-call impact.
         _counter.Inc();
         _gauge.Set(1);
         _summary.Observe(1);
         _histogram.Observe(1);
+        _wideHistogram.Observe(1);
     }
 
     [GlobalSetup]
@@ -118,58 +120,10 @@ public class MeasurementBenchmarks
         _spanIdLabel = _spanIdKey.WithValue(_spanIdValue);
     }
 
-    [IterationSetup]
-    public void Setup()
-    {
-        // We reuse the same registry for each iteration, as this represents typical (warmed up) usage.
-
-        _threadReadyToStart = new ManualResetEventSlim[ThreadCount];
-        _startThreads = new ManualResetEventSlim();
-        _threads = new Thread[ThreadCount];
-
-        for (var i = 0; i < ThreadCount; i++)
-        {
-            _threadReadyToStart[i] = new();
-            _threads[i] = new Thread(GetBenchmarkThreadEntryPoint());
-            _threads[i].Name = $"Measurements #{i}";
-            _threads[i].Start(i);
-        }
-
-        // Wait for all threads to get ready. We will give them the go signal in the actual benchmark method.
-        foreach (var e in _threadReadyToStart)
-            e.Wait();
-    }
-
-    private ParameterizedThreadStart GetBenchmarkThreadEntryPoint() => TargetMetricType switch
-    {
-        MetricType.Counter => MeasurementThreadCounter,
-        MetricType.Gauge => MeasurementThreadGauge,
-        MetricType.Histogram => MeasurementThreadHistogram,
-        MetricType.Summary => MeasurementThreadSummary,
-        _ => throw new NotSupportedException()
-    };
-
-    [IterationCleanup]
-    public void Cleanup()
-    {
-        _startThreads.Dispose();
-
-        foreach (var e in _threadReadyToStart)
-            e.Dispose();
-    }
-
-    private ManualResetEventSlim[] _threadReadyToStart;
-    private ManualResetEventSlim _startThreads;
-    private Thread[] _threads;
-
-    private void MeasurementThreadCounter(object state)
+    [Benchmark]
+    public void Counter()
     {
         var exemplarProvider = GetExemplarProvider();
-
-        var threadIndex = (int)state;
-
-        _threadReadyToStart[threadIndex].Set();
-        _startThreads.Wait();
 
         for (var i = 0; i < MeasurementCount; i++)
         {
@@ -177,27 +131,19 @@ public class MeasurementBenchmarks
         }
     }
 
-    private void MeasurementThreadGauge(object state)
+    [Benchmark]
+    public void Gauge()
     {
-        var threadIndex = (int)state;
-
-        _threadReadyToStart[threadIndex].Set();
-        _startThreads.Wait();
-
         for (var i = 0; i < MeasurementCount; i++)
         {
             _gauge.Set(i);
         }
     }
 
-    private void MeasurementThreadHistogram(object state)
+    [Benchmark]
+    public void Histogram()
     {
         var exemplarProvider = GetExemplarProvider();
-
-        var threadIndex = (int)state;
-
-        _threadReadyToStart[threadIndex].Set();
-        _startThreads.Wait();
 
         for (var i = 0; i < MeasurementCount; i++)
         {
@@ -205,26 +151,24 @@ public class MeasurementBenchmarks
         }
     }
 
-    private void MeasurementThreadSummary(object state)
+    [Benchmark]
+    public void WideHistogram()
     {
-        var threadIndex = (int)state;
-
-        _threadReadyToStart[threadIndex].Set();
-        _startThreads.Wait();
+        var exemplarProvider = GetExemplarProvider();
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _summary.Observe(i);
+            _wideHistogram.Observe(i, exemplarProvider());
         }
     }
 
     [Benchmark]
-    public void MeasurementPerformance()
+    public void Summary()
     {
-        _startThreads.Set();
-
-        for (var i = 0; i < _threads.Length; i++)
-            _threads[i].Join();
+        for (var i = 0; i < MeasurementCount; i++)
+        {
+            _summary.Observe(i);
+        }
     }
 
     private Func<Exemplar> GetExemplarProvider() => Exemplars switch
