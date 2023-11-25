@@ -1,3 +1,9 @@
+using System.Numerics;
+#if NET7_0_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
+
 namespace Prometheus;
 
 /// <remarks>
@@ -155,23 +161,65 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
             exemplar ??= GetDefaultExemplar(val);
 
-            for (int i = 0; i < _upperBounds.Length; i++)
-            {
-                if (val <= _upperBounds[i])
-                {
-                    _bucketCounts[i].Add(count);
+            var bucketIndex = GetBucketIndex(val);
 
-                    if (exemplar != null)
-                        RecordExemplar(exemplar, ref _exemplars[i], val);
+            _bucketCounts[bucketIndex].Add(count);
 
-                    break;
-                }
-            }
+            if (exemplar != null)
+                RecordExemplar(exemplar, ref _exemplars[bucketIndex], val);
 
             _sum.Add(val * count);
 
             Publish();
         }
+
+        private int GetBucketIndex(double val)
+        {
+#if NET7_0_OR_GREATER
+            if (Avx.IsSupported)
+                return GetBucketIndexAvx(val);
+#endif
+
+            for (int i = 0; i < _upperBounds.Length; i++)
+            {
+                if (val <= _upperBounds[i])
+                    return i;
+            }
+
+            throw new Exception("Unreachable code reached.");
+        }
+
+#if NET7_0_OR_GREATER
+        private int GetBucketIndexAvx(double val)
+        {
+            var remaining = _upperBounds.Length % Vector256<double>.Count;
+
+            for (int i = 0; i < _upperBounds.Length - remaining; i += Vector256<double>.Count)
+            {
+                var boundVector = Vector256.Create(_upperBounds, i);
+                var valVector = Vector256.Create(val);
+                var mask = Avx.CompareLessThanOrEqual(valVector, boundVector);
+
+                if (mask.Equals(Vector256<double>.Zero))
+                    continue;
+
+                // Condenses the vector into a 32-bit integer where each bit represents one vector element (so 1111 means "all true").
+                var moveMask = Avx.MoveMask(mask);
+
+                var indexInBlock = BitOperations.TrailingZeroCount(moveMask);
+
+                return i + indexInBlock;
+            }
+
+            for (int i = _upperBounds.Length - remaining; i < _upperBounds.Length; i++)
+            {
+                if (val <= _upperBounds[i])
+                    return i;
+            }
+
+            throw new Exception("Unreachable code reached.");
+        }
+#endif
     }
 
     internal override MetricType Type => MetricType.Histogram;
