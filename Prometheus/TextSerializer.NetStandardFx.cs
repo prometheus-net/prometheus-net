@@ -90,6 +90,10 @@ internal sealed class TextSerializer : IMetricsSerializer
             {
                 nameLen -= 6; // in OpenMetrics the counter name does not include the _total prefix.
             }
+            else
+            {
+                typeBytes = Unknown; // if the total prefix is missing the _total prefix it is out of spec
+            }
         }
 
         await _stream.Value.WriteAsync(HashHelpSpace, 0, HashHelpSpace.Length, cancel);
