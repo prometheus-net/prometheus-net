@@ -71,9 +71,8 @@ public interface IManagedLifetimeMetricHandle<TMetricInterface>
     /// Returns a metric instance that automatically extends the lifetime of the timeseries whenever the value is changed.
     /// This is equivalent to taking a lease for every update to the value, and immediately releasing the lease.
     /// 
-    /// This is useful if:
-    /// 1) the caller does not perform any long-running operations that would require keeping a lease for more than 1 update;
-    /// 2) or if the caller is lifetime-management-agnostic code that is not aware of the possibility to extend metric lifetime via leases.
+    /// This is useful if the caller is lifetime-management-agnostic code that is not aware of the possibility to extend metric lifetime via leases.
+    /// Do not use this if you can use explicit leases instead, as this is considerably less efficient.
     /// </summary>
     ICollector<TMetricInterface> WithExtendLifetimeOnUse();
 }
