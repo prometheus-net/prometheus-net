@@ -10,7 +10,6 @@ namespace Prometheus;
 /// Each metric handle maintains a reaper task that occasionally removes metrics that have expired. The reaper is started
 /// when the first lifetime-managed metric is created and terminates when the last lifetime-managed metric expires.
 /// This does mean that the metric handle may keep objects alive until expiration, even if the handle itself is no longer used.
-/// TODO: Can we do something to reduce that risk?
 /// </remarks>
 internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : IManagedLifetimeMetricHandle<TMetricInterface>
     where TChild : ChildBase, TMetricInterface
