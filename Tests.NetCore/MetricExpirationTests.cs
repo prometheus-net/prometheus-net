@@ -1,8 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Prometheus.Tests
 {
@@ -86,11 +85,11 @@ namespace Prometheus.Tests
         [TestMethod]
         public async Task ManagedLifetimeMetric_ExpiresOnlyAfterAllLeasesReleased()
         {
-            var handle = _expiringMetrics.CreateCounter(MetricName, "", Array.Empty<string>());
+            var handle = (ManagedLifetimeCounter)_expiringMetrics.CreateCounter(MetricName, "", Array.Empty<string>());
 
             // We break delays on demand to force any expiring-eligible metrics to expire.
             var delayer = new BreakableDelayer();
-            ((ManagedLifetimeCounter)handle).Delayer = delayer;
+            handle.Delayer = delayer;
 
             // We detect expiration by the value having been reset when we try allocate the counter again.
             // We break 2 delays on every use, to ensure that the expiration logic has enough iterations to make up its mind.
@@ -105,6 +104,7 @@ namespace Prometheus.Tests
 
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+                    handle.ZeroAllKeepaliveTimestamps();
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                     delayer.BreakAllDelays();
@@ -116,6 +116,7 @@ namespace Prometheus.Tests
 
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+                handle.ZeroAllKeepaliveTimestamps();
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                 delayer.BreakAllDelays();
@@ -127,6 +128,7 @@ namespace Prometheus.Tests
 
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+            handle.ZeroAllKeepaliveTimestamps();
             delayer.BreakAllDelays();
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
             delayer.BreakAllDelays();
@@ -160,15 +162,16 @@ namespace Prometheus.Tests
             var labelingFactory1 = _expiringMetrics.WithLabels(labels);
             var labelingFactory2 = _expiringMetrics.WithLabels(labels);
 
-            var factory1Handle = labelingFactory1.CreateCounter(MetricName, "", Array.Empty<string>());
-            var factory2Handle = labelingFactory2.CreateCounter(MetricName, "", Array.Empty<string>());
-            var rawHandle = _expiringMetrics.CreateCounter(MetricName, "", labelNames);
+            var factory1Handle = (LabelEnrichingManagedLifetimeCounter)labelingFactory1.CreateCounter(MetricName, "", Array.Empty<string>());
+            var factory2Handle = (LabelEnrichingManagedLifetimeCounter)labelingFactory2.CreateCounter(MetricName, "", Array.Empty<string>());
+
+            var rawHandle = (ManagedLifetimeCounter)_expiringMetrics.CreateCounter(MetricName, "", labelNames);
 
             // We break delays on demand to force any expiring-eligible metrics to expire.
             var delayer = new BreakableDelayer();
-            ((ManagedLifetimeCounter)((LabelEnrichingManagedLifetimeCounter)factory1Handle)._inner).Delayer = delayer;
-            ((ManagedLifetimeCounter)((LabelEnrichingManagedLifetimeCounter)factory2Handle)._inner).Delayer = delayer;
-            ((ManagedLifetimeCounter)rawHandle).Delayer = delayer;
+            ((ManagedLifetimeCounter)factory1Handle._inner).Delayer = delayer;
+            ((ManagedLifetimeCounter)factory2Handle._inner).Delayer = delayer;
+            rawHandle.Delayer = delayer;
 
             // We detect expiration by the value having been reset when we try allocate the counter again.
             // We break 2 delays on every use, to ensure that the expiration logic has enough iterations to make up its mind.
@@ -183,6 +186,7 @@ namespace Prometheus.Tests
 
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+                    rawHandle.ZeroAllKeepaliveTimestamps();
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                     delayer.BreakAllDelays();
@@ -194,6 +198,7 @@ namespace Prometheus.Tests
 
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+                rawHandle.ZeroAllKeepaliveTimestamps();
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                 delayer.BreakAllDelays();
@@ -208,6 +213,7 @@ namespace Prometheus.Tests
 
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+                    rawHandle.ZeroAllKeepaliveTimestamps();
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                     delayer.BreakAllDelays();
@@ -219,6 +225,7 @@ namespace Prometheus.Tests
 
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+                rawHandle.ZeroAllKeepaliveTimestamps();
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                 delayer.BreakAllDelays();
@@ -230,6 +237,7 @@ namespace Prometheus.Tests
 
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
 
+            rawHandle.ZeroAllKeepaliveTimestamps();
             delayer.BreakAllDelays();
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
             delayer.BreakAllDelays();
