@@ -12,7 +12,7 @@ public class MetricExpirationBenchmarks
     /// <summary>
     /// Just to ensure that a benchmark iteration has enough to do for stable and meaningful results.
     /// </summary>
-    private const int _metricCount = 100;
+    private const int _metricCount = 1_000;
 
     /// <summary>
     /// Some benchmarks try to register metrics that already exist.
