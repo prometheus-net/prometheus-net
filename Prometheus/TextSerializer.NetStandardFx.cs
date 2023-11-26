@@ -30,6 +30,7 @@ internal sealed class TextSerializer : IMetricsSerializer
     internal static readonly byte[] EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
     internal static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
     internal static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
+
     internal static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
 
     internal static readonly byte[] PositiveInfinityBytes = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
@@ -64,7 +65,7 @@ internal sealed class TextSerializer : IMetricsSerializer
     /// However, we can easily simulate this via the serialization benchmark through named pipes - they are super slow if writing
     /// individual characters. It is a reasonable assumption that this limitation is also true elsewhere, at least on some OS/platform.
     /// </summary>
-    private Stream AddStreamBuffering(Stream inner)
+    private static Stream AddStreamBuffering(Stream inner)
     {
         return new BufferedStream(inner);
     }
