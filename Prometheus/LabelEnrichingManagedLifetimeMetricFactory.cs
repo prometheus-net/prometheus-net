@@ -35,11 +35,40 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
 
         // 1-1 relationship between instance of inner handle and our labeling handle.
         // We expect lifetime of each to match the lifetime of the respective factory, so no need to cleanup anything.
-        return _counters.GetOrAdd(innerHandle, CreateCounterCore);
+
+        _countersLock.EnterReadLock();
+
+        try
+        {
+            if (_counters.TryGetValue(innerHandle, out var existing))
+                return existing;
+        }
+        finally
+        {
+            _countersLock.ExitReadLock();
+        }
+
+        _countersLock.EnterWriteLock();
+
+        try
+        {
+            if (_counters.TryGetValue(innerHandle, out var existing))
+                return existing;
+
+            var instance = CreateCounterCore(innerHandle);
+            _counters.Add(innerHandle, instance);
+            return instance;
+        }
+        finally
+        {
+            _countersLock.ExitWriteLock();
+        }
     }
 
     private LabelEnrichingManagedLifetimeCounter CreateCounterCore(IManagedLifetimeMetricHandle<ICounter> inner) => new LabelEnrichingManagedLifetimeCounter(inner, _enrichWithLabelValues);
-    private readonly ConcurrentDictionary<IManagedLifetimeMetricHandle<ICounter>, LabelEnrichingManagedLifetimeCounter> _counters = new();
+
+    private readonly Dictionary<IManagedLifetimeMetricHandle<ICounter>, LabelEnrichingManagedLifetimeCounter> _counters = new();
+    private readonly ReaderWriterLockSlim _countersLock = new();
 
     public IManagedLifetimeMetricHandle<IGauge> CreateGauge(string name, string help, string[]? instanceLabelNames, GaugeConfiguration? configuration)
     {
@@ -48,11 +77,39 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
 
         // 1-1 relationship between instance of inner handle and our labeling handle.
         // We expect lifetime of each to match the lifetime of the respective factory, so no need to cleanup anything.
-        return _gauges.GetOrAdd(innerHandle, CreateGaugeCore);
+
+        _gaugesLock.EnterReadLock();
+
+        try
+        {
+            if (_gauges.TryGetValue(innerHandle, out var existing))
+                return existing;
+        }
+        finally
+        {
+            _gaugesLock.ExitReadLock();
+        }
+
+        _gaugesLock.EnterWriteLock();
+
+        try
+        {
+            if (_gauges.TryGetValue(innerHandle, out var existing))
+                return existing;
+
+            var instance = CreateGaugeCore(innerHandle);
+            _gauges.Add(innerHandle, instance);
+            return instance;
+        }
+        finally
+        {
+            _gaugesLock.ExitWriteLock();
+        }
     }
 
     private LabelEnrichingManagedLifetimeGauge CreateGaugeCore(IManagedLifetimeMetricHandle<IGauge> inner) => new LabelEnrichingManagedLifetimeGauge(inner, _enrichWithLabelValues);
-    private readonly ConcurrentDictionary<IManagedLifetimeMetricHandle<IGauge>, LabelEnrichingManagedLifetimeGauge> _gauges = new();
+    private readonly Dictionary<IManagedLifetimeMetricHandle<IGauge>, LabelEnrichingManagedLifetimeGauge> _gauges = new();
+    private readonly ReaderWriterLockSlim _gaugesLock = new();
 
     public IManagedLifetimeMetricHandle<IHistogram> CreateHistogram(string name, string help, string[]? instanceLabelNames, HistogramConfiguration? configuration)
     {
@@ -61,11 +118,39 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
 
         // 1-1 relationship between instance of inner handle and our labeling handle.
         // We expect lifetime of each to match the lifetime of the respective factory, so no need to cleanup anything.
-        return _histograms.GetOrAdd(innerHandle, CreateHistogramCore);
+
+        _histogramsLock.EnterReadLock();
+
+        try
+        {
+            if (_histograms.TryGetValue(innerHandle, out var existing))
+                return existing;
+        }
+        finally
+        {
+            _histogramsLock.ExitReadLock();
+        }
+
+        _histogramsLock.EnterWriteLock();
+
+        try
+        {
+            if (_histograms.TryGetValue(innerHandle, out var existing))
+                return existing;
+
+            var instance = CreateHistogramCore(innerHandle);
+            _histograms.Add(innerHandle, instance);
+            return instance;
+        }
+        finally
+        {
+            _histogramsLock.ExitWriteLock();
+        }
     }
 
     private LabelEnrichingManagedLifetimeHistogram CreateHistogramCore(IManagedLifetimeMetricHandle<IHistogram> inner) => new LabelEnrichingManagedLifetimeHistogram(inner, _enrichWithLabelValues);
-    private readonly ConcurrentDictionary<IManagedLifetimeMetricHandle<IHistogram>, LabelEnrichingManagedLifetimeHistogram> _histograms = new();
+    private readonly Dictionary<IManagedLifetimeMetricHandle<IHistogram>, LabelEnrichingManagedLifetimeHistogram> _histograms = new();
+    private readonly ReaderWriterLockSlim _histogramsLock = new();
 
     public IManagedLifetimeMetricHandle<ISummary> CreateSummary(string name, string help, string[]? instanceLabelNames, SummaryConfiguration? configuration)
     {
@@ -74,11 +159,39 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
 
         // 1-1 relationship between instance of inner handle and our labeling handle.
         // We expect lifetime of each to match the lifetime of the respective factory, so no need to cleanup anything.
-        return _summaries.GetOrAdd(innerHandle, CreateSummaryCore);
+
+        _summariesLock.EnterReadLock();
+
+        try
+        {
+            if (_summaries.TryGetValue(innerHandle, out var existing))
+                return existing;
+        }
+        finally
+        {
+            _summariesLock.ExitReadLock();
+        }
+
+        _summariesLock.EnterWriteLock();
+
+        try
+        {
+            if (_summaries.TryGetValue(innerHandle, out var existing))
+                return existing;
+
+            var instance = CreateSummaryCore(innerHandle);
+            _summaries.Add(innerHandle, instance);
+            return instance;
+        }
+        finally
+        {
+            _summariesLock.ExitWriteLock();
+        }
     }
 
     private LabelEnrichingManagedLifetimeSummary CreateSummaryCore(IManagedLifetimeMetricHandle<ISummary> inner) => new LabelEnrichingManagedLifetimeSummary(inner, _enrichWithLabelValues);
-    private readonly ConcurrentDictionary<IManagedLifetimeMetricHandle<ISummary>, LabelEnrichingManagedLifetimeSummary> _summaries = new();
+    private readonly Dictionary<IManagedLifetimeMetricHandle<ISummary>, LabelEnrichingManagedLifetimeSummary> _summaries = new();
+    private readonly ReaderWriterLockSlim _summariesLock = new();
 
     public IManagedLifetimeMetricFactory WithLabels(IDictionary<string, string> labels)
     {
