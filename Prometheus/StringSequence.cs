@@ -156,6 +156,9 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
     public static StringSequence From(params string[] values)
     {
+        if (values.Length == 0)
+            return Empty;
+
         return new StringSequence(null, null, values);
     }
 
