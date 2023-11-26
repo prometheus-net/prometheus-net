@@ -8,6 +8,9 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
 {
     internal ManagedLifetimeMetricHandle(Collector<TChild> metric, TimeSpan expiresAfter)
     {
+        _createLifetimeManagerFunc = CreateLifetimeManager;
+        _deleteMetricOuterFunc = DeleteMetricOuter;
+
         _metric = metric;
         _expiresAfter = expiresAfter;
     }
@@ -81,13 +84,15 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     {
         public LifetimeManager(TChild child, TimeSpan expiresAfter, IDelayer delayer, Action<TChild> remove)
         {
+            _releaseLeaseFunc = ReleaseLease;
+
             _child = child;
             _expiresAfter = expiresAfter;
             _delayer = delayer;
             _remove = remove;
 
             // NB! There may be optimistic copies made by the ConcurrentDictionary - this may be such a copy!
-            _reusableLease = new ReusableLease(ReleaseLease);
+            _reusableLease = new ReusableLease(_releaseLeaseFunc);
         }
 
         private readonly TChild _child;
@@ -112,7 +117,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         {
             TakeLeaseCore();
 
-            return new Lease(ReleaseLease);
+            return new Lease(_releaseLeaseFunc);
         }
 
         /// <summary>
@@ -144,6 +149,8 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
                 unchecked { _epoch++; }
             }
         }
+
+        private readonly Action _releaseLeaseFunc;
 
         private void EnsureExpirationTimerStarted()
         {
@@ -251,6 +258,9 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     /// </summary>
     private readonly ConcurrentDictionary<TChild, LifetimeManager> _lifetimeManagers = new();
 
+    // This is not used for collection reads/writes but rather to block taking leases when we are ending a lifetime:
+    // read == taking a lease.
+    // write == lifetime being ended.
     private readonly ReaderWriterLockSlim _lifetimeManagersLock = new();
 
     /// <summary>
@@ -295,13 +305,11 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         if (_lifetimeManagers.TryGetValue(child, out var existing))
             return existing;
 
-        return _lifetimeManagers.GetOrAdd(child, CreateLifetimeManager);
+        return _lifetimeManagers.GetOrAdd(child, _createLifetimeManagerFunc);
     }
 
-    private LifetimeManager CreateLifetimeManager(TChild child)
-    {
-        return new LifetimeManager(child, _expiresAfter, Delayer, DeleteMetricOuter);
-    }
+    private LifetimeManager CreateLifetimeManager(TChild child) => new(child, _expiresAfter, Delayer, _deleteMetricOuterFunc);
+    private readonly Func<TChild, LifetimeManager> _createLifetimeManagerFunc;
 
     /// <summary>
     /// Performs the locking necessary to ensure that a LifetimeManager that ends the lifetime does not get reused.
@@ -321,4 +329,6 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
             _lifetimeManagersLock.ExitWriteLock();
         }
     }
+
+    private readonly Action<TChild> _deleteMetricOuterFunc;
 }
