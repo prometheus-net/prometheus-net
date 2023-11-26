@@ -2,6 +2,7 @@ using System.Buffers;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Prometheus;
 
@@ -95,28 +96,55 @@ public abstract class Collector
 
         FlattenedLabelNames = instanceLabelNames.Concat(staticLabels.Names);
 
-        // Used to check uniqueness.
+        // Used to check uniqueness of label names, to catch any label layering mistakes early.
+        var uniqueLabelNames = LabelValidationHashSetPool.Get();
+
+        try
+        {
+            var labelNameEnumerator = FlattenedLabelNames.GetEnumerator();
+            while (labelNameEnumerator.MoveNext())
+            {
+                var labelName = labelNameEnumerator.Current;
+
+                if (labelName == null)
+                    throw new ArgumentNullException("Label name was null.");
+
+                ValidateLabelName(labelName);
+                uniqueLabelNames.Add(labelName);
+            }
+
+            // Here we check for label name collision, ensuring that the same label name is not defined twice on any label inheritance level.
+            if (uniqueLabelNames.Count != FlattenedLabelNames.Length)
+                throw new InvalidOperationException("The set of label names includes duplicates: " + string.Join(", ", FlattenedLabelNames.ToArray()));
+        }
+        finally
+        {
+            LabelValidationHashSetPool.Return(uniqueLabelNames);
+        }
+    }
+
+    private static readonly ObjectPool<HashSet<string>> LabelValidationHashSetPool = ObjectPool.Create(new LabelValidationHashSetPoolPolicy());
+
+    private sealed class LabelValidationHashSetPoolPolicy : PooledObjectPolicy<HashSet<string>>
+    {
+        // If something should explode the size, we do not return it to the pool.
+        // This should be more than generous even for the most verbosely labeled scenarios.
+        private const int PooledHashSetMaxSize = 50;
+
 #if NET
-        var uniqueLabelNames = new HashSet<string>(FlattenedLabelNames.Length, StringComparer.Ordinal);
+        public override HashSet<string> Create() => new(PooledHashSetMaxSize, StringComparer.Ordinal);
 #else
-        var uniqueLabelNames = new HashSet<string>(StringComparer.Ordinal);
+        public override HashSet<string> Create() => new(StringComparer.Ordinal);
 #endif
 
-        var labelNameEnumerator = FlattenedLabelNames.GetEnumerator();
-        while (labelNameEnumerator.MoveNext())
+        public override bool Return(HashSet<string> obj)
         {
-            var labelName = labelNameEnumerator.Current;
+            if (obj.Count > PooledHashSetMaxSize)
+                return false;
 
-            if (labelName == null)
-                throw new ArgumentNullException("Label name was null.");
-
-            ValidateLabelName(labelName);
-            uniqueLabelNames.Add(labelName);
+            obj.Clear();
+            return true;
         }
-
-        // Here we check for label name collision, ensuring that the same label name is not defined twice on any label inheritance level.
-        if (uniqueLabelNames.Count != FlattenedLabelNames.Length)
-            throw new InvalidOperationException("The set of label names includes duplicates: " + string.Join(", ", FlattenedLabelNames.ToArray()));
     }
 
     internal static void ValidateLabelName(string labelName)
