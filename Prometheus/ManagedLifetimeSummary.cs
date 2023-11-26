@@ -33,6 +33,9 @@ internal sealed class ManagedLifetimeSummary : ManagedLifetimeMetricHandle<Summa
     private static readonly Action<ManagedLifetimeSummary> _assignUnlabelledFunc;
     private static void AssignUnlabelled(ManagedLifetimeSummary instance) => instance._unlabelled = new AutoLeasingInstance(instance, Array.Empty<string>());
 
+    // These do not get cached, so are potentially expensive - user code should try avoiding re-allocating these when possible,
+    // though admittedly this may not be so easy as often these are on the hot path and the very reason that lifetime-managed
+    // metrics are used is that we do not have a meaningful way to reuse metrics or identify their lifetime.
     public ISummary WithLabels(params string[] labelValues)
     {
         return new AutoLeasingInstance(this, labelValues);
