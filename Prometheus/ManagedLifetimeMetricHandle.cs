@@ -11,7 +11,8 @@ namespace Prometheus;
 /// when the first lifetime-managed metric is created and terminates when the last lifetime-managed metric expires.
 /// This does mean that the metric handle may keep objects alive until expiration, even if the handle itself is no longer used.
 /// </remarks>
-internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : IManagedLifetimeMetricHandle<TMetricInterface>
+internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
+    : IManagedLifetimeMetricHandle<TMetricInterface>, INotifyLeaseEnded
     where TChild : ChildBase, TMetricInterface
     where TMetricInterface : ICollectorChild
 {
@@ -32,6 +33,14 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         metric = child;
 
         return TakeLease(child);
+    }
+
+    public RefLease AcquireRefLease(out TMetricInterface metric, params string[] labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeRefLease(child);
     }
 
     public void WithLease(Action<TMetricInterface> action, params string[] labelValues)
@@ -76,22 +85,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     internal IDelayer Delayer = RealDelayer.Instance;
 
     #region Lease tracking
-    // Contents modified via atomic operations, not guarded by locks.
-    private sealed class LifetimeInfo
-    {
-        // Number of active leases. Nonzero value here indicates the lifetime extends forever.
-        public int LeaseCount;
-
-        // When the last lifetime related activity was performed. Expiration timer starts counting from here.
-        // This is refreshed whenever a lease is released (a kept lease is a forever-keepalive, so we only care about releasing).
-        public long KeepaliveTimestamp;
-
-        // The lifetime has been ended, potentially while a lease was active. The next time a lease ends,
-        // it will have to re-register the lifetime instead of just extending the existing one.
-        public bool Ended;
-    }
-
-    private readonly Dictionary<TChild, LifetimeInfo> _lifetimes = new();
+    private readonly Dictionary<TChild, ChildLifetimeInfo> _lifetimes = new();
 
     // Guards the collection but not the contents.
     private readonly ReaderWriterLockSlim _lifetimesLock = new();
@@ -144,7 +138,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         return new RefLease(this, child, lifetime);
     }
 
-    private LifetimeInfo GetOrCreateLifetimeAndIncrementLeaseCount(TChild child)
+    private ChildLifetimeInfo GetOrCreateLifetimeAndIncrementLeaseCount(TChild child)
     {
         _lifetimesLock.EnterReadLock();
 
@@ -178,7 +172,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
             }
 
             // Did not get lucky. Make a new one.
-            lifetime = new LifetimeInfo
+            lifetime = new ChildLifetimeInfo
             {
                 LeaseCount = 1
             };
@@ -192,7 +186,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         }
     }
 
-    private void OnLeaseEnded(TChild child, LifetimeInfo lifetime)
+    internal void OnLeaseEnded(TChild child, ChildLifetimeInfo lifetime)
     {
         // Update keepalive timestamp before anything else, to avoid racing.
         Volatile.Write(ref lifetime.KeepaliveTimestamp, LowGranularityTimeSource.GetStopwatchTimestamp());
@@ -211,12 +205,12 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         Interlocked.Decrement(ref lifetime.LeaseCount);
     }
 
-    private sealed class Lease(ManagedLifetimeMetricHandle<TChild, TMetricInterface> parent, TChild child, LifetimeInfo lifetime) : IDisposable
+    void INotifyLeaseEnded.OnLeaseEnded(object child, ChildLifetimeInfo lifetime)
     {
-        public void Dispose() => parent.OnLeaseEnded(child, lifetime);
+        OnLeaseEnded((TChild)child, lifetime);
     }
 
-    private readonly ref struct RefLease(ManagedLifetimeMetricHandle<TChild, TMetricInterface> parent, TChild child, LifetimeInfo lifetime)
+    private sealed class Lease(ManagedLifetimeMetricHandle<TChild, TMetricInterface> parent, TChild child, ChildLifetimeInfo lifetime) : IDisposable
     {
         public void Dispose() => parent.OnLeaseEnded(child, lifetime);
     }

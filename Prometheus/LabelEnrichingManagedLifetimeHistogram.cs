@@ -16,6 +16,11 @@ internal sealed class LabelEnrichingManagedLifetimeHistogram : IManagedLifetimeM
         return _inner.AcquireLease(out metric, WithEnrichedLabelValues(labelValues));
     }
 
+    public RefLease AcquireRefLease(out IHistogram metric, params string[] labelValues)
+    {
+        return _inner.AcquireRefLease(out metric, WithEnrichedLabelValues(labelValues));
+    }
+
     public ICollector<IHistogram> WithExtendLifetimeOnUse()
     {
         return new LabelEnrichingAutoLeasingMetric<IHistogram>(_inner.WithExtendLifetimeOnUse(), _enrichWithLabelValues);
