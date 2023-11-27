@@ -44,6 +44,15 @@ internal sealed class ManagedLifetimeGauge : ManagedLifetimeMetricHandle<Gauge.C
 
     private sealed class AutoLeasingInstance : IGauge
     {
+        static AutoLeasingInstance()
+        {
+            _incCoreFunc = IncCore;
+            _incToCoreFunc = IncToCore;
+            _setCoreFunc = SetCore;
+            _decCoreFunc = DecCore;
+            _decToCoreFunc = DecToCore;
+        }
+
         public AutoLeasingInstance(IManagedLifetimeMetricHandle<IGauge> inner, string[] labelValues)
         {
             _inner = inner;
@@ -57,27 +66,72 @@ internal sealed class ManagedLifetimeGauge : ManagedLifetimeMetricHandle<Gauge.C
 
         public void Inc(double increment = 1)
         {
-            _inner.WithLease(x => x.Inc(increment), _labelValues);
+            var args = new IncArgs(increment);
+            _inner.WithLease(_incCoreFunc, args, _labelValues);
         }
+
+        private readonly struct IncArgs(double increment)
+        {
+            public readonly double Increment = increment;
+        }
+
+        private static void IncCore(IncArgs args, IGauge gauge) => gauge.Inc(args.Increment);
+        private static readonly Action<IncArgs, IGauge> _incCoreFunc;
 
         public void Set(double val)
         {
-            _inner.WithLease(x => x.Set(val), _labelValues);
+            var args = new SetArgs(val);
+            _inner.WithLease(_setCoreFunc, args, _labelValues);
         }
+
+        private readonly struct SetArgs(double val)
+        {
+            public readonly double Val = val;
+        }
+
+        private static void SetCore(SetArgs args, IGauge gauge) => gauge.Set(args.Val);
+        private static readonly Action<SetArgs, IGauge> _setCoreFunc;
 
         public void Dec(double decrement = 1)
         {
-            _inner.WithLease(x => x.Dec(decrement), _labelValues);
+            var args = new DecArgs(decrement);
+            _inner.WithLease(_decCoreFunc, args, _labelValues);
         }
+
+        private readonly struct DecArgs(double decrement)
+        {
+            public readonly double Decrement = decrement;
+        }
+
+        private static void DecCore(DecArgs args, IGauge gauge) => gauge.Dec(args.Decrement);
+        private static readonly Action<DecArgs, IGauge> _decCoreFunc;
 
         public void IncTo(double targetValue)
         {
-            _inner.WithLease(x => x.IncTo(targetValue), _labelValues);
+            var args = new IncToArgs(targetValue);
+            _inner.WithLease(_incToCoreFunc, args, _labelValues);
         }
+
+        private readonly struct IncToArgs(double targetValue)
+        {
+            public readonly double TargetValue = targetValue;
+        }
+
+        private static void IncToCore(IncToArgs args, IGauge gauge) => gauge.IncTo(args.TargetValue);
+        private static readonly Action<IncToArgs, IGauge> _incToCoreFunc;
 
         public void DecTo(double targetValue)
         {
-            _inner.WithLease(x => x.DecTo(targetValue), _labelValues);
+            var args = new DecToArgs(targetValue);
+            _inner.WithLease(_decToCoreFunc, args, _labelValues);
         }
+
+        private readonly struct DecToArgs(double targetValue)
+        {
+            public readonly double TargetValue = targetValue;
+        }
+
+        private static void DecToCore(DecToArgs args, IGauge gauge) => gauge.DecTo(args.TargetValue);
+        private static readonly Action<DecToArgs, IGauge> _decToCoreFunc;
     }
 }

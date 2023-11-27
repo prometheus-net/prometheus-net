@@ -44,6 +44,11 @@ internal sealed class ManagedLifetimeSummary : ManagedLifetimeMetricHandle<Summa
 
     private sealed class AutoLeasingInstance : ISummary
     {
+        static AutoLeasingInstance()
+        {
+            _observeCoreFunc = ObserveCore;
+        }
+
         public AutoLeasingInstance(IManagedLifetimeMetricHandle<ISummary> inner, string[] labelValues)
         {
             _inner = inner;
@@ -55,7 +60,16 @@ internal sealed class ManagedLifetimeSummary : ManagedLifetimeMetricHandle<Summa
 
         public void Observe(double val)
         {
-            _inner.WithLease(x => x.Observe(val), _labelValues);
+            var args = new ObserveArgs(val);
+            _inner.WithLease(_observeCoreFunc, args, _labelValues);
         }
+
+        private readonly struct ObserveArgs(double val)
+        {
+            public readonly double Val = val;
+        }
+
+        private static void ObserveCore(ObserveArgs args, ISummary summary) => summary.Observe(args.Val);
+        private static readonly Action<ObserveArgs, ISummary> _observeCoreFunc;
     }
 }

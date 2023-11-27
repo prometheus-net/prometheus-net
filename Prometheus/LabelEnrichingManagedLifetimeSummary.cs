@@ -26,6 +26,11 @@ internal sealed class LabelEnrichingManagedLifetimeSummary : IManagedLifetimeMet
         _inner.WithLease(action, WithEnrichedLabelValues(labelValues));
     }
 
+    public void WithLease<TArg>(Action<TArg, ISummary> action, TArg arg, params string[] labelValues)
+    {
+        _inner.WithLease(action, arg, WithEnrichedLabelValues(labelValues));
+    }
+
     public TResult WithLease<TResult>(Func<ISummary, TResult> func, params string[] labelValues)
     {
         return _inner.WithLease(func, WithEnrichedLabelValues(labelValues));
