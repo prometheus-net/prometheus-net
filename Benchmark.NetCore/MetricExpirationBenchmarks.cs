@@ -137,6 +137,37 @@ public class MetricExpirationBenchmarks
             }
     }
 
+    [Benchmark]
+    public void CreateAndUse_ManualRefLease()
+    {
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
+
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+            {
+                using var lease = counter.AcquireRefLease(out var instance, _labels);
+                instance.Inc();
+            }
+        }
+    }
+
+    [Benchmark]
+    public void CreateAndUse_ManualRefLease_WithDuplicates()
+    {
+        for (var dupe = 0; dupe < _duplicateCount; dupe++)
+            for (var i = 0; i < _metricCount; i++)
+            {
+                var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
+
+                for (var repeat = 0; repeat < RepeatCount; repeat++)
+                {
+                    using var lease = counter.AcquireRefLease(out var instance, _labels);
+                    instance.Inc();
+                }
+            }
+    }
+
     private static void IncrementCounter(ICounter counter)
     {
         counter.Inc();

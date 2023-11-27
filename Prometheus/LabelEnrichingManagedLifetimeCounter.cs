@@ -17,6 +17,11 @@ internal sealed class LabelEnrichingManagedLifetimeCounter : IManagedLifetimeMet
         return _inner.AcquireLease(out metric, WithEnrichedLabelValues(labelValues));
     }
 
+    public RefLease AcquireRefLease(out ICounter metric, params string[] labelValues)
+    {
+        return _inner.AcquireRefLease(out metric, WithEnrichedLabelValues(labelValues));
+    }
+
     public ICollector<ICounter> WithExtendLifetimeOnUse()
     {
         return new LabelEnrichingAutoLeasingMetric<ICounter>(_inner.WithExtendLifetimeOnUse(), _enrichWithLabelValues);

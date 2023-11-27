@@ -16,6 +16,11 @@ internal sealed class LabelEnrichingManagedLifetimeGauge : IManagedLifetimeMetri
         return _inner.AcquireLease(out metric, WithEnrichedLabelValues(labelValues));
     }
 
+    public RefLease AcquireRefLease(out IGauge metric, params string[] labelValues)
+    {
+        return _inner.AcquireRefLease(out metric, WithEnrichedLabelValues(labelValues));
+    }
+
     public ICollector<IGauge> WithExtendLifetimeOnUse()
     {
         return new LabelEnrichingAutoLeasingMetric<IGauge>(_inner.WithExtendLifetimeOnUse(), _enrichWithLabelValues);

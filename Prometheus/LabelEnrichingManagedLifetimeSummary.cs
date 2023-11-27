@@ -16,6 +16,11 @@ internal sealed class LabelEnrichingManagedLifetimeSummary : IManagedLifetimeMet
         return _inner.AcquireLease(out metric, WithEnrichedLabelValues(labelValues));
     }
 
+    public RefLease AcquireRefLease(out ISummary metric, params string[] labelValues)
+    {
+        return _inner.AcquireRefLease(out metric, WithEnrichedLabelValues(labelValues));
+    }
+
     public ICollector<ISummary> WithExtendLifetimeOnUse()
     {
         return new LabelEnrichingAutoLeasingMetric<ISummary>(_inner.WithExtendLifetimeOnUse(), _enrichWithLabelValues);
