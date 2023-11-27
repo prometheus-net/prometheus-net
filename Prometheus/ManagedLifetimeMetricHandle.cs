@@ -37,16 +37,17 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     public void WithLease(Action<TMetricInterface> action, params string[] labelValues)
     {
         var child = _metric.WithLabels(labelValues);
-        var lease = TakeRefLease(child);
+        using var lease = TakeRefLease(child);
 
-        try
-        {
-            action(child);
-        }
-        finally
-        {
-            lease.Dispose();
-        }
+        action(child);
+    }
+
+    public void WithLease<TArg>(Action<TArg, TMetricInterface> action, TArg arg, params string[] labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(arg, child);
     }
 
     public async Task WithLeaseAsync(Func<TMetricInterface, Task> action, params string[] labelValues)

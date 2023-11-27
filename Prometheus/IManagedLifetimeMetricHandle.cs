@@ -33,6 +33,19 @@ public interface IManagedLifetimeMetricHandle<TMetricInterface>
 
     /// <summary>
     /// While executing an action, holds a lifetime-extending lease on the metric, scoped to a specific combination of label values.
+    /// Passes a given argument to the callback.
+    /// 
+    /// The typical pattern is that the metric value is only modified when the caller is holding a lease on the metric.
+    /// Automatic removal of the metric will not occur until all leases on the metric are disposed and the expiration duration elapses.
+    /// </summary>
+    /// <remarks>
+    /// Acquiring a new lease after the metric has been removed will re-publish the metric without preserving the old value.
+    /// Re-publishing may return a new instance of the metric (data collected via expired instances will not be published).
+    /// </remarks>
+    void WithLease<TArg>(Action<TArg, TMetricInterface> action, TArg arg, params string[] labelValues);
+
+    /// <summary>
+    /// While executing an action, holds a lifetime-extending lease on the metric, scoped to a specific combination of label values.
     /// 
     /// The typical pattern is that the metric value is only modified when the caller is holding a lease on the metric.
     /// Automatic removal of the metric will not occur until all leases on the metric are disposed and the expiration duration elapses.

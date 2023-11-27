@@ -26,6 +26,11 @@ internal sealed class LabelEnrichingManagedLifetimeHistogram : IManagedLifetimeM
         _inner.WithLease(action, WithEnrichedLabelValues(labelValues));
     }
 
+    public void WithLease<TArg>(Action<TArg, IHistogram> action, TArg arg, params string[] labelValues)
+    {
+        _inner.WithLease(action, arg, WithEnrichedLabelValues(labelValues));
+    }
+
     public TResult WithLease<TResult>(Func<IHistogram, TResult> func, params string[] labelValues)
     {
         return _inner.WithLease(func, WithEnrichedLabelValues(labelValues));

@@ -26,6 +26,11 @@ internal sealed class LabelEnrichingManagedLifetimeGauge : IManagedLifetimeMetri
         _inner.WithLease(action, WithEnrichedLabelValues(labelValues));
     }
 
+    public void WithLease<TArg>(Action<TArg, IGauge> action, TArg arg, params string[] labelValues)
+    {
+        _inner.WithLease(action, arg, WithEnrichedLabelValues(labelValues));
+    }
+
     public TResult WithLease<TResult>(Func<IGauge, TResult> func, params string[] labelValues)
     {
         return _inner.WithLease(func, WithEnrichedLabelValues(labelValues));

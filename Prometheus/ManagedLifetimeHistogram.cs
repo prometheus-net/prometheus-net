@@ -44,6 +44,12 @@ internal sealed class ManagedLifetimeHistogram : ManagedLifetimeMetricHandle<His
 
     private sealed class AutoLeasingInstance : IHistogram
     {
+        static AutoLeasingInstance()
+        {
+            _observeValCountCoreFunc = ObserveValCountCore;
+            _observeValExemplarCoreFunc = ObserveValExemplarCore;
+        }
+
         public AutoLeasingInstance(IManagedLifetimeMetricHandle<IHistogram> inner, string[] labelValues)
         {
             _inner = inner;
@@ -58,13 +64,33 @@ internal sealed class ManagedLifetimeHistogram : ManagedLifetimeMetricHandle<His
 
         public void Observe(double val, long count)
         {
-            _inner.WithLease(x => x.Observe(val, count), _labelValues);
+            var args = new ObserveValCountArgs(val, count);
+            _inner.WithLease(_observeValCountCoreFunc, args, _labelValues);
         }
+
+        private readonly struct ObserveValCountArgs(double val, long count)
+        {
+            public readonly double Val = val;
+            public readonly long Count = count;
+        }
+
+        private static void ObserveValCountCore(ObserveValCountArgs args, IHistogram histogram) => histogram.Observe(args.Val, args.Count);
+        private static readonly Action<ObserveValCountArgs, IHistogram> _observeValCountCoreFunc;
 
         public void Observe(double val, Exemplar? exemplar)
         {
-            _inner.WithLease(x => x.Observe(val, exemplar), _labelValues);
+            var args = new ObserveValExemplarArgs(val, exemplar);
+            _inner.WithLease(_observeValExemplarCoreFunc, args, _labelValues);
         }
+
+        private readonly struct ObserveValExemplarArgs(double val, Exemplar? exemplar)
+        {
+            public readonly double Val = val;
+            public readonly Exemplar? Exemplar = exemplar;
+        }
+
+        private static void ObserveValExemplarCore(ObserveValExemplarArgs args, IHistogram histogram) => histogram.Observe(args.Val, args.Exemplar);
+        private static readonly Action<ObserveValExemplarArgs, IHistogram> _observeValExemplarCoreFunc;
 
         public void Observe(double val)
         {

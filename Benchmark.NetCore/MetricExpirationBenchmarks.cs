@@ -7,6 +7,7 @@ namespace Benchmark.NetCore;
 /// Here we try to ensure that creating/using expiring metrics does not impose too heavy of a performance burden or create easily identifiable memory leaks.
 /// </summary>
 [MemoryDiagnoser]
+//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
 public class MetricExpirationBenchmarks
 {
     /// <summary>

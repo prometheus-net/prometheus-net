@@ -44,6 +44,12 @@ internal sealed class ManagedLifetimeCounter : ManagedLifetimeMetricHandle<Count
 
     private sealed class AutoLeasingInstance : ICounter
     {
+        static AutoLeasingInstance()
+        {
+            _incCoreFunc = IncCore;
+            _incToCoreFunc = IncToCore;
+        }
+
         public AutoLeasingInstance(IManagedLifetimeMetricHandle<ICounter> inner, string[] labelValues)
         {
             _inner = inner;
@@ -55,24 +61,36 @@ internal sealed class ManagedLifetimeCounter : ManagedLifetimeMetricHandle<Count
 
         public double Value => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
 
-        public void Inc(double increment)
-        {
-            Inc(increment, null);
-        }
-
-        public void Inc(Exemplar? exemplar)
-        {
-            Inc(increment: 1, exemplar: exemplar);
-        }
+        public void Inc(double increment) => Inc(increment, null);
+        public void Inc(Exemplar? exemplar) => Inc(increment: 1, exemplar: exemplar);
 
         public void Inc(double increment, Exemplar? exemplar)
         {
-            _inner.WithLease(x => x.Inc(increment, exemplar), _labelValues);
+            var args = new IncArgs(increment, exemplar);
+            _inner.WithLease(_incCoreFunc, args, _labelValues);
         }
+
+        private readonly struct IncArgs(double increment, Exemplar? exemplar)
+        {
+            public readonly double Increment = increment;
+            public readonly Exemplar? Exemplar = exemplar;
+        }
+
+        private static void IncCore(IncArgs args, ICounter counter) => counter.Inc(args.Increment, args.Exemplar);
+        private static readonly Action<IncArgs, ICounter> _incCoreFunc;
 
         public void IncTo(double targetValue)
         {
-            _inner.WithLease(x => x.IncTo(targetValue), _labelValues);
+            var args = new IncToArgs(targetValue);
+            _inner.WithLease(_incToCoreFunc, args, _labelValues);
         }
+
+        private readonly struct IncToArgs(double targetValue)
+        {
+            public readonly double TargetValue = targetValue;
+        }
+
+        private static void IncToCore(IncToArgs args, ICounter counter) => counter.IncTo(args.TargetValue);
+        private static readonly Action<IncToArgs, ICounter> _incToCoreFunc;
     }
 }
