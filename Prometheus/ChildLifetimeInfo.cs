@@ -1,4 +1,6 @@
-﻿namespace Prometheus;
+﻿using System.Diagnostics;
+
+namespace Prometheus;
 
 /// <summary>
 /// Describes a lifetime of a lifetime-managed metric instance.
@@ -24,4 +26,15 @@ internal sealed class ChildLifetimeInfo
     /// it will have to re-register the lifetime instead of just extending the existing one.
     /// </summary>
     public bool Ended;
+
+    public override string ToString()
+    {
+        var leaseCount = Volatile.Read(ref LeaseCount);
+        var keepaliveTimestamp = Volatile.Read(ref KeepaliveTimestamp);
+        var ended = Volatile.Read(ref Ended);
+
+        var age = PlatformCompatibilityHelpers.StopwatchGetElapsedTime(keepaliveTimestamp, Stopwatch.GetTimestamp());
+
+        return $"LeaseCount: {leaseCount}, KeepaliveTimestamp: {keepaliveTimestamp}, Ended: {ended}, Age: {age.TotalSeconds:F3} seconds";
+    }
 }

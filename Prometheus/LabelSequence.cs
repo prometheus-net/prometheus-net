@@ -236,4 +236,10 @@ internal readonly struct LabelSequence : IEquatable<LabelSequence>
 
         return result;
     }
+
+    public override string ToString()
+    {
+        // Just for debugging.
+        return $"({Length})" + string.Join("; ", ToDictionary().Select(pair => $"{pair.Key} = {pair.Value}"));
+    }
 }

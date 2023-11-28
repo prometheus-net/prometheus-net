@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace Prometheus;
@@ -115,6 +116,28 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
         {
             foreach (var lifetime in _lifetimes.Values)
                 Volatile.Write(ref lifetime.KeepaliveTimestamp, 0L);
+        }
+        finally
+        {
+            _lifetimesLock.ExitReadLock();
+        }
+    }
+
+    /// <summary>
+    /// For anomaly analysis during testing only.
+    /// </summary>
+    internal void DebugDumpLifetimes()
+    {
+        _lifetimesLock.EnterReadLock();
+
+        try
+        {
+            Console.WriteLine($"Dumping {_lifetimes.Count} lifetimes of {_metric}. Reaper status: {Volatile.Read(ref _reaperActiveBool)}.");
+
+            foreach (var pair in _lifetimes)
+            {
+                Console.WriteLine($"{pair.Key} -> {pair.Value}");
+            }
         }
         finally
         {
@@ -239,10 +262,6 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
         _ = Task.Run(_reaperFunc);
     }
 
-    // Reimplementation of Stopwatch.GetElapsedTime (only available on .NET 7 or newer).
-    private static TimeSpan GetElapsedTime(long start, long end)
-        => new((long)((end - start) * ((double)10_000_000 / Stopwatch.Frequency)));
-
     private async Task Reaper()
     {
         while (true)
@@ -267,7 +286,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
                         if (Volatile.Read(ref pair.Value.LeaseCount) != 0)
                             continue; // Not expired.
 
-                        if (GetElapsedTime(Volatile.Read(ref pair.Value.KeepaliveTimestamp), now) < _expiresAfter)
+                        if (PlatformCompatibilityHelpers.StopwatchGetElapsedTime(Volatile.Read(ref pair.Value.KeepaliveTimestamp), now) < _expiresAfter)
                             continue; // Not expired.
 
                         // No leases and keepalive has expired - it is an expired instance!
@@ -298,7 +317,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
                         if (Volatile.Read(ref lifetime.LeaseCount) != 0)
                             continue; // Not expired.
 
-                        if (GetElapsedTime(Volatile.Read(ref lifetime.KeepaliveTimestamp), now) < _expiresAfter)
+                        if (PlatformCompatibilityHelpers.StopwatchGetElapsedTime(Volatile.Read(ref lifetime.KeepaliveTimestamp), now) < _expiresAfter)
                             continue; // Not expired.
 
                         // No leases and keepalive has expired - it is an expired instance!
