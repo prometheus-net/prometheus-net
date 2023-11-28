@@ -9,5 +9,5 @@ internal class PlatformCompatibilityHelpers
         => new((long)((end - start) * ((double)10_000_000 / Stopwatch.Frequency)));
 
     public static long ElapsedToTimeStopwatchTicks(TimeSpan elapsedTime)
-        => (long)(elapsedTime.TotalSeconds * (Stopwatch.Frequency / (double)10_000_000));
+        => (long)(elapsedTime.Ticks * (Stopwatch.Frequency / (double)10_000_000));
 }
