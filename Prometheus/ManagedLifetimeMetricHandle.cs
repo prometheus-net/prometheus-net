@@ -1,6 +1,4 @@
 ﻿using System.Buffers;
-using System.ComponentModel;
-using System.Diagnostics;
 
 namespace Prometheus;
 
@@ -106,16 +104,21 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
     }
 
     /// <summary>
-    /// For testing only. Sets all keepalive timestamps to 0, which will cause all lifetimes to expire (if they have no leases).
+    /// For testing only. Sets all keepalive timestamps to a time in the disstant past,
+    /// which will cause all lifetimes to expire (if they have no leases).
     /// </summary>
-    internal void ZeroAllKeepaliveTimestamps()
+    internal void SetAllKeepaliveTimestampsToDistantPast()
     {
+        // We cannot just zero this because zero is the machine start timestamp, so zero is not necessarily
+        // far in the past (especially if the machine is a build agent that just started up). 1 year negative should work, though.
+        var distantPast = -PlatformCompatibilityHelpers.ElapsedToTimeStopwatchTicks(TimeSpan.FromDays(365));
+
         _lifetimesLock.EnterReadLock();
 
         try
         {
             foreach (var lifetime in _lifetimes.Values)
-                Volatile.Write(ref lifetime.KeepaliveTimestamp, 0L);
+                Volatile.Write(ref lifetime.KeepaliveTimestamp, distantPast);
         }
         finally
         {
