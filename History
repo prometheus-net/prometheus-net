@@ -1,3 +1,5 @@
+* 8.1.1
+- Fix bug in .NET Meters API adapter for UpDownCounter, which was incorrectly transformed to Prometheus metrics. #452 and #453
 * 8.1.0
 - Add support for capturing HttpClient metrics from all registered HttpClients (`services.UseHttpClientMetrics()`).
 * 8.0.1
