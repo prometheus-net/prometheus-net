@@ -101,7 +101,7 @@ namespace Prometheus.Tests
                 {
                     instance2.Inc();
 
-                    handle.ZeroAllKeepaliveTimestamps();
+                    handle.SetAllKeepaliveTimestampsToDistantPast();
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -109,7 +109,7 @@ namespace Prometheus.Tests
                     Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "").Value);
                 }
 
-                handle.ZeroAllKeepaliveTimestamps();
+                handle.SetAllKeepaliveTimestampsToDistantPast();
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -117,7 +117,7 @@ namespace Prometheus.Tests
                 Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "").Value);
             }
 
-            handle.ZeroAllKeepaliveTimestamps();
+            handle.SetAllKeepaliveTimestampsToDistantPast();
             delayer.BreakAllDelays();
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -172,7 +172,7 @@ namespace Prometheus.Tests
                 {
                     instance2.Inc();
 
-                    rawHandle.ZeroAllKeepaliveTimestamps();
+                    rawHandle.SetAllKeepaliveTimestampsToDistantPast();
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -180,7 +180,7 @@ namespace Prometheus.Tests
                     Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "", labelNames).WithLabels(labelValues).Value);
                 }
 
-                rawHandle.ZeroAllKeepaliveTimestamps();
+                rawHandle.SetAllKeepaliveTimestampsToDistantPast();
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -191,7 +191,7 @@ namespace Prometheus.Tests
                 {
                     instance3.Inc();
 
-                    rawHandle.ZeroAllKeepaliveTimestamps();
+                    rawHandle.SetAllKeepaliveTimestampsToDistantPast();
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -199,7 +199,7 @@ namespace Prometheus.Tests
                     Assert.AreEqual(3, _metrics.CreateCounter(MetricName, "", labelNames).WithLabels(labelValues).Value);
                 }
 
-                rawHandle.ZeroAllKeepaliveTimestamps();
+                rawHandle.SetAllKeepaliveTimestampsToDistantPast();
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -207,7 +207,7 @@ namespace Prometheus.Tests
                 Assert.AreEqual(3, _metrics.CreateCounter(MetricName, "", labelNames).WithLabels(labelValues).Value);
             }
 
-            rawHandle.ZeroAllKeepaliveTimestamps();
+            rawHandle.SetAllKeepaliveTimestampsToDistantPast();
             delayer.BreakAllDelays();
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
