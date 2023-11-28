@@ -92,7 +92,6 @@ namespace Prometheus.Tests
             handle.Delayer = delayer;
 
             // We detect expiration by the value having been reset when we try allocate the counter again.
-            // We break 2 delays on every use, to ensure that the expiration logic has enough iterations to make up its mind.
 
             using (handle.AcquireLease(out var instance1))
             {
@@ -102,11 +101,7 @@ namespace Prometheus.Tests
                 {
                     instance2.Inc();
 
-                    await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
-
                     handle.ZeroAllKeepaliveTimestamps();
-                    delayer.BreakAllDelays();
-                    await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -114,11 +109,7 @@ namespace Prometheus.Tests
                     Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "").Value);
                 }
 
-                await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
-
                 handle.ZeroAllKeepaliveTimestamps();
-                delayer.BreakAllDelays();
-                await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -126,13 +117,11 @@ namespace Prometheus.Tests
                 Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "").Value);
             }
 
-            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
-
             handle.ZeroAllKeepaliveTimestamps();
             delayer.BreakAllDelays();
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
-            delayer.BreakAllDelays();
-            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
+
+            handle.DebugDumpLifetimes();
 
             // 0 leases remains - should have expired. Check with a fresh copy from the root registry.
             Assert.AreEqual(0, _metrics.CreateCounter(MetricName, "").Value);
@@ -174,7 +163,6 @@ namespace Prometheus.Tests
             rawHandle.Delayer = delayer;
 
             // We detect expiration by the value having been reset when we try allocate the counter again.
-            // We break 2 delays on every use, to ensure that the expiration logic has enough iterations to make up its mind.
 
             using (factory1Handle.AcquireLease(out var instance1))
             {
@@ -184,11 +172,7 @@ namespace Prometheus.Tests
                 {
                     instance2.Inc();
 
-                    await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
-
                     rawHandle.ZeroAllKeepaliveTimestamps();
-                    delayer.BreakAllDelays();
-                    await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -196,11 +180,7 @@ namespace Prometheus.Tests
                     Assert.AreEqual(2, _metrics.CreateCounter(MetricName, "", labelNames).WithLabels(labelValues).Value);
                 }
 
-                await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
-
                 rawHandle.ZeroAllKeepaliveTimestamps();
-                delayer.BreakAllDelays();
-                await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -211,11 +191,7 @@ namespace Prometheus.Tests
                 {
                     instance3.Inc();
 
-                    await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
-
                     rawHandle.ZeroAllKeepaliveTimestamps();
-                    delayer.BreakAllDelays();
-                    await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                     delayer.BreakAllDelays();
                     await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -223,11 +199,7 @@ namespace Prometheus.Tests
                     Assert.AreEqual(3, _metrics.CreateCounter(MetricName, "", labelNames).WithLabels(labelValues).Value);
                 }
 
-                await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
-
                 rawHandle.ZeroAllKeepaliveTimestamps();
-                delayer.BreakAllDelays();
-                await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
                 delayer.BreakAllDelays();
                 await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
 
@@ -235,13 +207,11 @@ namespace Prometheus.Tests
                 Assert.AreEqual(3, _metrics.CreateCounter(MetricName, "", labelNames).WithLabels(labelValues).Value);
             }
 
-            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and start expiring.
-
             rawHandle.ZeroAllKeepaliveTimestamps();
             delayer.BreakAllDelays();
             await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
-            delayer.BreakAllDelays();
-            await Task.Delay(WaitForAsyncActionSleepTime); // Give it a moment to wake up and finish expiring.
+
+            rawHandle.DebugDumpLifetimes();
 
             // 0 leases remains - should have expired. Check with a fresh copy from the root registry.
             Assert.AreEqual(0, _metrics.CreateCounter(MetricName, "", labelNames).WithLabels(labelValues).Value);

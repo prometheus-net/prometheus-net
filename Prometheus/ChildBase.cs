@@ -185,4 +185,10 @@ public abstract class ChildBase : ICollectorChild, IDisposable
             ExemplarsRecorded = Metrics.CreateCounter("prometheus_net_exemplars_recorded_total", "Number of exemplars that were accepted into in-memory storage in the prometheus-net SDK.");
         });
     }
+
+    public override string ToString()
+    {
+        // Just for debugging.
+        return $"{Parent.Name}{{{FlattenedLabels}}}";
+    }
 }

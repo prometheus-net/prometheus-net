@@ -155,6 +155,12 @@ public abstract class Collector
         if (ReservedLabelRegex.IsMatch(labelName))
             throw new ArgumentException($"Label name '{labelName}' is not valid - labels starting with double underscore are reserved!");
     }
+
+    public override string ToString()
+    {
+        // Just for debugging.
+        return $"{Name}{{{FlattenedLabelNames}}}";
+    }
 }
 
 /// <summary>
