@@ -276,8 +276,10 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
                 _childrenLock.ExitReadLock();
             }
 
-            foreach (var labels in buffer)
+            for (var i = 0; i < childCount; i++)
             {
+                var labels = buffer[i];
+
                 if (labels.Length == 0)
                     continue; // We do not return the "unlabelled" label set.
 
