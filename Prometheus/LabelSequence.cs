@@ -5,7 +5,7 @@ namespace Prometheus;
 /// <summary>
 /// A sequence of metric label-name pairs.
 /// </summary>
-internal struct LabelSequence
+internal struct LabelSequence: IEquatable<LabelSequence>
 {
     public static readonly LabelSequence Empty = new();
 
