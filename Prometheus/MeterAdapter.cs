@@ -220,9 +220,9 @@ public sealed class MeterAdapter : IDisposable
         // 2) We already have a perfectly satisfactory expiration based lifetime control model, no need to complicate with a second logic alongside.
         // 3) There is no 1:1 mapping between instrument and metric due to allowing flexible label name combinations, which may cause undesirable complexity.
 
-        // We know we will not need this data anymore, though, so we can throw it out.
-        _instrumentPrometheusNames.TryRemove(instrument, out _);
-        _instrumentPrometheusHelp.TryRemove(instrument, out _);
+        // We also cannot clear our mapping collections yet because it is possible that some measurement observations are still in progress!
+        // In other words, this may be called before the last OnMeasurementRecorded() call for the instrument has completed (perhaps even started?).
+        // The entire adapter data set will be collected when the Prometheus registry itself is garbage collected.
     }
 
     private string[] TagsToLabelNames(List<KeyValuePair<string, object?>> tags)
