@@ -144,14 +144,14 @@ public sealed class MeterAdapter : IDisposable
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the increment.
-                handle.WithLease(x => x.Inc(value), labelValues);
+                handle.WithLease(_incrementGaugeFunc, value, labelValues);
             }
             else if (instrument is ObservableCounter<T>)
             {
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the current value. We transform it into a Set() to allow the counter to reset itself (unusual but who are we to say no).
-                handle.WithLease(x => x.Set(value), labelValues);
+                handle.WithLease(_setGaugeFunc, value, labelValues);
             }
 #if NET7_0_OR_GREATER
             else if (instrument is UpDownCounter<T>)
@@ -159,7 +159,7 @@ public sealed class MeterAdapter : IDisposable
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the increment.
-                handle.WithLease(x => x.Inc(value), labelValues);
+                handle.WithLease(_incrementGaugeFunc, value, labelValues);
             }
 #endif
             else if (instrument is ObservableGauge<T>
@@ -171,7 +171,7 @@ public sealed class MeterAdapter : IDisposable
                 var handle = _factory.CreateGauge(_instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], labelNames);
 
                 // A measurement is the current value.
-                handle.WithLease(x => x.Set(value), labelValues);
+                handle.WithLease(_setGaugeFunc, value, labelValues);
             }
             else if (instrument is Histogram<T>)
             {
@@ -182,7 +182,7 @@ public sealed class MeterAdapter : IDisposable
                 });
 
                 // A measurement is the observed value.
-                handle.WithLease(x => x.Observe(value), labelValues);
+                handle.WithLease(_observeHistogramFunc, value, labelValues);
             }
             else
             {
@@ -194,6 +194,15 @@ public sealed class MeterAdapter : IDisposable
             Trace.WriteLine($"{instrument.Name} collection failed: {ex.Message}");
         }
     }
+
+    private static void IncrementGauge(double value, IGauge gauge) => gauge.Inc(value);
+    private static readonly Action<double, IGauge> _incrementGaugeFunc = IncrementGauge;
+
+    private static void SetGauge(double value, IGauge gauge) => gauge.Set(value);
+    private static readonly Action<double, IGauge> _setGaugeFunc = SetGauge;
+
+    private static void ObserveHistogram(double value, IHistogram histogram) => histogram.Observe(value);
+    private static readonly Action<double, IHistogram> _observeHistogramFunc = ObserveHistogram;
 
     private static void FilterLabelsToAvoidConflicts(string[] nameCandidates, string[] valueCandidates, string[] namesToSkip, out string[] names, out string[] values)
     {
