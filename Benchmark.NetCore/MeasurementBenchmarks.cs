@@ -9,15 +9,7 @@ namespace Benchmark.NetCore;
 [MemoryDiagnoser]
 public class MeasurementBenchmarks
 {
-    public enum MetricType
-    {
-        Counter,
-        Gauge,
-        Histogram,
-        Summary
-    }
-
-    [Params(1_000_000)]
+    [Params(100_000)]
     public int MeasurementCount { get; set; }
 
     [Params(ExemplarMode.Auto, ExemplarMode.None, ExemplarMode.Provided)]
@@ -65,7 +57,10 @@ public class MeasurementBenchmarks
     /// The max value we observe for histograms, to give us coverage of all the histogram buckets
     /// but not waste 90% of the benchmark on incrementing the +Inf bucket.
     /// </summary>
-    private const int HistogramMaxValue = 32 * 1024;
+    private const int WideHistogramMaxValue = 32 * 1024;
+
+    // Same but for the regular histogram.
+    private readonly int _regularHistogramMaxValue;
 
     public MeasurementBenchmarks()
     {
@@ -84,15 +79,21 @@ public class MeasurementBenchmarks
                 new(0.99, 0.005)
             }
         });
+
+        // 1 ms to 32K ms, 16 buckets. Same as used in HTTP metrics by default.
+        var regularHistogramBuckets = Prometheus.Histogram.ExponentialBuckets(0.001, 2, 16);
+        
+        // Last one is +inf, so take the second-to-last.
+        _regularHistogramMaxValue = (int)regularHistogramBuckets[regularHistogramBuckets.Length - 2];
+
         var histogramTemplate = _factory.CreateHistogram("histogram", "test histogram", new[] { "label" }, new HistogramConfiguration
         {
-            // 1 ms to 32K ms, 16 buckets. Same as used in HTTP metrics by default.
-            Buckets = Prometheus.Histogram.ExponentialBuckets(0.001, 2, 16)
+            Buckets = regularHistogramBuckets
         });
 
         var wideHistogramTemplate = _factory.CreateHistogram("wide_histogram", "test histogram", new[] { "label" }, new HistogramConfiguration
         {
-            Buckets = Prometheus.Histogram.LinearBuckets(1, HistogramMaxValue / 128, 128)
+            Buckets = Prometheus.Histogram.LinearBuckets(1, WideHistogramMaxValue / 128, 128)
         });
 
         // We cache the children, as is typical usage.
@@ -147,7 +148,8 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _histogram.Observe(i, exemplarProvider());
+            var value = i % _regularHistogramMaxValue;
+            _histogram.Observe(value, exemplarProvider());
         }
     }
 
@@ -158,7 +160,8 @@ public class MeasurementBenchmarks
 
         for (var i = 0; i < MeasurementCount; i++)
         {
-            _wideHistogram.Observe(i, exemplarProvider());
+            var value = i % WideHistogramMaxValue;
+            _wideHistogram.Observe(value, exemplarProvider());
         }
     }
 
