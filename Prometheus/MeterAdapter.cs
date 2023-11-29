@@ -240,7 +240,7 @@ public sealed class MeterAdapter : IDisposable
 
         for (var i = 0; i < tags.Count; i++)
         {
-            var prometheusLabelName = _tagPrometheusNames.GetOrAdd(tags[i].Key, TranslateTagNameToPrometheusName);
+            var prometheusLabelName = _tagPrometheusNames.GetOrAdd(tags[i].Key, _translateTagNameToPrometheusNameFunc);
             labelNames[i] = prometheusLabelName;
         }
 
@@ -283,19 +283,35 @@ public sealed class MeterAdapter : IDisposable
         return PrometheusNameHelpers.TranslateNameToPrometheusName(tagName);
     }
 
+    private static readonly Func<string, string> _translateTagNameToPrometheusNameFunc = TranslateTagNameToPrometheusName;
+
+    [ThreadStatic]
+    private static StringBuilder? _prometheusHelpBuilder;
+
+    // If the string builder grows over this, we throw it away and use a new one next time to avoid keeping a large buffer around.
+    private const int PrometheusHelpBuilderReusableCapacity = 1 * 1024;
+
     private static string TranslateInstrumentDescriptionToPrometheusHelp(Instrument instrument)
     {
-        var sb = new StringBuilder();
+        _prometheusHelpBuilder ??= new(PrometheusHelpBuilderReusableCapacity);
 
         if (!string.IsNullOrWhiteSpace(instrument.Unit))
-            sb.Append($"({instrument.Unit}) ");
+            _prometheusHelpBuilder.Append($"({instrument.Unit}) ");
 
-        sb.Append(instrument.Description);
+        _prometheusHelpBuilder.Append(instrument.Description);
 
         // Append the base type name, so we see what type of metric it is.
-        sb.Append($" ({instrument.GetType().Name})");
+        _prometheusHelpBuilder.Append($" ({instrument.GetType().Name})");
 
-        return sb.ToString();
+        var result = _prometheusHelpBuilder.ToString();
+
+        // If it grew too big, throw it away.
+        if (_prometheusHelpBuilder.Capacity > PrometheusHelpBuilderReusableCapacity)
+            _prometheusHelpBuilder = null;
+        else
+            _prometheusHelpBuilder.Clear();
+
+        return result;
     }
 }
 #endif

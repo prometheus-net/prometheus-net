@@ -27,10 +27,10 @@ public class MeterAdapterBenchmarks
 
     public MeterAdapterBenchmarks()
     {
-        _intCounter = _meter.CreateCounter<long>("int_counter");
-        _floatCounter = _meter.CreateCounter<double>("float_counter");
-        _intHistogram = _meter.CreateHistogram<long>("int_histogram");
-        _floatHistogram = _meter.CreateHistogram<double>("float_histogram");
+        _intCounter = _meter.CreateCounter<long>("int_counter", description: "This is an integer counter.");
+        _floatCounter = _meter.CreateCounter<double>("float_counter", description: "This is a floating-point counter.");
+        _intHistogram = _meter.CreateHistogram<long>("int_histogram", description: "This is an integer histogram.");
+        _floatHistogram = _meter.CreateHistogram<double>("float_histogram", description: "This is a floating-point histogram.");
 
         _registry = Metrics.NewCustomRegistry();
 
