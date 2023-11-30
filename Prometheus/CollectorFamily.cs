@@ -73,7 +73,13 @@ internal sealed class CollectorFamily
 
     private readonly Func<Collector, SerializeFamilyOperation, CancellationToken, ValueTask> _collectAndSerializeFunc;
 
-    internal Collector GetOrAdd<TCollector, TConfiguration>(CollectorIdentity identity, in CollectorRegistry.CollectorInitializer<TCollector, TConfiguration> initializer)
+    internal Collector GetOrAdd<TCollector, TConfiguration>(
+        in CollectorIdentity identity,
+        string name,
+        string help,
+        TConfiguration configuration,
+        ExemplarBehavior exemplarBehavior,
+        CollectorRegistry.CollectorInitializer<TCollector, TConfiguration> initializer)
         where TCollector : Collector
         where TConfiguration : MetricConfiguration
     {
@@ -99,7 +105,7 @@ internal sealed class CollectorFamily
             if (_collectors.TryGetValue(identity, out var collector))
                 return collector;
 
-            var newCollector = initializer.CreateInstance();
+            var newCollector = initializer(name, help, identity.InstanceLabelNames, identity.StaticLabels, configuration, exemplarBehavior);
             _collectors.Add(identity, newCollector);
             return newCollector;
         }

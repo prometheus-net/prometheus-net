@@ -153,62 +153,26 @@ public sealed class CollectorRegistry : ICollectorRegistry
         return CollectAndSerializeAsync(new TextSerializer(to, format), cancel);
     }
 
-    // We pass this thing to GetOrAdd to avoid allocating a collector or a closure.
-    // This reduces memory usage in situations where the collector is already registered.
-    internal readonly ref struct CollectorInitializer<TCollector, TConfiguration>
+    internal delegate TCollector CollectorInitializer<TCollector, TConfiguration>(string name, string help, in StringSequence instanceLabelNames, in LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior)
         where TCollector : Collector
-        where TConfiguration : MetricConfiguration
-    {
-        private readonly CreateInstanceDelegate _createInstance;
-        private readonly string _name;
-        private readonly string _help;
-        private readonly StringSequence _instanceLabelNames;
-        private readonly LabelSequence _staticLabels;
-        private readonly TConfiguration _configuration;
-        // This is already resolved to inherit from any parent or defaults.
-        private readonly ExemplarBehavior _exemplarBehavior;
-
-        public string Name => _name;
-        public StringSequence InstanceLabelNames => _instanceLabelNames;
-        public LabelSequence StaticLabels => _staticLabels;
-
-        public CollectorInitializer(CreateInstanceDelegate createInstance, string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior)
-        {
-            _createInstance = createInstance;
-            _name = name;
-            _help = help;
-            _instanceLabelNames = instanceLabelNames;
-            _staticLabels = staticLabels;
-            _configuration = configuration;
-            _exemplarBehavior = exemplarBehavior;
-        }
-
-        public TCollector CreateInstance() => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration, _exemplarBehavior);
-
-        public delegate TCollector CreateInstanceDelegate(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior);
-    }
+        where TConfiguration : MetricConfiguration;
 
     /// <summary>
     /// Adds a collector to the registry, returning an existing instance if one with a matching name was already registered.
     /// </summary>
-    internal TCollector GetOrAdd<TCollector, TConfiguration>(in CollectorInitializer<TCollector, TConfiguration> initializer)
+    internal TCollector GetOrAdd<TCollector, TConfiguration>(string name, string help, in StringSequence instanceLabelNames, in LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior, in CollectorInitializer<TCollector, TConfiguration> initializer)
         where TCollector : Collector
         where TConfiguration : MetricConfiguration
     {
-        // Should we optimize for the case where the family/collector is already registered? It is unlikely to be very common. However, we still should because:
-        // 1) In scenarios where collector re-registration is common, it could be an expensive persistent cost in terms of allocations.
-        // 2) In scenarios where collector re-registration is not common, a tiny compute overhead is unlikely to be significant in the big picture, as it only happens once.
+        var family = GetOrAddCollectorFamily<TCollector>(name);
 
-        var family = GetOrAddCollectorFamily(initializer);
+        var collectorIdentity = new CollectorIdentity(instanceLabelNames, staticLabels);
 
-        var collectorIdentity = new CollectorIdentity(initializer.InstanceLabelNames, initializer.StaticLabels);
-
-        return (TCollector)family.GetOrAdd(collectorIdentity, initializer);
+        return (TCollector)family.GetOrAdd(collectorIdentity, name, help, configuration, exemplarBehavior, initializer);
     }
 
-    private CollectorFamily GetOrAddCollectorFamily<TCollector, TConfiguration>(in CollectorInitializer<TCollector, TConfiguration> initializer)
+    private CollectorFamily GetOrAddCollectorFamily<TCollector>(string finalName)
         where TCollector : Collector
-        where TConfiguration : MetricConfiguration
     {
         static CollectorFamily ValidateFamily(CollectorFamily candidate)
         {
@@ -226,7 +190,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
         try
         {
-            if (_families.TryGetValue(initializer.Name, out var existing))
+            if (_families.TryGetValue(finalName, out var existing))
                 return ValidateFamily(existing);
         }
         finally
@@ -239,11 +203,11 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
         try
         {
-            if (_families.TryGetValue(initializer.Name, out var existing))
+            if (_families.TryGetValue(finalName, out var existing))
                 return ValidateFamily(existing);
 
             var newFamily = new CollectorFamily(typeof(TCollector));
-            _families.Add(initializer.Name, newFamily);
+            _families.Add(finalName, newFamily);
             return newFamily;
         }
         finally

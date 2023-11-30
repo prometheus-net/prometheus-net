@@ -5,7 +5,7 @@
 /// * Any difference in static labels (keys or values) means it is a different collector.
 /// * Any difference in the names of instance labels means it is a different collector.
 /// </summary>
-internal struct CollectorIdentity : IEquatable<CollectorIdentity>
+internal readonly struct CollectorIdentity : IEquatable<CollectorIdentity>
 {
     public readonly StringSequence InstanceLabelNames;
     public readonly LabelSequence StaticLabels;
