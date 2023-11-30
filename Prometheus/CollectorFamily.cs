@@ -25,7 +25,7 @@ internal sealed class CollectorFamily
         var operation = _serializeFamilyOperationPool.Get();
         operation.Serializer = serializer;
 
-        await ForEachCollectorAsync(CollectAndSerialize, operation, cancel);
+        await ForEachCollectorAsync(_collectAndSerializeFunc, operation, cancel);
 
         _serializeFamilyOperationPool.Return(operation);
     }
