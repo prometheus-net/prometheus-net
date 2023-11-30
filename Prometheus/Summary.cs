@@ -90,16 +90,24 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
         if (instanceLabelNames.Contains(QuantileLabel))
             throw new ArgumentException($"{QuantileLabel} is a reserved label name");
 
-        _sortedObjectives = new double[_objectives.Count];
-        _quantileLabels = new CanonicalLabel[_objectives.Count];
-
-        for (var i = 0; i < _objectives.Count; i++)
+        if (_objectives.Count == 0)
         {
-            _sortedObjectives[i] = _objectives[i].Quantile;
-            _quantileLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(QuantileLabelName, _objectives[i].Quantile);
+            _sortedObjectives = [];
+            _quantileLabels = [];
         }
+        else
+        {
+            _sortedObjectives = new double[_objectives.Count];
+            _quantileLabels = new CanonicalLabel[_objectives.Count];
 
-        Array.Sort(_sortedObjectives);
+            for (var i = 0; i < _objectives.Count; i++)
+            {
+                _sortedObjectives[i] = _objectives[i].Quantile;
+                _quantileLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(QuantileLabelName, _objectives[i].Quantile);
+            }
+
+            Array.Sort(_sortedObjectives);
+        }
     }
 
     private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
@@ -119,8 +127,8 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
             _hotBuf = new SampleBuffer(_parent._bufCap);
             _coldBuf = new SampleBuffer(_parent._bufCap);
             _streamDuration = new TimeSpan(_parent._maxAge.Ticks / _parent._ageBuckets);
-            _headStreamExpTime = DateTime.UtcNow.Add(_streamDuration);
-            _hotBufExpTime = _headStreamExpTime;
+            _headStreamExpUnixtimeSeconds = LowGranularityTimeSource.GetSecondsFromUnixEpoch() + _streamDuration.TotalSeconds;
+            _hotBufExpUnixtimeSeconds = _headStreamExpUnixtimeSeconds;
 
             _streams = new QuantileStream[_parent._ageBuckets];
             for (var i = 0; i < _parent._ageBuckets; i++)
@@ -146,7 +154,7 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
             // We output count.
             // We output quantiles.
 
-            var now = DateTime.UtcNow;
+            var now = LowGranularityTimeSource.GetSecondsFromUnixEpoch();
 
             long count;
             double sum;
@@ -219,8 +227,8 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
         private readonly TimeSpan _streamDuration;
         private QuantileStream _headStream;
         private int _headStreamIdx;
-        private DateTime _headStreamExpTime;
-        private DateTime _hotBufExpTime;
+        private double _headStreamExpUnixtimeSeconds;
+        private double _hotBufExpUnixtimeSeconds;
 
         // Protects hotBuf and hotBufExpTime.
         private readonly object _bufLock = new();
@@ -231,37 +239,37 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
 
         public void Observe(double val)
         {
-            Observe(val, DateTime.UtcNow);
+            Observe(val, LowGranularityTimeSource.GetSecondsFromUnixEpoch());
         }
 
         /// <summary>
         /// For unit tests only
         /// </summary>
-        internal void Observe(double val, DateTime now)
+        internal void Observe(double val, double nowUnixtimeSeconds)
         {
             if (double.IsNaN(val))
                 return;
 
             lock (_bufLock)
             {
-                if (now > _hotBufExpTime)
-                    Flush(now);
+                if (nowUnixtimeSeconds > _hotBufExpUnixtimeSeconds)
+                    Flush(nowUnixtimeSeconds);
 
                 _hotBuf.Append(val);
 
                 if (_hotBuf.IsFull)
-                    Flush(now);
+                    Flush(nowUnixtimeSeconds);
             }
 
             Publish();
         }
 
         // Flush needs bufMtx locked.
-        private void Flush(DateTime now)
+        private void Flush(double nowUnixtimeSeconds)
         {
             lock (_lock)
             {
-                SwapBufs(now);
+                SwapBufs(nowUnixtimeSeconds);
 
                 // Go version flushes on a separate goroutine, but doing this on another
                 // thread actually makes the benchmark tests slower in .net
@@ -270,7 +278,7 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
         }
 
         // SwapBufs needs mtx AND bufMtx locked, coldBuf must be empty.
-        private void SwapBufs(DateTime now)
+        private void SwapBufs(double nowUnixtimeSeconds)
         {
             if (!_coldBuf.IsEmpty)
                 throw new InvalidOperationException("coldBuf is not empty");
@@ -280,9 +288,9 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
             _coldBuf = temp;
 
             // hotBuf is now empty and gets new expiration set.
-            while (now > _hotBufExpTime)
+            while (nowUnixtimeSeconds > _hotBufExpUnixtimeSeconds)
             {
-                _hotBufExpTime = _hotBufExpTime.Add(_streamDuration);
+                _hotBufExpUnixtimeSeconds += _streamDuration.TotalSeconds;
             }
         }
 
@@ -309,7 +317,7 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
         // MaybeRotateStreams needs mtx AND bufMtx locked.
         private void MaybeRotateStreams()
         {
-            while (!_hotBufExpTime.Equals(_headStreamExpTime))
+            while (!_hotBufExpUnixtimeSeconds.Equals(_headStreamExpUnixtimeSeconds))
             {
                 _headStream.Reset();
                 _headStreamIdx++;
@@ -318,7 +326,7 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
                     _headStreamIdx = 0;
 
                 _headStream = _streams[_headStreamIdx];
-                _headStreamExpTime = _headStreamExpTime.Add(_streamDuration);
+                _headStreamExpUnixtimeSeconds += _streamDuration.TotalSeconds;
             }
         }
     }
