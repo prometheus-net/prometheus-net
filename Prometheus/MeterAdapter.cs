@@ -202,7 +202,7 @@ public sealed class MeterAdapter : IDisposable
 
     // Cache key: Instrument + user-ordered list of label names.
     //   NB! The same Instrument may be cached multiple times, with the same label names in a different order!
-    private readonly struct CacheKey(Instrument instrument, StringSequence meterLabelNames)
+    private readonly struct CacheKey(Instrument instrument, StringSequence meterLabelNames) : IEquatable<CacheKey>
     {
         public Instrument Instrument { get; } = instrument;
 
