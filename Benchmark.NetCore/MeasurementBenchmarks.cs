@@ -165,7 +165,8 @@ public class MeasurementBenchmarks
         }
     }
 
-    [Benchmark]
+    // Disabled because it is slow and Summary is a legacy metric type that is not recommended for new usage.
+    //[Benchmark]
     public void Summary()
     {
         for (var i = 0; i < MeasurementCount; i++)
