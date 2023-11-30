@@ -135,10 +135,10 @@ public sealed class MeterAdapter : IDisposable
         {
             double value = unchecked(measurement switch
             {
-                byte x => (double)x,
-                short x => (double)x,
-                int x => (double)x,
-                long x => (double)x,
+                byte x => x,
+                short x => x,
+                int x => x,
+                long x => x,
                 float x => (double)x,
                 double x => x,
                 decimal x => (double)x,
