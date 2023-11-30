@@ -23,7 +23,7 @@ public abstract class Collector
 
     internal byte[] NameBytes => NonCapturingLazyInitializer.EnsureInitialized(ref _nameBytes, this, _assignNameBytesFunc)!;
     private byte[]? _nameBytes;
-    private static readonly Action<Collector> _assignNameBytesFunc;
+    private static readonly Action<Collector> _assignNameBytesFunc = AssignNameBytes;
     private static void AssignNameBytes(Collector instance) => instance._nameBytes = PrometheusConstants.ExportEncoding.GetBytes(instance.Name);
 
     /// <summary>
@@ -33,7 +33,7 @@ public abstract class Collector
 
     internal byte[] HelpBytes => NonCapturingLazyInitializer.EnsureInitialized(ref _helpBytes, this, _assignHelpBytesFunc)!;
     private byte[]? _helpBytes;
-    private static readonly Action<Collector> _assignHelpBytesFunc;
+    private static readonly Action<Collector> _assignHelpBytesFunc = AssignHelpBytes;
     private static void AssignHelpBytes(Collector instance) =>
         instance._helpBytes = string.IsNullOrWhiteSpace(instance.Help) ? [] : PrometheusConstants.ExportEncoding.GetBytes(instance.Help);
 
@@ -44,7 +44,7 @@ public abstract class Collector
     /// </summary>
     public string[] LabelNames => NonCapturingLazyInitializer.EnsureInitialized(ref _labelNames, this, _assignLabelNamesFunc)!;
     private string[]? _labelNames;
-    private static readonly Action<Collector> _assignLabelNamesFunc;
+    private static readonly Action<Collector> _assignLabelNamesFunc = AssignLabelNames;
     private static void AssignLabelNames(Collector instance) => instance._labelNames = instance.InstanceLabelNames.ToArray();
 
     internal StringSequence InstanceLabelNames;
@@ -75,13 +75,6 @@ public abstract class Collector
     private static readonly Regex MetricNameRegex = new Regex(ValidMetricNameExpression, RegexOptions.Compiled);
     private static readonly Regex LabelNameRegex = new Regex(ValidLabelNameExpression, RegexOptions.Compiled);
     private static readonly Regex ReservedLabelRegex = new Regex(ReservedLabelNameExpression, RegexOptions.Compiled);
-
-    static Collector()
-    {
-        _assignNameBytesFunc = AssignNameBytes;
-        _assignHelpBytesFunc = AssignHelpBytes;
-        _assignLabelNamesFunc = AssignLabelNames;
-    }
 
     internal Collector(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels)
     {
@@ -175,12 +168,15 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
     // Lazy-initialized since not every collector will use a child with no labels.
     // Lazy instance will be replaced if the unlabelled timeseries is removed.
-    private Lazy<TChild> _unlabelledLazy;
+    private TChild? _lazyUnlabelled;
 
     /// <summary>
     /// Gets the child instance that has no labels.
     /// </summary>
-    protected internal TChild Unlabelled => _unlabelledLazy.Value;
+    protected internal TChild Unlabelled => LazyInitializer.EnsureInitialized(ref _lazyUnlabelled, _createdUnlabelledFunc)!;
+
+    private TChild CreateUnlabelled() => GetOrAddLabelled(LabelSequence.Empty);
+    private readonly Func<TChild> _createdUnlabelledFunc;
 
     // We need it for the ICollector interface but using this is rarely relevant in client code, so keep it obscured.
     TChild ICollector<TChild>.Unlabelled => Unlabelled;
@@ -227,13 +223,8 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         {
             // If we remove the unlabeled instance (technically legitimate, if the caller really desires to do so) then
             // we need to also ensure that the special-casing used for it gets properly wired up the next time.
-            _unlabelledLazy = GetUnlabelledLazyInitializer();
+            Volatile.Write(ref _lazyUnlabelled, null);
         }
-    }
-
-    private Lazy<TChild> GetUnlabelledLazyInitializer()
-    {
-        return new Lazy<TChild>(() => GetOrAddLabelled(LabelSequence.Empty));
     }
 
     internal override int ChildCount
@@ -357,10 +348,10 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     internal Collector(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, ExemplarBehavior exemplarBehavior)
         : base(name, help, instanceLabelNames, staticLabels)
     {
+        _createdUnlabelledFunc = CreateUnlabelled;
+
         _suppressInitialValue = suppressInitialValue;
         _exemplarBehavior = exemplarBehavior;
-
-        _unlabelledLazy = GetUnlabelledLazyInitializer();
 
         _createdLabelledChildFunc = CreateLabelledChild;
     }
@@ -423,8 +414,8 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
         // If there are no label names then clearly this metric is supposed to be used unlabelled, so create it.
         // Otherwise, we allow unlabelled metrics to be used if the user explicitly does it but omit them by default.
-        if (!_unlabelledLazy.IsValueCreated && InstanceLabelNames.Length == 0)
-            GetOrAddLabelled(LabelSequence.Empty);
+        if (InstanceLabelNames.Length == 0)
+            LazyInitializer.EnsureInitialized(ref _lazyUnlabelled, _createdUnlabelledFunc);
     }
 
     private readonly ExemplarBehavior _exemplarBehavior;
