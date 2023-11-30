@@ -122,19 +122,33 @@ public sealed class MeterAdapter : IDisposable
         }
     }
 
-    private void OnMeasurementRecorded<T>(Instrument instrument, T measurement, ReadOnlySpan<KeyValuePair<string, object?>> tags, object? state)
-        where T : struct
+    private void OnMeasurementRecorded<TMeasurement>(
+        Instrument instrument,
+        TMeasurement measurement,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        object? state)
+        where TMeasurement : struct
     {
         // NOTE: If we throw an exception from this, it can lead to the instrument becoming inoperable (no longer measured). Let's not do that.
 
         try
         {
-            var value = Convert.ToDouble(measurement);
+            double value = unchecked(measurement switch
+            {
+                byte x => (double)x,
+                short x => (double)x,
+                int x => (double)x,
+                long x => (double)x,
+                float x => (double)x,
+                double x => x,
+                decimal x => (double)x,
+                _ => throw new NotSupportedException($"Measurement type {typeof(TMeasurement).Name} is not supported.")
+            });
 
             // We do not represent any of the "counter" style .NET meter types as counters because
             // they may be re-created on the .NET Meters side at any time, decrementing the value!
 
-            if (instrument is Counter<T>)
+            if (instrument is Counter<TMeasurement>)
             {
                 var context = GetOrCreateGaugeContext(instrument, tags);
                 var labelValues = TagsToLabelValues(context, tags);
@@ -142,7 +156,7 @@ public sealed class MeterAdapter : IDisposable
                 // A measurement is the increment.
                 context.MetricInstanceHandle.WithLease(_incrementGaugeFunc, value, labelValues);
             }
-            else if (instrument is ObservableCounter<T>)
+            else if (instrument is ObservableCounter<TMeasurement>)
             {
                 var context = GetOrCreateGaugeContext(instrument, tags);
                 var labelValues = TagsToLabelValues(context, tags);
@@ -151,7 +165,7 @@ public sealed class MeterAdapter : IDisposable
                 context.MetricInstanceHandle.WithLease(_setGaugeFunc, value, labelValues);
             }
 #if NET7_0_OR_GREATER
-            else if (instrument is UpDownCounter<T>)
+            else if (instrument is UpDownCounter<TMeasurement>)
             {
                 var context = GetOrCreateGaugeContext(instrument, tags);
                 var labelValues = TagsToLabelValues(context, tags);
@@ -160,19 +174,19 @@ public sealed class MeterAdapter : IDisposable
                 context.MetricInstanceHandle.WithLease(_incrementGaugeFunc, value, labelValues);
             }
 #endif
-            else if (instrument is ObservableGauge<T>
+            else if (instrument is ObservableGauge<TMeasurement>
 #if NET7_0_OR_GREATER
-                or ObservableUpDownCounter<T>
+                or ObservableUpDownCounter<TMeasurement>
 #endif
                 )
             {
                 var context = GetOrCreateGaugeContext(instrument, tags);
                 var labelValues = TagsToLabelValues(context, tags);
-                
+
                 // A measurement is the current value.
                 context.MetricInstanceHandle.WithLease(_setGaugeFunc, value, labelValues);
             }
-            else if (instrument is Histogram<T>)
+            else if (instrument is Histogram<TMeasurement>)
             {
                 var context = GetOrCreateHistogramContext(instrument, tags);
                 var labelValues = TagsToLabelValues(context, tags);
