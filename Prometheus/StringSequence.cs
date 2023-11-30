@@ -33,7 +33,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         private ReadOnlySpan<string> _currentArray;
         private string _current;
 
-        public string Current
+        public readonly string Current
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _current;
