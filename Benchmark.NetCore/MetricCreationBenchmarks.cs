@@ -108,7 +108,8 @@ public class MetricCreationBenchmarks
             }
     }
 
-    [Benchmark]
+    // Disabled because it is slow and Summary is a legacy metric type that is not recommended for new usage.
+    //[Benchmark]
     public void Summary()
     {
         for (var dupe = 0; dupe < DuplicateCount; dupe++)
