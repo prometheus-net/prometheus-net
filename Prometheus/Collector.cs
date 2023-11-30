@@ -185,7 +185,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     // it will often for whatever reason focus on LabelNames instead of Labels, leading to tiny but persistent frustration.
     // Having WithLabels() instead eliminates the other candidate and allows for a frustration-free typing experience.
     public TChild WithLabels(params string[] labelValues) => Labels(labelValues);
-
+    
     // Discourage it as it can create confusion. But it works fine, so no reason to mark it obsolete, really.
     [EditorBrowsable(EditorBrowsableState.Never)]
     public TChild Labels(params string[] labelValues)
@@ -195,6 +195,33 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
         var labels = LabelSequence.From(InstanceLabelNames, StringSequence.From(labelValues));
         return GetOrAddLabelled(labels);
+    }
+
+    internal TChild WithLabels(ReadOnlySpan<string> labelValues)
+    {
+        // This is used only by MeterAdapter for now, until we stabilize this feature and have confidence it makes sense in general.
+        // We first use a pooled buffer to create the LabelSequence in the hopes that an instance with these labels already exists.
+        // This avoids allocating a string[] for the label values if we can avoid it. We only allocate if we create a new instance.
+
+        var buffer = ArrayPool<string>.Shared.Rent(labelValues.Length);
+
+        try
+        {
+            labelValues.CopyTo(buffer);
+
+            var temporaryLabels = LabelSequence.From(InstanceLabelNames, StringSequence.From(buffer.AsMemory(0, labelValues.Length)));
+
+            if (TryGetLabelled(temporaryLabels, out var existing))
+                return existing!;
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(buffer);
+        }
+
+        // If we got this far, we did not succeed in finding an existing instance. We need to allocate a long-lived string[] for the label values.
+        var labels = LabelSequence.From(InstanceLabelNames, StringSequence.From(labelValues.ToArray()));
+        return CreateLabelled(labels);
     }
 
     public void RemoveLabelled(params string[] labelValues)
@@ -297,19 +324,36 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         // If we somehow end up registering the same metric with the same label names in different order, we will publish it twice, in two orders...
         // That is not ideal but also not that big of a deal to justify a lookup every time a metric instance is registered.
 
+        if (TryGetLabelled(instanceLabels, out var existing))
+            return existing!;
+
+        return CreateLabelled(instanceLabels);
+    }
+
+    private bool TryGetLabelled(LabelSequence instanceLabels, out TChild? child)
+    {
         // First try to find an existing instance. This is the fast path, if we are re-looking-up an existing one.
         _childrenLock.EnterReadLock();
 
         try
         {
             if (_children.TryGetValue(instanceLabels, out var existing))
-                return existing;
+            {
+                child = existing;
+                return true;
+            }
+
+            child = null;
+            return false;
         }
         finally
         {
             _childrenLock.ExitReadLock();
         }
+    }
 
+    private TChild CreateLabelled(LabelSequence instanceLabels)
+    {
         // If no existing one found, grab the write lock and create a new one if needed.
         _childrenLock.EnterWriteLock();
 
