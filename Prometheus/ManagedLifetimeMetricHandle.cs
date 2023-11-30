@@ -26,6 +26,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
     protected readonly Collector<TChild> _metric;
     protected readonly TimeSpan _expiresAfter;
 
+    #region Lease(string[])
     public IDisposable AcquireLease(out TMetricInterface metric, params string[] labelValues)
     {
         var child = _metric.WithLabels(labelValues);
@@ -75,6 +76,47 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
         using var lease = AcquireLease(out var metric, labelValues);
         return await func(metric);
     }
+    #endregion
+
+    #region Lease(ReadOnlySpan<string>)
+    public IDisposable AcquireLease(out TMetricInterface metric, ReadOnlySpan<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeLease(child);
+    }
+
+    public RefLease AcquireRefLease(out TMetricInterface metric, ReadOnlySpan<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeRefLease(child);
+    }
+
+    public void WithLease(Action<TMetricInterface> action, ReadOnlySpan<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(child);
+    }
+
+    public void WithLease<TArg>(Action<TArg, TMetricInterface> action, TArg arg, ReadOnlySpan<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(arg, child);
+    }
+
+    public TResult WithLease<TResult>(Func<TMetricInterface, TResult> func, ReadOnlySpan<string> labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return func(metric);
+    }
+    #endregion
 
     public abstract ICollector<TMetricInterface> WithExtendLifetimeOnUse();
 

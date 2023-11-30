@@ -1,4 +1,6 @@
-﻿namespace Prometheus;
+﻿using System.Buffers;
+
+namespace Prometheus;
 
 internal sealed class LabelEnrichingManagedLifetimeHistogram : IManagedLifetimeMetricHandle<IHistogram>
 {
@@ -11,6 +13,7 @@ internal sealed class LabelEnrichingManagedLifetimeHistogram : IManagedLifetimeM
     private readonly IManagedLifetimeMetricHandle<IHistogram> _inner;
     private readonly string[] _enrichWithLabelValues;
 
+    #region Lease(string[])
     public IDisposable AcquireLease(out IHistogram metric, params string[] labelValues)
     {
         return _inner.AcquireLease(out metric, WithEnrichedLabelValues(labelValues));
@@ -50,9 +53,98 @@ internal sealed class LabelEnrichingManagedLifetimeHistogram : IManagedLifetimeM
     {
         return _inner.WithLeaseAsync(action, WithEnrichedLabelValues(labelValues));
     }
+    #endregion
 
     private string[] WithEnrichedLabelValues(string[] instanceLabelValues)
     {
         return _enrichWithLabelValues.Concat(instanceLabelValues).ToArray();
+    }
+
+    #region Lease(ReadOnlySpan<string>)
+    public IDisposable AcquireLease(out IHistogram metric, ReadOnlySpan<string> labelValues)
+    {
+        var buffer = RentBufferForEnrichedLabelValues(labelValues);
+
+        try
+        {
+            var enrichedLabelValues = AssembleEnrichedLabelValues(labelValues, buffer);
+            return _inner.AcquireLease(out metric, enrichedLabelValues);
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(buffer);
+        }
+    }
+
+    public RefLease AcquireRefLease(out IHistogram metric, ReadOnlySpan<string> labelValues)
+    {
+        var buffer = RentBufferForEnrichedLabelValues(labelValues);
+
+        try
+        {
+            var enrichedLabelValues = AssembleEnrichedLabelValues(labelValues, buffer);
+            return _inner.AcquireRefLease(out metric, enrichedLabelValues);
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(buffer);
+        }
+    }
+
+    public void WithLease(Action<IHistogram> action, ReadOnlySpan<string> labelValues)
+    {
+        var buffer = RentBufferForEnrichedLabelValues(labelValues);
+
+        try
+        {
+            var enrichedLabelValues = AssembleEnrichedLabelValues(labelValues, buffer);
+            _inner.WithLease(action, enrichedLabelValues);
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(buffer);
+        }
+    }
+
+    public void WithLease<TArg>(Action<TArg, IHistogram> action, TArg arg, ReadOnlySpan<string> labelValues)
+    {
+        var buffer = RentBufferForEnrichedLabelValues(labelValues);
+
+        try
+        {
+            var enrichedLabelValues = AssembleEnrichedLabelValues(labelValues, buffer);
+            _inner.WithLease(action, arg, enrichedLabelValues);
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(buffer);
+        }
+    }
+
+    public TResult WithLease<TResult>(Func<IHistogram, TResult> func, ReadOnlySpan<string> labelValues)
+    {
+        var buffer = RentBufferForEnrichedLabelValues(labelValues);
+
+        try
+        {
+            var enrichedLabelValues = AssembleEnrichedLabelValues(labelValues, buffer);
+            return _inner.WithLease(func, enrichedLabelValues);
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(buffer);
+        }
+    }
+    #endregion
+
+    private string[] RentBufferForEnrichedLabelValues(ReadOnlySpan<string> instanceLabelValues)
+        => ArrayPool<string>.Shared.Rent(instanceLabelValues.Length + _enrichWithLabelValues.Length);
+
+    private ReadOnlySpan<string> AssembleEnrichedLabelValues(ReadOnlySpan<string> instanceLabelValues, string[] buffer)
+    {
+        _enrichWithLabelValues.CopyTo(buffer, 0);
+        instanceLabelValues.CopyTo(buffer.AsSpan(_enrichWithLabelValues.Length));
+
+        return buffer.AsSpan(0, _enrichWithLabelValues.Length + instanceLabelValues.Length);
     }
 }
