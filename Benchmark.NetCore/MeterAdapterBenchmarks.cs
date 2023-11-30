@@ -8,6 +8,7 @@ namespace Benchmark.NetCore;
 /// Equivalent of MeasurementBenchmarks, except we publish the data via .NET Meters API and convert via MeterAdapter.
 /// </summary>
 [MemoryDiagnoser]
+//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
 public class MeterAdapterBenchmarks
 {
     [Params(100_000)]

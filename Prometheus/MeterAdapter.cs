@@ -236,10 +236,10 @@ public sealed class MeterAdapter : IDisposable
     private readonly Dictionary<CacheKey, MetricContext<IHistogram>> _histogramCache = new();
     private readonly ReaderWriterLockSlim _histogramCacheLock = new();
 
-    private MetricContext<IGauge> GetOrCreateGaugeContext(Instrument instrument, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    private MetricContext<IGauge> GetOrCreateGaugeContext(Instrument instrument, in ReadOnlySpan<KeyValuePair<string, object?>> tags)
         => GetOrCreateMetricContext(instrument, tags, _createGaugeFunc, _gaugeCacheLock, _gaugeCache);
 
-    private MetricContext<IHistogram> GetOrCreateHistogramContext(Instrument instrument, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    private MetricContext<IHistogram> GetOrCreateHistogramContext(Instrument instrument, in ReadOnlySpan<KeyValuePair<string, object?>> tags)
         => GetOrCreateMetricContext(instrument, tags, _createHistogramFunc, _histogramCacheLock, _histogramCache);
 
     private IManagedLifetimeMetricHandle<IGauge> CreateGauge(Instrument instrument, string name, string help, string[] labelNames)
@@ -256,7 +256,7 @@ public sealed class MeterAdapter : IDisposable
 
     private MetricContext<TMetricInstance> GetOrCreateMetricContext<TMetricInstance>(
         Instrument instrument,
-        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        in ReadOnlySpan<KeyValuePair<string, object?>> tags,
         Func<Instrument, string, string, string[], IManagedLifetimeMetricHandle<TMetricInstance>> metricFactory,
         ReaderWriterLockSlim cacheLock,
         Dictionary<CacheKey, MetricContext<TMetricInstance>> cache)
@@ -299,7 +299,7 @@ public sealed class MeterAdapter : IDisposable
 
     private MetricContext<TMetricInstance> CreateMetricContext<TMetricInstance>(
         Instrument instrument,
-        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        in ReadOnlySpan<KeyValuePair<string, object?>> tags,
         Func<Instrument, string, string, string[], IManagedLifetimeMetricHandle<TMetricInstance>> metricFactory,
         ReaderWriterLockSlim cacheLock,
         Dictionary<CacheKey, MetricContext<TMetricInstance>> cache)
@@ -336,7 +336,7 @@ public sealed class MeterAdapter : IDisposable
     }
 
     private void DeterminePrometheusLabels(
-        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        in ReadOnlySpan<KeyValuePair<string, object?>> tags,
         out string[] prometheusLabelNames,
         out int[] prometheusLabelValueIndexes)
     {
