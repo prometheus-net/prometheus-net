@@ -52,9 +52,13 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
             _upperBounds = Parent._buckets;
             _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
             _leLabels = new CanonicalLabel[_upperBounds.Length];
+
+            // create a reusable buffer outside of the loop to avoid double-to-bytes intermediary string allocations
+            Span<byte> buffer = stackalloc byte[32];
+
             for (var i = 0; i < Parent._buckets.Length; i++)
             {
-                _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, Parent._buckets[i]);
+                _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, Parent._buckets[i], buffer);
             }
             _exemplars = new ObservedExemplar[_upperBounds.Length];
             for (var i = 0; i < _upperBounds.Length; i++)
