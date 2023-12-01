@@ -25,9 +25,10 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
                 Parent.NameBytes,
                 FlattenedLabelsBytes,
                 CanonicalLabel.Empty,
-                cancel,
                 Value,
-                exemplar);
+                exemplar,
+                null,
+                cancel);
 
             ReturnBorrowedExemplar(ref _observedExemplar, exemplar);
         }

@@ -62,15 +62,17 @@ public class MeasurementBenchmarks
     // Same but for the regular histogram.
     private readonly int _regularHistogramMaxValue;
 
+    private static readonly string[] labelNames = ["label"];
+
     public MeasurementBenchmarks()
     {
         _registry = Metrics.NewCustomRegistry();
         _factory = Metrics.WithCustomRegistry(_registry);
 
         // We add a label to each, as labeled usage is the typical usage.
-        var counterTemplate = _factory.CreateCounter("counter", "test counter", new[] { "label" });
-        var gaugeTemplate = _factory.CreateGauge("gauge", "test gauge", new[] { "label" });
-        var summaryTemplate = _factory.CreateSummary("summary", "test summary", new[] { "label" }, new SummaryConfiguration
+        var counterTemplate = _factory.CreateCounter("counter", "test counter", labelNames);
+        var gaugeTemplate = _factory.CreateGauge("gauge", "test gauge", labelNames);
+        var summaryTemplate = _factory.CreateSummary("summary", "test summary", labelNames, new SummaryConfiguration
         {
             Objectives = new QuantileEpsilonPair[]
             {
@@ -84,14 +86,14 @@ public class MeasurementBenchmarks
         var regularHistogramBuckets = Prometheus.Histogram.ExponentialBuckets(0.001, 2, 16);
         
         // Last one is +inf, so take the second-to-last.
-        _regularHistogramMaxValue = (int)regularHistogramBuckets[regularHistogramBuckets.Length - 2];
+        _regularHistogramMaxValue = (int)regularHistogramBuckets[^2];
 
-        var histogramTemplate = _factory.CreateHistogram("histogram", "test histogram", new[] { "label" }, new HistogramConfiguration
+        var histogramTemplate = _factory.CreateHistogram("histogram", "test histogram", labelNames, new HistogramConfiguration
         {
             Buckets = regularHistogramBuckets
         });
 
-        var wideHistogramTemplate = _factory.CreateHistogram("wide_histogram", "test histogram", new[] { "label" }, new HistogramConfiguration
+        var wideHistogramTemplate = _factory.CreateHistogram("wide_histogram", "test histogram", labelNames, new HistogramConfiguration
         {
             Buckets = Prometheus.Histogram.LinearBuckets(1, WideHistogramMaxValue / 128, 128)
         });

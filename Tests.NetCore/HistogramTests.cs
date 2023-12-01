@@ -89,18 +89,18 @@ namespace Prometheus.Tests
             await histogram.CollectAndSerializeAsync(serializer, true, default);
 
             // Sum
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 5.0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), 5.0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>(), Arg.Any<CancellationToken>());
 
             // 1.0 bucket
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), 0, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>(), Arg.Any<CancellationToken>());
 
             // 2.0 bucket
-            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 1, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received().WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), 1, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>(), Arg.Any<CancellationToken>());
 
             // Count
             // 3.0 bucket
             // +inf bucket
-            await serializer.Received(requiredNumberOfCalls: 3).WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), Arg.Any<CancellationToken>(), 2, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>());
+            await serializer.Received(requiredNumberOfCalls: 3).WriteMetricPointAsync(Arg.Any<byte[]>(), Arg.Any<byte[]>(), Arg.Any<CanonicalLabel>(), 2, Arg.Any<ObservedExemplar>(), Arg.Any<byte[]>(), Arg.Any<CancellationToken>());
         }
 
         [TestMethod]

@@ -44,6 +44,7 @@ public class AspNetCoreExporterBenchmarks
 
     private sealed class EntryPoint
     {
+#pragma warning disable CA1822 // Mark members as static
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRouting();
@@ -66,6 +67,7 @@ public class AspNetCoreExporterBenchmarks
                 });
             });
         }
+#pragma warning restore CA1822 // Mark members as static
     }
 
     [Benchmark]

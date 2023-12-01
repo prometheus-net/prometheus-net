@@ -8,15 +8,15 @@ namespace Prometheus;
 /// </remarks>
 internal sealed class TextSerializer : IMetricsSerializer
 {
-    internal static readonly byte[] NewLine = { (byte)'\n' };
-    internal static readonly byte[] Quote = { (byte)'"' };
-    internal static readonly byte[] Equal = { (byte)'=' };
-    internal static readonly byte[] Comma = { (byte)',' };
-    internal static readonly byte[] Underscore = { (byte)'_' };
-    internal static readonly byte[] LeftBrace = { (byte)'{' };
-    internal static readonly byte[] RightBraceSpace = { (byte)'}', (byte)' ' };
-    internal static readonly byte[] Space = { (byte)' ' };
-    internal static readonly byte[] SpaceHashSpaceLeftBrace = { (byte)' ', (byte)'#', (byte)' ', (byte)'{' };
+    internal static readonly byte[] NewLine = [(byte)'\n'];
+    internal static readonly byte[] Quote = [(byte)'"'];
+    internal static readonly byte[] Equal = [(byte)'='];
+    internal static readonly byte[] Comma = [(byte)','];
+    internal static readonly byte[] Underscore = [(byte)'_'];
+    internal static readonly byte[] LeftBrace = [(byte)'{'];
+    internal static readonly byte[] RightBraceSpace = [(byte)'}', (byte)' '];
+    internal static readonly byte[] Space = [(byte)' '];
+    internal static readonly byte[] SpaceHashSpaceLeftBrace = [(byte)' ', (byte)'#', (byte)' ', (byte)'{'];
     internal static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
     internal static readonly byte[] NegativeInfinity = PrometheusConstants.ExportEncoding.GetBytes("-Inf");
     internal static readonly byte[] NotANumber = PrometheusConstants.ExportEncoding.GetBytes("NaN");
@@ -43,7 +43,7 @@ internal sealed class TextSerializer : IMetricsSerializer
         { MetricType.Summary, PrometheusConstants.ExportEncoding.GetBytes("summary") },
     };
 
-    private static readonly char[] DotEChar = { '.', 'e' };
+    private static readonly char[] DotEChar = ['.', 'e'];
 
     public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
@@ -119,9 +119,9 @@ internal sealed class TextSerializer : IMetricsSerializer
     }
 
     public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
-        CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null)
+        double value, ObservedExemplar exemplar, byte[]? suffix, CancellationToken cancel)
     {
-        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, suffix);
+        await WriteIdentifierPartAsync(name, flattenedLabels, canonicalLabel, suffix, cancel);
 
         await WriteValue(value, cancel);
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
@@ -133,9 +133,9 @@ internal sealed class TextSerializer : IMetricsSerializer
     }
 
     public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
-        CancellationToken cancel, long value, ObservedExemplar exemplar, byte[]? suffix = null)
+        long value, ObservedExemplar exemplar, byte[]? suffix, CancellationToken cancel)
     {
-        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, suffix);
+        await WriteIdentifierPartAsync(name, flattenedLabels, canonicalLabel, suffix, cancel);
 
         await WriteValue(value, cancel);
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
@@ -243,8 +243,8 @@ internal sealed class TextSerializer : IMetricsSerializer
     /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
     /// Note: Terminates with a SPACE
     /// </summary>
-    private async Task WriteIdentifierPartAsync(byte[] name, byte[] flattenedLabels, CancellationToken cancel,
-        CanonicalLabel canonicalLabel, byte[]? suffix = null)
+    private async Task WriteIdentifierPartAsync(byte[] name, byte[] flattenedLabels,
+        CanonicalLabel canonicalLabel, byte[]? suffix, CancellationToken cancel)
     {
         await _stream.Value.WriteAsync(name, 0, name.Length, cancel);
         if (suffix != null && suffix.Length > 0)

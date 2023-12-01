@@ -108,9 +108,8 @@ public sealed class MetricServerMiddleware
 
             if (!string.IsNullOrWhiteSpace(ex.Message))
             {
-                using (var writer = new StreamWriter(response.Body, PrometheusConstants.ExportEncoding,
-                    bufferSize: -1, leaveOpen: true))
-                    await writer.WriteAsync(ex.Message);
+                using var writer = new StreamWriter(response.Body, PrometheusConstants.ExportEncoding, bufferSize: -1, leaveOpen: true);
+                await writer.WriteAsync(ex.Message);
             }
         }
     }
