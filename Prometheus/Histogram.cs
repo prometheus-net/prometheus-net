@@ -14,7 +14,7 @@ namespace Prometheus;
 /// </remarks>
 public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 {
-    private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
+    private static readonly double[] DefaultBuckets = [.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10];
 
     private readonly double[] _buckets;
 
@@ -50,7 +50,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
         if (!double.IsPositiveInfinity(_buckets[_buckets.Length - 1]))
         {
-            _buckets = _buckets.Concat(new[] { double.PositiveInfinity }).ToArray();
+            _buckets = [.. _buckets, double.PositiveInfinity];
         }
 
         for (int i = 1; i < _buckets.Length; i++)
@@ -116,7 +116,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
         internal new readonly Histogram Parent;
 
-        private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
+        private ThreadSafeDouble _sum = new(0.0D);
         private readonly ThreadSafeLong[] _bucketCounts;
         private static readonly byte[] SumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
         private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
@@ -136,18 +136,18 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 Parent.NameBytes,
                 FlattenedLabelsBytes,
                 CanonicalLabel.Empty,
-                cancel,
                 _sum.Value,
                 ObservedExemplar.Empty,
-                suffix: SumSuffix);
+                SumSuffix,
+                cancel);
             await serializer.WriteMetricPointAsync(
                 Parent.NameBytes,
                 FlattenedLabelsBytes,
                 CanonicalLabel.Empty,
-                cancel,
                 Count,
                 ObservedExemplar.Empty,
-                suffix: CountSuffix);
+                CountSuffix,
+                cancel);
 
             var cumulativeCount = 0L;
 
@@ -160,10 +160,10 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                     Parent.NameBytes,
                     FlattenedLabelsBytes,
                     Parent._leLabels[i],
-                    cancel,
                     cumulativeCount,
                     exemplar,
-                    suffix: BucketSuffix);
+                    BucketSuffix,
+                    cancel);
 
                 ReturnBorrowedExemplar(ref _exemplars[i], exemplar);
             }
@@ -395,7 +395,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
             }
         }
 
-        return buckets.ToArray();
+        return [.. buckets];
     }
 
     // sum + count + buckets

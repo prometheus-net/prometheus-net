@@ -72,9 +72,9 @@ public abstract class Collector
     private const string ValidLabelNameExpression = "^[a-zA-Z_][a-zA-Z0-9_]*$";
     private const string ReservedLabelNameExpression = "^__.*$";
 
-    private static readonly Regex MetricNameRegex = new Regex(ValidMetricNameExpression, RegexOptions.Compiled);
-    private static readonly Regex LabelNameRegex = new Regex(ValidLabelNameExpression, RegexOptions.Compiled);
-    private static readonly Regex ReservedLabelRegex = new Regex(ReservedLabelNameExpression, RegexOptions.Compiled);
+    private static readonly Regex MetricNameRegex = new(ValidMetricNameExpression, RegexOptions.Compiled);
+    private static readonly Regex LabelNameRegex = new(ValidLabelNameExpression, RegexOptions.Compiled);
+    private static readonly Regex ReservedLabelRegex = new(ReservedLabelNameExpression, RegexOptions.Compiled);
 
     internal Collector(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels)
     {
@@ -94,13 +94,10 @@ public abstract class Collector
 
         try
         {
-            var labelNameEnumerator = FlattenedLabelNames.GetEnumerator();
-            while (labelNameEnumerator.MoveNext())
+            foreach (var labelName in FlattenedLabelNames)
             {
-                var labelName = labelNameEnumerator.Current;
-
                 if (labelName == null)
-                    throw new ArgumentNullException("Label name was null.");
+                    throw new ArgumentException("One of the label names was null.");
 
                 ValidateLabelName(labelName);
                 uniqueLabelNames.Add(labelName);
@@ -163,7 +160,7 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     where TChild : ChildBase
 {
     // Keyed by the instance labels (not by flattened labels!).
-    private readonly Dictionary<LabelSequence, TChild> _children = new();
+    private readonly Dictionary<LabelSequence, TChild> _children = [];
     private readonly ReaderWriterLockSlim _childrenLock = new();
 
     // Lazy-initialized since not every collector will use a child with no labels.

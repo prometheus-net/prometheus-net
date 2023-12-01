@@ -10,15 +10,14 @@ using SDM = System.Diagnostics.Metrics;
 namespace Prometheus.Tests;
 
 [TestClass]
-public class MeterAdapterTests: IDisposable
+public sealed class MeterAdapterTests : IDisposable
 {
-    private CollectorRegistry _registry;
-    private MetricFactory _metrics;
+    private readonly CollectorRegistry _registry;
+    private readonly MetricFactory _metrics;
     private readonly SDM.Meter _meter = new("test");
     private readonly SDM.Counter<long> _intCounter;
     private readonly SDM.Counter<double> _floatCounter;
-    private readonly SDM.Histogram<double> _histogram;
-    private IDisposable _adapter;
+    private readonly IDisposable _adapter;
 
     public MeterAdapterTests()
     {
@@ -27,13 +26,14 @@ public class MeterAdapterTests: IDisposable
 
         _intCounter = _meter.CreateCounter<long>("int_counter");
         _floatCounter = _meter.CreateCounter<double>("float_counter");
-        _histogram = _meter.CreateHistogram<double>("histogram");
 
         _registry = Metrics.NewCustomRegistry();
         _metrics = Metrics.WithCustomRegistry(_registry);
 
-        _adapter = MeterAdapter.StartListening(new MeterAdapterOptions {
-            InstrumentFilterPredicate = instrument => {
+        _adapter = MeterAdapter.StartListening(new MeterAdapterOptions
+        {
+            InstrumentFilterPredicate = instrument =>
+            {
                 return instrument.Meter == _meter;
             },
             Registry = _registry,
@@ -42,7 +42,7 @@ public class MeterAdapterTests: IDisposable
         });
     }
 
-    private FakeSerializer SerializeMetrics(CollectorRegistry registry)
+    private static FakeSerializer SerializeMetrics(CollectorRegistry registry)
     {
         var serializer = new FakeSerializer();
         registry.CollectAndSerializeAsync(serializer, default).Wait();
@@ -68,6 +68,7 @@ public class MeterAdapterTests: IDisposable
         }
         if (serializer.Data.Any(d => d.name == meterName))
             throw new Exception($"Metric {meterName}{{{labelsString}}} not found, only these labels were found: {string.Join(" / ", serializer.Data.Where(d => d.name == meterName).Select(d => d.labels))}");
+
         throw new Exception($"Metric {meterName} not found, only these metrics were found: {string.Join(" / ", serializer.Data.Select(d => d.name).Distinct())}");
     }
 
@@ -92,12 +93,12 @@ public class MeterAdapterTests: IDisposable
     [TestMethod]
     public void CounterLabels()
     {
-        _intCounter.Add(1, new ("l1", "value"), new ("l2", 111));
+        _intCounter.Add(1, new("l1", "value"), new("l2", 111));
         Assert.AreEqual(1, GetValue("test_int_counter", ("l1", "value"), ("l2", "111")));
         _intCounter.Add(1000);
-        _intCounter.Add(1000, new ("l1", "value"), new ("l2", 0));
+        _intCounter.Add(1000, new("l1", "value"), new("l2", 0));
         _intCounter.Add(1000, new KeyValuePair<string, object?>("l1", "value"));
-        _intCounter.Add(1, new ("l2", 111), new ("l1", "value"));
+        _intCounter.Add(1, new("l2", 111), new("l1", "value"));
         Assert.AreEqual(2, GetValue("test_int_counter", ("l1", "value"), ("l2", "111")));
         Assert.AreEqual(1000, GetValue("test_int_counter", ("l1", "value"), ("l2", "0")));
         Assert.AreEqual(1000, GetValue("test_int_counter", ("l1", "value")));
@@ -107,7 +108,7 @@ public class MeterAdapterTests: IDisposable
     [TestMethod]
     public void LabelRenaming()
     {
-        _intCounter.Add(1, new ("my-label", 1), new ("Another.Label", 1));
+        _intCounter.Add(1, new("my-label", 1), new("Another.Label", 1));
         Assert.AreEqual(1, GetValue("test_int_counter", ("another_label", "1"), ("my_label", "1")));
     }
 
@@ -120,8 +121,10 @@ public class MeterAdapterTests: IDisposable
         var registry2 = Metrics.NewCustomRegistry();
         var metrics2 = Metrics.WithCustomRegistry(registry2);
 
-        var adapter2 = MeterAdapter.StartListening(new MeterAdapterOptions {
-            InstrumentFilterPredicate = instrument => {
+        var adapter2 = MeterAdapter.StartListening(new MeterAdapterOptions
+        {
+            InstrumentFilterPredicate = instrument =>
+            {
                 return instrument.Meter == _meter;
             },
             Registry = registry2,
@@ -140,7 +143,6 @@ public class MeterAdapterTests: IDisposable
         Assert.AreEqual(1, GetValue(registry2, "test_int_counter"));
     }
 
-
     public void Dispose()
     {
         _adapter.Dispose();
@@ -154,7 +156,7 @@ public class MeterAdapterTests: IDisposable
 
         public ValueTask WriteFamilyDeclarationAsync(string name, byte[] nameBytes, byte[] helpBytes, MetricType type, byte[] typeBytes, CancellationToken cancel) => default;
 
-        public ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel, CancellationToken cancel, double value, ObservedExemplar exemplar, byte[] suffix = null)
+        public ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel, double value, ObservedExemplar exemplar, byte[] suffix, CancellationToken cancel)
         {
             Data.Add((
                 name: Encoding.UTF8.GetString(name),
@@ -166,7 +168,7 @@ public class MeterAdapterTests: IDisposable
             return default;
         }
 
-        public ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel, CancellationToken cancel, long value, ObservedExemplar exemplar, byte[] suffix = null) =>
-            WriteMetricPointAsync(name, flattenedLabels, canonicalLabel, cancel, (double)value, exemplar, suffix);
+        public ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel, long value, ObservedExemplar exemplar, byte[] suffix, CancellationToken cancel) =>
+            WriteMetricPointAsync(name, flattenedLabels, canonicalLabel, (double)value, exemplar, suffix, cancel);
     }
 }
