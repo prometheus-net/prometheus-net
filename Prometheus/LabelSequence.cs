@@ -138,22 +138,22 @@ internal readonly struct LabelSequence : IEquatable<LabelSequence>
 #if NET
             if (i != 0)
             {
-                TextSerializer.Comma.CopyTo(bytes.AsMemory(index));
+                TextSerializer.Comma.CopyTo(bytes.AsSpan(index));
                 index += TextSerializer.Comma.Length;
             }
 
             index += PrometheusConstants.ExportEncoding.GetBytes(nameEnumerator.Current, 0, nameEnumerator.Current.Length, bytes, index);
 
-            TextSerializer.Equal.CopyTo(bytes.AsMemory(index));
+            TextSerializer.Equal.CopyTo(bytes.AsSpan(index));
             index += TextSerializer.Equal.Length;
 
-            TextSerializer.Quote.CopyTo(bytes.AsMemory(index));
+            TextSerializer.Quote.CopyTo(bytes.AsSpan(index));
             index += TextSerializer.Quote.Length;
 
             var escapedLabelValue = EscapeLabelValue(valueEnumerator.Current);
             index += PrometheusConstants.ExportEncoding.GetBytes(escapedLabelValue, 0, escapedLabelValue.Length, bytes, index);
 
-            TextSerializer.Quote.CopyTo(bytes.AsMemory(index));
+            TextSerializer.Quote.CopyTo(bytes.AsSpan(index));
             index += TextSerializer.Quote.Length;
 #else
             if (i != 0)

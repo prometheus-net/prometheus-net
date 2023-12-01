@@ -5,6 +5,7 @@ using Prometheus;
 namespace Benchmark.NetCore;
 
 [MemoryDiagnoser]
+//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.CpuSampling)]
 public class SerializationBenchmarks
 {
     public enum OutputStreamType
@@ -189,7 +190,7 @@ public class SerializationBenchmarks
         await _registry.CollectAndSerializeAsync(new TextSerializer(_outputStream), default);
     }
 
-    //[Benchmark]
+    [Benchmark]
     public async Task CollectAndSerializeOpenMetrics()
     {
         await _registry.CollectAndSerializeAsync(new TextSerializer(_outputStream, ExpositionFormat.OpenMetricsText), default);
