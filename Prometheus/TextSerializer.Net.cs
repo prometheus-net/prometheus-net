@@ -1,4 +1,6 @@
 ﻿#if NET
+using System;
+using System.Buffers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -9,31 +11,30 @@ namespace Prometheus;
 /// </remarks>
 internal sealed class TextSerializer : IMetricsSerializer
 {
-    internal static readonly ReadOnlyMemory<byte> NewLine = new byte[] { (byte)'\n' };
-    internal static readonly ReadOnlyMemory<byte> Quote = new byte[] { (byte)'"' };
-    internal static readonly ReadOnlyMemory<byte> Equal = new byte[] { (byte)'=' };
-    internal static readonly ReadOnlyMemory<byte> Comma = new byte[] { (byte)',' };
-    internal static readonly ReadOnlyMemory<byte> Underscore = new byte[] { (byte)'_' };
-    internal static readonly ReadOnlyMemory<byte> LeftBrace = new byte[] { (byte)'{' };
-    internal static readonly ReadOnlyMemory<byte> RightBraceSpace = new byte[] { (byte)'}', (byte)' ' };
-    internal static readonly ReadOnlyMemory<byte> Space = new byte[] { (byte)' ' };
-    internal static readonly ReadOnlyMemory<byte> SpaceHashSpaceLeftBrace = new byte[] { (byte)' ', (byte)'#', (byte)' ', (byte)'{' };
-    internal static readonly ReadOnlyMemory<byte> PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
-    internal static readonly ReadOnlyMemory<byte> NegativeInfinity = PrometheusConstants.ExportEncoding.GetBytes("-Inf");
-    internal static readonly ReadOnlyMemory<byte> NotANumber = PrometheusConstants.ExportEncoding.GetBytes("NaN");
-    internal static readonly ReadOnlyMemory<byte> DotZero = PrometheusConstants.ExportEncoding.GetBytes(".0");
-    internal static readonly ReadOnlyMemory<byte> FloatPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1.0");
-    internal static readonly ReadOnlyMemory<byte> FloatZero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
-    internal static readonly ReadOnlyMemory<byte> FloatNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
-    internal static readonly ReadOnlyMemory<byte> IntPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1");
-    internal static readonly ReadOnlyMemory<byte> IntZero = PrometheusConstants.ExportEncoding.GetBytes("0");
-    internal static readonly ReadOnlyMemory<byte> IntNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1");
-    internal static readonly ReadOnlyMemory<byte> EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
-    internal static readonly ReadOnlyMemory<byte> HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
-    internal static readonly ReadOnlyMemory<byte> NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
+    internal static ReadOnlySpan<byte> NewLine => [(byte)'\n'];
+    internal static ReadOnlySpan<byte> Quote => [(byte)'"'];
+    internal static ReadOnlySpan<byte> Equal => [(byte)'='];
+    internal static ReadOnlySpan<byte> Comma => [(byte)','];
+    internal static ReadOnlySpan<byte> Underscore => [(byte)'_'];
+    internal static ReadOnlySpan<byte> LeftBrace => [(byte)'{'];
+    internal static ReadOnlySpan<byte> RightBraceSpace => [(byte)'}', (byte)' '];
+    internal static ReadOnlySpan<byte> Space => [(byte)' '];
+    internal static ReadOnlySpan<byte> SpaceHashSpaceLeftBrace => [(byte)' ', (byte)'#', (byte)' ', (byte)'{'];
+    internal static ReadOnlySpan<byte> PositiveInfinity => [(byte)'+', (byte)'I', (byte)'n', (byte)'f'];
+    internal static ReadOnlySpan<byte> NegativeInfinity => [(byte)'-', (byte)'I', (byte)'n', (byte)'f'];
+    internal static ReadOnlySpan<byte> NotANumber => [(byte)'N', (byte)'a', (byte)'N'];
+    internal static ReadOnlySpan<byte> DotZero => [(byte)'.', (byte)'0'];
+    internal static ReadOnlySpan<byte> FloatPositiveOne => [(byte)'1', (byte)'.', (byte)'0'];
+    internal static ReadOnlySpan<byte> FloatZero => [(byte)'0', (byte)'.', (byte)'0'];
+    internal static ReadOnlySpan<byte> FloatNegativeOne => [(byte)'-', (byte)'1', (byte)'.', (byte)'0'];
+    internal static ReadOnlySpan<byte> IntPositiveOne => [(byte)'1'];
+    internal static ReadOnlySpan<byte> IntZero => [(byte)'0'];
+    internal static ReadOnlySpan<byte> IntNegativeOne => [(byte)'-', (byte)'1'];
+    internal static ReadOnlySpan<byte> HashHelpSpace => [(byte)'#', (byte)' ', (byte)'H', (byte)'E', (byte)'L', (byte)'P', (byte)' '];
+    internal static ReadOnlySpan<byte> NewlineHashTypeSpace => [(byte)'\n', (byte)'#', (byte)' ', (byte)'T', (byte)'Y', (byte)'P', (byte)'E', (byte)' '];
 
-    internal static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
-
+    internal static readonly byte[] UnknownBytes = PrometheusConstants.ExportEncoding.GetBytes("unknown");
+    internal static readonly byte[] EofNewLineBytes = { (byte)'#', (byte)' ', (byte)'E', (byte)'O', (byte)'F', (byte)'\n' };
     internal static readonly byte[] PositiveInfinityBytes = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
 
     internal static readonly Dictionary<MetricType, byte[]> MetricTypeToBytes = new()
@@ -86,7 +87,54 @@ internal sealed class TextSerializer : IMetricsSerializer
     public async ValueTask WriteFamilyDeclarationAsync(string name, byte[] nameBytes, byte[] helpBytes, MetricType type,
         byte[] typeBytes, CancellationToken cancel)
     {
+        var bufferLength = MeasureFamilyDeclarationLength(name, nameBytes, helpBytes, type, typeBytes);
+        var buffer = ArrayPool<byte>.Shared.Rent(bufferLength);
+
+        try
+        {
+            var nameLen = nameBytes.Length;
+            if (_expositionFormat == ExpositionFormat.OpenMetricsText && type == MetricType.Counter)
+            {
+                if (name.EndsWith("_total"))
+                {
+                    nameLen -= 6; // in OpenMetrics the counter name does not include the _total prefix.
+                }
+                else
+                {
+                    typeBytes = UnknownBytes; // if the total prefix is missing the _total prefix it is out of spec
+                }
+            }
+
+            var position = 0;
+            AppendToBufferAndIncrementPosition(HashHelpSpace, buffer, ref position);
+            AppendToBufferAndIncrementPosition(nameBytes.AsSpan(0, nameLen), buffer, ref position);
+            // The space after the name in "HELP" is mandatory as per ABNF, even if there is no help text.
+            AppendToBufferAndIncrementPosition(Space, buffer, ref position);
+            if (helpBytes.Length > 0)
+            {
+                AppendToBufferAndIncrementPosition(helpBytes, buffer, ref position);
+            }
+            AppendToBufferAndIncrementPosition(NewlineHashTypeSpace, buffer, ref position);
+            AppendToBufferAndIncrementPosition(nameBytes.AsSpan(0, nameLen), buffer, ref position);
+            AppendToBufferAndIncrementPosition(Space, buffer, ref position);
+            AppendToBufferAndIncrementPosition(typeBytes, buffer, ref position);
+            AppendToBufferAndIncrementPosition(NewLine, buffer, ref position);
+
+            await _stream.Value.WriteAsync(buffer.AsMemory(0, position), cancel);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    public int MeasureFamilyDeclarationLength(string name, byte[] nameBytes, byte[] helpBytes, MetricType type, byte[] typeBytes)
+    {
+        // We mirror the logic in the Write() call but just measure how many bytes of buffer we need.
+        var length = 0;
+
         var nameLen = nameBytes.Length;
+
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && type == MetricType.Counter)
         {
             if (name.EndsWith("_total"))
@@ -95,119 +143,197 @@ internal sealed class TextSerializer : IMetricsSerializer
             }
             else
             {
-                typeBytes = Unknown; // if the total prefix is missing the _total prefix it is out of spec
+                typeBytes = UnknownBytes; // if the total prefix is missing the _total prefix it is out of spec
             }
         }
 
-        await _stream.Value.WriteAsync(HashHelpSpace, cancel);
-        await _stream.Value.WriteAsync(nameBytes.AsMemory(0, nameLen), cancel);
+        length += HashHelpSpace.Length;
+        length += nameLen;
         // The space after the name in "HELP" is mandatory as per ABNF, even if there is no help text.
-        await _stream.Value.WriteAsync(Space, cancel);
-        if (helpBytes.Length > 0)
-        {
-            await _stream.Value.WriteAsync(helpBytes, cancel);
-        }
-        await _stream.Value.WriteAsync(NewlineHashTypeSpace, cancel);
-        await _stream.Value.WriteAsync(nameBytes.AsMemory(0, nameLen), cancel);
-        await _stream.Value.WriteAsync(Space, cancel);
-        await _stream.Value.WriteAsync(typeBytes, cancel);
-        await _stream.Value.WriteAsync(NewLine, cancel);
+        length += Space.Length;
+        length += helpBytes.Length;
+        length += NewlineHashTypeSpace.Length;
+        length += nameLen;
+        length += Space.Length;
+        length += typeBytes.Length;
+        length += NewLine.Length;
+
+        return length;
     }
 
     public async ValueTask WriteEnd(CancellationToken cancel)
     {
         if (_expositionFormat == ExpositionFormat.OpenMetricsText)
-            await _stream.Value.WriteAsync(EofNewLine, cancel);
+            await _stream.Value.WriteAsync(EofNewLineBytes, cancel);
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
         CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null)
     {
-        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, suffix);
+        // This is a max length because we do not know ahead of time how many bytes the actual value will consume.
+        var bufferMaxLength = MeasureIdentifierPartLength(name, flattenedLabels, canonicalLabel, suffix) + MeasureValueMaxLength(value) + NewLine.Length;
 
-        await WriteValue(value, cancel);
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
-        {
-            await WriteExemplarAsync(cancel, exemplar);
-        }
+            bufferMaxLength += MeasureExemplarMaxLength(exemplar);
 
-        await _stream.Value.WriteAsync(NewLine, cancel);
+        var buffer = ArrayPool<byte>.Shared.Rent(bufferMaxLength);
+
+        try
+        {
+            var position = WriteIdentifierPart(buffer, name, flattenedLabels, canonicalLabel, suffix);
+
+            position += WriteValue(buffer.AsSpan(position..), value);
+
+            if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
+            {
+                position += WriteExemplar(buffer.AsSpan(position..), exemplar);
+            }
+
+            AppendToBufferAndIncrementPosition(NewLine, buffer, ref position);
+
+            ValidateBufferMaxLengthAndPosition(bufferMaxLength, position);
+
+            await _stream.Value.WriteAsync(buffer.AsMemory(0, position), cancel);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
         CancellationToken cancel, long value, ObservedExemplar exemplar, byte[]? suffix = null)
     {
-        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, suffix);
+        // This is a max length because we do not know ahead of time how many bytes the actual value will consume.
+        var bufferMaxLength = MeasureIdentifierPartLength(name, flattenedLabels, canonicalLabel, suffix) + MeasureValueMaxLength(value) + NewLine.Length;
 
-        await WriteValue(value, cancel);
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
-        {
-            await WriteExemplarAsync(cancel, exemplar);
-        }
+            bufferMaxLength += MeasureExemplarMaxLength(exemplar);
 
-        await _stream.Value.WriteAsync(NewLine, cancel);
+        var buffer = ArrayPool<byte>.Shared.Rent(bufferMaxLength);
+
+        try
+        {
+            var position = WriteIdentifierPart(buffer, name, flattenedLabels, canonicalLabel, suffix);
+
+            position += WriteValue(buffer.AsSpan(position..), value);
+
+            if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
+            {
+                position += WriteExemplar(buffer.AsSpan(position..), exemplar);
+            }
+
+            AppendToBufferAndIncrementPosition(NewLine, buffer, ref position);
+
+            ValidateBufferMaxLengthAndPosition(bufferMaxLength, position);
+
+            await _stream.Value.WriteAsync(buffer.AsMemory(0, position), cancel);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
     }
 
-    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
-    private async ValueTask WriteExemplarAsync(CancellationToken cancel, ObservedExemplar exemplar)
+    private int WriteExemplar(Span<byte> buffer, ObservedExemplar exemplar)
     {
-        await _stream.Value.WriteAsync(SpaceHashSpaceLeftBrace, cancel);
+        var position = 0;
+
+        AppendToBufferAndIncrementPosition(SpaceHashSpaceLeftBrace, buffer, ref position);
         for (var i = 0; i < exemplar.Labels!.Length; i++)
         {
             if (i > 0)
-                await _stream.Value.WriteAsync(Comma, cancel);
-            await WriteLabel(exemplar.Labels!.Buffer[i].KeyBytes, exemplar.Labels!.Buffer[i].ValueBytes, cancel);
+                AppendToBufferAndIncrementPosition(Comma, buffer, ref position);
+
+            position += WriteExemplarLabel(buffer[position..], exemplar.Labels!.Buffer[i].KeyBytes, exemplar.Labels!.Buffer[i].ValueBytes);
         }
 
-        await _stream.Value.WriteAsync(RightBraceSpace, cancel);
-        await WriteValue(exemplar.Value, cancel);
-        await _stream.Value.WriteAsync(Space, cancel);
-        await WriteValue(exemplar.Timestamp, cancel);
+        AppendToBufferAndIncrementPosition(RightBraceSpace, buffer, ref position);
+        position += WriteValue(buffer[position..], exemplar.Value);
+        AppendToBufferAndIncrementPosition(Space, buffer, ref position);
+        position += WriteValue(buffer[position..], exemplar.Timestamp);
+
+        return position;
     }
 
-    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
-    private async ValueTask WriteLabel(byte[] label, byte[] value, CancellationToken cancel)
+    private int MeasureExemplarMaxLength(ObservedExemplar exemplar)
     {
-        await _stream.Value.WriteAsync(label, cancel);
-        await _stream.Value.WriteAsync(Equal, cancel);
-        await _stream.Value.WriteAsync(Quote, cancel);
-        await _stream.Value.WriteAsync(value, cancel);
-        await _stream.Value.WriteAsync(Quote, cancel);
+        // We mirror the logic in the Write() call but just measure how many bytes of buffer we need.
+        var length = 0;
+
+        length += SpaceHashSpaceLeftBrace.Length;
+        for (var i = 0; i < exemplar.Labels!.Length; i++)
+        {
+            if (i > 0)
+                length += Comma.Length;
+
+            length += MeasureExemplarLabelLength(exemplar.Labels!.Buffer[i].KeyBytes, exemplar.Labels!.Buffer[i].ValueBytes);
+        }
+
+        length += RightBraceSpace.Length;
+        length += MeasureValueMaxLength(exemplar.Value);
+        length += Space.Length;
+        length += MeasureValueMaxLength(exemplar.Timestamp);
+
+        return length;
     }
 
-    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
-    private async ValueTask WriteValue(double value, CancellationToken cancel)
+    private int WriteExemplarLabel(Span<byte> buffer, byte[] label, byte[] value)
     {
+        var position = 0;
+
+        AppendToBufferAndIncrementPosition(label, buffer, ref position);
+        AppendToBufferAndIncrementPosition(Equal, buffer, ref position);
+        AppendToBufferAndIncrementPosition(Quote, buffer, ref position);
+        AppendToBufferAndIncrementPosition(value, buffer, ref position);
+        AppendToBufferAndIncrementPosition(Quote, buffer, ref position);
+
+        return position;
+    }
+
+    private int MeasureExemplarLabelLength(byte[] label, byte[] value)
+    {
+        // We mirror the logic in the Write() call but just measure how many bytes of buffer we need.
+        var length = 0;
+
+        length += label.Length;
+        length += Equal.Length;
+        length += Quote.Length;
+        length += value.Length;
+        length += Quote.Length;
+
+        return length;
+    }
+
+    private int WriteValue(Span<byte> buffer, double value)
+    {
+        var position = 0;
+
         if (_expositionFormat == ExpositionFormat.OpenMetricsText)
         {
             switch (value)
             {
                 case 0:
-                    await _stream.Value.WriteAsync(FloatZero, cancel);
-                    return;
+                    AppendToBufferAndIncrementPosition(FloatZero, buffer, ref position);
+                    return position;
                 case 1:
-                    await _stream.Value.WriteAsync(FloatPositiveOne, cancel);
-                    return;
+                    AppendToBufferAndIncrementPosition(FloatPositiveOne, buffer, ref position);
+                    return position;
                 case -1:
-                    await _stream.Value.WriteAsync(FloatNegativeOne, cancel);
-                    return;
+                    AppendToBufferAndIncrementPosition(FloatNegativeOne, buffer, ref position);
+                    return position;
                 case double.PositiveInfinity:
-                    await _stream.Value.WriteAsync(PositiveInfinity, cancel);
-                    return;
+                    AppendToBufferAndIncrementPosition(PositiveInfinity, buffer, ref position);
+                    return position;
                 case double.NegativeInfinity:
-                    await _stream.Value.WriteAsync(NegativeInfinity, cancel);
-                    return;
+                    AppendToBufferAndIncrementPosition(NegativeInfinity, buffer, ref position);
+                    return position;
                 case double.NaN:
-                    await _stream.Value.WriteAsync(NotANumber, cancel);
-                    return;
+                    AppendToBufferAndIncrementPosition(NotANumber, buffer, ref position);
+                    return position;
             }
-        }
-
-        static bool RequiresDotZero(char[] buffer, int length)
-        {
-            return buffer.AsSpan(0..length).IndexOfAny(DotEChar) == -1; /* did not contain .|e */
         }
 
         // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
@@ -215,29 +341,64 @@ internal sealed class TextSerializer : IMetricsSerializer
             throw new Exception("Failed to encode floating point value as string.");
 
         var encodedBytes = PrometheusConstants.ExportEncoding.GetBytes(_stringCharsBuffer, 0, charsWritten, _stringBytesBuffer, 0);
-        await _stream.Value.WriteAsync(_stringBytesBuffer.AsMemory(0, encodedBytes), cancel);
+        AppendToBufferAndIncrementPosition(_stringBytesBuffer.AsSpan(0, encodedBytes), buffer, ref position);
 
         // In certain places (e.g. "le" label) we need floating point values to actually have the decimal point in them for OpenMetrics.
-        if (_expositionFormat == ExpositionFormat.OpenMetricsText && RequiresDotZero(_stringCharsBuffer, charsWritten))
-            await _stream.Value.WriteAsync(DotZero, cancel);
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText && RequiresOpenMetricsDotZero(_stringCharsBuffer, charsWritten))
+            AppendToBufferAndIncrementPosition(DotZero, buffer, ref position);
+
+        return position;
     }
 
-    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
-    private async ValueTask WriteValue(long value, CancellationToken cancel)
+    static bool RequiresOpenMetricsDotZero(char[] buffer, int length)
     {
+        return buffer.AsSpan(0..length).IndexOfAny(DotEChar) == -1; /* did not contain .|e, so needs a .0 to turn it into a floating-point value */
+    }
+
+    private int MeasureValueMaxLength(double value)
+    {
+        // We mirror the logic in the Write() call but just measure how many bytes of buffer we need.
         if (_expositionFormat == ExpositionFormat.OpenMetricsText)
         {
             switch (value)
             {
                 case 0:
-                    await _stream.Value.WriteAsync(IntZero, cancel);
-                    return;
+                    return FloatZero.Length;
                 case 1:
-                    await _stream.Value.WriteAsync(IntPositiveOne, cancel);
-                    return;
+                    return FloatPositiveOne.Length;
                 case -1:
-                    await _stream.Value.WriteAsync(IntNegativeOne, cancel);
-                    return;
+                    return FloatNegativeOne.Length;
+                case double.PositiveInfinity:
+                    return PositiveInfinity.Length;
+                case double.NegativeInfinity:
+                    return NegativeInfinity.Length;
+                case double.NaN:
+                    return NotANumber.Length;
+            }
+        }
+
+        // We do not want to spend time formatting the value just to measure the length and throw away the result.
+        // Therefore we just consider the max length and return it. The max length is just the length of the value-encoding buffer.
+        return _stringBytesBuffer.Length;
+    }
+
+    private int WriteValue(Span<byte> buffer, long value)
+    {
+        var position = 0;
+
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText)
+        {
+            switch (value)
+            {
+                case 0:
+                    AppendToBufferAndIncrementPosition(IntZero, buffer, ref position);
+                    return position;
+                case 1:
+                    AppendToBufferAndIncrementPosition(IntPositiveOne, buffer, ref position);
+                    return position;
+                case -1:
+                    AppendToBufferAndIncrementPosition(IntNegativeOne, buffer, ref position);
+                    return position;
             }
         }
 
@@ -245,7 +406,30 @@ internal sealed class TextSerializer : IMetricsSerializer
             throw new Exception("Failed to encode integer value as string.");
 
         var encodedBytes = PrometheusConstants.ExportEncoding.GetBytes(_stringCharsBuffer, 0, charsWritten, _stringBytesBuffer, 0);
-        await _stream.Value.WriteAsync(_stringBytesBuffer.AsMemory(0, encodedBytes), cancel);
+        AppendToBufferAndIncrementPosition(_stringBytesBuffer.AsSpan(0, encodedBytes), buffer, ref position);
+
+        return position;
+    }
+
+    private int MeasureValueMaxLength(long value)
+    {
+        // We mirror the logic in the Write() call but just measure how many bytes of buffer we need.
+        if (_expositionFormat == ExpositionFormat.OpenMetricsText)
+        {
+            switch (value)
+            {
+                case 0:
+                    return IntZero.Length;
+                case 1:
+                    return IntPositiveOne.Length;
+                case -1:
+                    return IntNegativeOne.Length;
+            }
+        }
+
+        // We do not want to spend time formatting the value just to measure the length and throw away the result.
+        // Therefore we just consider the max length and return it. The max length is just the length of the value-encoding buffer.
+        return _stringBytesBuffer.Length;
     }
 
     // Reuse a buffer to do the serialization and UTF-8 encoding.
@@ -255,54 +439,128 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     private readonly ExpositionFormat _expositionFormat;
 
+    private static void AppendToBufferAndIncrementPosition(ReadOnlySpan<byte> from, Span<byte> to, ref int position)
+    {
+        from.CopyTo(to[position..]);
+        position += from.Length;
+    }
+
+    private static void ValidateBufferLengthAndPosition(int bufferLength, int position)
+    {
+        if (position != bufferLength)
+            throw new Exception("Internal error: counting the same bytes twice got us a different value.");
+    }
+
+    private static void ValidateBufferMaxLengthAndPosition(int bufferMaxLength, int position)
+    {
+        if (position > bufferMaxLength)
+            throw new Exception("Internal error: counting the same bytes twice got us a different value.");
+    }
+
     /// <summary>
     /// Creates a metric identifier, with an optional name postfix and an optional extra label to append to the end.
     /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
     /// Note: Terminates with a SPACE
     /// </summary>
-    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
-    private async ValueTask WriteIdentifierPartAsync(byte[] name, byte[] flattenedLabels, CancellationToken cancel,
-        CanonicalLabel canonicalLabel, byte[]? suffix = null)
+    private int WriteIdentifierPart(Span<byte> buffer, byte[] name, byte[] flattenedLabels, CanonicalLabel extraLabel, byte[]? suffix = null)
     {
-        await _stream.Value.WriteAsync(name, cancel);
+        var position = 0;
+
+        AppendToBufferAndIncrementPosition(name, buffer, ref position);
+
         if (suffix != null && suffix.Length > 0)
         {
-            await _stream.Value.WriteAsync(Underscore, cancel);
-            await _stream.Value.WriteAsync(suffix, cancel);
+            AppendToBufferAndIncrementPosition(Underscore, buffer, ref position);
+            AppendToBufferAndIncrementPosition(suffix, buffer, ref position);
         }
 
-        if (flattenedLabels.Length > 0 || canonicalLabel.IsNotEmpty)
+        if (flattenedLabels.Length > 0 || extraLabel.IsNotEmpty)
         {
-            await _stream.Value.WriteAsync(LeftBrace, cancel);
+            AppendToBufferAndIncrementPosition(LeftBrace, buffer, ref position);
             if (flattenedLabels.Length > 0)
             {
-                await _stream.Value.WriteAsync(flattenedLabels, cancel);
+                AppendToBufferAndIncrementPosition(flattenedLabels, buffer, ref position);
             }
 
             // Extra labels go to the end (i.e. they are deepest to inherit from).
-            if (canonicalLabel.IsNotEmpty)
+            if (extraLabel.IsNotEmpty)
             {
                 if (flattenedLabels.Length > 0)
                 {
-                    await _stream.Value.WriteAsync(Comma, cancel);
+                    AppendToBufferAndIncrementPosition(Comma, buffer, ref position);
                 }
 
-                await _stream.Value.WriteAsync(canonicalLabel.Name.AsMemory(0, canonicalLabel.Name.Length), cancel);
-                await _stream.Value.WriteAsync(Equal, cancel);
-                await _stream.Value.WriteAsync(Quote, cancel);
+                AppendToBufferAndIncrementPosition(extraLabel.Name, buffer, ref position);
+                AppendToBufferAndIncrementPosition(Equal, buffer, ref position);
+                AppendToBufferAndIncrementPosition(Quote, buffer, ref position);
+
                 if (_expositionFormat == ExpositionFormat.OpenMetricsText)
-                    await _stream.Value.WriteAsync(canonicalLabel.OpenMetrics.AsMemory(0, canonicalLabel.OpenMetrics.Length), cancel);
+                    AppendToBufferAndIncrementPosition(extraLabel.OpenMetrics, buffer, ref position);
                 else
-                    await _stream.Value.WriteAsync(canonicalLabel.Prometheus.AsMemory(0, canonicalLabel.Prometheus.Length), cancel);
-                await _stream.Value.WriteAsync(Quote, cancel);
+                    AppendToBufferAndIncrementPosition(extraLabel.Prometheus, buffer, ref position);
+
+                AppendToBufferAndIncrementPosition(Quote, buffer, ref position);
             }
 
-            await _stream.Value.WriteAsync(RightBraceSpace, cancel);
+            AppendToBufferAndIncrementPosition(RightBraceSpace, buffer, ref position);
         }
         else
         {
-            await _stream.Value.WriteAsync(Space, cancel);
+            AppendToBufferAndIncrementPosition(Space, buffer, ref position);
         }
+
+        return position;
+    }
+
+    private int MeasureIdentifierPartLength(byte[] name, byte[] flattenedLabels, CanonicalLabel extraLabel, byte[]? suffix = null)
+    {
+        // We mirror the logic in the Write() call but just measure how many bytes of buffer we need.
+        var length = 0;
+
+        length += name.Length;
+
+        if (suffix != null && suffix.Length > 0)
+        {
+            length += Underscore.Length;
+            length += suffix.Length;
+        }
+
+        if (flattenedLabels.Length > 0 || extraLabel.IsNotEmpty)
+        {
+            length += LeftBrace.Length;
+            if (flattenedLabels.Length > 0)
+            {
+                length += flattenedLabels.Length;
+            }
+
+            // Extra labels go to the end (i.e. they are deepest to inherit from).
+            if (extraLabel.IsNotEmpty)
+            {
+                if (flattenedLabels.Length > 0)
+                {
+                    length += Comma.Length;
+                }
+
+                length += extraLabel.Name.Length;
+                length += Equal.Length;
+                length += Quote.Length;
+
+                if (_expositionFormat == ExpositionFormat.OpenMetricsText)
+                    length += extraLabel.OpenMetrics.Length;
+                else
+                    length += extraLabel.Prometheus.Length;
+
+                length += Quote.Length;
+            }
+
+            length += RightBraceSpace.Length;
+        }
+        else
+        {
+            length += Space.Length;
+        }
+
+        return length;
     }
 
     /// <summary>
@@ -343,7 +601,7 @@ internal sealed class TextSerializer : IMetricsSerializer
             openMetricsBytes = new byte[openMetricsByteCount];
             Array.Copy(prometheusBytes, openMetricsBytes, prometheusByteCount);
 
-            DotZero.CopyTo(openMetricsBytes.AsMemory(prometheusByteCount));
+            DotZero.CopyTo(openMetricsBytes.AsSpan(prometheusByteCount));
         }
         else
         {
