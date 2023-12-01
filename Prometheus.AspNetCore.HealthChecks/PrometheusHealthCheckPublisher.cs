@@ -16,6 +16,8 @@ namespace Prometheus
 
         public Task PublishAsync(HealthReport report, CancellationToken cancellationToken)
         {
+            _checkStatus.Set(HealthStatusToMetricValue(report.Status));
+        
             foreach (var reportEntry in report.Entries)
                 _checkStatus.WithLabels(reportEntry.Key).Set(HealthStatusToMetricValue(reportEntry.Value.Status));
 
