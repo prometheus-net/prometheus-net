@@ -11,31 +11,31 @@ namespace Prometheus;
 /// </remarks>
 internal sealed class TextSerializer : IMetricsSerializer
 {
-    internal static ReadOnlySpan<byte> NewLine => [(byte)'\n'];
-    internal static ReadOnlySpan<byte> Quote => [(byte)'"'];
-    internal static ReadOnlySpan<byte> Equal => [(byte)'='];
-    internal static ReadOnlySpan<byte> Comma => [(byte)','];
-    internal static ReadOnlySpan<byte> Underscore => [(byte)'_'];
-    internal static ReadOnlySpan<byte> LeftBrace => [(byte)'{'];
-    internal static ReadOnlySpan<byte> RightBraceSpace => [(byte)'}', (byte)' '];
-    internal static ReadOnlySpan<byte> Space => [(byte)' '];
-    internal static ReadOnlySpan<byte> SpaceHashSpaceLeftBrace => [(byte)' ', (byte)'#', (byte)' ', (byte)'{'];
-    internal static ReadOnlySpan<byte> PositiveInfinity => [(byte)'+', (byte)'I', (byte)'n', (byte)'f'];
-    internal static ReadOnlySpan<byte> NegativeInfinity => [(byte)'-', (byte)'I', (byte)'n', (byte)'f'];
-    internal static ReadOnlySpan<byte> NotANumber => [(byte)'N', (byte)'a', (byte)'N'];
-    internal static ReadOnlySpan<byte> DotZero => [(byte)'.', (byte)'0'];
-    internal static ReadOnlySpan<byte> FloatPositiveOne => [(byte)'1', (byte)'.', (byte)'0'];
-    internal static ReadOnlySpan<byte> FloatZero => [(byte)'0', (byte)'.', (byte)'0'];
-    internal static ReadOnlySpan<byte> FloatNegativeOne => [(byte)'-', (byte)'1', (byte)'.', (byte)'0'];
-    internal static ReadOnlySpan<byte> IntPositiveOne => [(byte)'1'];
-    internal static ReadOnlySpan<byte> IntZero => [(byte)'0'];
-    internal static ReadOnlySpan<byte> IntNegativeOne => [(byte)'-', (byte)'1'];
-    internal static ReadOnlySpan<byte> HashHelpSpace => [(byte)'#', (byte)' ', (byte)'H', (byte)'E', (byte)'L', (byte)'P', (byte)' '];
-    internal static ReadOnlySpan<byte> NewlineHashTypeSpace => [(byte)'\n', (byte)'#', (byte)' ', (byte)'T', (byte)'Y', (byte)'P', (byte)'E', (byte)' '];
-
-    internal static readonly byte[] UnknownBytes = PrometheusConstants.ExportEncoding.GetBytes("unknown");
-    internal static readonly byte[] EofNewLineBytes = { (byte)'#', (byte)' ', (byte)'E', (byte)'O', (byte)'F', (byte)'\n' };
-    internal static readonly byte[] PositiveInfinityBytes = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
+    internal static readonly byte[] NewLine = [(byte)'\n'];
+    internal static readonly byte[] Quote = [(byte)'"'];
+    internal static readonly byte[] Equal = [(byte)'='];
+    internal static readonly byte[] Comma = [(byte)','];
+    internal static readonly byte[] Underscore = [(byte)'_'];
+    internal static readonly byte[] LeftBrace = [(byte)'{'];
+    internal static readonly byte[] RightBraceSpace = "} "u8.ToArray();
+    internal static readonly byte[] Space = [(byte)' '];
+    internal static readonly byte[] SpaceHashSpaceLeftBrace = " # {"u8.ToArray();
+    internal static readonly byte[] PositiveInfinity = "+Inf"u8.ToArray();
+    internal static readonly byte[] NegativeInfinity = "-Inf"u8.ToArray();
+    internal static readonly byte[] NotANumber = "NaN"u8.ToArray();
+    internal static readonly byte[] DotZero = ".0"u8.ToArray();
+    internal static readonly byte[] FloatPositiveOne = "1.0"u8.ToArray();
+    internal static readonly byte[] FloatZero = "0.0"u8.ToArray();
+    internal static readonly byte[] FloatNegativeOne = "-1.0"u8.ToArray();
+    internal static readonly byte[] IntPositiveOne = "1"u8.ToArray();
+    internal static readonly byte[] IntZero = "0"u8.ToArray();
+    internal static readonly byte[] IntNegativeOne = "-1"u8.ToArray();
+    internal static readonly byte[] EofNewLine = "# EOF\n"u8.ToArray();
+    internal static readonly byte[] HashHelpSpace = "# HELP "u8.ToArray();
+    internal static readonly byte[] NewlineHashTypeSpace = "\n# TYPE "u8.ToArray();
+    internal static readonly byte[] UnknownBytes = "unknown"u8.ToArray();
+    internal static readonly byte[] EofNewLineBytes = "# EOF\n"u8.ToArray();
+    internal static readonly byte[] PositiveInfinityBytes = "+Inf"u8.ToArray();
 
     internal static readonly Dictionary<MetricType, byte[]> MetricTypeToBytes = new()
     {
