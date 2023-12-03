@@ -121,9 +121,6 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     internal void RecordExemplar(Exemplar exemplar, ref ObservedExemplar storage, double observedValue)
     {
-        if (exemplar.Length == 0)
-            return;
-
         exemplar.MarkAsConsumed();
 
         // We do the "is allowed" check only if we really have an exemplar to record, to minimize the performance impact on users who do not use exemplars.

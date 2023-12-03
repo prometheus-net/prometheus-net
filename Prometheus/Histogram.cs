@@ -203,7 +203,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
             _bucketCounts[bucketIndex].Add(count);
 
-            if (exemplar != null)
+            if (exemplar?.Length > 0)
                 RecordExemplar(exemplar, ref _exemplars[bucketIndex], val);
 
             _sum.Add(val * count);
