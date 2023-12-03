@@ -33,16 +33,16 @@ internal sealed class TextSerializer : IMetricsSerializer
     internal static ReadOnlySpan<byte> HashHelpSpace => [(byte)'#', (byte)' ', (byte)'H', (byte)'E', (byte)'L', (byte)'P', (byte)' '];
     internal static ReadOnlySpan<byte> NewlineHashTypeSpace => [(byte)'\n', (byte)'#', (byte)' ', (byte)'T', (byte)'Y', (byte)'P', (byte)'E', (byte)' '];
 
-    internal static readonly byte[] UnknownBytes = PrometheusConstants.ExportEncoding.GetBytes("unknown");
+    internal static readonly byte[] UnknownBytes = "unknown"u8.ToArray();
     internal static readonly byte[] EofNewLineBytes = [(byte)'#', (byte)' ', (byte)'E', (byte)'O', (byte)'F', (byte)'\n'];
     internal static readonly byte[] PositiveInfinityBytes = [(byte)'+', (byte)'I', (byte)'n', (byte)'f'];
 
     internal static readonly Dictionary<MetricType, byte[]> MetricTypeToBytes = new()
     {
-        { MetricType.Gauge, PrometheusConstants.ExportEncoding.GetBytes("gauge") },
-        { MetricType.Counter, PrometheusConstants.ExportEncoding.GetBytes("counter") },
-        { MetricType.Histogram, PrometheusConstants.ExportEncoding.GetBytes("histogram") },
-        { MetricType.Summary, PrometheusConstants.ExportEncoding.GetBytes("summary") },
+        { MetricType.Gauge, "gauge"u8.ToArray() },
+        { MetricType.Counter, "counter"u8.ToArray() },
+        { MetricType.Histogram, "histogram"u8.ToArray() },
+        { MetricType.Summary, "summary"u8.ToArray() },
     };
 
     private static readonly char[] DotEChar = ['.', 'e'];

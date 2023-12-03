@@ -55,7 +55,7 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
     // These labels go together with the objectives, so we do not need to allocate them for every child.
     private readonly CanonicalLabel[] _quantileLabels;
 
-    private static readonly byte[] QuantileLabelName = PrometheusConstants.ExportEncoding.GetBytes("quantile");
+    private static readonly byte[] QuantileLabelName = "quantile"u8.ToArray();
 
     internal Summary(
         string name,
@@ -141,8 +141,8 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
 
         private readonly Summary _parent;
 
-        private static readonly byte[] SumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
-        private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
+        private static readonly byte[] SumSuffix = "sum"u8.ToArray();
+        private static readonly byte[] CountSuffix = "count"u8.ToArray();
 
 #if NET
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
