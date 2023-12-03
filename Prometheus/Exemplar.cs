@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.ObjectPool;
 
@@ -45,6 +46,7 @@ public sealed class Exemplar
         /// The string is expected to only contain runes in the ASCII range, runes outside the ASCII range will get replaced
         /// with placeholders. This constraint may be relaxed with future versions.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public LabelPair WithValue(string value)
         {
             static bool IsAscii(ReadOnlySpan<char> chars)
@@ -115,6 +117,7 @@ public sealed class Exemplar
         return Key(key).WithValue(value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4, in LabelPair labelPair5, in LabelPair labelPair6)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 6);
@@ -128,6 +131,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4, in LabelPair labelPair5)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 5);
@@ -140,6 +144,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 4);
@@ -151,6 +156,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 3);
@@ -161,6 +167,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 2);
@@ -170,6 +177,7 @@ public sealed class Exemplar
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 1);
@@ -180,6 +188,7 @@ public sealed class Exemplar
 
     internal ref LabelPair this[int index]
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
             if (index == 0) return ref LabelPair1;
@@ -225,6 +234,7 @@ public sealed class Exemplar
         Length = length;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Update(int length)
     {
         Length = length;
@@ -245,16 +255,15 @@ public sealed class Exemplar
 
     private static readonly ObjectPool<Exemplar> ExemplarPool = ObjectPool.Create<Exemplar>();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Exemplar AllocateFromPool(int length)
     {
-        if (length < 1)
-            throw new ArgumentOutOfRangeException(nameof(length), $"{nameof(Exemplar)} key-value pair length must be at least 1 when constructing a pool-backed value.");
-
         var instance = ExemplarPool.Get();
         instance.Update(length);
         return instance;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ReturnToPoolIfNotEmpty()
     {
         if (Length == 0)
