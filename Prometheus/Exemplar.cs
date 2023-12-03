@@ -1,7 +1,6 @@
-﻿#if NET6_0_OR_GREATER
-using System.Buffers;
+﻿using System.Buffers;
 using System.Diagnostics;
-#endif
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.ObjectPool;
 
@@ -24,20 +23,20 @@ public sealed class Exemplar
     /// <summary>
     /// Indicates that no exemplar is to be recorded for a given observation.
     /// </summary>
-    public static readonly Exemplar None = new Exemplar(Array.Empty<LabelPair>(), 0);
+    public static readonly Exemplar None = new(0);
 
     /// <summary>
     /// An exemplar label key. For optimal performance, create it once and reuse it forever.
     /// </summary>
     public readonly struct LabelKey
     {
-        internal LabelKey(byte[] key, int runeCount)
+        internal LabelKey(byte[] key)
         {
             Bytes = key;
-            RuneCount = runeCount;
         }
 
-        internal int RuneCount { get; }
+        // We only support ASCII here, so rune count always matches byte count.
+        internal int RuneCount => Bytes.Length;
 
         internal byte[] Bytes { get; }
 
@@ -47,10 +46,29 @@ public sealed class Exemplar
         /// The string is expected to only contain runes in the ASCII range, runes outside the ASCII range will get replaced
         /// with placeholders. This constraint may be relaxed with future versions.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public LabelPair WithValue(string value)
         {
-            var valueBytes = Encoding.ASCII.GetBytes(value);
-            return new LabelPair(Bytes, valueBytes, RuneCount + valueBytes.Length);
+            static bool IsAscii(ReadOnlySpan<char> chars)
+            {
+                for (var i = 0; i < chars.Length; i++)
+                    if (chars[i] > 127)
+                        return false;
+
+                return true;
+            }
+
+            if (!IsAscii(value.AsSpan()))
+            {
+                // We believe that approximately 100% of use cases only consist of ASCII characters.
+                // That being said, we do not want to throw an exception here as the value may be coming from external sources
+                // that calling code has little control over. Therefore, we just replace such characters with placeholders.
+                // This matches the default behavior of Encoding.ASCII.GetBytes() - it replaces non-ASCII characters with '?'.
+                // As this is a highly theoretical case, we do an inefficient conversion here using the built-in encoder.
+                value = Encoding.ASCII.GetString(Encoding.ASCII.GetBytes(value));
+            }
+
+            return new LabelPair(Bytes, value);
         }
     }
 
@@ -60,16 +78,19 @@ public sealed class Exemplar
     /// </summary>
     public readonly struct LabelPair
     {
-        internal LabelPair(byte[] keyBytes, byte[] valueBytes, int runeCount)
+        internal LabelPair(byte[] keyBytes, string value)
         {
             KeyBytes = keyBytes;
-            ValueBytes = valueBytes;
-            RuneCount = runeCount;
+            Value = value;
         }
 
-        internal int RuneCount { get; }
+        internal int RuneCount => KeyBytes.Length + Value.Length;
         internal byte[] KeyBytes { get; }
-        internal byte[] ValueBytes { get; }
+
+        // We keep the value as a string because it typically starts out its life as a string
+        // and we want to avoid paying the cost of converting it to a byte array until we serialize it.
+        // If we record many exemplars then we may, in fact, never serialize most of them because they get replaced.
+        internal string Value { get; }
     }
 
     /// <summary>
@@ -79,12 +100,12 @@ public sealed class Exemplar
     public static LabelKey Key(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
-            throw new ArgumentException("empty key");
+            throw new ArgumentException("empty key", nameof(key));
 
         Collector.ValidateLabelName(key);
 
         var asciiBytes = Encoding.ASCII.GetBytes(key);
-        return new LabelKey(asciiBytes, asciiBytes.Length);
+        return new LabelKey(asciiBytes);
     }
 
     /// <summary>
@@ -96,67 +117,88 @@ public sealed class Exemplar
         return Key(key).WithValue(value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4, in LabelPair labelPair5, in LabelPair labelPair6)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 6);
-        exemplar.Buffer[0] = labelPair1;
-        exemplar.Buffer[1] = labelPair2;
-        exemplar.Buffer[2] = labelPair3;
-        exemplar.Buffer[3] = labelPair4;
-        exemplar.Buffer[4] = labelPair5;
-        exemplar.Buffer[5] = labelPair6;
+        exemplar.LabelPair1 = labelPair1;
+        exemplar.LabelPair2 = labelPair2;
+        exemplar.LabelPair3 = labelPair3;
+        exemplar.LabelPair4 = labelPair4;
+        exemplar.LabelPair5 = labelPair5;
+        exemplar.LabelPair6 = labelPair6;
 
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4, in LabelPair labelPair5)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 5);
-        exemplar.Buffer[0] = labelPair1;
-        exemplar.Buffer[1] = labelPair2;
-        exemplar.Buffer[2] = labelPair3;
-        exemplar.Buffer[3] = labelPair4;
-        exemplar.Buffer[4] = labelPair5;
+        exemplar.LabelPair1 = labelPair1;
+        exemplar.LabelPair2 = labelPair2;
+        exemplar.LabelPair3 = labelPair3;
+        exemplar.LabelPair4 = labelPair4;
+        exemplar.LabelPair5 = labelPair5;
 
         return exemplar;
     }
-    
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3, in LabelPair labelPair4)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 4);
-        exemplar.Buffer[0] = labelPair1;
-        exemplar.Buffer[1] = labelPair2;
-        exemplar.Buffer[2] = labelPair3;
-        exemplar.Buffer[3] = labelPair4;
+        exemplar.LabelPair1 = labelPair1;
+        exemplar.LabelPair2 = labelPair2;
+        exemplar.LabelPair3 = labelPair3;
+        exemplar.LabelPair4 = labelPair4;
 
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2, in LabelPair labelPair3)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 3);
-        exemplar.Buffer[0] = labelPair1;
-        exemplar.Buffer[1] = labelPair2;
-        exemplar.Buffer[2] = labelPair3;
+        exemplar.LabelPair1 = labelPair1;
+        exemplar.LabelPair2 = labelPair2;
+        exemplar.LabelPair3 = labelPair3;
 
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1, in LabelPair labelPair2)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 2);
-        exemplar.Buffer[0] = labelPair1;
-        exemplar.Buffer[1] = labelPair2;
+        exemplar.LabelPair1 = labelPair1;
+        exemplar.LabelPair2 = labelPair2;
 
         return exemplar;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Exemplar From(in LabelPair labelPair1)
     {
         var exemplar = Exemplar.AllocateFromPool(length: 1);
-        exemplar.Buffer[0] = labelPair1;
+        exemplar.LabelPair1 = labelPair1;
 
         return exemplar;
+    }
+
+    internal ref LabelPair this[int index]
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get
+        {
+            if (index == 0) return ref LabelPair1;
+            if (index == 1) return ref LabelPair2;
+            if (index == 2) return ref LabelPair3;
+            if (index == 3) return ref LabelPair4;
+            if (index == 4) return ref LabelPair5;
+            if (index == 5) return ref LabelPair6;
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
     }
 
     // Based on https://opentelemetry.io/docs/reference/specification/compatibility/prometheus_and_openmetrics/
@@ -171,6 +213,7 @@ public sealed class Exemplar
         var activity = Activity.Current;
         if (activity != null)
         {
+            // These values already exist as strings inside the Activity logic, so there is no string allocation happening here.
             var traceIdLabel = traceIdKey.WithValue(activity.TraceId.ToString());
             var spanIdLabel = spanIdKey.WithValue(activity.SpanId.ToString());
 
@@ -184,62 +227,49 @@ public sealed class Exemplar
 
     public Exemplar()
     {
-        Buffer = Array.Empty<LabelPair>();
     }
 
-    private Exemplar(LabelPair[] buffer, int length)
+    private Exemplar(int length)
     {
-        Buffer = buffer;
         Length = length;
     }
 
-    internal void Update(LabelPair[] buffer, int length)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Update(int length)
     {
-        Buffer = buffer;
         Length = length;
         _consumed = false;
     }
 
     /// <summary>
-    /// The buffer containing the label pairs. Might not be fully filled!
-    /// </summary>
-    internal LabelPair[] Buffer { get; private set; }
-
-    /// <summary>
-    /// Number of label pairs from the buffer to use.
+    /// Number of label pairs in use.
     /// </summary>
     internal int Length { get; private set; }
 
+    internal LabelPair LabelPair1;
+    internal LabelPair LabelPair2;
+    internal LabelPair LabelPair3;
+    internal LabelPair LabelPair4;
+    internal LabelPair LabelPair5;
+    internal LabelPair LabelPair6;
+
     private static readonly ObjectPool<Exemplar> ExemplarPool = ObjectPool.Create<Exemplar>();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Exemplar AllocateFromPool(int length)
     {
-        if (length < 1)
-            throw new ArgumentOutOfRangeException(nameof(length), $"{nameof(Exemplar)} key-value pair length must be at least 1 when constructing a pool-backed value.");
-
-#if NET
-        var buffer = ArrayPool<LabelPair>.Shared.Rent(length);
-#else
-        // .NET Framework does not support ArrayPool, so we just allocate explicit arrays to keep it simple. Migrate to .NET Core to get better performance.
-        var buffer = new LabelPair[length];
-#endif
-
         var instance = ExemplarPool.Get();
-        instance.Update(buffer, length);
+        instance.Update(length);
         return instance;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ReturnToPoolIfNotEmpty()
     {
         if (Length == 0)
             return; // Only the None instance can have a length of 0.
 
-#if NET
-        ArrayPool<LabelPair>.Shared.Return(Buffer);
-#endif
-
         Length = 0;
-        Buffer = Array.Empty<LabelPair>();
 
         ExemplarPool.Return(this);
     }
@@ -263,7 +293,12 @@ public sealed class Exemplar
             throw new InvalidOperationException($"An instance of {nameof(Exemplar)} cannot be cloned after it has already been used.");
 
         var clone = AllocateFromPool(Length);
-        Array.Copy(Buffer, clone.Buffer, Length);
+        clone.LabelPair1 = LabelPair1;
+        clone.LabelPair2 = LabelPair2;
+        clone.LabelPair3 = LabelPair3;
+        clone.LabelPair4 = LabelPair4;
+        clone.LabelPair5 = LabelPair5;
+        clone.LabelPair6 = LabelPair6;
         return clone;
     }
 }

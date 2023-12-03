@@ -57,8 +57,8 @@ public sealed class CollectorRegistry : ICollectorRegistry
         _beforeCollectAsyncCallbacks.Add(callback);
     }
 
-    private readonly ConcurrentBag<Action> _beforeCollectCallbacks = new ConcurrentBag<Action>();
-    private readonly ConcurrentBag<Func<CancellationToken, Task>> _beforeCollectAsyncCallbacks = new ConcurrentBag<Func<CancellationToken, Task>>();
+    private readonly ConcurrentBag<Action> _beforeCollectCallbacks = [];
+    private readonly ConcurrentBag<Func<CancellationToken, Task>> _beforeCollectAsyncCallbacks = [];
     #endregion
 
     #region Static labels
@@ -115,7 +115,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
     }
 
     private LabelSequence _staticLabels;
-    private readonly ReaderWriterLockSlim _staticLabelsLock = new ReaderWriterLockSlim();
+    private readonly ReaderWriterLockSlim _staticLabelsLock = new();
 
     internal LabelSequence GetStaticLabels()
     {
@@ -237,7 +237,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
     /// </summary>
     private Action? _beforeFirstCollectCallback;
     private bool _hasPerformedFirstCollect;
-    private readonly object _firstCollectLock = new object();
+    private readonly object _firstCollectLock = new();
 
     /// <summary>
     /// Collects metrics from all the registered collectors and sends them to the specified serializer.
@@ -327,13 +327,13 @@ public sealed class CollectorRegistry : ICollectorRegistry
     {
         var factory = Metrics.WithCustomRegistry(this);
 
-        _metricFamilies = factory.CreateGauge("prometheus_net_metric_families", "Number of metric families currently registered.", labelNames: new[] { MetricTypeDebugLabel });
-        _metricInstances = factory.CreateGauge("prometheus_net_metric_instances", "Number of metric instances currently registered across all metric families.", labelNames: new[] { MetricTypeDebugLabel });
-        _metricTimeseries = factory.CreateGauge("prometheus_net_metric_timeseries", "Number of metric timeseries currently generated from all metric instances.", labelNames: new[] { MetricTypeDebugLabel });
+        _metricFamilies = factory.CreateGauge("prometheus_net_metric_families", "Number of metric families currently registered.", labelNames: [MetricTypeDebugLabel]);
+        _metricInstances = factory.CreateGauge("prometheus_net_metric_instances", "Number of metric instances currently registered across all metric families.", labelNames: [MetricTypeDebugLabel]);
+        _metricTimeseries = factory.CreateGauge("prometheus_net_metric_timeseries", "Number of metric timeseries currently generated from all metric instances.", labelNames: [MetricTypeDebugLabel]);
 
-        _metricFamiliesPerType = new();
-        _metricInstancesPerType = new();
-        _metricTimeseriesPerType = new();
+        _metricFamiliesPerType = [];
+        _metricInstancesPerType = [];
+        _metricTimeseriesPerType = [];
 
         foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
         {

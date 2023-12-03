@@ -14,7 +14,7 @@ public sealed class Gauge : Collector<Gauge.Child>, IGauge
         private protected override ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
             return serializer.WriteMetricPointAsync(
-                Parent.NameBytes, FlattenedLabelsBytes, CanonicalLabel.Empty, cancel, Value, ObservedExemplar.Empty);
+                Parent.NameBytes, FlattenedLabelsBytes, CanonicalLabel.Empty, Value, ObservedExemplar.Empty, null, cancel);
         }
 
         public void Inc(double increment = 1)

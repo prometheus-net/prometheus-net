@@ -262,12 +262,11 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
     {
         int hashCode = 0;
 
-        var enumerator = GetEnumerator();
-        while (enumerator.MoveNext())
+        foreach (var item in this)
         {
             unchecked
             {
-                hashCode ^= (enumerator.Current.GetHashCode() * 397);
+                hashCode ^= (item.GetHashCode() * 397);
             }
         }
 
@@ -276,10 +275,9 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
     public bool Contains(string value)
     {
-        var enumerator = GetEnumerator();
-        while (enumerator.MoveNext())
+        foreach (var item in this)
         {
-            if (enumerator.Current.Equals(value, StringComparison.Ordinal))
+            if (item.Equals(value, StringComparison.Ordinal))
                 return true;
         }
 
@@ -293,13 +291,10 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
     {
         var result = new string[Length];
 
-        var enumerator = GetEnumerator();
         var index = 0;
 
-        while (enumerator.MoveNext())
-        {
-            result[index++] = enumerator.Current;
-        }
+        foreach (var item in this)
+            result[index++] = item;
 
         return result;
     }

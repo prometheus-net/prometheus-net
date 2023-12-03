@@ -45,7 +45,7 @@ internal sealed class TextSerializer : IMetricsSerializer
         { MetricType.Summary, PrometheusConstants.ExportEncoding.GetBytes("summary") },
     };
 
-    private static readonly char[] DotEChar = { '.', 'e' };
+    private static readonly char[] DotEChar = ['.', 'e'];
 
     public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
@@ -169,7 +169,7 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
-        CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null)
+        double value, ObservedExemplar exemplar, byte[]? suffix, CancellationToken cancel)
     {
         // This is a max length because we do not know ahead of time how many bytes the actual value will consume.
         var bufferMaxLength = MeasureIdentifierPartLength(name, flattenedLabels, canonicalLabel, suffix) + MeasureValueMaxLength(value) + NewLine.Length;
@@ -204,7 +204,7 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
-        CancellationToken cancel, long value, ObservedExemplar exemplar, byte[]? suffix = null)
+        long value, ObservedExemplar exemplar, byte[]? suffix, CancellationToken cancel)
     {
         // This is a max length because we do not know ahead of time how many bytes the actual value will consume.
         var bufferMaxLength = MeasureIdentifierPartLength(name, flattenedLabels, canonicalLabel, suffix) + MeasureValueMaxLength(value) + NewLine.Length;
@@ -242,12 +242,14 @@ internal sealed class TextSerializer : IMetricsSerializer
         var position = 0;
 
         AppendToBufferAndIncrementPosition(SpaceHashSpaceLeftBrace, buffer, ref position);
+
         for (var i = 0; i < exemplar.Labels!.Length; i++)
         {
             if (i > 0)
                 AppendToBufferAndIncrementPosition(Comma, buffer, ref position);
 
-            position += WriteExemplarLabel(buffer[position..], exemplar.Labels!.Buffer[i].KeyBytes, exemplar.Labels!.Buffer[i].ValueBytes);
+            ref var labelPair = ref exemplar.Labels[i];
+            position += WriteExemplarLabel(buffer[position..], labelPair.KeyBytes, labelPair.Value);
         }
 
         AppendToBufferAndIncrementPosition(RightBraceSpace, buffer, ref position);
@@ -264,12 +266,14 @@ internal sealed class TextSerializer : IMetricsSerializer
         var length = 0;
 
         length += SpaceHashSpaceLeftBrace.Length;
+
         for (var i = 0; i < exemplar.Labels!.Length; i++)
         {
             if (i > 0)
                 length += Comma.Length;
 
-            length += MeasureExemplarLabelLength(exemplar.Labels!.Buffer[i].KeyBytes, exemplar.Labels!.Buffer[i].ValueBytes);
+            ref var labelPair = ref exemplar.Labels[i];
+            length += MeasureExemplarLabelMaxLength(labelPair.KeyBytes, labelPair.Value);
         }
 
         length += RightBraceSpace.Length;
@@ -280,20 +284,20 @@ internal sealed class TextSerializer : IMetricsSerializer
         return length;
     }
 
-    private int WriteExemplarLabel(Span<byte> buffer, byte[] label, byte[] value)
+    private static int WriteExemplarLabel(Span<byte> buffer, byte[] label, string value)
     {
         var position = 0;
 
         AppendToBufferAndIncrementPosition(label, buffer, ref position);
         AppendToBufferAndIncrementPosition(Equal, buffer, ref position);
         AppendToBufferAndIncrementPosition(Quote, buffer, ref position);
-        AppendToBufferAndIncrementPosition(value, buffer, ref position);
+        position += PrometheusConstants.ExemplarEncoding.GetBytes(value.AsSpan(), buffer[position..]);
         AppendToBufferAndIncrementPosition(Quote, buffer, ref position);
 
         return position;
     }
 
-    private int MeasureExemplarLabelLength(byte[] label, byte[] value)
+    private static int MeasureExemplarLabelMaxLength(byte[] label, string value)
     {
         // We mirror the logic in the Write() call but just measure how many bytes of buffer we need.
         var length = 0;
@@ -301,7 +305,7 @@ internal sealed class TextSerializer : IMetricsSerializer
         length += label.Length;
         length += Equal.Length;
         length += Quote.Length;
-        length += value.Length;
+        length += PrometheusConstants.ExemplarEncoding.GetMaxByteCount(value.Length);
         length += Quote.Length;
 
         return length;
@@ -444,7 +448,7 @@ internal sealed class TextSerializer : IMetricsSerializer
         from.CopyTo(to[position..]);
         position += from.Length;
     }
-
+    
     private static void ValidateBufferLengthAndPosition(int bufferLength, int position)
     {
         if (position != bufferLength)

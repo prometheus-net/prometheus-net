@@ -1,18 +1,17 @@
 ﻿#if NET
 using System.Diagnostics;
 
-namespace Prometheus
+namespace Prometheus;
+
+public sealed class DiagnosticSourceAdapterOptions
 {
-    public sealed class DiagnosticSourceAdapterOptions
-    {
-        internal static readonly DiagnosticSourceAdapterOptions Default = new DiagnosticSourceAdapterOptions();
+    internal static readonly DiagnosticSourceAdapterOptions Default = new();
 
-        /// <summary>
-        /// By default we subscribe to all listeners but this allows you to filter by listener.
-        /// </summary>
-        public Func<DiagnosticListener, bool> ListenerFilterPredicate = _ => true;
+    /// <summary>
+    /// By default we subscribe to all listeners but this allows you to filter by listener.
+    /// </summary>
+    public Func<DiagnosticListener, bool> ListenerFilterPredicate = _ => true;
 
-        public CollectorRegistry Registry = Metrics.DefaultRegistry;
-    }
+    public CollectorRegistry Registry = Metrics.DefaultRegistry;
 }
 #endif

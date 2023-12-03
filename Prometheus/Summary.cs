@@ -189,18 +189,18 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
                     Parent.NameBytes,
                     FlattenedLabelsBytes,
                     CanonicalLabel.Empty,
-                    cancel,
                     sum,
                     ObservedExemplar.Empty,
-                    suffix: SumSuffix);
+                    SumSuffix,
+                    cancel);
                 await serializer.WriteMetricPointAsync(
                     Parent.NameBytes,
                     FlattenedLabelsBytes,
                     CanonicalLabel.Empty,
-                    cancel,
                     count,
                     ObservedExemplar.Empty,
-                    suffix: CountSuffix);
+                    CountSuffix,
+                    cancel);
 
                 for (var i = 0; i < _parent._objectives.Count; i++)
                 {
@@ -208,9 +208,10 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
                         Parent.NameBytes,
                         FlattenedLabelsBytes,
                         _parent._quantileLabels[i],
-                        cancel,
                         values[i].value,
-                        ObservedExemplar.Empty);
+                        ObservedExemplar.Empty,
+                        null,
+                        cancel);
                 }
             }
             finally
@@ -283,9 +284,7 @@ public sealed class Summary : Collector<Summary.Child>, ISummary
             if (!_coldBuf.IsEmpty)
                 throw new InvalidOperationException("coldBuf is not empty");
 
-            var temp = _hotBuf;
-            _hotBuf = _coldBuf;
-            _coldBuf = temp;
+            (_coldBuf, _hotBuf) = (_hotBuf, _coldBuf);
 
             // hotBuf is now empty and gets new expiration set.
             while (nowUnixtimeSeconds > _hotBufExpUnixtimeSeconds)
