@@ -153,7 +153,7 @@ internal sealed class TextSerializer : IMetricsSerializer
         {
             if (i > 0)
                 await _stream.Value.WriteAsync(Comma, 0, Comma.Length, cancel);
-            await WriteLabel(exemplar.Labels!.Buffer[i].KeyBytes, exemplar.Labels!.Buffer[i].ValueBytes, cancel);
+            await WriteLabel(exemplar.Labels![i].KeyBytes, PrometheusConstants.ExemplarEncoding.GetBytes(exemplar.Labels![i].Value), cancel);
         }
 
         await _stream.Value.WriteAsync(RightBraceSpace, 0, RightBraceSpace.Length, cancel);

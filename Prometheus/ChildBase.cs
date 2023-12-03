@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Prometheus;
 
 /// <summary>
@@ -145,7 +147,10 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     protected Exemplar GetDefaultExemplar(double value)
     {
-        return _exemplarBehavior.DefaultExemplarProvider?.Invoke(Parent, value) ?? Exemplar.None;
+        if (_exemplarBehavior.DefaultExemplarProvider == null)
+            return Exemplar.None;
+
+        return _exemplarBehavior.DefaultExemplarProvider(Parent, value);
     }
 
     // May be replaced in test code.
