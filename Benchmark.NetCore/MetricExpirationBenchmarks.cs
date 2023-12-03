@@ -7,7 +7,9 @@ namespace Benchmark.NetCore;
 /// Here we try to ensure that creating/using expiring metrics does not impose too heavy of a performance burden or create easily identifiable memory leaks.
 /// </summary>
 [MemoryDiagnoser]
-//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
+// This seems to need a lot of warmup to stabilize.
+[WarmupCount(50)]
+//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.CpuSampling)]
 public class MetricExpirationBenchmarks
 {
     /// <summary>
@@ -48,6 +50,9 @@ public class MetricExpirationBenchmarks
     private CollectorRegistry _registry;
     private IManagedLifetimeMetricFactory _factory;
 
+    // We use the same strings both for the names and the values.
+    private static readonly string[] _labels = ["foo", "bar", "baz"];
+
     [IterationSetup]
     public void Setup()
     {
@@ -78,8 +83,16 @@ public class MetricExpirationBenchmarks
         }
     }
 
-    // We use the same strings both for the names and the values.
-    private static readonly string[] _labels = new[] { "foo", "bar", "baz" };
+    [IterationCleanup]
+    public void Cleanup()
+    {
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var managedLifetimeCounter = (ManagedLifetimeMetricHandle<Counter.Child, ICounter>)_factory.CreateCounter(_metricNames[i], _help, _labels);
+            // Ensure we do not slow down the next iteration by having the timer keep a bunch of references alive.
+            managedLifetimeCounter.CancelReaper();
+        }
+    }
 
     [Benchmark]
     public void CreateAndUse_AutoLease()
