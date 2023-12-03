@@ -17,30 +17,28 @@ internal sealed class TextSerializer : IMetricsSerializer
     internal static readonly byte[] RightBraceSpace = [(byte)'}', (byte)' '];
     internal static readonly byte[] Space = [(byte)' '];
     internal static readonly byte[] SpaceHashSpaceLeftBrace = [(byte)' ', (byte)'#', (byte)' ', (byte)'{'];
-    internal static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
-    internal static readonly byte[] NegativeInfinity = PrometheusConstants.ExportEncoding.GetBytes("-Inf");
-    internal static readonly byte[] NotANumber = PrometheusConstants.ExportEncoding.GetBytes("NaN");
-    internal static readonly byte[] DotZero = PrometheusConstants.ExportEncoding.GetBytes(".0");
-    internal static readonly byte[] FloatPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1.0");
-    internal static readonly byte[] FloatZero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
-    internal static readonly byte[] FloatNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
-    internal static readonly byte[] IntPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1");
-    internal static readonly byte[] IntZero = PrometheusConstants.ExportEncoding.GetBytes("0");
-    internal static readonly byte[] IntNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1");
-    internal static readonly byte[] EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
-    internal static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
-    internal static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
+    internal static readonly byte[] PositiveInfinity = "+Inf"u8.ToArray();
+    internal static readonly byte[] NegativeInfinity = "-Inf"u8.ToArray();
+    internal static readonly byte[] NotANumber = "NaN"u8.ToArray();
+    internal static readonly byte[] DotZero = ".0"u8.ToArray();
+    internal static readonly byte[] FloatPositiveOne = "1.0"u8.ToArray();
+    internal static readonly byte[] FloatZero = "0.0"u8.ToArray();
+    internal static readonly byte[] FloatNegativeOne = "-1.0"u8.ToArray();
+    internal static readonly byte[] IntPositiveOne = "1"u8.ToArray();
+    internal static readonly byte[] IntZero = "0"u8.ToArray();
+    internal static readonly byte[] IntNegativeOne = "-1"u8.ToArray();
+    internal static readonly byte[] EofNewLine = "# EOF\n"u8.ToArray();
+    internal static readonly byte[] HashHelpSpace = "# HELP "u8.ToArray();
+    internal static readonly byte[] NewlineHashTypeSpace = "\n# TYPE "u8.ToArray();
 
-    internal static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
-
-    internal static readonly byte[] PositiveInfinityBytes = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
+    internal static readonly byte[] Unknown = "unknown"u8.ToArray();
 
     internal static readonly Dictionary<MetricType, byte[]> MetricTypeToBytes = new()
     {
-        { MetricType.Gauge, PrometheusConstants.ExportEncoding.GetBytes("gauge") },
-        { MetricType.Counter, PrometheusConstants.ExportEncoding.GetBytes("counter") },
-        { MetricType.Histogram, PrometheusConstants.ExportEncoding.GetBytes("histogram") },
-        { MetricType.Summary, PrometheusConstants.ExportEncoding.GetBytes("summary") },
+        { MetricType.Gauge, "gauge"u8.ToArray() },
+        { MetricType.Counter, "counter"u8.ToArray() },
+        { MetricType.Histogram, "histogram"u8.ToArray() },
+        { MetricType.Summary, "summary"u8.ToArray() },
     };
 
     private static readonly char[] DotEChar = ['.', 'e'];
@@ -298,7 +296,7 @@ internal sealed class TextSerializer : IMetricsSerializer
     internal static CanonicalLabel EncodeValueAsCanonicalLabel(byte[] name, double value)
     {
         if (double.IsPositiveInfinity(value))
-            return new CanonicalLabel(name, PositiveInfinityBytes, PositiveInfinityBytes);
+            return new CanonicalLabel(name, PositiveInfinity, PositiveInfinity);
 
         var valueAsString = value.ToString("g", CultureInfo.InvariantCulture);
         var prometheusBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString);

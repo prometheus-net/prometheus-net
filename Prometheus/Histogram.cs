@@ -31,7 +31,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
     // These labels go together with the buckets, so we do not need to allocate them for every child.
     private readonly CanonicalLabel[] _leLabels;
 
-    private static readonly byte[] LeLabelName = PrometheusConstants.ExportEncoding.GetBytes("le");
+    private static readonly byte[] LeLabelName = "le"u8.ToArray();
 
     internal Histogram(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, double[]? buckets, ExemplarBehavior exemplarBehavior)
         : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue, exemplarBehavior)
@@ -118,9 +118,9 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
         private ThreadSafeDouble _sum = new(0.0D);
         private readonly ThreadSafeLong[] _bucketCounts;
-        private static readonly byte[] SumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
-        private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
-        private static readonly byte[] BucketSuffix = PrometheusConstants.ExportEncoding.GetBytes("bucket");
+        private static readonly byte[] SumSuffix = "sum"u8.ToArray();
+        private static readonly byte[] CountSuffix = "count"u8.ToArray();
+        private static readonly byte[] BucketSuffix = "bucket"u8.ToArray();
         private readonly ObservedExemplar[] _exemplars;
 
 #if NET
