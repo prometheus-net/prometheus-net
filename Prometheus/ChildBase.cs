@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace Prometheus;
 
 /// <summary>
@@ -67,7 +65,7 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     internal byte[] FlattenedLabelsBytes => NonCapturingLazyInitializer.EnsureInitialized(ref _flattenedLabelsBytes, this, _assignFlattenedLabelsBytesFunc)!;
     private byte[]? _flattenedLabelsBytes;
-    private static readonly Action<ChildBase> _assignFlattenedLabelsBytesFunc;
+    private static readonly Action<ChildBase> _assignFlattenedLabelsBytesFunc = AssignFlattenedLabelsBytes;
     private static void AssignFlattenedLabelsBytes(ChildBase instance) => instance._flattenedLabelsBytes = instance.FlattenedLabels.Serialize();
 
     internal readonly Collector Parent;
@@ -96,7 +94,7 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     /// Borrowing ensures that no other thread is modifying it (as exemplars are not thread-safe).
     /// You would typically want to do this while serializing the exemplar.
     /// </summary>
-    internal ObservedExemplar BorrowExemplar(ref ObservedExemplar storage)
+    internal static ObservedExemplar BorrowExemplar(ref ObservedExemplar storage)
     {
         return Interlocked.Exchange(ref storage, ObservedExemplar.Empty);
     }
@@ -104,7 +102,7 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     /// <summary>
     /// Returns a borrowed exemplar to storage or the object pool, with correct handling for cases where it is Empty.
     /// </summary>
-    internal void ReturnBorrowedExemplar(ref ObservedExemplar storage, ObservedExemplar borrowed)
+    internal static void ReturnBorrowedExemplar(ref ObservedExemplar storage, ObservedExemplar borrowed)
     {
         if (borrowed == ObservedExemplar.Empty)
             return;
@@ -171,6 +169,9 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     protected void MarkNewExemplarHasBeenRecorded()
     {
+        if (_exemplarBehavior.NewExemplarMinInterval <= TimeSpan.Zero)
+            return; // No need to record the timestamp if we are not enforcing a minimum interval.
+
         _exemplarLastRecordedTimestamp.Value = ExemplarRecordingTimestampProvider();
     }
 
@@ -180,8 +181,6 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     static ChildBase()
     {
-        _assignFlattenedLabelsBytesFunc = AssignFlattenedLabelsBytes;
-
         Metrics.DefaultRegistry.OnStartCollectingRegistryMetrics(delegate
         {
             ExemplarsRecorded = Metrics.CreateCounter("prometheus_net_exemplars_recorded_total", "Number of exemplars that were accepted into in-memory storage in the prometheus-net SDK.");
