@@ -10,7 +10,7 @@ public static class GaugeExtensions
     /// </summary>
     public static void SetToCurrentTimeUtc(this IGauge gauge)
     {
-        gauge.Set(TimestampHelpers.ToUnixTimeSecondsAsDouble(DateTimeOffset.UtcNow));
+        gauge.Set(LowGranularityTimeSource.GetSecondsFromUnixEpoch());
     }
 
     /// <summary>
@@ -29,7 +29,7 @@ public static class GaugeExtensions
     /// </summary>
     public static void IncToCurrentTimeUtc(this IGauge gauge)
     {
-        gauge.IncTo(TimestampHelpers.ToUnixTimeSecondsAsDouble(DateTimeOffset.UtcNow));
+        gauge.IncTo(LowGranularityTimeSource.GetSecondsFromUnixEpoch());
     }
 
     /// <summary>
