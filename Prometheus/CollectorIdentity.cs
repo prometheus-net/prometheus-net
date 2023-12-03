@@ -5,20 +5,12 @@
 /// * Any difference in static labels (keys or values) means it is a different collector.
 /// * Any difference in the names of instance labels means it is a different collector.
 /// </summary>
-internal readonly struct CollectorIdentity : IEquatable<CollectorIdentity>
+internal readonly struct CollectorIdentity(StringSequence instanceLabelNames, LabelSequence staticLabels) : IEquatable<CollectorIdentity>
 {
-    public readonly StringSequence InstanceLabelNames;
-    public readonly LabelSequence StaticLabels;
+    public readonly StringSequence InstanceLabelNames = instanceLabelNames;
+    public readonly LabelSequence StaticLabels = staticLabels;
 
-    private readonly int _hashCode;
-
-    public CollectorIdentity(StringSequence instanceLabelNames, LabelSequence staticLabels)
-    {
-        InstanceLabelNames = instanceLabelNames;
-        StaticLabels = staticLabels;
-
-        _hashCode = CalculateHashCode(instanceLabelNames, staticLabels);
-    }
+    private readonly int _hashCode = CalculateHashCode(instanceLabelNames, staticLabels);
 
     public bool Equals(CollectorIdentity other)
     {
@@ -58,5 +50,10 @@ internal readonly struct CollectorIdentity : IEquatable<CollectorIdentity>
     public override string ToString()
     {
         return $"{_hashCode}{{{InstanceLabelNames.Length} + {StaticLabels.Length}}}";
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is CollectorIdentity identity && Equals(identity);
     }
 }
