@@ -8,6 +8,9 @@ namespace Benchmark.NetCore;
 /// creating a brand new set of metrics for each scrape. So let's benchmark this scenario.
 /// </summary>
 [MemoryDiagnoser]
+// This seems to need a lot of warmup to stabilize.
+[WarmupCount(50)]
+//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.CpuSampling)]
 public class MetricCreationBenchmarks
 {
     /// <summary>
@@ -77,10 +80,10 @@ public class MetricCreationBenchmarks
     // We use the same strings both for the names and the values.
     private static readonly string[] _labels = ["foo", "bar", "baz"];
 
-    private readonly CounterConfiguration _counterConfiguration = CounterConfiguration.Default;
-    private readonly GaugeConfiguration _gaugeConfiguration = GaugeConfiguration.Default;
-    private readonly SummaryConfiguration _summaryConfiguration = SummaryConfiguration.Default;
-    private readonly HistogramConfiguration _histogramConfiguration = HistogramConfiguration.Default;
+    private static readonly CounterConfiguration _counterConfiguration = CounterConfiguration.Default;
+    private static readonly GaugeConfiguration _gaugeConfiguration = GaugeConfiguration.Default;
+    private static readonly SummaryConfiguration _summaryConfiguration = SummaryConfiguration.Default;
+    private static readonly HistogramConfiguration _histogramConfiguration = HistogramConfiguration.Default;
 
     [Benchmark]
     public void Counter()
@@ -104,7 +107,7 @@ public class MetricCreationBenchmarks
                 var metric = _factory.CreateGauge(_metricNames[i], _help, _labels, _gaugeConfiguration);
 
                 for (var repeat = 0; repeat < RepeatCount; repeat++)
-                    metric.WithLabels(_labels).Inc();
+                    metric.WithLabels(_labels).Set(repeat);
             }
     }
 
