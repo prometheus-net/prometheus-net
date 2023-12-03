@@ -178,28 +178,35 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     // We need it for the ICollector interface but using this is rarely relevant in client code, so keep it obscured.
     TChild ICollector<TChild>.Unlabelled => Unlabelled;
 
-    // This servers a slightly silly but useful purpose: by default if you start typing .La... and trigger Intellisense
+
+    // Old naming, deprecated for a silly reason: by default if you start typing .La... and trigger Intellisense
     // it will often for whatever reason focus on LabelNames instead of Labels, leading to tiny but persistent frustration.
     // Having WithLabels() instead eliminates the other candidate and allows for a frustration-free typing experience.
-    public TChild WithLabels(params string[] labelValues) => Labels(labelValues);
-    
-    // Discourage it as it can create confusion. But it works fine, so no reason to mark it obsolete, really.
+    // Discourage this method as it can create confusion. But it works fine, so no reason to mark it obsolete, really.
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public TChild Labels(params string[] labelValues)
+    public TChild Labels(params string[] labelValues) => WithLabels(labelValues);
+
+    public TChild WithLabels(params string[] labelValues)
     {
         if (labelValues == null)
             throw new ArgumentNullException(nameof(labelValues));
 
+        return WithLabels(labelValues.AsMemory());
+    }
+
+    public TChild WithLabels(ReadOnlyMemory<string> labelValues)
+    {
         var labels = LabelSequence.From(InstanceLabelNames, StringSequence.From(labelValues));
         return GetOrAddLabelled(labels);
     }
 
-    internal TChild WithLabels(ReadOnlySpan<string> labelValues)
+    public TChild WithLabels(ReadOnlySpan<string> labelValues)
     {
-        // This is used only by MeterAdapter for now, until we stabilize this feature and have confidence it makes sense in general.
-        // We first use a pooled buffer to create the LabelSequence in the hopes that an instance with these labels already exists.
-        // This avoids allocating a string[] for the label values if we can avoid it. We only allocate if we create a new instance.
+        // We take ReadOnlySpan as a signal that the caller believes we may be able to perform the operation allocation-free because
+        // the label values are probably already known and a metric instance registered. There is no a guarantee, just a high probability.
+        // The implementation avoids allocating a long-lived string[] for the label values. We only allocate if we create a new instance.
 
+        // We still need to process the label values as a reference type, so we transform the Span into a Memory using a pooled buffer.
         var buffer = ArrayPool<string>.Shared.Rent(labelValues.Length);
 
         try
@@ -237,17 +244,17 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         try
         {
             _children.Remove(labels);
+
+            if (labels.Length == 0)
+            {
+                // If we remove the unlabeled instance (technically legitimate, if the caller really desires to do so) then
+                // we need to also ensure that the special-casing used for it gets properly wired up the next time.
+                Volatile.Write(ref _lazyUnlabelled, null);
+            }
         }
         finally
         {
             _childrenLock.ExitWriteLock();
-        }
-
-        if (labels.Length == 0)
-        {
-            // If we remove the unlabeled instance (technically legitimate, if the caller really desires to do so) then
-            // we need to also ensure that the special-casing used for it gets properly wired up the next time.
-            Volatile.Write(ref _lazyUnlabelled, null);
         }
     }
 
@@ -317,19 +324,20 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
     private TChild GetOrAddLabelled(LabelSequence instanceLabels)
     {
         // NOTE: We do not try to find a metric instance with the same set of label names but in a DIFFERENT order.
-        // Order of labels matterns in data creation, although does not matter when the exported data set is imported later.
+        // Order of labels matters in data creation, although does not matter when the exported data set is imported later.
         // If we somehow end up registering the same metric with the same label names in different order, we will publish it twice, in two orders...
         // That is not ideal but also not that big of a deal to justify a lookup every time a metric instance is registered.
 
+        // First try to find an existing instance. This is the fast path, if we are re-looking-up an existing one.
         if (TryGetLabelled(instanceLabels, out var existing))
             return existing!;
 
+        // If no existing one found, grab the write lock and create a new one if needed.
         return CreateLabelled(instanceLabels);
     }
 
     private bool TryGetLabelled(LabelSequence instanceLabels, out TChild? child)
     {
-        // First try to find an existing instance. This is the fast path, if we are re-looking-up an existing one.
         _childrenLock.EnterReadLock();
 
         try
@@ -351,7 +359,6 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
     private TChild CreateLabelled(LabelSequence instanceLabels)
     {
-        // If no existing one found, grab the write lock and create a new one if needed.
         _childrenLock.EnterWriteLock();
 
         try
@@ -390,11 +397,10 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
         : base(name, help, instanceLabelNames, staticLabels)
     {
         _createdUnlabelledFunc = CreateUnlabelled;
+        _createdLabelledChildFunc = CreateLabelledChild;
 
         _suppressInitialValue = suppressInitialValue;
         _exemplarBehavior = exemplarBehavior;
-
-        _createdLabelledChildFunc = CreateLabelledChild;
     }
 
     /// <summary>
@@ -415,18 +421,18 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
         // This could potentially take nontrivial time, as we are serializing to a stream (potentially, a network stream).
         // Therefore we operate on a defensive copy in a reused buffer.
-        TChild[] buffer;
+        TChild[] children;
 
         _childrenLock.EnterReadLock();
 
         var childCount = _children.Count;
-        buffer = ArrayPool<TChild>.Shared.Rent(childCount);
+        children = ArrayPool<TChild>.Shared.Rent(childCount);
 
         try
         {
             try
             {
-                _children.Values.CopyTo(buffer, 0);
+                _children.Values.CopyTo(children, 0);
             }
             finally
             {
@@ -435,13 +441,13 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
             for (var i = 0; i < childCount; i++)
             {
-                var child = buffer[i];
+                var child = children[i];
                 await child.CollectAndSerializeAsync(serializer, cancel);
             }
         }
         finally
         {
-            ArrayPool<TChild>.Shared.Return(buffer, clearArray: true);
+            ArrayPool<TChild>.Shared.Return(children, clearArray: true);
         }
     }
 
