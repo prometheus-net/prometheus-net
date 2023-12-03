@@ -178,43 +178,16 @@ public sealed class Exemplar
         return exemplar;
     }
 
-    public ref struct LabelPairEnumerator(Exemplar exemplar)
-    {
-        private readonly Exemplar _exemplar = exemplar;
-        private int _index = -1;
-
-        public bool MoveNext() => ++_index < _exemplar.Length;
-
-        public LabelPair Current
-        {
-            get
-            {
-                if (_index == 0) return _exemplar.LabelPair1;
-                if (_index == 1) return _exemplar.LabelPair2;
-                if (_index == 2) return _exemplar.LabelPair3;
-                if (_index == 3) return _exemplar.LabelPair4;
-                if (_index == 4) return _exemplar.LabelPair5;
-                if (_index == 5) return _exemplar.LabelPair6;
-                throw new InvalidOperationException("Invalid index");
-            }
-        }
-    }
-
-    public LabelPairEnumerator GetEnumerator() => new(this);
-
-    public LabelPair this[int index]
+    internal ref LabelPair this[int index]
     {
         get
         {
-            if (index < 0 || index >= Length)
-                throw new ArgumentOutOfRangeException(nameof(index));
-
-            if (index == 0) return LabelPair1;
-            if (index == 1) return LabelPair2;
-            if (index == 2) return LabelPair3;
-            if (index == 3) return LabelPair4;
-            if (index == 4) return LabelPair5;
-            if (index == 5) return LabelPair6;
+            if (index == 0) return ref LabelPair1;
+            if (index == 1) return ref LabelPair2;
+            if (index == 2) return ref LabelPair3;
+            if (index == 3) return ref LabelPair4;
+            if (index == 4) return ref LabelPair5;
+            if (index == 5) return ref LabelPair6;
             throw new ArgumentOutOfRangeException(nameof(index));
         }
     }

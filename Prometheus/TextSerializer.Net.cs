@@ -243,15 +243,13 @@ internal sealed class TextSerializer : IMetricsSerializer
 
         AppendToBufferAndIncrementPosition(SpaceHashSpaceLeftBrace, buffer, ref position);
 
-        bool first = true;
-        foreach (var labelPair in exemplar.Labels!)
+        for (var i = 0; i < exemplar.Labels!.Length; i++)
         {
-            if (!first)
+            if (i > 0)
                 AppendToBufferAndIncrementPosition(Comma, buffer, ref position);
 
-            first = false;
-
-            position += TextSerializer.WriteExemplarLabel(buffer[position..], labelPair.KeyBytes, labelPair.Value);
+            ref var labelPair = ref exemplar.Labels[i];
+            position += WriteExemplarLabel(buffer[position..], labelPair.KeyBytes, labelPair.Value);
         }
 
         AppendToBufferAndIncrementPosition(RightBraceSpace, buffer, ref position);
@@ -269,15 +267,13 @@ internal sealed class TextSerializer : IMetricsSerializer
 
         length += SpaceHashSpaceLeftBrace.Length;
 
-        bool first = true;
-        foreach (var labelPair in exemplar.Labels!)
+        for (var i = 0; i < exemplar.Labels!.Length; i++)
         {
-            if (!first)
+            if (i > 0)
                 length += Comma.Length;
 
-            first = false;
-
-            length += TextSerializer.MeasureExemplarLabelMaxLength(labelPair.KeyBytes, labelPair.Value);
+            ref var labelPair = ref exemplar.Labels[i];
+            length += MeasureExemplarLabelMaxLength(labelPair.KeyBytes, labelPair.Value);
         }
 
         length += RightBraceSpace.Length;
