@@ -50,7 +50,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
 
             exemplar ??= GetDefaultExemplar(increment);
 
-            if (exemplar != null)
+            if (exemplar?.Length > 0)
                 RecordExemplar(exemplar, ref _observedExemplar, increment);
 
             _value.Add(increment);
