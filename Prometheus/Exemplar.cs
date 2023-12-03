@@ -1,7 +1,5 @@
-﻿#if NET6_0_OR_GREATER
-using System.Buffers;
+﻿using System.Buffers;
 using System.Diagnostics;
-#endif
 using System.Text;
 using Microsoft.Extensions.ObjectPool;
 
@@ -24,7 +22,7 @@ public sealed class Exemplar
     /// <summary>
     /// Indicates that no exemplar is to be recorded for a given observation.
     /// </summary>
-    public static readonly Exemplar None = new Exemplar(Array.Empty<LabelPair>(), 0);
+    public static readonly Exemplar None = new([], 0);
 
     /// <summary>
     /// An exemplar label key. For optimal performance, create it once and reuse it forever.
@@ -79,7 +77,7 @@ public sealed class Exemplar
     public static LabelKey Key(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
-            throw new ArgumentException("empty key");
+            throw new ArgumentException("empty key", nameof(key));
 
         Collector.ValidateLabelName(key);
 
@@ -184,7 +182,7 @@ public sealed class Exemplar
 
     public Exemplar()
     {
-        Buffer = Array.Empty<LabelPair>();
+        Buffer = [];
     }
 
     private Exemplar(LabelPair[] buffer, int length)
@@ -217,12 +215,7 @@ public sealed class Exemplar
         if (length < 1)
             throw new ArgumentOutOfRangeException(nameof(length), $"{nameof(Exemplar)} key-value pair length must be at least 1 when constructing a pool-backed value.");
 
-#if NET
         var buffer = ArrayPool<LabelPair>.Shared.Rent(length);
-#else
-        // .NET Framework does not support ArrayPool, so we just allocate explicit arrays to keep it simple. Migrate to .NET Core to get better performance.
-        var buffer = new LabelPair[length];
-#endif
 
         var instance = ExemplarPool.Get();
         instance.Update(buffer, length);
@@ -234,12 +227,10 @@ public sealed class Exemplar
         if (Length == 0)
             return; // Only the None instance can have a length of 0.
 
-#if NET
         ArrayPool<LabelPair>.Shared.Return(Buffer);
-#endif
 
         Length = 0;
-        Buffer = Array.Empty<LabelPair>();
+        Buffer = [];
 
         ExemplarPool.Return(this);
     }
