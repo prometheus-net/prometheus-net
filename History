@@ -1,5 +1,8 @@
 * 8.2.0
-- Various optimizations to reduce spent CPU time and allocated memory.
+- .WithLabels() & similar now accept ReadOnlyMemory<string> as alternative to string[]. Same behavior, just easier to use if you already have a ReadOnlyMemory<string>.
+- .WithLabels() & similar now accept ReadOnlySpan<string> as alternative to string[]. This enables allocation-free metric instance creation if a metric instance with these labels is already known.
+- Incorporated various optimizations to reduce the required CPU time and allocated memory, including #410, #443 and other contributions.
+- Observation of large histograms is now 10-30% faster on machines that support AVX2 instructions.
 * 8.1.1
 - Fix bug in .NET Meters API adapter for UpDownCounter, which was incorrectly transformed to Prometheus metrics. #452 and #453
 * 8.1.0
