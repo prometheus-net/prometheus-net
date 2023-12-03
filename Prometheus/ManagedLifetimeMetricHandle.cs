@@ -80,6 +80,58 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
     }
     #endregion
 
+    #region Lease(ReadOnlyMemory<string>)
+    public IDisposable AcquireLease(out TMetricInterface metric, ReadOnlyMemory<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeLease(child);
+    }
+
+    public RefLease AcquireRefLease(out TMetricInterface metric, ReadOnlyMemory<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeRefLease(child);
+    }
+
+    public void WithLease(Action<TMetricInterface> action, ReadOnlyMemory<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(child);
+    }
+
+    public void WithLease<TArg>(Action<TArg, TMetricInterface> action, TArg arg, ReadOnlyMemory<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(arg, child);
+    }
+
+    public async Task WithLeaseAsync(Func<TMetricInterface, Task> action, ReadOnlyMemory<string> labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        await action(metric);
+    }
+
+    public TResult WithLease<TResult>(Func<TMetricInterface, TResult> func, ReadOnlyMemory<string> labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return func(metric);
+    }
+
+    public async Task<TResult> WithLeaseAsync<TResult>(Func<TMetricInterface, Task<TResult>> func, ReadOnlyMemory<string> labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return await func(metric);
+    }
+    #endregion
+
     #region Lease(ReadOnlySpan<string>)
     public IDisposable AcquireLease(out TMetricInterface metric, ReadOnlySpan<string> labelValues)
     {
