@@ -119,7 +119,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
     // There are various ways we can make a StringSequence, comining one or two parents and maybe adding some extra to the start.
     // This ctor tries to account for all these options.
-    private StringSequence(StringSequence inheritFrom, StringSequence thenFrom, ReadOnlyMemory<string> andFinallyPrepend)
+    private StringSequence(in StringSequence inheritFrom, in StringSequence thenFrom, in ReadOnlyMemory<string> andFinallyPrepend)
     {
         // Simplify construction if we just need to match one of the cloneable inputs.
         if (!inheritFrom.IsEmpty && thenFrom.IsEmpty && andFinallyPrepend.Length == 0)
