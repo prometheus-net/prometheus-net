@@ -884,14 +884,14 @@ As an example of the performance of measuring data using prometheus-net, we have
 
 Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. Both SDKs are evaluated in single-threaded mode under a comparable workload and enabled feature set. A representative result is here:
 
-| SDK            | Benchmark scenario                                | CPU time spent | Memory allocated |
-|----------------|---------------------------------------------------|---------------:|-----------------:|
-| prometheus-net | Counter measurement (existing timeseries) x100K   |         233 µs |             None |
-| OpenTelemetry  | Counter measurement (existing timeseries) x100K   |       10770 µs |             None |
-| prometheus-net | Histogram measurement (existing timeseries) x100K |         958 µs |             None |
-| OpenTelemetry  | Histogram measurement (existing timeseries) x100K |       11997 µs |             None |
-| prometheus-net | Histogram measurement (new timeseries) x1K        |         992 µs |           664 KB |
-| OpenTelemetry  | Histogram measurement (new timeseries) x1K        |         386 µs |            96 KB |
+| SDK            | Benchmark scenario                    | CPU time | Memory |
+|----------------|---------------------------------------|---------:|-------:|
+| prometheus-net | Counter (existing timeseries) x100K   |   233 µs |   None |
+| OpenTelemetry  | Counter (existing timeseries) x100K   | 10770 µs |   None |
+| prometheus-net | Histogram (existing timeseries) x100K |   958 µs |   None |
+| OpenTelemetry  | Histogram (existing timeseries) x100K | 11997 µs |   None |
+| prometheus-net | Histogram (new timeseries) x1K        |   992 µs | 664 KB |
+| OpenTelemetry  | Histogram (new timeseries) x1K        |   386 µs |  96 KB |
 
 # Community projects
 
