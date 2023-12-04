@@ -21,8 +21,6 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
 
         _metric = metric;
         _expiresAfter = expiresAfter;
-
-        _reaperCt = _reaperCts.Token;
     }
 
     protected readonly Collector<TChild> _metric;
@@ -347,11 +345,6 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
     private const int ReaperActive = 1;
     private const int ReaperInactive = 0;
 
-    // Only used for testing - in normal usage the reaper only stops when all metric instances have expired.
-    // That is a potential area for future improvement, as in rare situations this may result in a temporary waste of resources.
-    private readonly CancellationTokenSource _reaperCts = new();
-    private readonly CancellationToken _reaperCt;
-
     /// <summary>
     /// Call this immediately after creating a metric instance that will eventually expire.
     /// </summary>
@@ -364,15 +357,6 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
         }
 
         _ = Task.Run(_reaperFunc);
-    }
-
-    /// <summary>
-    /// For testing only. Stops the reaper if it is active, allowing resources to be released after a test
-    /// without keeping things in memory just because the reaper task is still waiting for a delay of many minutes to elapse.
-    /// </summary>
-    internal void CancelReaper()
-    {
-        _reaperCts.Cancel();
     }
 
     private async Task Reaper()
@@ -453,34 +437,32 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
                         _lifetimesLock.ExitWriteLock();
                     }
                 }
-
-                // Check if we need to shut down the reaper or keep going.
-                _lifetimesLock.EnterReadLock();
-
-                try
-                {
-                    if (_lifetimes.Count == 0)
-                    {
-                        CleanupReaper();
-                        return;
-                    }
-                }
-                finally
-                {
-                    _lifetimesLock.ExitReadLock();
-                }
-
-                // Work done! Go sleep a bit and come back when something may have expired.
-                // We do not need to be too aggressive here, as expiration is not a hard schedule guarantee.
-                await Delayer.Delay(_expiresAfter, _reaperCt);
-            }
-            catch (OperationCanceledException) when (_reaperCt.IsCancellationRequested)
-            {
             }
             finally
             {
                 ArrayPool<TChild>.Shared.Return(expiredInstancesBuffer);
             }
+
+            // Check if we need to shut down the reaper or keep going.
+            _lifetimesLock.EnterReadLock();
+
+            try
+            {
+                if (_lifetimes.Count != 0)
+                    goto has_more_work;
+            }
+            finally
+            {
+                _lifetimesLock.ExitReadLock();
+            }
+
+            CleanupReaper();
+            return;
+
+        has_more_work:
+            // Work done! Go sleep a bit and come back when something may have expired.
+            // We do not need to be too aggressive here, as expiration is not a hard schedule guarantee.
+            await Delayer.Delay(_expiresAfter);
         }
     }
 
