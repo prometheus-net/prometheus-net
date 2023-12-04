@@ -75,6 +75,7 @@ public static class CustomDotNetMeters
                     highCardinalityCounter1.Add(Random.Shared.Next(10_000_000), new KeyValuePair<string, object?>("connection-id", connection));
 
                 // Maybe some connection went away, maybe some was added.
+                // Timeseries that stop receiving updates will disappear from prometheus-net output after a short delay (up to 10 minutes by default).
                 if (Random.Shared.Next(100) == 0)
                 {
                     activeConnections.RemoveAt(Random.Shared.Next(activeConnections.Count));
