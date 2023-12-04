@@ -13,6 +13,8 @@
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 		<NoWarn>1591</NoWarn>
 
+		<ServerGarbageCollection>true</ServerGarbageCollection>
+
 		<LangVersion>latest</LangVersion>
 		<WarningLevel>9999</WarningLevel>
 
