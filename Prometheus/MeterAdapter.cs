@@ -65,8 +65,9 @@ public sealed class MeterAdapter : IDisposable
         {
             // ICollectorRegistry does not support unregistering the callback, so we just no-op when disposed.
             // The expected pattern is that any disposal of the pipeline also throws away the ICollectorRegistry.
-            if (_disposed)
-                return;
+            lock (_disposedLock)
+                if (_disposed)
+                    return;
 
             // Seems OK to call even when _listener has been disposed.
             _listener.RecordObservableInstruments();
@@ -83,7 +84,7 @@ public sealed class MeterAdapter : IDisposable
 
     private readonly MeterListener _listener = new MeterListener();
 
-    private volatile bool _disposed;
+    private bool _disposed;
     private readonly object _disposedLock = new();
 
     public void Dispose()

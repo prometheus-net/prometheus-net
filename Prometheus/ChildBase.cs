@@ -137,7 +137,7 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         MarkNewExemplarHasBeenRecorded();
 
         // We cannot record an exemplar every time we record an exemplar!
-        ExemplarsRecorded?.Inc(Exemplar.None);
+        Volatile.Read(ref ExemplarsRecorded)?.Inc(Exemplar.None);
     }
 
     protected Exemplar GetDefaultExemplar(double value)
@@ -177,13 +177,13 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
 
     // This is only set if and when debug metrics are enabled in the default registry.
-    private static volatile Counter? ExemplarsRecorded;
+    private static Counter? ExemplarsRecorded;
 
     static ChildBase()
     {
         Metrics.DefaultRegistry.OnStartCollectingRegistryMetrics(delegate
         {
-            ExemplarsRecorded = Metrics.CreateCounter("prometheus_net_exemplars_recorded_total", "Number of exemplars that were accepted into in-memory storage in the prometheus-net SDK.");
+            Volatile.Write(ref ExemplarsRecorded, Metrics.CreateCounter("prometheus_net_exemplars_recorded_total", "Number of exemplars that were accepted into in-memory storage in the prometheus-net SDK."));
         });
     }
 

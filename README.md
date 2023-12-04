@@ -877,10 +877,10 @@ As an example of the performance of measuring data using prometheus-net, we have
 
 | Metric type             | Measurements per second |
 |-------------------------|------------------------:|
-| Counter                 |             259 million |
-| Gauge                   |             593 million |
-| Histogram (16 buckets)  |             106 million |
-| Histogram (128 buckets) |              58 million |
+| Counter                 |             261 million |
+| Gauge                   |             591 million |
+| Histogram (16 buckets)  |             105 million |
+| Histogram (128 buckets) |              65 million |
 
 Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. Both SDKs are evaluated in single-threaded mode under a comparable workload and enabled feature set. A representative result is here:
 

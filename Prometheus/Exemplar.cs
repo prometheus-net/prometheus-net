@@ -1,5 +1,4 @@
-﻿using System.Buffers;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.ObjectPool;
@@ -238,7 +237,7 @@ public sealed class Exemplar
     internal void Update(int length)
     {
         Length = length;
-        _consumed = false;
+        Interlocked.Exchange(ref _consumed, IsNotConsumed);
     }
 
     /// <summary>
@@ -274,14 +273,15 @@ public sealed class Exemplar
         ExemplarPool.Return(this);
     }
 
-    private volatile bool _consumed;
+    private long _consumed;
+
+    private const long IsConsumed = 1;
+    private const long IsNotConsumed = 0;
 
     internal void MarkAsConsumed()
     {
-        if (_consumed)
+        if (Interlocked.Exchange(ref _consumed, IsConsumed) == IsConsumed)
             throw new InvalidOperationException($"An instance of {nameof(Exemplar)} was reused. You must obtain a new instance via Exemplar.From() or Exemplar.Clone() for each metric value observation.");
-
-        _consumed = true;
     }
 
     /// <summary>
@@ -289,7 +289,7 @@ public sealed class Exemplar
     /// </summary>
     public Exemplar Clone()
     {
-        if (_consumed)
+        if (Interlocked.Read(ref _consumed) == IsConsumed)
             throw new InvalidOperationException($"An instance of {nameof(Exemplar)} cannot be cloned after it has already been used.");
 
         var clone = AllocateFromPool(Length);
