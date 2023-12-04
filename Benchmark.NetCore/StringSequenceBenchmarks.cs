@@ -61,4 +61,16 @@ public class StringSequenceBenchmarks
     {
         FromValues3.Equals(Other);
     }
+
+    [Benchmark]
+    public void Concat_Empty()
+    {
+        FromValues3.Concat(StringSequence.Empty);
+    }
+
+    [Benchmark]
+    public void Concat_ToEmpty()
+    {
+        StringSequence.Empty.Concat(FromValues3);
+    }
 }

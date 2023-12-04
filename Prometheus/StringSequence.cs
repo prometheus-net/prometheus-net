@@ -159,18 +159,33 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
     // Creates a new sequence, inheriting all current values and optionally adding more. New values are prepended to the sequence, inherited values come last.
     public StringSequence InheritAndPrepend(params string[] prependValues)
     {
+        if (prependValues.Length == 0)
+            return this;
+
         return new StringSequence(this, Empty, prependValues);
     }
 
     // Creates a new sequence, inheriting all current values and optionally adding more. New values are prepended to the sequence, inherited values come last.
     public StringSequence InheritAndPrepend(StringSequence prependValues)
     {
+        if (prependValues.IsEmpty)
+            return this;
+
+        if (IsEmpty)
+            return prependValues;
+
         return new StringSequence(this, prependValues, null);
     }
 
     // Creates a new sequence, concatenating another string sequence (by inheriting from it).
     public StringSequence Concat(StringSequence concatenatedValues)
     {
+        if (concatenatedValues.IsEmpty)
+            return this;
+
+        if (IsEmpty)
+            return concatenatedValues;
+
         return new StringSequence(concatenatedValues, this, null);
     }
 
