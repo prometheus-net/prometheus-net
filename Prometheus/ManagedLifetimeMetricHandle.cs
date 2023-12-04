@@ -265,11 +265,11 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
         try
         {
             // Ideally, there already exists a registered lifetime for this metric instance.
-            if (_lifetimes.TryGetValue(child, out var lifetime))
+            if (_lifetimes.TryGetValue(child, out var existing))
             {
                 // Immediately increment it, to reduce the risk of any concurrent activities ending the lifetime.
-                Interlocked.Increment(ref lifetime.LeaseCount);
-                return lifetime;
+                Interlocked.Increment(ref existing.LeaseCount);
+                return existing;
             }
         }
         finally
@@ -278,27 +278,39 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
         }
 
         // No lifetime registered yet - we need to take a write lock and register it.
+        var newLifetime = new ChildLifetimeInfo
+        {
+            LeaseCount = 1
+        };
 
         _lifetimesLock.EnterWriteLock();
 
         try
         {
-            // Did we get lucky and someone already registered it?
-            if (_lifetimes.TryGetValue(child, out var lifetime))
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_lifetimes.TryAdd(child, newLifetime))
+                return newLifetime;
+
+            var existing = _lifetimes[child];
+
+            // Immediately increment it, to reduce the risk of any concurrent activities ending the lifetime.
+            // Even if something does, it is not the end of the world - the reaper will create a new lifetime when it realizes this happened.
+            Interlocked.Increment(ref existing.LeaseCount);
+            return existing;
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
+            if (_lifetimes.TryGetValue(child, out var existing))
             {
                 // Immediately increment it, to reduce the risk of any concurrent activities ending the lifetime.
-                Interlocked.Increment(ref lifetime.LeaseCount);
-                return lifetime;
+                // Even if something does, it is not the end of the world - the reaper will create a new lifetime when it realizes this happened.
+                Interlocked.Increment(ref existing.LeaseCount);
+                return existing;
             }
 
-            // Did not get lucky. Make a new one.
-            lifetime = new ChildLifetimeInfo
-            {
-                LeaseCount = 1
-            };
-
-            _lifetimes.Add(child, lifetime);
-            return lifetime;
+            _lifetimes.Add(child, newLifetime);
+            return newLifetime;
+#endif
         }
         finally
         {
@@ -334,7 +346,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
     {
         public void Dispose() => parent.OnLeaseEnded(child, lifetime);
     }
-    #endregion
+#endregion
 
     #region Reaper
     // Whether the reaper is currently active. This is set to true when a metric instance is created and

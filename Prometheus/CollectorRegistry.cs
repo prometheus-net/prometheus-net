@@ -199,16 +199,26 @@ public sealed class CollectorRegistry : ICollectorRegistry
         }
 
         // It does not exist. OK, just create it.
+        var newFamily = new CollectorFamily(typeof(TCollector));
+
         _familiesLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_families.TryAdd(finalName, newFamily))
+                return newFamily;
+
+            return ValidateFamily(_families[finalName]);
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_families.TryGetValue(finalName, out var existing))
                 return ValidateFamily(existing);
 
-            var newFamily = new CollectorFamily(typeof(TCollector));
             _families.Add(finalName, newFamily);
             return newFamily;
+#endif
         }
         finally
         {

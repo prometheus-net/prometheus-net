@@ -1,6 +1,4 @@
-﻿using System.Collections.Concurrent;
-
-namespace Prometheus;
+﻿namespace Prometheus;
 
 /// <summary>
 /// Applies a set of static labels to lifetime-managed metrics. Multiple instances are functionally equivalent for the same label set.
@@ -48,16 +46,26 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
             _countersLock.ExitReadLock();
         }
 
+        var instance = CreateCounterCore(innerHandle);
+
         _countersLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_counters.TryAdd(innerHandle, instance))
+                return instance;
+
+            return _counters[innerHandle];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_counters.TryGetValue(innerHandle, out var existing))
                 return existing;
 
-            var instance = CreateCounterCore(innerHandle);
             _counters.Add(innerHandle, instance);
             return instance;
+#endif
         }
         finally
         {
@@ -90,16 +98,26 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
             _gaugesLock.ExitReadLock();
         }
 
+        var instance = CreateGaugeCore(innerHandle);
+
         _gaugesLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_gauges.TryAdd(innerHandle, instance))
+                return instance;
+
+            return _gauges[innerHandle];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_gauges.TryGetValue(innerHandle, out var existing))
                 return existing;
 
-            var instance = CreateGaugeCore(innerHandle);
             _gauges.Add(innerHandle, instance);
             return instance;
+#endif
         }
         finally
         {
@@ -131,16 +149,26 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
             _histogramsLock.ExitReadLock();
         }
 
+        var instance = CreateHistogramCore(innerHandle);
+
         _histogramsLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_histograms.TryAdd(innerHandle, instance))
+                return instance;
+
+            return _histograms[innerHandle];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_histograms.TryGetValue(innerHandle, out var existing))
                 return existing;
 
-            var instance = CreateHistogramCore(innerHandle);
             _histograms.Add(innerHandle, instance);
             return instance;
+#endif
         }
         finally
         {
@@ -172,16 +200,26 @@ internal sealed class LabelEnrichingManagedLifetimeMetricFactory : IManagedLifet
             _summariesLock.ExitReadLock();
         }
 
+        var instance = CreateSummaryCore(innerHandle);
+
         _summariesLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_summaries.TryAdd(innerHandle, instance))
+                return instance;
+
+            return _summaries[innerHandle];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_summaries.TryGetValue(innerHandle, out var existing))
                 return existing;
 
-            var instance = CreateSummaryCore(innerHandle);
             _summaries.Add(innerHandle, instance);
             return instance;
+#endif
         }
         finally
         {

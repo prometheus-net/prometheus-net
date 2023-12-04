@@ -38,17 +38,27 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
             _countersLock.ExitReadLock();
         }
 
+        var metric = _inner.CreateCounter(identity.MetricFamilyName, help, identity.InstanceLabelNames, configuration);
+        var instance = new ManagedLifetimeCounter(metric, _expiresAfter);
+
         _countersLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_counters.TryAdd(identity, instance))
+                return instance;
+
+            return _counters[identity];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_counters.TryGetValue(identity, out var existing))
                 return existing;
-
-            var metric = _inner.CreateCounter(identity.MetricFamilyName, help, identity.InstanceLabelNames, configuration);
-            var instance = new ManagedLifetimeCounter(metric, _expiresAfter);
+            
             _counters.Add(identity, instance);
             return instance;
+#endif
         }
         finally
         {
@@ -73,17 +83,27 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
             _gaugesLock.ExitReadLock();
         }
 
+        var metric = _inner.CreateGauge(identity.MetricFamilyName, help, identity.InstanceLabelNames, configuration);
+        var instance = new ManagedLifetimeGauge(metric, _expiresAfter);
+
         _gaugesLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_gauges.TryAdd(identity, instance))
+                return instance;
+
+            return _gauges[identity];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_gauges.TryGetValue(identity, out var existing))
                 return existing;
-
-            var metric = _inner.CreateGauge(identity.MetricFamilyName, help, identity.InstanceLabelNames, configuration);
-            var instance = new ManagedLifetimeGauge(metric, _expiresAfter);
+            
             _gauges.Add(identity, instance);
             return instance;
+#endif
         }
         finally
         {
@@ -108,17 +128,27 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
             _histogramsLock.ExitReadLock();
         }
 
+        var metric = _inner.CreateHistogram(identity.MetricFamilyName, help, identity.InstanceLabelNames, configuration);
+        var instance = new ManagedLifetimeHistogram(metric, _expiresAfter);
+
         _histogramsLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_histograms.TryAdd(identity, instance))
+                return instance;
+
+            return _histograms[identity];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_histograms.TryGetValue(identity, out var existing))
                 return existing;
-
-            var metric = _inner.CreateHistogram(identity.MetricFamilyName, help, identity.InstanceLabelNames, configuration);
-            var instance = new ManagedLifetimeHistogram(metric, _expiresAfter);
+            
             _histograms.Add(identity, instance);
             return instance;
+#endif
         }
         finally
         {
@@ -143,17 +173,27 @@ internal sealed class ManagedLifetimeMetricFactory : IManagedLifetimeMetricFacto
             _summariesLock.ExitReadLock();
         }
 
+        var metric = _inner.CreateSummary(identity.MetricFamilyName, help, identity.InstanceLabelNames, configuration);
+        var instance = new ManagedLifetimeSummary(metric, _expiresAfter);
+
         _summariesLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_summaries.TryAdd(identity, instance))
+                return instance;
+
+            return _summaries[identity];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_summaries.TryGetValue(identity, out var existing))
                 return existing;
-
-            var metric = _inner.CreateSummary(identity.MetricFamilyName, help, identity.InstanceLabelNames, configuration);
-            var instance = new ManagedLifetimeSummary(metric, _expiresAfter);
+            
             _summaries.Add(identity, instance);
             return instance;
+#endif
         }
         finally
         {

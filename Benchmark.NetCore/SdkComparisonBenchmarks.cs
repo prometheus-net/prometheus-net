@@ -11,17 +11,17 @@ AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
 .NET SDK 8.0.100
   [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
   DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
-  Job-IZHPUA : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  Job-PPCGVJ : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-| Method                        | Job        | MaxIterationCount | Mean        | Error     | StdDev    | Gen0    | Gen1    | Allocated |
-|------------------------------ |----------- |------------------ |------------:|----------:|----------:|--------:|--------:|----------:|
-| PromNetCounter                | DefaultJob | Default           |    237.1 us |   1.71 us |   1.43 us |       - |       - |         - |
-| PromNetHistogram              | DefaultJob | Default           |  1,236.2 us |   9.99 us |   8.86 us |       - |       - |       2 B |
-| OTelCounter                   | DefaultJob | Default           | 10,981.5 us |  64.49 us |  57.17 us |       - |       - |      11 B |
-| OTelHistogram                 | DefaultJob | Default           | 12,078.9 us | 126.10 us | 117.95 us |       - |       - |      24 B |
-| PromNetHistogramForAdHocLabel | Job-NDQITE | 16                |  1,877.7 us | 104.83 us |  87.54 us | 50.7813 | 48.8281 |  872701 B |
-| OTelHistogramForAdHocLabel    | Job-NDQITE | 16                |    354.0 us |   4.05 us |   3.78 us |  5.3711 |       - |   96000 B |
+| Method                        | Job        | MaxIterationCount | Mean        | Error    | StdDev   | Allocated |
+|------------------------------ |----------- |------------------ |------------:|---------:|---------:|----------:|
+| PromNetCounter                | DefaultJob | Default           |    230.4 μs |  1.20 μs |  1.12 μs |         - |
+| PromNetHistogram              | DefaultJob | Default           |    956.7 μs |  3.28 μs |  3.07 μs |         - |
+| OTelCounter                   | DefaultJob | Default           | 10,998.2 μs | 35.54 μs | 31.51 μs |      11 B |
+| OTelHistogram                 | DefaultJob | Default           | 12,110.3 μs | 17.08 μs | 14.26 μs |      11 B |
+| PromNetHistogramForAdHocLabel | Job-PPCGVJ | 16                |    716.2 μs | 30.20 μs | 26.77 μs |  664000 B |
+| OTelHistogramForAdHocLabel    | Job-PPCGVJ | 16                |    350.5 μs |  1.91 μs |  1.79 μs |   96000 B |
 */
 
 /// <summary>

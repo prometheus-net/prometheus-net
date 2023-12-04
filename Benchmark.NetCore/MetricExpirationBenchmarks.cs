@@ -10,6 +10,8 @@ namespace Benchmark.NetCore;
 [MemoryDiagnoser]
 // This seems to need a lot of warmup to stabilize.
 [WarmupCount(80)]
+// This seems to need a lot of iterations to stabilize.
+[IterationCount(100)]
 //[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
 public class MetricExpirationBenchmarks
 {

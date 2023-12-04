@@ -96,18 +96,27 @@ internal sealed class CollectorFamily
             _lock.ExitReadLock();
         }
 
-        // Then we grab a write lock. This is the slow path. It could still be that someone beats us to it!
+        // Then we grab a write lock. This is the slow path.
+        var newCollector = initializer(name, help, identity.InstanceLabelNames, identity.StaticLabels, configuration, exemplarBehavior);
 
         _lock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_collectors.TryAdd(identity, newCollector))
+                return newCollector;
+
+            return _collectors[identity];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_collectors.TryGetValue(identity, out var collector))
                 return collector;
 
-            var newCollector = initializer(name, help, identity.InstanceLabelNames, identity.StaticLabels, configuration, exemplarBehavior);
             _collectors.Add(identity, newCollector);
             return newCollector;
+#endif
         }
         finally
         {

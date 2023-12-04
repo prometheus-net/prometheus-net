@@ -886,12 +886,12 @@ Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To he
 
 | SDK            | Benchmark scenario                    | CPU time | Memory |
 |----------------|---------------------------------------|---------:|-------:|
-| prometheus-net | Counter (existing timeseries) x100K   |   233 µs |   None |
-| OpenTelemetry  | Counter (existing timeseries) x100K   | 10770 µs |   None |
-| prometheus-net | Histogram (existing timeseries) x100K |   958 µs |   None |
-| OpenTelemetry  | Histogram (existing timeseries) x100K | 11997 µs |   None |
-| prometheus-net | Histogram (new timeseries) x1K        |   992 µs | 664 KB |
-| OpenTelemetry  | Histogram (new timeseries) x1K        |   386 µs |  96 KB |
+| prometheus-net | Counter (existing timeseries) x100K   |   230 µs |   None |
+| OpenTelemetry  | Counter (existing timeseries) x100K   | 10998 µs |   None |
+| prometheus-net | Histogram (existing timeseries) x100K |   957 µs |   None |
+| OpenTelemetry  | Histogram (existing timeseries) x100K | 12110 µs |   None |
+| prometheus-net | Histogram (new timeseries) x1K        |   716 µs | 664 KB |
+| OpenTelemetry  | Histogram (new timeseries) x1K        |   350 µs |  96 KB |
 
 # Community projects
 

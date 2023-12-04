@@ -339,18 +339,26 @@ public sealed class MeterAdapter : IDisposable
         // Create the context before taking any locks, to avoid holding the cache too long.
         DeterminePrometheusLabels(tags, out var prometheusLabelNames, out var prometheusLabelValueIndexes);
         var metricHandle = metricFactory(instrument, _instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], prometheusLabelNames);
+        var newContext = new MetricContext<TMetricInstance>(metricHandle, prometheusLabelValueIndexes);
 
         cacheLock.EnterWriteLock();
 
         try
         {
-            // It is theoretically possible that another thread got to it already, in which case we exit early.
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (cache.TryAdd(cacheKey, newContext))
+                return newContext;
+
+            return cache[cacheKey];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (cache.TryGetValue(cacheKey, out var context))
                 return context;
 
-            context = new MetricContext<TMetricInstance>(metricHandle, prometheusLabelValueIndexes);
-            cache.Add(cacheKey, context);
-            return context;
+            cache.Add(cacheKey, newContext);
+            return newContext;
+#endif
         }
         finally
         {

@@ -359,16 +359,26 @@ public abstract class Collector<TChild> : Collector, ICollector<TChild>
 
     private TChild CreateLabelled(LabelSequence instanceLabels)
     {
+        var newChild = _createdLabelledChildFunc(instanceLabels);
+
         _childrenLock.EnterWriteLock();
 
         try
         {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_children.TryAdd(instanceLabels, newChild))
+                return newChild;
+
+            return _children[instanceLabels];
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
             if (_children.TryGetValue(instanceLabels, out var existing))
                 return existing;
 
-            var newChild = _createdLabelledChildFunc(instanceLabels);
             _children.Add(instanceLabels, newChild);
             return newChild;
+#endif
         }
         finally
         {
