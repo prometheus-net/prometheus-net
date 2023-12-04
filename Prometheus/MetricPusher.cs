@@ -56,10 +56,9 @@ public class MetricPusher : MetricHandler
             }
         }
 
-        Uri? targetUrl;
-        if (!Uri.TryCreate(sb.ToString(), UriKind.Absolute, out targetUrl) || targetUrl == null)
+        if (!Uri.TryCreate(sb.ToString(), UriKind.Absolute, out var targetUrl) || targetUrl == null)
         {
-            throw new ArgumentException("Endpoint must be a valid url", "endpoint");
+            throw new ArgumentException("Endpoint must be a valid url", nameof(options.Endpoint));
         }
 
         _targetUrl = targetUrl;
@@ -70,7 +69,7 @@ public class MetricPusher : MetricHandler
         _method = options.ReplaceOnPush ? HttpMethod.Put : HttpMethod.Post;
     }
 
-    private static readonly HttpClient _singletonHttpClient = new HttpClient();
+    private static readonly HttpClient _singletonHttpClient = new();
 
     private readonly CollectorRegistry _registry;
     private readonly Action<Exception>? _onError;

@@ -1,10 +1,9 @@
-﻿namespace Prometheus
+﻿namespace Prometheus;
+
+public sealed class GrpcRequestCountOptions : GrpcMetricsOptionsBase
 {
-    public sealed class GrpcRequestCountOptions : GrpcMetricsOptionsBase
-    {
-        /// <summary>
-        /// Set this to use a custom metric instead of the default.
-        /// </summary>
-        public ICollector<ICounter>? Counter { get; set; }
-    }
+    /// <summary>
+    /// Set this to use a custom metric instead of the default.
+    /// </summary>
+    public ICollector<ICounter>? Counter { get; set; }
 }

@@ -1,10 +1,9 @@
-﻿namespace Prometheus
+﻿namespace Prometheus;
+
+internal enum MetricType
 {
-    internal enum MetricType
-    {
-        Counter,
-        Gauge,
-        Summary,
-        Histogram
-    }
+    Counter,
+    Gauge,
+    Summary,
+    Histogram
 }
