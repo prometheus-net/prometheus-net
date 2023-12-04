@@ -12,6 +12,8 @@ public class LabelSequenceBenchmarks
     [Benchmark]
     public void Create_From3Array()
     {
-        LabelSequence.From(Names3Array, Values3Array);
+        // This is too fast for the benchmark engine, so let's create some additional work by looping through it many times.
+        for (var i = 0; i < 10_000; i++)
+            LabelSequence.From(Names3Array, Values3Array);
     }
 }

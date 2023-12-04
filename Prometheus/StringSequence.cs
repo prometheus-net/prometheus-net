@@ -16,10 +16,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 {
     public static readonly StringSequence Empty = new();
 
-    public Enumerator GetEnumerator()
-    {
-        return new Enumerator(_values.Span, _inheritedValueArrays ?? []);
-    }
+    public Enumerator GetEnumerator() => new(_values.Span, _inheritedValueArrays ?? []);
 
     public ref struct Enumerator
     {
@@ -119,24 +116,8 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
     // There are various ways we can make a StringSequence, comining one or two parents and maybe adding some extra to the start.
     // This ctor tries to account for all these options.
-    private StringSequence(in StringSequence inheritFrom, in StringSequence thenFrom, in ReadOnlyMemory<string> andFinallyPrepend)
+    private StringSequence(StringSequence inheritFrom, StringSequence thenFrom, in ReadOnlyMemory<string> andFinallyPrepend)
     {
-        // Simplify construction if we just need to match one of the cloneable inputs.
-        if (!inheritFrom.IsEmpty && thenFrom.IsEmpty && andFinallyPrepend.Length == 0)
-        {
-            this = inheritFrom;
-            return;
-        }
-        else if (!thenFrom.IsEmpty && inheritFrom.IsEmpty && andFinallyPrepend.Length == 0)
-        {
-            this = thenFrom;
-            return;
-        }
-
-        // Simplify construction if we have nothing at all.
-        if (inheritFrom.IsEmpty && thenFrom.IsEmpty && andFinallyPrepend.Length == 0)
-            return;
-
         // Anything inherited is already validated. Perform a sanity check on anything new.
         if (andFinallyPrepend.Length != 0)
         {
@@ -144,14 +125,12 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
             for (var i = 0; i < span.Length; i++)
             {
-                var ownValue = span[i];
-
-                if (ownValue == null)
+                if (span[i] == null)
                     throw new NotSupportedException("Null values are not supported for metric label names and values.");
             }
-        }
 
-        _values = andFinallyPrepend;
+            _values = andFinallyPrepend;
+        }
 
         if (!inheritFrom.IsEmpty || !thenFrom.IsEmpty)
             _inheritedValueArrays = InheritFrom(inheritFrom, thenFrom);
@@ -169,7 +148,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         return new StringSequence(Empty, Empty, values);
     }
 
-    public static StringSequence From(in ReadOnlyMemory<string> values)
+    public static StringSequence From(ReadOnlyMemory<string> values)
     {
         if (values.Length == 0)
             return Empty;
@@ -205,7 +184,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
     private readonly int _hashCode;
 
     // We can inherit from one or two parent sequences. Order is "first at the end, second prefixed to it" as is typical (ancestors at the end).
-    private static ReadOnlyMemory<string>[]? InheritFrom(StringSequence first, StringSequence second)
+    private static ReadOnlyMemory<string>[] InheritFrom(StringSequence first, StringSequence second)
     {
         // Expected output: second._values, second._inheritedValues, first._values, first._inheritedValues
 
@@ -229,7 +208,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         var totalSegmentCount = firstOwnArrayCount + firstInheritedArrayCount + secondOwnArrayCount + secondInheritedArrayCount;
 
         if (totalSegmentCount == 0)
-            return null;
+            throw new Exception("Unreachable code reached: InheritFrom() should not even be called if there is nothing to inherit.");
 
         var result = new ReadOnlyMemory<string>[totalSegmentCount];
 
@@ -254,7 +233,6 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         if (firstInheritedArrayCount != 0)
         {
             Array.Copy(first._inheritedValueArrays!, 0, result, targetIndex, firstInheritedArrayCount);
-            targetIndex += firstInheritedArrayCount;
         }
 
         return result;
