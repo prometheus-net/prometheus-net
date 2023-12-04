@@ -875,37 +875,23 @@ A suite of benchmarks is included if you wish to explore the performance charact
 
 As an example of the performance of measuring data using prometheus-net, we have the results of the MeasurementBenchmarks here, converted into measurements per second:
 
-| Metric type | Concurrency | Measurements per second |
-|-------------|------------:|------------------------:|
-| Gauge       |    1 thread |             519 million |
-| Counter     |    1 thread |             134 million |
-| Histogram   |    1 thread |              69 million |
-| Summary     |    1 thread |               2 million |
-| Gauge       |  16 threads |              53 million |
-| Counter     |  16 threads |               9 million |
-| Histogram   |  16 threads |               5 million |
-| Summary     |  16 threads |               2 million |
-
-> **Note**
-> All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. In real-world apps with the load spread across multiple metrics, you can expect even better performance.
+| Metric type             | Measurements per second |
+|-------------------------|------------------------:|
+| Counter                 |             259 million |
+| Gauge                   |             593 million |
+| Histogram (16 buckets)  |             106 million |
+| Histogram (128 buckets) |              58 million |
 
 Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. Both SDKs are evaluated in single-threaded mode under a comparable workload and enabled feature set. A representative result is here:
 
-```text
-BenchmarkDotNet v0.13.10, Windows 11 (10.0.22621.2715/22H2/2022Update/SunValley2)
-AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
-  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
-
-
-| Method                        | Mean        | Gen0    | Gen1    | Allocated |
-|------------------------------ |------------:|--------:|--------:|----------:|
-| PromNetCounter                |    237.1 us |       - |       - |         - |
-| PromNetHistogram              |  1,236.2 us |       - |       - |       2 B |
-| OTelCounter                   | 10,981.5 us |       - |       - |      11 B |
-| OTelHistogram                 | 12,078.9 us |       - |       - |      24 B |
-| PromNetHistogramForAdHocLabel |  1,877.7 us | 50.7813 | 48.8281 |  872701 B |
-| OTelHistogramForAdHocLabel    |    354.0 us |  5.3711 |       - |   96000 B |
-```
+| SDK            | Benchmark scenario                                | CPU time spent | Memory allocated |
+|----------------|---------------------------------------------------|---------------:|-----------------:|
+| prometheus-net | Counter measurement (existing timeseries) x100K   |         233 µs |             None |
+| OpenTelemetry  | Counter measurement (existing timeseries) x100K   |       10770 µs |             None |
+| prometheus-net | Histogram measurement (existing timeseries) x100K |         958 µs |             None |
+| OpenTelemetry  | Histogram measurement (existing timeseries) x100K |       11997 µs |             None |
+| prometheus-net | Histogram measurement (new timeseries) x1K        |         992 µs |           664 KB |
+| OpenTelemetry  | Histogram measurement (new timeseries) x1K        |         386 µs |            96 KB |
 
 # Community projects
 
