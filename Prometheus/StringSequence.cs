@@ -18,7 +18,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
     public Enumerator GetEnumerator()
     {
-        return new Enumerator(_values.Span, _inheritedValues ?? []);
+        return new Enumerator(_values.Span, _inheritedValueArrays ?? []);
     }
 
     public ref struct Enumerator
@@ -152,7 +152,9 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         }
 
         _values = andFinallyPrepend;
-        _inheritedValues = InheritFrom(inheritFrom, thenFrom);
+
+        if (!inheritFrom.IsEmpty || !thenFrom.IsEmpty)
+            _inheritedValueArrays = InheritFrom(inheritFrom, thenFrom);
 
         Length = _values.Length + inheritFrom.Length + thenFrom.Length;
 
@@ -167,7 +169,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         return new StringSequence(Empty, Empty, values);
     }
 
-    public static StringSequence From(ReadOnlyMemory<string> values)
+    public static StringSequence From(in ReadOnlyMemory<string> values)
     {
         if (values.Length == 0)
             return Empty;
@@ -198,7 +200,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
     // Inherited values from one or more parent instances.
     // It may be null because structs have a default ctor that zero-initializes them, so watch out.
-    private readonly ReadOnlyMemory<string>[]? _inheritedValues;
+    private readonly ReadOnlyMemory<string>[]? _inheritedValueArrays;
 
     private readonly int _hashCode;
 
@@ -215,13 +217,13 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         if (!first.IsEmpty)
         {
             firstOwnArrayCount = first._values.Length > 0 ? 1 : 0;
-            firstInheritedArrayCount = first._inheritedValues?.Length ?? 0;
+            firstInheritedArrayCount = first._inheritedValueArrays?.Length ?? 0;
         }
 
         if (!second.IsEmpty)
         {
             secondOwnArrayCount = second._values.Length > 0 ? 1 : 0;
-            secondInheritedArrayCount = second._inheritedValues?.Length ?? 0;
+            secondInheritedArrayCount = second._inheritedValueArrays?.Length ?? 0;
         }
 
         var totalSegmentCount = firstOwnArrayCount + firstInheritedArrayCount + secondOwnArrayCount + secondInheritedArrayCount;
@@ -240,7 +242,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
         if (secondInheritedArrayCount != 0)
         {
-            Array.Copy(second._inheritedValues!, 0, result, targetIndex, secondInheritedArrayCount);
+            Array.Copy(second._inheritedValueArrays!, 0, result, targetIndex, secondInheritedArrayCount);
             targetIndex += secondInheritedArrayCount;
         }
 
@@ -251,7 +253,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
         if (firstInheritedArrayCount != 0)
         {
-            Array.Copy(first._inheritedValues!, 0, result, targetIndex, firstInheritedArrayCount);
+            Array.Copy(first._inheritedValueArrays!, 0, result, targetIndex, firstInheritedArrayCount);
             targetIndex += firstInheritedArrayCount;
         }
 
