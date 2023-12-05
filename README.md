@@ -875,29 +875,23 @@ A suite of benchmarks is included if you wish to explore the performance charact
 
 As an example of the performance of measuring data using prometheus-net, we have the results of the MeasurementBenchmarks here, converted into measurements per second:
 
-| Metric type | Concurrency | Measurements per second |
-|-------------|------------:|------------------------:|
-| Gauge       |    1 thread |             521 million |
-| Counter     |    1 thread |              87 million |
-| Histogram   |    1 thread |              46 million |
-| Summary     |    1 thread |               2 million |
-| Gauge       |  16 threads |              55 million |
-| Counter     |  16 threads |              10 million |
-| Histogram   |  16 threads |              14 million |
-| Summary     |  16 threads |               2 million |
+| Metric type             | Measurements per second |
+|-------------------------|------------------------:|
+| Counter                 |             261 million |
+| Gauge                   |             591 million |
+| Histogram (16 buckets)  |             105 million |
+| Histogram (128 buckets) |              65 million |
 
-> **Note**
-> All measurements on all threads are recorded by the same metric instance, for maximum stress and concurrent load. In real-world apps with the load spread across multiple metrics, you can expect even better performance.
+Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. Both SDKs are evaluated in single-threaded mode under a comparable workload and enabled feature set. A representative result is here:
 
-Another popular .NET SDK with Prometheus support is the OpenTelemetry SDK. To help you choose, we have [SdkComparisonBenchmarks.cs](Benchmark.NetCore/SdkComparisonBenchmarks.cs) to compare the two SDKs and give some idea of how they differer in the performance tradeoffs made. Both SDKs are evaluated in single-threaded mode under a comparable workload and enabled feature set.
-
-![](Docs/SdkComparison-MeasurementCpuUsage.png)
-![](Docs/SdkComparison-MeasurementMemoryUsage.png)
-![](Docs/SdkComparison-SetupCpuUsage.png)
-![](Docs/SdkComparison-SetupMemoryUsage.png)
-
-> **Note**
-> As authors of this SDK are not necessarily experts in use of other SDKs, please feel free to submit pull requests with benchmark improvements to better highlight the strengths or weaknesses here.
+| SDK            | Benchmark scenario                    | CPU time | Memory |
+|----------------|---------------------------------------|---------:|-------:|
+| prometheus-net | Counter (existing timeseries) x100K   |   230 µs |   None |
+| OpenTelemetry  | Counter (existing timeseries) x100K   | 10998 µs |   None |
+| prometheus-net | Histogram (existing timeseries) x100K |   957 µs |   None |
+| OpenTelemetry  | Histogram (existing timeseries) x100K | 12110 µs |   None |
+| prometheus-net | Histogram (new timeseries) x1K        |   716 µs | 664 KB |
+| OpenTelemetry  | Histogram (new timeseries) x1K        |   350 µs |  96 KB |
 
 # Community projects
 

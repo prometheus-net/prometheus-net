@@ -1,13 +1,24 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Buffers;
 
 namespace Prometheus;
 
-internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : IManagedLifetimeMetricHandle<TMetricInterface>
+/// <summary>
+/// Represents a metric whose lifetime is managed by the caller, either via explicit leases or via extend-on-use behavior (implicit leases).
+/// </summary>
+/// <remarks>
+/// Each metric handle maintains a reaper task that occasionally removes metrics that have expired. The reaper is started
+/// when the first lifetime-managed metric is created and terminates when the last lifetime-managed metric expires.
+/// This does mean that the metric handle may keep objects alive until expiration, even if the handle itself is no longer used.
+/// </remarks>
+internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface>
+    : IManagedLifetimeMetricHandle<TMetricInterface>, INotifyLeaseEnded
     where TChild : ChildBase, TMetricInterface
     where TMetricInterface : ICollectorChild
 {
     internal ManagedLifetimeMetricHandle(Collector<TChild> metric, TimeSpan expiresAfter)
     {
+        _reaperFunc = Reaper;
+
         _metric = metric;
         _expiresAfter = expiresAfter;
     }
@@ -15,6 +26,7 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     protected readonly Collector<TChild> _metric;
     protected readonly TimeSpan _expiresAfter;
 
+    #region Lease(string[])
     public IDisposable AcquireLease(out TMetricInterface metric, params string[] labelValues)
     {
         var child = _metric.WithLabels(labelValues);
@@ -23,19 +35,28 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         return TakeLease(child);
     }
 
+    public RefLease AcquireRefLease(out TMetricInterface metric, params string[] labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeRefLease(child);
+    }
+
     public void WithLease(Action<TMetricInterface> action, params string[] labelValues)
     {
         var child = _metric.WithLabels(labelValues);
-        var lease = TakeLeaseFast(child);
+        using var lease = TakeRefLease(child);
 
-        try
-        {
-            action(child);
-        }
-        finally
-        {
-            lease.Dispose();
-        }
+        action(child);
+    }
+
+    public void WithLease<TArg>(Action<TArg, TMetricInterface> action, TArg arg, params string[] labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(arg, child);
     }
 
     public async Task WithLeaseAsync(Func<TMetricInterface, Task> action, params string[] labelValues)
@@ -55,6 +76,99 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
         using var lease = AcquireLease(out var metric, labelValues);
         return await func(metric);
     }
+    #endregion
+
+    #region Lease(ReadOnlyMemory<string>)
+    public IDisposable AcquireLease(out TMetricInterface metric, ReadOnlyMemory<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeLease(child);
+    }
+
+    public RefLease AcquireRefLease(out TMetricInterface metric, ReadOnlyMemory<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeRefLease(child);
+    }
+
+    public void WithLease(Action<TMetricInterface> action, ReadOnlyMemory<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(child);
+    }
+
+    public void WithLease<TArg>(Action<TArg, TMetricInterface> action, TArg arg, ReadOnlyMemory<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(arg, child);
+    }
+
+    public async Task WithLeaseAsync(Func<TMetricInterface, Task> action, ReadOnlyMemory<string> labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        await action(metric);
+    }
+
+    public TResult WithLease<TResult>(Func<TMetricInterface, TResult> func, ReadOnlyMemory<string> labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return func(metric);
+    }
+
+    public async Task<TResult> WithLeaseAsync<TResult>(Func<TMetricInterface, Task<TResult>> func, ReadOnlyMemory<string> labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return await func(metric);
+    }
+    #endregion
+
+    #region Lease(ReadOnlySpan<string>)
+    public IDisposable AcquireLease(out TMetricInterface metric, ReadOnlySpan<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeLease(child);
+    }
+
+    public RefLease AcquireRefLease(out TMetricInterface metric, ReadOnlySpan<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        metric = child;
+
+        return TakeRefLease(child);
+    }
+
+    public void WithLease(Action<TMetricInterface> action, ReadOnlySpan<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(child);
+    }
+
+    public void WithLease<TArg>(Action<TArg, TMetricInterface> action, TArg arg, ReadOnlySpan<string> labelValues)
+    {
+        var child = _metric.WithLabels(labelValues);
+        using var lease = TakeRefLease(child);
+
+        action(arg, child);
+    }
+
+    public TResult WithLease<TResult>(Func<TMetricInterface, TResult> func, ReadOnlySpan<string> labelValues)
+    {
+        using var lease = AcquireLease(out var metric, labelValues);
+        return func(metric);
+    }
+    #endregion
 
     public abstract ICollector<TMetricInterface> WithExtendLifetimeOnUse();
 
@@ -63,262 +177,321 @@ internal abstract class ManagedLifetimeMetricHandle<TChild, TMetricInterface> : 
     /// </summary>
     internal IDelayer Delayer = RealDelayer.Instance;
 
-    /// <summary>
-    /// An instance of LifetimeManager takes care of the lifetime of a single child metric:
-    /// * It maintains the count of active leases.
-    /// * It schedules removal for a suitable moment after the last lease is released.
-    /// 
-    /// Once the lifetime manager decides to remove the metric, it can no longer be used and a new lifetime manager must be allocated.
-    /// Taking new leases after removal will have no effect without recycling the lifetime manager (because it will be a lease on
-    /// a metric instance that has already been removed from its parent metric family - even if you update the value, it is no longer exported).
-    /// </summary>
-    /// <remarks>
-    /// Expiration is managed on a loosely accurate method - when the first lease is taken, an expiration timer is started.
-    /// This timer will tick at a regular interval and, upon each tick, check whether the metric needs to expire. That's it.
-    /// The metric expiration is guaranteed to be no less than [expiresAfter] has elapsed, but may be more as the timer ticks on its own clock.
-    /// </remarks>
-    private sealed class LifetimeManager
+    #region Lease tracking
+    private readonly Dictionary<TChild, ChildLifetimeInfo> _lifetimes = new();
+
+    // Guards the collection but not the contents.
+    private readonly ReaderWriterLockSlim _lifetimesLock = new();
+
+    private bool HasAnyTrackedLifetimes()
     {
-        public LifetimeManager(TChild child, TimeSpan expiresAfter, IDelayer delayer, Action<TChild> remove)
-        {
-            _child = child;
-            _expiresAfter = expiresAfter;
-            _delayer = delayer;
-            _remove = remove;
+        _lifetimesLock.EnterReadLock();
 
-            // NB! There may be optimistic copies made by the ConcurrentDictionary - this may be such a copy!
-            _reusableLease = new ReusableLease(ReleaseLease);
+        try
+        {
+            return _lifetimes.Count != 0;
         }
-
-        private readonly TChild _child;
-        private readonly TimeSpan _expiresAfter;
-        private readonly IDelayer _delayer;
-        private readonly Action<TChild> _remove;
-
-        private readonly object _lock = new();
-        private int _leaseCount = 0;
-
-        // Taking or releasing a lease will always start a new epoch. The expiration timer simply checks whether the epoch changes between two ticks.
-        // If the epoch changes, it must mean there was some lease-related activity and it will do nothing. If the epoch remains the same and the lease
-        // count is 0, the metric has expired and will be removed.
-        private int _epoch = 0;
-
-        // We start the expiration timer the first time a lease is taken.
-        private bool _timerStarted;
-
-        private readonly ReusableLease _reusableLease;
-
-        public IDisposable TakeLease()
+        finally
         {
-            TakeLeaseCore();
-
-            return new Lease(ReleaseLease);
-        }
-
-        /// <summary>
-        /// Returns a reusable lease-releaser object. Only for internal use - to avoid allocating on every lease.
-        /// </summary>
-        internal IDisposable TakeLeaseFast()
-        {
-            TakeLeaseCore();
-
-            return _reusableLease;
-        }
-
-        private void TakeLeaseCore()
-        {
-            lock (_lock)
-            {
-                EnsureExpirationTimerStarted();
-
-                _leaseCount++;
-                unchecked { _epoch++; }
-            }
-        }
-
-        private void ReleaseLease()
-        {
-            lock (_lock)
-            {
-                _leaseCount--;
-                unchecked { _epoch++; }
-            }
-        }
-
-        private void EnsureExpirationTimerStarted()
-        {
-            if (_timerStarted)
-                return;
-
-            _timerStarted = true;
-
-            _ = Task.Run(ExecuteExpirationTimer);
-        }
-
-        private async Task ExecuteExpirationTimer()
-        {
-            while (true)
-            {
-                int epochBeforeDelay;
-                
-                lock (_lock)
-                    epochBeforeDelay = _epoch;
-
-                // We iterate on the expiration interval. This means that the real lifetime of a metric may be up to 2x the expiration interval.
-                // This is fine - we are intentionally loose here, to avoid the timer logic being scheduled too aggressively. Approximate is good enough.
-                await _delayer.Delay(_expiresAfter);
-
-                lock (_lock)
-                {
-                    if (_leaseCount != 0)
-                        continue; // Will not expire if there are active leases.
-
-                    if (_epoch != epochBeforeDelay)
-                        continue; // Will not expire if some leasing activity happened during this interval.
-                }
-
-                // Expired!
-                //
-                // It is possible that a new lease still gets taken before this call completes, because we are not yet holding the lifetime manager write lock that
-                // guards against new leases being taken. In that case, the new lease will be a dud - it will fail to extend the lifetime because the removal happens
-                // already now, even if the new lease is taken. This is intentional, to keep the code simple.
-                _remove(_child);
-                break;
-            }
-        }
-
-        private sealed class Lease : IDisposable
-        {
-            public Lease(Action releaseLease)
-            {
-                _releaseLease = releaseLease;
-            }
-
-            ~Lease()
-            {
-                // Anomalous but we'll do the best we can.
-                Dispose();
-            }
-
-            private readonly Action _releaseLease;
-
-            private bool _disposed;
-            private readonly object _lock = new();
-
-            public void Dispose()
-            {
-                lock (_lock)
-                {
-                    if (_disposed)
-                        return;
-
-                    _disposed = true;
-                }
-
-                _releaseLease();
-                GC.SuppressFinalize(this);
-            }
-        }
-
-        public sealed class ReusableLease : IDisposable
-        {
-            public ReusableLease(Action releaseLease)
-            {
-                _releaseLease = releaseLease;
-            }
-
-            private readonly Action _releaseLease;
-
-            public void Dispose()
-            {
-                _releaseLease();
-            }
+            _lifetimesLock.ExitReadLock();
         }
     }
 
     /// <summary>
-    /// The lifetime manager of each child is stored here. We optimistically allocate them to avoid synchronization on the hot path.
-    /// We only synchronize when disposing of children whose lifetime has expired, to avoid racing between concurrent removal and re-publishing.
-    /// 
-    /// Avoiding races during lifetime manager allocation:
-    /// * Creating a new instance of LifetimeManager is harmless in duplicate.
-    ///     - An instance of LifetimeManager will only "start" once its methods are called, not in its ctor.
-    ///     - ConcurrentDictionary will throw away an optimistically created duplicate.
-    /// * Creating a new instance takes a reader lock to allow allocation to be blocked by removal logic.
-    /// * Removal will take a writer lock to prevent concurrent allocataions (which also implies preventing concurrent new leases that might "renew" a lifetime).
-    ///     - It can be that between "deletion needed" event and write lock being taken, the state of the lifetime manager changes because of
-    ///       actions done by holders of the read lock (e.g. new lease added). For code simplicity, we accept this as a gap where we may lose data (such a lease fails to renew/start a lifetime).
+    /// For testing only. Sets all keepalive timestamps to a time in the disstant past,
+    /// which will cause all lifetimes to expire (if they have no leases).
     /// </summary>
-    private readonly ConcurrentDictionary<TChild, LifetimeManager> _lifetimeManagers = new();
+    internal void SetAllKeepaliveTimestampsToDistantPast()
+    {
+        // We cannot just zero this because zero is the machine start timestamp, so zero is not necessarily
+        // far in the past (especially if the machine is a build agent that just started up). 1 year negative should work, though.
+        var distantPast = -PlatformCompatibilityHelpers.ElapsedToTimeStopwatchTicks(TimeSpan.FromDays(365));
 
-    private readonly ReaderWriterLockSlim _lifetimeManagersLock = new();
+        _lifetimesLock.EnterReadLock();
+
+        try
+        {
+            foreach (var lifetime in _lifetimes.Values)
+                Volatile.Write(ref lifetime.KeepaliveTimestamp, distantPast);
+        }
+        finally
+        {
+            _lifetimesLock.ExitReadLock();
+        }
+    }
 
     /// <summary>
-    /// Takes a new lease on a child, allocating a new lifetime manager if necessary.
-    /// Any number of leases may be held concurrently on the same child.
-    /// As soon as the last lease is released, the child is eligible for removal, though new leases may still be taken to extend the lifetime.
+    /// For anomaly analysis during testing only.
     /// </summary>
+    internal void DebugDumpLifetimes()
+    {
+        _lifetimesLock.EnterReadLock();
+
+        try
+        {
+            Console.WriteLine($"Dumping {_lifetimes.Count} lifetimes of {_metric}. Reaper status: {Volatile.Read(ref _reaperActiveBool)}.");
+
+            foreach (var pair in _lifetimes)
+            {
+                Console.WriteLine($"{pair.Key} -> {pair.Value}");
+            }
+        }
+        finally
+        {
+            _lifetimesLock.ExitReadLock();
+        }
+    }
+
     private IDisposable TakeLease(TChild child)
     {
-        // We synchronize here to ensure that we do not get a LifetimeManager that has already ended the lifetime.
-        _lifetimeManagersLock.EnterReadLock();
+        var lifetime = GetOrCreateLifetimeAndIncrementLeaseCount(child);
+        EnsureReaperActive();
+
+        return new Lease(this, child, lifetime);
+    }
+
+    private RefLease TakeRefLease(TChild child)
+    {
+        var lifetime = GetOrCreateLifetimeAndIncrementLeaseCount(child);
+        EnsureReaperActive();
+
+        return new RefLease(this, child, lifetime);
+    }
+
+    private ChildLifetimeInfo GetOrCreateLifetimeAndIncrementLeaseCount(TChild child)
+    {
+        _lifetimesLock.EnterReadLock();
 
         try
         {
-            return GetOrAddLifetimeManagerCore(child).TakeLease();
+            // Ideally, there already exists a registered lifetime for this metric instance.
+            if (_lifetimes.TryGetValue(child, out var existing))
+            {
+                // Immediately increment it, to reduce the risk of any concurrent activities ending the lifetime.
+                Interlocked.Increment(ref existing.LeaseCount);
+                return existing;
+            }
         }
         finally
         {
-            _lifetimeManagersLock.ExitReadLock();
+            _lifetimesLock.ExitReadLock();
         }
-    }
 
-    // Non-allocating variant, for internal use via WithLease().
-    private IDisposable TakeLeaseFast(TChild child)
-    {
-        // We synchronize here to ensure that we do not get a LifetimeManager that has already ended the lifetime.
-        _lifetimeManagersLock.EnterReadLock();
+        // No lifetime registered yet - we need to take a write lock and register it.
+        var newLifetime = new ChildLifetimeInfo
+        {
+            LeaseCount = 1
+        };
+
+        _lifetimesLock.EnterWriteLock();
 
         try
         {
-            return GetOrAddLifetimeManagerCore(child).TakeLeaseFast();
-        }
-        finally
-        {
-            _lifetimeManagersLock.ExitReadLock();
-        }
-    }
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_lifetimes.TryAdd(child, newLifetime))
+                return newLifetime;
 
-    private LifetimeManager GetOrAddLifetimeManagerCore(TChild child)
-    {
-        // Let's assume optimistically that in the typical case, there already is a lifetime manager for it.
-        if (_lifetimeManagers.TryGetValue(child, out var existing))
+            var existing = _lifetimes[child];
+
+            // Immediately increment it, to reduce the risk of any concurrent activities ending the lifetime.
+            // Even if something does, it is not the end of the world - the reaper will create a new lifetime when it realizes this happened.
+            Interlocked.Increment(ref existing.LeaseCount);
             return existing;
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
+            if (_lifetimes.TryGetValue(child, out var existing))
+            {
+                // Immediately increment it, to reduce the risk of any concurrent activities ending the lifetime.
+                // Even if something does, it is not the end of the world - the reaper will create a new lifetime when it realizes this happened.
+                Interlocked.Increment(ref existing.LeaseCount);
+                return existing;
+            }
 
-        return _lifetimeManagers.GetOrAdd(child, CreateLifetimeManager);
+            _lifetimes.Add(child, newLifetime);
+            return newLifetime;
+#endif
+        }
+        finally
+        {
+            _lifetimesLock.ExitWriteLock();
+        }
     }
 
-    private LifetimeManager CreateLifetimeManager(TChild child)
+    internal void OnLeaseEnded(TChild child, ChildLifetimeInfo lifetime)
     {
-        return new LifetimeManager(child, _expiresAfter, Delayer, DeleteMetricOuter);
+        // Update keepalive timestamp before anything else, to avoid racing.
+        Volatile.Write(ref lifetime.KeepaliveTimestamp, LowGranularityTimeSource.GetStopwatchTimestamp());
+
+        // If the lifetime has been ended while we still held a lease, it means there was a race that we lost.
+        // The metric instance may or may not be still alive. To ensure proper cleanup, we re-register a lifetime
+        // for the metric instance, which will ensure it gets cleaned up when it expires.
+        if (Volatile.Read(ref lifetime.Ended))
+        {
+            // We just take a new lease and immediately dispose it. We are guaranteed not to loop here because the
+            // reaper removes lifetimes from the dictionary once ended, so we can never run into the same lifetime again.
+            TakeRefLease(child).Dispose();
+        }
+
+        // Finally, decrement the lease count to relinquish any claim on extending the lifetime.
+        Interlocked.Decrement(ref lifetime.LeaseCount);
+    }
+
+    void INotifyLeaseEnded.OnLeaseEnded(object child, ChildLifetimeInfo lifetime)
+    {
+        OnLeaseEnded((TChild)child, lifetime);
+    }
+
+    private sealed class Lease(ManagedLifetimeMetricHandle<TChild, TMetricInterface> parent, TChild child, ChildLifetimeInfo lifetime) : IDisposable
+    {
+        public void Dispose() => parent.OnLeaseEnded(child, lifetime);
+    }
+#endregion
+
+    #region Reaper
+    // Whether the reaper is currently active. This is set to true when a metric instance is created and
+    // reset when the last metric instance expires (after which it may be set again).
+    // We use atomic operations without locking.
+    private int _reaperActiveBool = ReaperInactive;
+
+    private const int ReaperActive = 1;
+    private const int ReaperInactive = 0;
+
+    /// <summary>
+    /// Call this immediately after creating a metric instance that will eventually expire.
+    /// </summary>
+    private void EnsureReaperActive()
+    {
+        if (Interlocked.CompareExchange(ref _reaperActiveBool, ReaperActive, ReaperInactive) == ReaperActive)
+        {
+            // It was already active - nothing for us to do.
+            return;
+        }
+
+        _ = Task.Run(_reaperFunc);
+    }
+
+    private async Task Reaper()
+    {
+        while (true)
+        {
+            var now = LowGranularityTimeSource.GetStopwatchTimestamp();
+
+            // Will contains the results of pass 1.
+            TChild[] expiredInstancesBuffer = null!;
+            int expiredInstanceCount = 0;
+
+            // Pass 1: holding only a read lock, make a list of metric instances that have expired.
+            _lifetimesLock.EnterReadLock();
+
+            try
+            {
+                try
+                {
+                    expiredInstancesBuffer = ArrayPool<TChild>.Shared.Rent(_lifetimes.Count);
+
+                    foreach (var pair in _lifetimes)
+                    {
+                        if (Volatile.Read(ref pair.Value.LeaseCount) != 0)
+                            continue; // Not expired.
+
+                        if (PlatformCompatibilityHelpers.StopwatchGetElapsedTime(Volatile.Read(ref pair.Value.KeepaliveTimestamp), now) < _expiresAfter)
+                            continue; // Not expired.
+
+                        // No leases and keepalive has expired - it is an expired instance!
+                        expiredInstancesBuffer[expiredInstanceCount++] = pair.Key;
+                    }
+                }
+                finally
+                {
+                    _lifetimesLock.ExitReadLock();
+                }
+
+                // Pass 2: if we have any work to do, take a write lock and remove the expired metric instances,
+                // assuming our judgement about their expiration remains valid. We process and lock one by one,
+                // to avoid holding locks for a long duration if many items expire at once - we are not in any rush.
+                for (var i = 0; i < expiredInstanceCount; i++)
+                {
+                    var expiredInstance = expiredInstancesBuffer[i];
+
+                    _lifetimesLock.EnterWriteLock();
+
+                    try
+                    {
+                        if (!_lifetimes.TryGetValue(expiredInstance, out var lifetime))
+                            continue; // Already gone, nothing for us to do.
+
+                        // We need to check again whether the metric instance is still expired, because it may have been
+                        // renewed by a new lease in the meantime. If it is still expired, we can remove it.
+                        if (Volatile.Read(ref lifetime.LeaseCount) != 0)
+                            continue; // Not expired.
+
+                        if (PlatformCompatibilityHelpers.StopwatchGetElapsedTime(Volatile.Read(ref lifetime.KeepaliveTimestamp), now) < _expiresAfter)
+                            continue; // Not expired.
+
+                        // No leases and keepalive has expired - it is an expired instance!
+
+                        // We mark the old lifetime as ended - if it happened that it got associated with a new lease
+                        // (which is possible because we do not prevent lease-taking while in this loop), the new lease
+                        // upon being ended will re-register the lifetime instead of just extending the existing one.
+                        // We can be certain that any concurrent lifetime-affecting logic is using the same LifetimeInfo
+                        // instance because the lifetime dictionary remains locked until we are done (by which time this flag is set).
+                        Volatile.Write(ref lifetime.Ended, true);
+
+                        _lifetimes.Remove(expiredInstance);
+
+                        // If we did encounter a race, removing the metric instance here means that some metric value updates
+                        // may go missing (until the next lease creates a new instance). This is acceptable behavior, to keep the code simple.
+                        expiredInstance.Remove();
+                    }
+                    finally
+                    {
+                        _lifetimesLock.ExitWriteLock();
+                    }
+                }
+            }
+            finally
+            {
+                ArrayPool<TChild>.Shared.Return(expiredInstancesBuffer);
+            }
+
+            // Check if we need to shut down the reaper or keep going.
+            _lifetimesLock.EnterReadLock();
+
+            try
+            {
+                if (_lifetimes.Count != 0)
+                    goto has_more_work;
+            }
+            finally
+            {
+                _lifetimesLock.ExitReadLock();
+            }
+
+            CleanupReaper();
+            return;
+
+        has_more_work:
+            // Work done! Go sleep a bit and come back when something may have expired.
+            // We do not need to be too aggressive here, as expiration is not a hard schedule guarantee.
+            await Delayer.Delay(_expiresAfter);
+        }
     }
 
     /// <summary>
-    /// Performs the locking necessary to ensure that a LifetimeManager that ends the lifetime does not get reused.
+    /// Called when the reaper has noticed that all metric instances have expired and it has no more work to do. 
     /// </summary>
-    private void DeleteMetricOuter(TChild child)
+    private void CleanupReaper()
     {
-        _lifetimeManagersLock.EnterWriteLock();
+        Volatile.Write(ref _reaperActiveBool, ReaperInactive);
 
-        try
-        {
-            // We assume here that LifetimeManagers are not so buggy to call this method twice (when another LifetimeManager has replaced the old one).
-            _ = _lifetimeManagers.TryRemove(child, out _);
-            child.Remove();
-        }
-        finally
-        {
-            _lifetimeManagersLock.ExitWriteLock();
-        }
+        // The reaper is now gone. However, as we do not use locking here it is possible that someone already
+        // added metric instances (which saw "oh reaper is still running") before we got here. Let's check - if
+        // there appear to be metric instances registered, we may need to start the reaper again.
+        if (HasAnyTrackedLifetimes())
+            EnsureReaperActive();
     }
+
+    private readonly Func<Task> _reaperFunc;
+    #endregion
 }

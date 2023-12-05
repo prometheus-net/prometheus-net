@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿#if !NET
+using System.Globalization;
 
 namespace Prometheus;
 
@@ -7,36 +8,45 @@ namespace Prometheus;
 /// </remarks>
 internal sealed class TextSerializer : IMetricsSerializer
 {
-    private static readonly byte[] NewLine = { (byte)'\n' };
-    private static readonly byte[] Quote = { (byte)'"' };
-    private static readonly byte[] Equal = { (byte)'=' };
-    private static readonly byte[] Comma = { (byte)',' };
-    private static readonly byte[] Underscore = { (byte)'_' };
-    private static readonly byte[] LeftBrace = { (byte)'{' };
-    private static readonly byte[] RightBraceSpace = { (byte)'}', (byte)' ' };
-    private static readonly byte[] Space = { (byte)' ' };
-    private static readonly byte[] SpaceHashSpaceLeftBrace = { (byte)' ', (byte)'#', (byte)' ', (byte)'{' };
-    private static readonly byte[] PositiveInfinity = PrometheusConstants.ExportEncoding.GetBytes("+Inf");
-    private static readonly byte[] NegativeInfinity = PrometheusConstants.ExportEncoding.GetBytes("-Inf");
-    private static readonly byte[] NotANumber = PrometheusConstants.ExportEncoding.GetBytes("NaN");
-    private static readonly byte[] DotZero = PrometheusConstants.ExportEncoding.GetBytes(".0");
-    private static readonly byte[] FloatPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1.0");
-    private static readonly byte[] FloatZero = PrometheusConstants.ExportEncoding.GetBytes("0.0");
-    private static readonly byte[] FloatNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1.0");
-    private static readonly byte[] IntPositiveOne = PrometheusConstants.ExportEncoding.GetBytes("1");
-    private static readonly byte[] IntZero = PrometheusConstants.ExportEncoding.GetBytes("0");
-    private static readonly byte[] IntNegativeOne = PrometheusConstants.ExportEncoding.GetBytes("-1");
-    private static readonly byte[] EofNewLine = PrometheusConstants.ExportEncoding.GetBytes("# EOF\n");
-    private static readonly byte[] HashHelpSpace = PrometheusConstants.ExportEncoding.GetBytes("# HELP ");
-    private static readonly byte[] NewlineHashTypeSpace = PrometheusConstants.ExportEncoding.GetBytes("\n# TYPE ");
-    private static readonly byte[] Unknown = PrometheusConstants.ExportEncoding.GetBytes("unknown");
+    internal static readonly byte[] NewLine = [(byte)'\n'];
+    internal static readonly byte[] Quote = [(byte)'"'];
+    internal static readonly byte[] Equal = [(byte)'='];
+    internal static readonly byte[] Comma = [(byte)','];
+    internal static readonly byte[] Underscore = [(byte)'_'];
+    internal static readonly byte[] LeftBrace = [(byte)'{'];
+    internal static readonly byte[] RightBraceSpace = [(byte)'}', (byte)' '];
+    internal static readonly byte[] Space = [(byte)' '];
+    internal static readonly byte[] SpaceHashSpaceLeftBrace = [(byte)' ', (byte)'#', (byte)' ', (byte)'{'];
+    internal static readonly byte[] PositiveInfinity = "+Inf"u8.ToArray();
+    internal static readonly byte[] NegativeInfinity = "-Inf"u8.ToArray();
+    internal static readonly byte[] NotANumber = "NaN"u8.ToArray();
+    internal static readonly byte[] DotZero = ".0"u8.ToArray();
+    internal static readonly byte[] FloatPositiveOne = "1.0"u8.ToArray();
+    internal static readonly byte[] FloatZero = "0.0"u8.ToArray();
+    internal static readonly byte[] FloatNegativeOne = "-1.0"u8.ToArray();
+    internal static readonly byte[] IntPositiveOne = "1"u8.ToArray();
+    internal static readonly byte[] IntZero = "0"u8.ToArray();
+    internal static readonly byte[] IntNegativeOne = "-1"u8.ToArray();
+    internal static readonly byte[] EofNewLine = "# EOF\n"u8.ToArray();
+    internal static readonly byte[] HashHelpSpace = "# HELP "u8.ToArray();
+    internal static readonly byte[] NewlineHashTypeSpace = "\n# TYPE "u8.ToArray();
 
-    private static readonly char[] DotEChar = { '.', 'e' };
+    internal static readonly byte[] Unknown = "unknown"u8.ToArray();
+
+    internal static readonly Dictionary<MetricType, byte[]> MetricTypeToBytes = new()
+    {
+        { MetricType.Gauge, "gauge"u8.ToArray() },
+        { MetricType.Counter, "counter"u8.ToArray() },
+        { MetricType.Histogram, "histogram"u8.ToArray() },
+        { MetricType.Summary, "summary"u8.ToArray() },
+    };
+
+    private static readonly char[] DotEChar = ['.', 'e'];
 
     public TextSerializer(Stream stream, ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
         _expositionFormat = fmt;
-        _stream = new Lazy<Stream>(() => stream);
+        _stream = new Lazy<Stream>(() => AddStreamBuffering(stream));
     }
 
     // Enables delay-loading of the stream, because touching stream in HTTP handler triggers some behavior.
@@ -44,7 +54,18 @@ internal sealed class TextSerializer : IMetricsSerializer
         ExpositionFormat fmt = ExpositionFormat.PrometheusText)
     {
         _expositionFormat = fmt;
-        _stream = new Lazy<Stream>(streamFactory);
+        _stream = new Lazy<Stream>(() => AddStreamBuffering(streamFactory()));
+    }
+
+    /// <summary>
+    /// Ensures that writes to the stream are buffered, meaning we do not emit individual "write 1 byte" calls to the stream.
+    /// This has been rumored by some users to be relevant in their scenarios (though never with solid evidence or repro steps).
+    /// However, we can easily simulate this via the serialization benchmark through named pipes - they are super slow if writing
+    /// individual characters. It is a reasonable assumption that this limitation is also true elsewhere, at least on some OS/platform.
+    /// </summary>
+    private static Stream AddStreamBuffering(Stream inner)
+    {
+        return new BufferedStream(inner);
     }
 
     public async Task FlushAsync(CancellationToken cancel)
@@ -58,7 +79,7 @@ internal sealed class TextSerializer : IMetricsSerializer
 
     private readonly Lazy<Stream> _stream;
 
-    public async Task WriteFamilyDeclarationAsync(string name, byte[] nameBytes, byte[] helpBytes, MetricType type,
+    public async ValueTask WriteFamilyDeclarationAsync(string name, byte[] nameBytes, byte[] helpBytes, MetricType type,
         byte[] typeBytes, CancellationToken cancel)
     {
         var nameLen = nameBytes.Length;
@@ -89,16 +110,16 @@ internal sealed class TextSerializer : IMetricsSerializer
         await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
     }
 
-    public async Task WriteEnd(CancellationToken cancel)
+    public async ValueTask WriteEnd(CancellationToken cancel)
     {
         if (_expositionFormat == ExpositionFormat.OpenMetricsText)
             await _stream.Value.WriteAsync(EofNewLine, 0, EofNewLine.Length, cancel);
     }
 
-    public async Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
-        CancellationToken cancel, double value, ObservedExemplar exemplar, byte[]? suffix = null)
+    public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+        double value, ObservedExemplar exemplar, byte[]? suffix, CancellationToken cancel)
     {
-        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, exemplar, suffix);
+        await WriteIdentifierPartAsync(name, flattenedLabels, canonicalLabel, suffix, cancel);
 
         await WriteValue(value, cancel);
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
@@ -109,10 +130,10 @@ internal sealed class TextSerializer : IMetricsSerializer
         await _stream.Value.WriteAsync(NewLine, 0, NewLine.Length, cancel);
     }
 
-    public async Task WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
-        CancellationToken cancel, long value, ObservedExemplar exemplar, byte[]? suffix = null)
+    public async ValueTask WriteMetricPointAsync(byte[] name, byte[] flattenedLabels, CanonicalLabel canonicalLabel,
+        long value, ObservedExemplar exemplar, byte[]? suffix, CancellationToken cancel)
     {
-        await WriteIdentifierPartAsync(name, flattenedLabels, cancel, canonicalLabel, exemplar, suffix);
+        await WriteIdentifierPartAsync(name, flattenedLabels, canonicalLabel, suffix, cancel);
 
         await WriteValue(value, cancel);
         if (_expositionFormat == ExpositionFormat.OpenMetricsText && exemplar.IsValid)
@@ -130,7 +151,8 @@ internal sealed class TextSerializer : IMetricsSerializer
         {
             if (i > 0)
                 await _stream.Value.WriteAsync(Comma, 0, Comma.Length, cancel);
-            await WriteLabel(exemplar.Labels!.Buffer[i].KeyBytes, exemplar.Labels!.Buffer[i].ValueBytes, cancel);
+
+            await WriteLabel(exemplar.Labels![i].KeyBytes, PrometheusConstants.ExemplarEncoding.GetBytes(exemplar.Labels![i].Value), cancel);
         }
 
         await _stream.Value.WriteAsync(RightBraceSpace, 0, RightBraceSpace.Length, cancel);
@@ -204,16 +226,15 @@ internal sealed class TextSerializer : IMetricsSerializer
         }
 
         var valueAsString = value.ToString("D", CultureInfo.InvariantCulture);
-        
         var numBytes = PrometheusConstants.ExportEncoding.GetBytes(valueAsString, 0, valueAsString.Length, _stringBytesBuffer, 0);
         await _stream.Value.WriteAsync(_stringBytesBuffer, 0, numBytes, cancel);
     }
 
-    // Reuse a buffer to do the UTF-8 encoding.
-    // Maybe one day also ValueStringBuilder but that would be .NET Core only.
-    // https://github.com/dotnet/corefx/issues/28379
+    // Reuse a buffer to do the serialization and UTF-8 encoding.
     // Size limit guided by https://stackoverflow.com/questions/21146544/what-is-the-maximum-length-of-double-tostringd
+    private readonly char[] _stringCharsBuffer = new char[32];
     private readonly byte[] _stringBytesBuffer = new byte[32];
+
     private readonly ExpositionFormat _expositionFormat;
 
     /// <summary>
@@ -221,8 +242,8 @@ internal sealed class TextSerializer : IMetricsSerializer
     /// familyname_postfix{labelkey1="labelvalue1",labelkey2="labelvalue2"}
     /// Note: Terminates with a SPACE
     /// </summary>
-    private async Task WriteIdentifierPartAsync(byte[] name, byte[] flattenedLabels, CancellationToken cancel,
-        CanonicalLabel canonicalLabel, ObservedExemplar observedExemplar, byte[]? suffix = null)
+    private async Task WriteIdentifierPartAsync(byte[] name, byte[] flattenedLabels,
+        CanonicalLabel canonicalLabel, byte[]? suffix, CancellationToken cancel)
     {
         await _stream.Value.WriteAsync(name, 0, name.Length, cancel);
         if (suffix != null && suffix.Length > 0)
@@ -293,3 +314,4 @@ internal sealed class TextSerializer : IMetricsSerializer
         return new CanonicalLabel(name, prometheusBytes, openMetricsBytes);
     }
 }
+#endif

@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Routing;
 
-namespace Prometheus.HttpMetrics
+namespace Prometheus.HttpMetrics;
+
+sealed class CapturedRouteDataFeature : ICapturedRouteDataFeature
 {
-    sealed class CapturedRouteDataFeature : ICapturedRouteDataFeature
-    {
-        public RouteValueDictionary Values { get; } = new RouteValueDictionary();
-    }
+    public RouteValueDictionary Values { get; } = new RouteValueDictionary();
 }

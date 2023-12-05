@@ -42,13 +42,14 @@ internal sealed class ObservedExemplar
         Debug.Assert(this != Empty, "Do not mutate the sentinel");
 
         var totalRuneCount = 0;
+
         for (var i = 0; i < labels.Length; i++)
         {
-            totalRuneCount += labels.Buffer[i].RuneCount;
+            totalRuneCount += labels[i].RuneCount;
             for (var j = 0; j < labels.Length; j++)
             {
                 if (i == j) continue;
-                if (ByteArraysEqual(labels.Buffer[i].KeyBytes, labels.Buffer[j].KeyBytes))
+                if (ByteArraysEqual(labels[i].KeyBytes, labels[j].KeyBytes))
                     throw new ArgumentException("Exemplar contains duplicate keys.");
             }
         }

@@ -7,30 +7,24 @@ namespace Benchmark.NetCore;
 /// Here we try to ensure that creating/using expiring metrics does not impose too heavy of a performance burden or create easily identifiable memory leaks.
 /// </summary>
 [MemoryDiagnoser]
+// This seems to need a lot of warmup to stabilize.
+[WarmupCount(50)]
+// This seems to need a lot of iterations to stabilize.
+[IterationCount(50)]
+//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
 public class MetricExpirationBenchmarks
 {
     /// <summary>
     /// Just to ensure that a benchmark iteration has enough to do for stable and meaningful results.
     /// </summary>
-    private const int _metricCount = 100;
+    private const int _metricCount = 25_000;
 
     /// <summary>
-    /// Some benchmarks try to register metrics that already exist.
-    /// </summary>
-    private const int _duplicateCount = 5;
-
-    /// <summary>
-    /// How many times we repeat acquiring and incrementing the same instance.
-    /// </summary>
-    [Params(1, 10)]
-    public int RepeatCount { get; set; }
-
-    /// <summary>
-    /// If true, we preallocate a lifetime manager for every metric, so the benchmark only measures the actual usage
-    /// of the metric and not the creation, as these two components of a metric lifetime can have different impact in different cases.
+    /// If true, we preallocate a lifetime for every metric, so the benchmark only measures the actual usage
+    /// of the metric and not the first-lease setup, as these two components of a metric lifetime can have different impact in different cases.
     /// </summary>
     [Params(true, false)]
-    public bool PreallocateLifetimeManager { get; set; }
+    public bool PreallocateLifetime { get; set; }
 
     private const string _help = "arbitrary help message for metric, not relevant for benchmarking";
 
@@ -47,6 +41,13 @@ public class MetricExpirationBenchmarks
     private CollectorRegistry _registry;
     private IManagedLifetimeMetricFactory _factory;
 
+    // We use the same strings both for the names and the values.
+    private static readonly string[] _labels = ["foo", "bar", "baz"];
+
+    private ManualDelayer _delayer;
+
+    private readonly ManagedLifetimeMetricHandle<Counter.Child, ICounter>[] _counters = new ManagedLifetimeMetricHandle<Counter.Child, ICounter>[_metricCount];
+
     [IterationSetup]
     public void Setup()
     {
@@ -55,85 +56,109 @@ public class MetricExpirationBenchmarks
             // We enable lifetime management but set the expiration timer very high to avoid expiration in the middle of the benchmark.
             .WithManagedLifetime(expiresAfter: TimeSpan.FromHours(24));
 
-        var regularFactory = Metrics.WithCustomRegistry(_registry);
+        _delayer = new();
 
-        // We create non-expiring versions of the metrics to pre-warm the metrics registry.
-        // While not a realistic use case, it does help narrow down the benchmark workload to the actual part that is special about expiring metrics,
-        // which means we get more useful results from this (rather than with some metric allocation overhead mixed in).
         for (var i = 0; i < _metricCount; i++)
         {
-            var counter = regularFactory.CreateCounter(_metricNames[i], _help, _labels);
-            counter.WithLabels(_labels);
+            var counter = CreateCounter(_metricNames[i], _help, _labels);
+            _counters[i] = counter;
 
-            // If the params say so, we even preallocate the lifetime manager to ensure that we only measure the usage of the metric.
-            // Both the usage and the lifetime manager allocation matter but we want to bring them out separately in the benchmarks.
-            if (PreallocateLifetimeManager)
-            {
-                var managedLifetimeCounter = _factory.CreateCounter(_metricNames[i], _help, _labels);
-
-                // And also take the first lease to pre-warm the lifetime manager.
-                managedLifetimeCounter.AcquireLease(out _, _labels).Dispose();
-            }
+            // Both the usage and the lifetime allocation matter but we want to bring them out separately in the benchmarks.
+            if (PreallocateLifetime)
+                counter.AcquireRefLease(out _, _labels).Dispose();
         }
     }
 
-    // We use the same strings both for the names and the values.
-    private static readonly string[] _labels = new[] { "foo", "bar", "baz" };
+    [IterationCleanup]
+    public void Cleanup()
+    {
+        // Ensure that all metrics are marked as expired, so the expiration processing logic destroys them all.
+        // This causes some extra work during cleanup but on the other hand, it ensures good isolation between iterations, so fine.
+        foreach (var counter in _counters)
+            counter.SetAllKeepaliveTimestampsToDistantPast();
+
+        // Twice and with some sleep time, just for good measure.
+        // BenchmarkDotNet today does not support async here, so we do a sleep to let the reaper thread process things.
+        _delayer.BreakAllDelays();
+        Thread.Sleep(millisecondsTimeout: 5);
+    }
+
+    private ManagedLifetimeMetricHandle<Counter.Child, ICounter> CreateCounter(string name, string help, string[] labels)
+    {
+        var counter = (ManagedLifetimeMetricHandle<Counter.Child, ICounter>)_factory.CreateCounter(name, help, labels);
+
+        // We use a breakable delayer to ensure that we can control when the metric expiration logic runs, so one iteration
+        // of the benchmark does not start to interfere with another iteration just because some timers are left running.
+        counter.Delayer = _delayer;
+
+        return counter;
+    }
 
     [Benchmark]
-    public void CreateAndUse_AutoLease()
+    public void Use_AutoLease_Once()
     {
         for (var i = 0; i < _metricCount; i++)
         {
-            var metric = _factory.CreateCounter(_metricNames[i], _help, _labels).WithExtendLifetimeOnUse();
+            var wrapper = _counters[i].WithExtendLifetimeOnUse();
 
-            for (var repeat = 0; repeat < RepeatCount; repeat++)
-                metric.WithLabels(_labels).Inc();
+            // Auto-leasing is used as a drop-in replacement in a context that is not aware the metric is lifetime-managed.
+            // This means the typical usage is to pass a string[] (or ROM) and not a span (which would be a hint that it already exists).
+            wrapper.WithLabels(_labels).Inc();
         }
     }
 
     [Benchmark]
-    public void CreateAndUse_AutoLease_WithDuplicates()
+    public void Use_AutoLease_With10Duplicates()
     {
-        for (var dupe = 0; dupe < _duplicateCount; dupe++)
+        for (var dupe = 0; dupe < 10; dupe++)
             for (var i = 0; i < _metricCount; i++)
             {
-                var metric = _factory.CreateCounter(_metricNames[i], _help, _labels).WithExtendLifetimeOnUse();
+                var wrapper = _counters[i].WithExtendLifetimeOnUse();
 
-                for (var repeat = 0; repeat < RepeatCount; repeat++)
-                    metric.WithLabels(_labels).Inc();
+                // Auto-leasing is used as a drop-in replacement in a context that is not aware the metric is lifetime-managed.
+                // This means the typical usage is to pass a string[] (or ROM) and not a span (which would be a hint that it already exists).
+                wrapper.WithLabels(_labels).Inc();
             }
+    }
+
+    [Benchmark]
+    public void Use_AutoLease_Once_With10Repeats()
+    {
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var wrapper = _counters[i].WithExtendLifetimeOnUse();
+
+            for (var repeat = 0; repeat < 10; repeat++)
+                // Auto-leasing is used as a drop-in replacement in a context that is not aware the metric is lifetime-managed.
+                // This means the typical usage is to pass a string[] (or ROM) and not a span (which would be a hint that it already exists).
+                wrapper.WithLabels(_labels).Inc();
+        }
     }
 
     [Benchmark(Baseline = true)]
-    public void CreateAndUse_ManualLease()
+    public void Use_ManualLease()
     {
+        // Typical usage for explicitly lifetime-managed metrics is to pass the label values as span, as they may already be known.
+        var labelValues = _labels.AsSpan();
+
         for (var i = 0; i < _metricCount; i++)
         {
-            var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
-
-            for (var repeat = 0; repeat < RepeatCount; repeat++)
-            {
-                using var lease = counter.AcquireLease(out var instance, _labels);
-                instance.Inc();
-            }
+            using var lease = _counters[i].AcquireLease(out var instance, labelValues);
+            instance.Inc();
         }
     }
 
     [Benchmark]
-    public void CreateAndUse_ManualLease_WithDuplicates()
+    public void Use_ManualRefLease()
     {
-        for (var dupe = 0; dupe < _duplicateCount; dupe++)
-            for (var i = 0; i < _metricCount; i++)
-            {
-                var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
+        // Typical usage for explicitly lifetime-managed metrics is to pass the label values as span, as they may already be known.
+        var labelValues = _labels.AsSpan();
 
-                for (var repeat = 0; repeat < RepeatCount; repeat++)
-                {
-                    using var lease = counter.AcquireLease(out var instance, _labels);
-                    instance.Inc();
-                }
-            }
+        for (var i = 0; i < _metricCount; i++)
+        {
+            using var lease = _counters[i].AcquireRefLease(out var instance, labelValues);
+            instance.Inc();
+        }
     }
 
     private static void IncrementCounter(ICounter counter)
@@ -142,35 +167,15 @@ public class MetricExpirationBenchmarks
     }
 
     [Benchmark]
-    public void CreateAndUse_WithLease()
+    public void Use_WithLease()
     {
+        // Typical usage for explicitly lifetime-managed metrics is to pass the label values as span, as they may already be known.
+        var labelValues = _labels.AsSpan();
+
         // Reuse the delegate.
         Action<ICounter> incrementCounterAction = IncrementCounter;
 
         for (var i = 0; i < _metricCount; i++)
-        {
-            var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
-
-            for (var repeat = 0; repeat < RepeatCount; repeat++)
-            {
-                counter.WithLease(incrementCounterAction, _labels);
-            }
-        }
-    }
-
-    [Benchmark]
-    public void CreateAndUse_WithLease_WithDuplicates()
-    {
-        // Reuse the delegate.
-        Action<ICounter> incrementCounterAction = IncrementCounter;
-
-        for (var dupe = 0; dupe < _duplicateCount; dupe++)
-            for (var i = 0; i < _metricCount; i++)
-            {
-                var counter = _factory.CreateCounter(_metricNames[i], _help, _labels);
-
-                for (var repeat = 0; repeat < RepeatCount; repeat++)
-                    counter.WithLease(incrementCounterAction, _labels);
-            }
+            _counters[i].WithLease(incrementCounterAction, labelValues);
     }
 }

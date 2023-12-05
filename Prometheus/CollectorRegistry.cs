@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Buffers;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace Prometheus;
@@ -56,8 +57,8 @@ public sealed class CollectorRegistry : ICollectorRegistry
         _beforeCollectAsyncCallbacks.Add(callback);
     }
 
-    private readonly ConcurrentBag<Action> _beforeCollectCallbacks = new ConcurrentBag<Action>();
-    private readonly ConcurrentBag<Func<CancellationToken, Task>> _beforeCollectAsyncCallbacks = new ConcurrentBag<Func<CancellationToken, Task>>();
+    private readonly ConcurrentBag<Action> _beforeCollectCallbacks = [];
+    private readonly ConcurrentBag<Func<CancellationToken, Task>> _beforeCollectAsyncCallbacks = [];
     #endregion
 
     #region Static labels
@@ -114,7 +115,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
     }
 
     private LabelSequence _staticLabels;
-    private readonly ReaderWriterLockSlim _staticLabelsLock = new ReaderWriterLockSlim();
+    private readonly ReaderWriterLockSlim _staticLabelsLock = new();
 
     internal LabelSequence GetStaticLabels()
     {
@@ -152,65 +153,26 @@ public sealed class CollectorRegistry : ICollectorRegistry
         return CollectAndSerializeAsync(new TextSerializer(to, format), cancel);
     }
 
-    // We pass this thing to GetOrAdd to avoid allocating a collector or a closure.
-    // This reduces memory usage in situations where the collector is already registered.
-    internal readonly struct CollectorInitializer<TCollector, TConfiguration>
+    internal delegate TCollector CollectorInitializer<TCollector, TConfiguration>(string name, string help, in StringSequence instanceLabelNames, in LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior)
         where TCollector : Collector
-        where TConfiguration : MetricConfiguration
-    {
-        private readonly CreateInstanceDelegate _createInstance;
-        private readonly string _name;
-        private readonly string _help;
-        private readonly StringSequence _instanceLabelNames;
-        private readonly LabelSequence _staticLabels;
-        private readonly TConfiguration _configuration;
-        // This is already resolved to inherit from any parent or defaults.
-        private readonly ExemplarBehavior _exemplarBehavior;
-
-        public string Name => _name;
-        public StringSequence InstanceLabelNames => _instanceLabelNames;
-        public LabelSequence StaticLabels => _staticLabels;
-
-        public CollectorInitializer(CreateInstanceDelegate createInstance, string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior)
-        {
-            _createInstance = createInstance;
-            _name = name;
-            _help = help;
-            _instanceLabelNames = instanceLabelNames;
-            _staticLabels = staticLabels;
-            _configuration = configuration;
-            _exemplarBehavior = exemplarBehavior;
-        }
-
-        public TCollector CreateInstance(CollectorIdentity _) => _createInstance(_name, _help, _instanceLabelNames, _staticLabels, _configuration, _exemplarBehavior);
-
-        public delegate TCollector CreateInstanceDelegate(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior);
-    }
+        where TConfiguration : MetricConfiguration;
 
     /// <summary>
     /// Adds a collector to the registry, returning an existing instance if one with a matching name was already registered.
     /// </summary>
-    internal TCollector GetOrAdd<TCollector, TConfiguration>(in CollectorInitializer<TCollector, TConfiguration> initializer)
+    internal TCollector GetOrAdd<TCollector, TConfiguration>(string name, string help, in StringSequence instanceLabelNames, in LabelSequence staticLabels, TConfiguration configuration, ExemplarBehavior exemplarBehavior, in CollectorInitializer<TCollector, TConfiguration> initializer)
         where TCollector : Collector
         where TConfiguration : MetricConfiguration
     {
-        // Should we optimize for the case where the family/collector is already registered? It is unlikely to be very common. However, we still should because:
-        // 1) In scenarios where collector re-registration is common, it could be an expensive persistent cost in terms of allocations.
-        // 2) In scenarios where collector re-registration is not common, a tiny compute overhead is unlikely to be significant in the big picture, as it only happens once.
+        var family = GetOrAddCollectorFamily<TCollector>(name);
 
-        var family = GetOrAddCollectorFamily(initializer);
+        var collectorIdentity = new CollectorIdentity(instanceLabelNames, staticLabels);
 
-        var collectorIdentity = new CollectorIdentity(initializer.InstanceLabelNames, initializer.StaticLabels);
-
-        if (family.Collectors.TryGetValue(collectorIdentity, out var existing))
-            return (TCollector)existing;
-
-        return (TCollector)family.Collectors.GetOrAdd(collectorIdentity, initializer.CreateInstance);
+        return (TCollector)family.GetOrAdd(collectorIdentity, name, help, configuration, exemplarBehavior, initializer);
     }
 
-    private CollectorFamily GetOrAddCollectorFamily<TCollector, TConfiguration>(in CollectorInitializer<TCollector, TConfiguration> initializer)
+    private CollectorFamily GetOrAddCollectorFamily<TCollector>(string finalName)
         where TCollector : Collector
-        where TConfiguration : MetricConfiguration
     {
         static CollectorFamily ValidateFamily(CollectorFamily candidate)
         {
@@ -223,16 +185,51 @@ public sealed class CollectorRegistry : ICollectorRegistry
             return candidate;
         }
 
-        if (_families.TryGetValue(initializer.Name, out var existing))
-            return ValidateFamily(existing);
+        // First try to get the family with only a read lock, with the assumption that it might already exist and therefore we do not need an expensive write lock.
+        _familiesLock.EnterReadLock();
 
-        var collector = _families.GetOrAdd(initializer.Name, new CollectorFamily(typeof(TCollector)));
-        return ValidateFamily(collector);
+        try
+        {
+            if (_families.TryGetValue(finalName, out var existing))
+                return ValidateFamily(existing);
+        }
+        finally
+        {
+            _familiesLock.ExitReadLock();
+        }
+
+        // It does not exist. OK, just create it.
+        var newFamily = new CollectorFamily(typeof(TCollector));
+
+        _familiesLock.EnterWriteLock();
+
+        try
+        {
+#if NET
+            // It could be that someone beats us to it! Probably not, though.
+            if (_families.TryAdd(finalName, newFamily))
+                return newFamily;
+
+            return ValidateFamily(_families[finalName]);
+#else
+            // On .NET Fx we need to do the pessimistic case first because there is no TryAdd().
+            if (_families.TryGetValue(finalName, out var existing))
+                return ValidateFamily(existing);
+
+            _families.Add(finalName, newFamily);
+            return newFamily;
+#endif
+        }
+        finally
+        {
+            _familiesLock.ExitWriteLock();
+        }
     }
 
     // Each collector family has an identity (the base name of the metric, in Prometheus format) and any number of collectors within.
     // Different collectors in the same family may have different sets of labels (static and instance) depending on how they were created.
-    private readonly ConcurrentDictionary<string, CollectorFamily> _families = new();
+    private readonly Dictionary<string, CollectorFamily> _families = new(StringComparer.Ordinal);
+    private readonly ReaderWriterLockSlim _familiesLock = new();
 
     internal void SetBeforeFirstCollectCallback(Action a)
     {
@@ -250,7 +247,7 @@ public sealed class CollectorRegistry : ICollectorRegistry
     /// </summary>
     private Action? _beforeFirstCollectCallback;
     private bool _hasPerformedFirstCollect;
-    private readonly object _firstCollectLock = new object();
+    private readonly object _firstCollectLock = new();
 
     /// <summary>
     /// Collects metrics from all the registered collectors and sends them to the specified serializer.
@@ -271,8 +268,37 @@ public sealed class CollectorRegistry : ICollectorRegistry
 
         UpdateRegistryMetrics();
 
-        foreach (var collector in _families.Values)
-            await collector.CollectAndSerializeAsync(serializer, cancel);
+        // This could potentially take nontrivial time, as we are serializing to a stream (potentially, a network stream).
+        // Therefore we operate on a defensive copy in a reused buffer.
+        CollectorFamily[] buffer;
+
+        _familiesLock.EnterReadLock();
+
+        var familiesCount = _families.Count;
+        buffer = ArrayPool<CollectorFamily>.Shared.Rent(familiesCount);
+
+        try
+        {
+            try
+            {
+                _families.Values.CopyTo(buffer, 0);
+            }
+            finally
+            {
+                _familiesLock.ExitReadLock();
+            }
+
+            for (var i = 0; i < familiesCount; i++)
+            {
+                var family = buffer[i];
+                await family.CollectAndSerializeAsync(serializer, cancel);
+            }
+        }
+        finally
+        {
+            ArrayPool<CollectorFamily>.Shared.Return(buffer, clearArray: true);
+        }
+
         await serializer.WriteEnd(cancel);
         await serializer.FlushAsync(cancel);
     }
@@ -311,13 +337,13 @@ public sealed class CollectorRegistry : ICollectorRegistry
     {
         var factory = Metrics.WithCustomRegistry(this);
 
-        _metricFamilies = factory.CreateGauge("prometheus_net_metric_families", "Number of metric families currently registered.", labelNames: new[] { MetricTypeDebugLabel });
-        _metricInstances = factory.CreateGauge("prometheus_net_metric_instances", "Number of metric instances currently registered across all metric families.", labelNames: new[] { MetricTypeDebugLabel });
-        _metricTimeseries = factory.CreateGauge("prometheus_net_metric_timeseries", "Number of metric timeseries currently generated from all metric instances.", labelNames: new[] { MetricTypeDebugLabel });
+        _metricFamilies = factory.CreateGauge("prometheus_net_metric_families", "Number of metric families currently registered.", labelNames: [MetricTypeDebugLabel]);
+        _metricInstances = factory.CreateGauge("prometheus_net_metric_instances", "Number of metric instances currently registered across all metric families.", labelNames: [MetricTypeDebugLabel]);
+        _metricTimeseries = factory.CreateGauge("prometheus_net_metric_timeseries", "Number of metric timeseries currently generated from all metric instances.", labelNames: [MetricTypeDebugLabel]);
 
-        _metricFamiliesPerType = new();
-        _metricInstancesPerType = new();
-        _metricTimeseriesPerType = new();
+        _metricFamiliesPerType = [];
+        _metricInstancesPerType = [];
+        _metricTimeseriesPerType = [];
 
         foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
         {
@@ -370,12 +396,15 @@ public sealed class CollectorRegistry : ICollectorRegistry
             {
                 bool hadMatchingType = false;
 
-                foreach (var collector in family.Collectors.Values.Where(c => c.Type == type))
+                family.ForEachCollector(collector =>
                 {
+                    if (collector.Type != type)
+                        return;
+
                     hadMatchingType = true;
                     instances += collector.ChildCount;
                     timeseries += collector.TimeseriesCount;
-                }
+                });
 
                 if (hadMatchingType)
                     families++;

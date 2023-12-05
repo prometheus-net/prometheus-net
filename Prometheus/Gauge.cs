@@ -11,10 +11,10 @@ public sealed class Gauge : Collector<Gauge.Child>, IGauge
 
         private ThreadSafeDouble _value;
 
-        private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+        private protected override ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
-            await serializer.WriteMetricPointAsync(
-                Parent.NameBytes, FlattenedLabelsBytes, CanonicalLabel.Empty, cancel, Value, ObservedExemplar.Empty);
+            return serializer.WriteMetricPointAsync(
+                Parent.NameBytes, FlattenedLabelsBytes, CanonicalLabel.Empty, Value, ObservedExemplar.Empty, null, cancel);
         }
 
         public void Inc(double increment = 1)

@@ -1,10 +1,9 @@
-namespace Prometheus.HttpClientMetrics
+namespace Prometheus.HttpClientMetrics;
+
+public sealed class HttpClientRequestDurationOptions : HttpClientMetricsOptionsBase
 {
-    public sealed class HttpClientRequestDurationOptions : HttpClientMetricsOptionsBase
-    {
-        /// <summary>
-        /// Set this to use a custom metric instead of the default.
-        /// </summary>
-        public ICollector<IHistogram>? Histogram { get; set; }
-    }
+    /// <summary>
+    /// Set this to use a custom metric instead of the default.
+    /// </summary>
+    public ICollector<IHistogram>? Histogram { get; set; }
 }

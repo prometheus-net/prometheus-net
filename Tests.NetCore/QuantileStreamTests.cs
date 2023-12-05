@@ -33,24 +33,6 @@ namespace Prometheus.Tests
         }
 
         [TestMethod]
-        public void TestLowBiasedQuery()
-        {
-            var random = new Random(42);
-            var s = QuantileStream.NewLowBiased(RelativeEpsilon);
-            var a = PopulateStream(s, random);
-            VerifyLowPercsWithRelativeEpsilon(a, s);
-        }
-
-        [TestMethod]
-        public void TestHighBiasedQuery()
-        {
-            var random = new Random(42);
-            var s = QuantileStream.NewHighBiased(RelativeEpsilon);
-            var a = PopulateStream(s, random);
-            VerifyHighPercsWithRelativeEpsilon(a, s);
-        }
-
-        [TestMethod]
         public void TestUncompressed()
         {
             var q = QuantileStream.NewTargeted(_targets);

@@ -71,10 +71,10 @@ public sealed class MetricsTests
         await registry2.CollectAndSerializeAsync(serializer2, default);
 
         await serializer1.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default, default, default, default, default);
-        await serializer1.ReceivedWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(double), default);
+        await serializer1.ReceivedWithAnyArgs().WriteMetricPointAsync(default, default, default, default(double), default, default, default);
 
         await serializer2.ReceivedWithAnyArgs().WriteFamilyDeclarationAsync(default, default, default, default, default, default);
-        await serializer2.ReceivedWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(double), default);
+        await serializer2.ReceivedWithAnyArgs().WriteMetricPointAsync(default, default, default, default(double), default, default, default);
     }
 
     [TestMethod]
@@ -90,8 +90,8 @@ public sealed class MetricsTests
         await _registry.CollectAndSerializeAsync(serializer, default);
 
         await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(double), default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(long), default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default(double), default, default, default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default, default, default);
         serializer.ClearReceivedCalls();
 
         metric.Inc();
@@ -100,8 +100,8 @@ public sealed class MetricsTests
         await _registry.CollectAndSerializeAsync(serializer, default);
 
         await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(double), default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(long), default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default(double), default, default, default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default, default, default);
     }
 
     [TestMethod]
@@ -119,8 +119,8 @@ public sealed class MetricsTests
         await _registry.CollectAndSerializeAsync(serializer, default);
 
         await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(double), default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(long), default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default(double), default, default, default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default, default, default);
         serializer.ClearReceivedCalls();
 
         instance.Inc();
@@ -129,8 +129,8 @@ public sealed class MetricsTests
         await _registry.CollectAndSerializeAsync(serializer, default);
 
         await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(double), default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(long), default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default(double), default, default, default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default, default, default);
     }
 
     [TestMethod]
@@ -148,7 +148,7 @@ public sealed class MetricsTests
         await _registry.CollectAndSerializeAsync(serializer, default);
 
         await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
-        await serializer.ReceivedWithAnyArgs(1).WriteMetricPointAsync(default, default, default, default, default(double), default);
+        await serializer.ReceivedWithAnyArgs(1).WriteMetricPointAsync(default, default, default, default(double), default, default, default);
         serializer.ClearReceivedCalls();
 
         instance.Dispose();
@@ -156,8 +156,8 @@ public sealed class MetricsTests
         await _registry.CollectAndSerializeAsync(serializer, default);
 
         await serializer.ReceivedWithAnyArgs(1).WriteFamilyDeclarationAsync(default, default, default, default, default, default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(double), default);
-        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default(long), default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default(double), default, default, default);
+        await serializer.DidNotReceiveWithAnyArgs().WriteMetricPointAsync(default, default, default, default, default, default, default);
     }
 
     [TestMethod]

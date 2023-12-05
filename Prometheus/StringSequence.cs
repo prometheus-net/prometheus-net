@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System.Runtime.CompilerServices;
 
 namespace Prometheus;
 
@@ -16,10 +16,7 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 {
     public static readonly StringSequence Empty = new();
 
-    public Enumerator GetEnumerator()
-    {
-        return new Enumerator(_values, _inheritedValues);
-    }
+    public Enumerator GetEnumerator() => new(_values.Span, _inheritedValueArrays ?? []);
 
     public ref struct Enumerator
     {
@@ -27,36 +24,47 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         private int _completedInheritedArrays;
         private int _completedItemsInCurrentArray;
 
-        private readonly string[]? _values;
-        private readonly string[][]? _inheritedValues;
+        private readonly ReadOnlySpan<string> _values;
+        private readonly ReadOnlyMemory<string>[] _inheritedValues;
 
-        public string Current { get; private set; }
+        private ReadOnlySpan<string> _currentArray;
+        private string _current;
 
-        public Enumerator(string[]? values, string[][]? inheritedValues)
+        public readonly string Current
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _current;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Enumerator(ReadOnlySpan<string> values, ReadOnlyMemory<string>[] inheritedValues)
         {
             _values = values;
             _inheritedValues = inheritedValues;
 
-            Current = string.Empty;
+            _current = string.Empty;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext()
         {
             // Do we have an item to get from the primary values array?
-            if (_values != null && _values.Length > _completedItemsInValues)
+            if (_values.Length > _completedItemsInValues)
             {
-                Current = _values[_completedItemsInValues];
+                _current = _values[_completedItemsInValues];
                 _completedItemsInValues++;
                 return true;
             }
             // Do we have an item to get from an inherited array?
-            else if (_inheritedValues != null && _inheritedValues.Length > _completedInheritedArrays)
+            else if (_inheritedValues.Length > _completedInheritedArrays)
             {
-                var array = _inheritedValues[_completedInheritedArrays];
-                Current = array[_completedItemsInCurrentArray++];
+                if (_completedItemsInCurrentArray == 0)
+                    _currentArray = _inheritedValues[_completedInheritedArrays].Span;
+
+                _current = _currentArray[_completedItemsInCurrentArray++];
 
                 // Did we complete this array?
-                if (array.Length == _completedItemsInCurrentArray)
+                if (_currentArray.Length == _completedItemsInCurrentArray)
                 {
                     _completedItemsInCurrentArray = 0;
                     _completedInheritedArrays++;
@@ -73,6 +81,8 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
     }
 
     public int Length { get; }
+
+    public bool IsEmpty => Length == 0;
 
     public bool Equals(StringSequence other)
     {
@@ -106,89 +116,90 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
     // There are various ways we can make a StringSequence, comining one or two parents and maybe adding some extra to the start.
     // This ctor tries to account for all these options.
-    private StringSequence(StringSequence? inheritFrom, StringSequence? thenFrom, string[]? andFinallyPrepend)
+    private StringSequence(StringSequence inheritFrom, StringSequence thenFrom, in ReadOnlyMemory<string> andFinallyPrepend)
     {
-        // Simplify construction if we are given empty inputs.
-        if (inheritFrom.HasValue && inheritFrom.Value.Length == 0)
-            inheritFrom = null;
-
-        if (thenFrom.HasValue && thenFrom.Value.Length == 0)
-            thenFrom = null;
-
-        if (andFinallyPrepend != null && andFinallyPrepend.Length == 0)
-            andFinallyPrepend = null;
-
-        // Simplify construction if we have nothing at all.
-        if (!inheritFrom.HasValue && !thenFrom.HasValue && andFinallyPrepend == null)
-            return;
-
-        // Simplify construction if we just need to match one of the cloneable inputs.
-        if (inheritFrom.HasValue && !thenFrom.HasValue && andFinallyPrepend == null)
+        // Anything inherited is already validated. Perform a sanity check on anything new.
+        if (andFinallyPrepend.Length != 0)
         {
-            this = inheritFrom.Value;
-            return;
-        }
-        else if (thenFrom.HasValue && !inheritFrom.HasValue && andFinallyPrepend == null)
-        {
-            this = thenFrom.Value;
-            return;
-        }
+            var span = andFinallyPrepend.Span;
 
-        // Anything inherited is already validated.
-        if (andFinallyPrepend != null)
-        {
-            foreach (var ownValue in andFinallyPrepend)
+            for (var i = 0; i < span.Length; i++)
             {
-                if (ownValue == null)
+                if (span[i] == null)
                     throw new NotSupportedException("Null values are not supported for metric label names and values.");
             }
+
+            _values = andFinallyPrepend;
         }
 
-        _values = andFinallyPrepend;
-        _inheritedValues = InheritFrom(inheritFrom, thenFrom);
+        if (!inheritFrom.IsEmpty || !thenFrom.IsEmpty)
+            _inheritedValueArrays = InheritFrom(inheritFrom, thenFrom);
 
-        Length = (_values?.Length ?? 0)
-            + (inheritFrom.HasValue ? inheritFrom.Value.Length : 0)
-            + (thenFrom.HasValue ? thenFrom.Value.Length : 0);
+        Length = _values.Length + inheritFrom.Length + thenFrom.Length;
 
         _hashCode = CalculateHashCode();
     }
 
     public static StringSequence From(params string[] values)
     {
-        return new StringSequence(null, null, values);
+        if (values.Length == 0)
+            return Empty;
+
+        return new StringSequence(Empty, Empty, values);
+    }
+
+    public static StringSequence From(ReadOnlyMemory<string> values)
+    {
+        if (values.Length == 0)
+            return Empty;
+
+        return new StringSequence(Empty, Empty, values);
     }
 
     // Creates a new sequence, inheriting all current values and optionally adding more. New values are prepended to the sequence, inherited values come last.
     public StringSequence InheritAndPrepend(params string[] prependValues)
     {
-        return new StringSequence(this, null, prependValues);
+        if (prependValues.Length == 0)
+            return this;
+
+        return new StringSequence(this, Empty, prependValues);
     }
 
     // Creates a new sequence, inheriting all current values and optionally adding more. New values are prepended to the sequence, inherited values come last.
     public StringSequence InheritAndPrepend(StringSequence prependValues)
     {
+        if (prependValues.IsEmpty)
+            return this;
+
+        if (IsEmpty)
+            return prependValues;
+
         return new StringSequence(this, prependValues, null);
     }
 
     // Creates a new sequence, concatenating another string sequence (by inheriting from it).
     public StringSequence Concat(StringSequence concatenatedValues)
     {
+        if (concatenatedValues.IsEmpty)
+            return this;
+
+        if (IsEmpty)
+            return concatenatedValues;
+
         return new StringSequence(concatenatedValues, this, null);
     }
 
-    // Values added by this instance.
-    // It may be null because structs have a default ctor and let's be paranoid.
-    private readonly string[]? _values;
+    // Values added by this instance. It may be empty.
+    private readonly ReadOnlyMemory<string> _values;
 
     // Inherited values from one or more parent instances.
-    // It may be null because structs have a default ctor and let's be paranoid.
-    private readonly string[][]? _inheritedValues;
+    // It may be null because structs have a default ctor that zero-initializes them, so watch out.
+    private readonly ReadOnlyMemory<string>[]? _inheritedValueArrays;
 
     private readonly int _hashCode;
 
     // We can inherit from one or two parent sequences. Order is "first at the end, second prefixed to it" as is typical (ancestors at the end).
-    private static string[][]? InheritFrom(StringSequence? first, StringSequence? second)
+    private static ReadOnlyMemory<string>[] InheritFrom(StringSequence first, StringSequence second)
     {
         // Expected output: second._values, second._inheritedValues, first._values, first._inheritedValues
 
@@ -197,47 +208,46 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
         int secondOwnArrayCount = 0;
         int secondInheritedArrayCount = 0;
 
-        if (first.HasValue)
+        if (!first.IsEmpty)
         {
-            firstOwnArrayCount = first.Value._values?.Length > 0 ? 1 : 0;
-            firstInheritedArrayCount = first.Value._inheritedValues?.Length ?? 0;
+            firstOwnArrayCount = first._values.Length > 0 ? 1 : 0;
+            firstInheritedArrayCount = first._inheritedValueArrays?.Length ?? 0;
         }
 
-        if (second.HasValue)
+        if (!second.IsEmpty)
         {
-            secondOwnArrayCount = second.Value._values?.Length > 0 ? 1 : 0;
-            secondInheritedArrayCount = second.Value._inheritedValues?.Length ?? 0;
+            secondOwnArrayCount = second._values.Length > 0 ? 1 : 0;
+            secondInheritedArrayCount = second._inheritedValueArrays?.Length ?? 0;
         }
 
         var totalSegmentCount = firstOwnArrayCount + firstInheritedArrayCount + secondOwnArrayCount + secondInheritedArrayCount;
 
         if (totalSegmentCount == 0)
-            return null;
+            throw new Exception("Unreachable code reached: InheritFrom() should not even be called if there is nothing to inherit.");
 
-        var result = new string[totalSegmentCount][];
+        var result = new ReadOnlyMemory<string>[totalSegmentCount];
 
         var targetIndex = 0;
 
         if (secondOwnArrayCount != 0)
         {
-            result[targetIndex++] = second!.Value._values!;
+            result[targetIndex++] = second._values;
         }
 
         if (secondInheritedArrayCount != 0)
         {
-            Array.Copy(second!.Value._inheritedValues!, 0, result, targetIndex, secondInheritedArrayCount);
+            Array.Copy(second._inheritedValueArrays!, 0, result, targetIndex, secondInheritedArrayCount);
             targetIndex += secondInheritedArrayCount;
         }
 
         if (firstOwnArrayCount != 0)
         {
-            result[targetIndex++] = first!.Value._values!;
+            result[targetIndex++] = first._values;
         }
 
         if (firstInheritedArrayCount != 0)
         {
-            Array.Copy(first!.Value._inheritedValues!, 0, result, targetIndex, firstInheritedArrayCount);
-            targetIndex += firstInheritedArrayCount;
+            Array.Copy(first._inheritedValueArrays!, 0, result, targetIndex, firstInheritedArrayCount);
         }
 
         return result;
@@ -247,12 +257,11 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
     {
         int hashCode = 0;
 
-        var enumerator = GetEnumerator();
-        while (enumerator.MoveNext())
+        foreach (var item in this)
         {
             unchecked
             {
-                hashCode ^= (enumerator.Current.GetHashCode() * 397);
+                hashCode ^= (item.GetHashCode() * 397);
             }
         }
 
@@ -261,10 +270,9 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
 
     public bool Contains(string value)
     {
-        var enumerator = GetEnumerator();
-        while (enumerator.MoveNext())
+        foreach (var item in this)
         {
-            if (enumerator.Current.Equals(value, StringComparison.Ordinal))
+            if (item.Equals(value, StringComparison.Ordinal))
                 return true;
         }
 
@@ -278,13 +286,10 @@ internal readonly struct StringSequence : IEquatable<StringSequence>
     {
         var result = new string[Length];
 
-        var enumerator = GetEnumerator();
         var index = 0;
 
-        while (enumerator.MoveNext())
-        {
-            result[index++] = enumerator.Current;
-        }
+        foreach (var item in this)
+            result[index++] = item;
 
         return result;
     }

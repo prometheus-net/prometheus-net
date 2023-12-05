@@ -27,6 +27,7 @@ _ = Task.Run(async delegate
 // * built-in process metrics giving basic information about the .NET runtime (enabled by default)
 // * metrics from .NET Event Counters (enabled by default, updated every 10 seconds)
 // * metrics from .NET Meters (enabled by default)
+// * prometheus-net self-inspection metrics that indicate number of registered metrics/timeseries (enabled by default)
 // * the custom sample counter defined above
 Console.WriteLine("Open http://localhost:1234/metrics in a web browser.");
 Console.WriteLine("Press enter to exit.");

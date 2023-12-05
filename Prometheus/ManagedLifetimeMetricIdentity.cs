@@ -7,7 +7,7 @@
 /// Managed lifetime metrics are not differentiated by static labels because the static labels are applied
 /// in a lower layer (the underlying MetricFactory) and cannot differ within a single ManagedLifetimeMetricFactory.
 /// </summary>
-internal struct ManagedLifetimeMetricIdentity : IEquatable<ManagedLifetimeMetricIdentity>
+internal readonly struct ManagedLifetimeMetricIdentity : IEquatable<ManagedLifetimeMetricIdentity>
 {
     public readonly string MetricFamilyName;
     public readonly StringSequence InstanceLabelNames;
@@ -57,5 +57,10 @@ internal struct ManagedLifetimeMetricIdentity : IEquatable<ManagedLifetimeMetric
     public override string ToString()
     {
         return $"{MetricFamilyName}{InstanceLabelNames}";
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is ManagedLifetimeMetricIdentity identity && Equals(identity);
     }
 }

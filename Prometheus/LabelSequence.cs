@@ -1,18 +1,16 @@
-﻿using System.Text;
-
-namespace Prometheus;
+﻿namespace Prometheus;
 
 /// <summary>
 /// A sequence of metric label-name pairs.
 /// </summary>
-internal struct LabelSequence
+internal readonly struct LabelSequence : IEquatable<LabelSequence>
 {
     public static readonly LabelSequence Empty = new();
 
     public readonly StringSequence Names;
     public readonly StringSequence Values;
 
-    public int Length { get; }
+    public int Length => Names.Length;
 
     private LabelSequence(StringSequence names, StringSequence values)
     {
@@ -21,8 +19,6 @@ internal struct LabelSequence
 
         Names = names;
         Values = values;
-
-        Length = names.Length;
 
         _hashCode = CalculateHashCode();
     }
@@ -86,17 +82,32 @@ internal struct LabelSequence
                 .Replace("\"", @"\""");
     }
 
-    /// <summary>
-    /// Serializes to the labelkey1="labelvalue1",labelkey2="labelvalue2" label string.
-    /// </summary>
-    public string Serialize()
+    private static int GetEscapedLabelValueByteCount(string value)
     {
-        // Result is cached in child collector - no need to worry about efficiency here.
+        var byteCount = PrometheusConstants.ExportEncoding.GetByteCount(value);
 
-        var sb = new StringBuilder();
+        foreach (var c in value)
+        {
+            if (c == '\\' || c == '\n' || c == '"')
+                byteCount++;
+        }
 
+        return byteCount;
+    }
+
+    /// <summary>
+    /// Serializes to the labelkey1="labelvalue1",labelkey2="labelvalue2" label string as bytes.
+    /// </summary>
+    public byte[] Serialize()
+    {
+        // Result is cached in child collector, though we still might be making many of these child collectors if they are not reused.
+        // Let's try to be efficient to avoid allocations if this gets called in a hot path.
+
+        // First pass - calculate how many bytes we need to allocate.
         var nameEnumerator = Names.GetEnumerator();
         var valueEnumerator = Values.GetEnumerator();
+
+        var byteCount = 0;
 
         for (var i = 0; i < Names.Length; i++)
         {
@@ -104,16 +115,72 @@ internal struct LabelSequence
             if (!valueEnumerator.MoveNext()) throw new Exception("API contract violation.");
 
             if (i != 0)
-                sb.Append(',');
+                byteCount += TextSerializer.Comma.Length;
 
-            sb.Append(nameEnumerator.Current);
-            sb.Append('=');
-            sb.Append('"');
-            sb.Append(EscapeLabelValue(valueEnumerator.Current));
-            sb.Append('"');
+            byteCount += PrometheusConstants.ExportEncoding.GetByteCount(nameEnumerator.Current);
+            byteCount += TextSerializer.Equal.Length;
+            byteCount += TextSerializer.Quote.Length;
+            byteCount += GetEscapedLabelValueByteCount(valueEnumerator.Current);
+            byteCount += TextSerializer.Quote.Length;
         }
 
-        return sb.ToString();
+        var bytes = new byte[byteCount];
+        var index = 0;
+
+        nameEnumerator = Names.GetEnumerator();
+        valueEnumerator = Values.GetEnumerator();
+
+        for (var i = 0; i < Names.Length; i++)
+        {
+            if (!nameEnumerator.MoveNext()) throw new Exception("API contract violation.");
+            if (!valueEnumerator.MoveNext()) throw new Exception("API contract violation.");
+
+#if NET
+            if (i != 0)
+            {
+                TextSerializer.Comma.CopyTo(bytes.AsSpan(index));
+                index += TextSerializer.Comma.Length;
+            }
+
+            index += PrometheusConstants.ExportEncoding.GetBytes(nameEnumerator.Current, 0, nameEnumerator.Current.Length, bytes, index);
+
+            TextSerializer.Equal.CopyTo(bytes.AsSpan(index));
+            index += TextSerializer.Equal.Length;
+
+            TextSerializer.Quote.CopyTo(bytes.AsSpan(index));
+            index += TextSerializer.Quote.Length;
+
+            var escapedLabelValue = EscapeLabelValue(valueEnumerator.Current);
+            index += PrometheusConstants.ExportEncoding.GetBytes(escapedLabelValue, 0, escapedLabelValue.Length, bytes, index);
+
+            TextSerializer.Quote.CopyTo(bytes.AsSpan(index));
+            index += TextSerializer.Quote.Length;
+#else
+            if (i != 0)
+            {
+                Array.Copy(TextSerializer.Comma, 0, bytes, index, TextSerializer.Comma.Length);
+                index += TextSerializer.Comma.Length;
+            }
+
+            index += PrometheusConstants.ExportEncoding.GetBytes(nameEnumerator.Current, 0, nameEnumerator.Current.Length, bytes, index);
+
+            Array.Copy(TextSerializer.Equal, 0, bytes, index, TextSerializer.Equal.Length);
+            index += TextSerializer.Equal.Length;
+
+            Array.Copy(TextSerializer.Quote, 0, bytes, index, TextSerializer.Quote.Length);
+            index += TextSerializer.Quote.Length;
+
+            var escapedLabelValue = EscapeLabelValue(valueEnumerator.Current);
+            index += PrometheusConstants.ExportEncoding.GetBytes(escapedLabelValue, 0, escapedLabelValue.Length, bytes, index);
+
+            Array.Copy(TextSerializer.Quote, 0, bytes, index, TextSerializer.Quote.Length);
+            index += TextSerializer.Quote.Length;
+#endif
+        }
+
+        if (index != byteCount) throw new Exception("API contract violation - we counted the same bytes twice but got different numbers.");
+
+        return bytes;
     }
 
     public bool Equals(LabelSequence other)
@@ -168,5 +235,11 @@ internal struct LabelSequence
         }
 
         return result;
+    }
+
+    public override string ToString()
+    {
+        // Just for debugging.
+        return $"({Length})" + string.Join("; ", ToDictionary().Select(pair => $"{pair.Key} = {pair.Value}"));
     }
 }
