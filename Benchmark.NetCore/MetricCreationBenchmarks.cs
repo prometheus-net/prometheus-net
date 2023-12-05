@@ -10,7 +10,7 @@ namespace Benchmark.NetCore;
 [MemoryDiagnoser]
 // This seems to need a lot of warmup to stabilize.
 [WarmupCount(50)]
-//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.CpuSampling)]
+//[EventPipeProfiler(BenchmarkDotNet.Diagnosers.EventPipeProfile.GcVerbose)]
 public class MetricCreationBenchmarks
 {
     /// <summary>
@@ -23,12 +23,6 @@ public class MetricCreationBenchmarks
     /// </summary>
     [Params(1, 10)]
     public int RepeatCount { get; set; }
-
-    /// <summary>
-    /// How many times we should try to register a metric that already exists.
-    /// </summary>
-    [Params(1, 10)]
-    public int DuplicateCount { get; set; }
 
     [Params(true, false)]
     public bool IncludeStaticLabels { get; set; }
@@ -47,6 +41,7 @@ public class MetricCreationBenchmarks
 
     private CollectorRegistry _registry;
     private IMetricFactory _factory;
+    private IManagedLifetimeMetricFactory _managedLifetimeFactory;
 
     [IterationSetup]
     public void Setup()
@@ -75,6 +70,8 @@ public class MetricCreationBenchmarks
                 { "static_gaa5", "static_bar" },
             });
         }
+
+        _managedLifetimeFactory = _factory.WithManagedLifetime(expiresAfter: TimeSpan.FromHours(1));
     }
 
     // We use the same strings both for the names and the values.
@@ -86,14 +83,74 @@ public class MetricCreationBenchmarks
     private static readonly HistogramConfiguration _histogramConfiguration = HistogramConfiguration.Default;
 
     [Benchmark]
-    public void Counter()
+    public void Counter_ArrayLabels()
     {
-        for (var dupe = 0; dupe < DuplicateCount; dupe++)
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var metric = _factory.CreateCounter(_metricNames[i], _help, _labels, _counterConfiguration);
+
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+                metric.WithLabels(_labels).Inc();
+        }
+    }
+
+    [Benchmark]
+    public void Counter_MemoryLabels()
+    {
+        // The overloads accepting string[] and ROM<string> are functionally equivalent, though any conversion adds some overhead.
+        var labelsMemory = _labels.AsMemory();
+
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var metric = _factory.CreateCounter(_metricNames[i], _help, _labels, _counterConfiguration);
+
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+                metric.WithLabels(labelsMemory).Inc();
+        }
+    }
+
+    [Benchmark]
+    public void Counter_SpanLabels()
+    {
+        var labelsSpan = _labels.AsSpan();
+
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var metric = _factory.CreateCounter(_metricNames[i], _help, _labels, _counterConfiguration);
+
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+                // If code is aware that it is repeating the registration, using the Span overloads offers optimal performance.
+                metric.WithLabels(labelsSpan).Inc();
+        }
+    }
+
+    [Benchmark]
+    public void Counter_ManagedLifetime()
+    {
+        // Typical usage for explicitly lifetime-managed metrics is to pass the label values as span, as they may already be known.
+        var labelsSpan = _labels.AsSpan();
+
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var metric = _managedLifetimeFactory.CreateCounter(_metricNames[i], _help, _labels, _counterConfiguration);
+
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+                metric.WithLease(static x => x.Inc(), labelsSpan);
+        }
+    }
+
+    [Benchmark]
+    public void Counter_10Duplicates()
+    {
+        // We try to register the same metric 10 times, which is wasteful but shows us the overhead from doing this.
+
+        for (var dupe = 0; dupe < 10; dupe++)
             for (var i = 0; i < _metricCount; i++)
             {
                 var metric = _factory.CreateCounter(_metricNames[i], _help, _labels, _counterConfiguration);
 
                 for (var repeat = 0; repeat < RepeatCount; repeat++)
+                    // We do not use the Span overload here to exemplify "naive" code not aware of the repetition.
                     metric.WithLabels(_labels).Inc();
             }
     }
@@ -101,40 +158,40 @@ public class MetricCreationBenchmarks
     [Benchmark]
     public void Gauge()
     {
-        for (var dupe = 0; dupe < DuplicateCount; dupe++)
-            for (var i = 0; i < _metricCount; i++)
-            {
-                var metric = _factory.CreateGauge(_metricNames[i], _help, _labels, _gaugeConfiguration);
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var metric = _factory.CreateGauge(_metricNames[i], _help, _labels, _gaugeConfiguration);
 
-                for (var repeat = 0; repeat < RepeatCount; repeat++)
-                    metric.WithLabels(_labels).Set(repeat);
-            }
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+                // We do not use the Span overload here to exemplify "naive" code not aware of the repetition.
+                metric.WithLabels(_labels).Set(repeat);
+        }
     }
 
     // Disabled because it is slow and Summary is a legacy metric type that is not recommended for new usage.
     //[Benchmark]
     public void Summary()
     {
-        for (var dupe = 0; dupe < DuplicateCount; dupe++)
-            for (var i = 0; i < _metricCount; i++)
-            {
-                var metric = _factory.CreateSummary(_metricNames[i], _help, _labels, _summaryConfiguration);
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var metric = _factory.CreateSummary(_metricNames[i], _help, _labels, _summaryConfiguration);
 
-                for (var repeat = 0; repeat < RepeatCount; repeat++)
-                    metric.WithLabels(_labels).Observe(123);
-            }
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+                // We do not use the Span overload here to exemplify "naive" code not aware of the repetition.
+                metric.WithLabels(_labels).Observe(123);
+        }
     }
 
     [Benchmark]
     public void Histogram()
     {
-        for (var dupe = 0; dupe < DuplicateCount; dupe++)
-            for (var i = 0; i < _metricCount; i++)
-            {
-                var metric = _factory.CreateHistogram(_metricNames[i], _help, _labels, _histogramConfiguration);
+        for (var i = 0; i < _metricCount; i++)
+        {
+            var metric = _factory.CreateHistogram(_metricNames[i], _help, _labels, _histogramConfiguration);
 
-                for (var repeat = 0; repeat < RepeatCount; repeat++)
-                    metric.WithLabels(_labels).Observe(123);
-            }
+            for (var repeat = 0; repeat < RepeatCount; repeat++)
+                // We do not use the Span overload here to exemplify "naive" code not aware of the repetition.
+                metric.WithLabels(_labels).Observe(123);
+        }
     }
 }

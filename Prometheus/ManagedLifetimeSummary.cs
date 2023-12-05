@@ -36,32 +36,38 @@ internal sealed class ManagedLifetimeSummary : ManagedLifetimeMetricHandle<Summa
     // These do not get cached, so are potentially expensive - user code should try avoiding re-allocating these when possible,
     // though admittedly this may not be so easy as often these are on the hot path and the very reason that lifetime-managed
     // metrics are used is that we do not have a meaningful way to reuse metrics or identify their lifetime.
-    public ISummary WithLabels(params string[] labelValues)
+    public ISummary WithLabels(params string[] labelValues) => WithLabels(labelValues.AsMemory());
+
+    public ISummary WithLabels(ReadOnlyMemory<string> labelValues)
     {
         return new AutoLeasingInstance(this, labelValues);
+    }
+
+    public ISummary WithLabels(ReadOnlySpan<string> labelValues)
+    {
+        // We are allocating a long-lived auto-leasing wrapper here, so there is no way we can just use the span directly.
+        // We must copy it to a long-lived array. Another reason to avoid re-allocating these as much as possible.
+        return new AutoLeasingInstance(this, labelValues.ToArray());
     }
     #endregion
 
     private sealed class AutoLeasingInstance : ISummary
     {
-        static AutoLeasingInstance()
-        {
-            _observeCoreFunc = ObserveCore;
-        }
-
-        public AutoLeasingInstance(IManagedLifetimeMetricHandle<ISummary> inner, string[] labelValues)
+        public AutoLeasingInstance(IManagedLifetimeMetricHandle<ISummary> inner, ReadOnlyMemory<string> labelValues)
         {
             _inner = inner;
             _labelValues = labelValues;
         }
 
         private readonly IManagedLifetimeMetricHandle<ISummary> _inner;
-        private readonly string[] _labelValues;
+        private readonly ReadOnlyMemory<string> _labelValues;
 
         public void Observe(double val)
         {
             var args = new ObserveArgs(val);
-            _inner.WithLease(_observeCoreFunc, args, _labelValues);
+
+            // We use the Span overload to signal that we expect the label values to be known already.
+            _inner.WithLease(_observeCoreFunc, args, _labelValues.Span);
         }
 
         private readonly struct ObserveArgs(double val)
@@ -70,6 +76,6 @@ internal sealed class ManagedLifetimeSummary : ManagedLifetimeMetricHandle<Summa
         }
 
         private static void ObserveCore(ObserveArgs args, ISummary summary) => summary.Observe(args.Val);
-        private static readonly Action<ObserveArgs, ISummary> _observeCoreFunc;
+        private static readonly Action<ObserveArgs, ISummary> _observeCoreFunc = ObserveCore;
     }
 }

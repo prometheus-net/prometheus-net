@@ -36,38 +36,40 @@ internal sealed class ManagedLifetimeGauge : ManagedLifetimeMetricHandle<Gauge.C
     // These do not get cached, so are potentially expensive - user code should try avoiding re-allocating these when possible,
     // though admittedly this may not be so easy as often these are on the hot path and the very reason that lifetime-managed
     // metrics are used is that we do not have a meaningful way to reuse metrics or identify their lifetime.
-    public IGauge WithLabels(params string[] labelValues)
+    public IGauge WithLabels(params string[] labelValues) => WithLabels(labelValues.AsMemory());
+
+    public IGauge WithLabels(ReadOnlyMemory<string> labelValues)
     {
         return new AutoLeasingInstance(this, labelValues);
+    }
+
+    public IGauge WithLabels(ReadOnlySpan<string> labelValues)
+    {
+        // We are allocating a long-lived auto-leasing wrapper here, so there is no way we can just use the span directly.
+        // We must copy it to a long-lived array. Another reason to avoid re-allocating these as much as possible.
+        return new AutoLeasingInstance(this, labelValues.ToArray());
     }
     #endregion
 
     private sealed class AutoLeasingInstance : IGauge
     {
-        static AutoLeasingInstance()
-        {
-            _incCoreFunc = IncCore;
-            _incToCoreFunc = IncToCore;
-            _setCoreFunc = SetCore;
-            _decCoreFunc = DecCore;
-            _decToCoreFunc = DecToCore;
-        }
-
-        public AutoLeasingInstance(IManagedLifetimeMetricHandle<IGauge> inner, string[] labelValues)
+        public AutoLeasingInstance(IManagedLifetimeMetricHandle<IGauge> inner, ReadOnlyMemory<string> labelValues)
         {
             _inner = inner;
             _labelValues = labelValues;
         }
 
         private readonly IManagedLifetimeMetricHandle<IGauge> _inner;
-        private readonly string[] _labelValues;
+        private readonly ReadOnlyMemory<string> _labelValues;
 
         public double Value => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
 
         public void Inc(double increment = 1)
         {
             var args = new IncArgs(increment);
-            _inner.WithLease(_incCoreFunc, args, _labelValues);
+
+            // We use the Span overload to signal that we expect the label values to be known already.
+            _inner.WithLease(_incCoreFunc, args, _labelValues.Span);
         }
 
         private readonly struct IncArgs(double increment)
@@ -76,12 +78,14 @@ internal sealed class ManagedLifetimeGauge : ManagedLifetimeMetricHandle<Gauge.C
         }
 
         private static void IncCore(IncArgs args, IGauge gauge) => gauge.Inc(args.Increment);
-        private static readonly Action<IncArgs, IGauge> _incCoreFunc;
+        private static readonly Action<IncArgs, IGauge> _incCoreFunc = IncCore;
 
         public void Set(double val)
         {
             var args = new SetArgs(val);
-            _inner.WithLease(_setCoreFunc, args, _labelValues);
+
+            // We use the Span overload to signal that we expect the label values to be known already.
+            _inner.WithLease(_setCoreFunc, args, _labelValues.Span);
         }
 
         private readonly struct SetArgs(double val)
@@ -90,12 +94,14 @@ internal sealed class ManagedLifetimeGauge : ManagedLifetimeMetricHandle<Gauge.C
         }
 
         private static void SetCore(SetArgs args, IGauge gauge) => gauge.Set(args.Val);
-        private static readonly Action<SetArgs, IGauge> _setCoreFunc;
+        private static readonly Action<SetArgs, IGauge> _setCoreFunc = SetCore;
 
         public void Dec(double decrement = 1)
         {
             var args = new DecArgs(decrement);
-            _inner.WithLease(_decCoreFunc, args, _labelValues);
+
+            // We use the Span overload to signal that we expect the label values to be known already.
+            _inner.WithLease(_decCoreFunc, args, _labelValues.Span);
         }
 
         private readonly struct DecArgs(double decrement)
@@ -104,12 +110,14 @@ internal sealed class ManagedLifetimeGauge : ManagedLifetimeMetricHandle<Gauge.C
         }
 
         private static void DecCore(DecArgs args, IGauge gauge) => gauge.Dec(args.Decrement);
-        private static readonly Action<DecArgs, IGauge> _decCoreFunc;
+        private static readonly Action<DecArgs, IGauge> _decCoreFunc = DecCore;
 
         public void IncTo(double targetValue)
         {
             var args = new IncToArgs(targetValue);
-            _inner.WithLease(_incToCoreFunc, args, _labelValues);
+
+            // We use the Span overload to signal that we expect the label values to be known already.
+            _inner.WithLease(_incToCoreFunc, args, _labelValues.Span);
         }
 
         private readonly struct IncToArgs(double targetValue)
@@ -118,12 +126,14 @@ internal sealed class ManagedLifetimeGauge : ManagedLifetimeMetricHandle<Gauge.C
         }
 
         private static void IncToCore(IncToArgs args, IGauge gauge) => gauge.IncTo(args.TargetValue);
-        private static readonly Action<IncToArgs, IGauge> _incToCoreFunc;
+        private static readonly Action<IncToArgs, IGauge> _incToCoreFunc = IncToCore;
 
         public void DecTo(double targetValue)
         {
             var args = new DecToArgs(targetValue);
-            _inner.WithLease(_decToCoreFunc, args, _labelValues);
+
+            // We use the Span overload to signal that we expect the label values to be known already.
+            _inner.WithLease(_decToCoreFunc, args, _labelValues.Span);
         }
 
         private readonly struct DecToArgs(double targetValue)
@@ -132,6 +142,6 @@ internal sealed class ManagedLifetimeGauge : ManagedLifetimeMetricHandle<Gauge.C
         }
 
         private static void DecToCore(DecToArgs args, IGauge gauge) => gauge.DecTo(args.TargetValue);
-        private static readonly Action<DecToArgs, IGauge> _decToCoreFunc;
+        private static readonly Action<DecToArgs, IGauge> _decToCoreFunc = DecToCore;
     }
 }

@@ -8,6 +8,8 @@ public interface ICollector<out TChild> : ICollector
 {
     TChild Unlabelled { get; }
     TChild WithLabels(params string[] labelValues);
+    TChild WithLabels(ReadOnlyMemory<string> labelValues);
+    TChild WithLabels(ReadOnlySpan<string> labelValues);
 }
 
 /// <summary>

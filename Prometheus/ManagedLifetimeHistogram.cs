@@ -36,28 +36,31 @@ internal sealed class ManagedLifetimeHistogram : ManagedLifetimeMetricHandle<His
     // These do not get cached, so are potentially expensive - user code should try avoiding re-allocating these when possible,
     // though admittedly this may not be so easy as often these are on the hot path and the very reason that lifetime-managed
     // metrics are used is that we do not have a meaningful way to reuse metrics or identify their lifetime.
-    public IHistogram WithLabels(params string[] labelValues)
+    public IHistogram WithLabels(params string[] labelValues) => WithLabels(labelValues.AsMemory());
+
+    public IHistogram WithLabels(ReadOnlyMemory<string> labelValues)
     {
         return new AutoLeasingInstance(this, labelValues);
+    }
+
+    public IHistogram WithLabels(ReadOnlySpan<string> labelValues)
+    {
+        // We are allocating a long-lived auto-leasing wrapper here, so there is no way we can just use the span directly.
+        // We must copy it to a long-lived array. Another reason to avoid re-allocating these as much as possible.
+        return new AutoLeasingInstance(this, labelValues.ToArray());
     }
     #endregion
 
     private sealed class AutoLeasingInstance : IHistogram
     {
-        static AutoLeasingInstance()
-        {
-            _observeValCountCoreFunc = ObserveValCountCore;
-            _observeValExemplarCoreFunc = ObserveValExemplarCore;
-        }
-
-        public AutoLeasingInstance(IManagedLifetimeMetricHandle<IHistogram> inner, string[] labelValues)
+        public AutoLeasingInstance(IManagedLifetimeMetricHandle<IHistogram> inner, ReadOnlyMemory<string> labelValues)
         {
             _inner = inner;
             _labelValues = labelValues;
         }
 
         private readonly IManagedLifetimeMetricHandle<IHistogram> _inner;
-        private readonly string[] _labelValues;
+        private readonly ReadOnlyMemory<string> _labelValues;
 
         public double Sum => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
         public long Count => throw new NotSupportedException("Read operations on a lifetime-extending-on-use expiring metric are not supported.");
@@ -65,7 +68,9 @@ internal sealed class ManagedLifetimeHistogram : ManagedLifetimeMetricHandle<His
         public void Observe(double val, long count)
         {
             var args = new ObserveValCountArgs(val, count);
-            _inner.WithLease(_observeValCountCoreFunc, args, _labelValues);
+
+            // We use the Span overload to signal that we expect the label values to be known already.
+            _inner.WithLease(_observeValCountCoreFunc, args, _labelValues.Span);
         }
 
         private readonly struct ObserveValCountArgs(double val, long count)
@@ -75,12 +80,14 @@ internal sealed class ManagedLifetimeHistogram : ManagedLifetimeMetricHandle<His
         }
 
         private static void ObserveValCountCore(ObserveValCountArgs args, IHistogram histogram) => histogram.Observe(args.Val, args.Count);
-        private static readonly Action<ObserveValCountArgs, IHistogram> _observeValCountCoreFunc;
+        private static readonly Action<ObserveValCountArgs, IHistogram> _observeValCountCoreFunc = ObserveValCountCore;
 
         public void Observe(double val, Exemplar? exemplar)
         {
             var args = new ObserveValExemplarArgs(val, exemplar);
-            _inner.WithLease(_observeValExemplarCoreFunc, args, _labelValues);
+
+            // We use the Span overload to signal that we expect the label values to be known already.
+            _inner.WithLease(_observeValExemplarCoreFunc, args, _labelValues.Span);
         }
 
         private readonly struct ObserveValExemplarArgs(double val, Exemplar? exemplar)
@@ -90,7 +97,7 @@ internal sealed class ManagedLifetimeHistogram : ManagedLifetimeMetricHandle<His
         }
 
         private static void ObserveValExemplarCore(ObserveValExemplarArgs args, IHistogram histogram) => histogram.Observe(args.Val, args.Exemplar);
-        private static readonly Action<ObserveValExemplarArgs, IHistogram> _observeValExemplarCoreFunc;
+        private static readonly Action<ObserveValExemplarArgs, IHistogram> _observeValExemplarCoreFunc = ObserveValExemplarCore;
 
         public void Observe(double val)
         {

@@ -23,7 +23,6 @@
 
 	<ItemGroup>
 		<Compile Include="..\Tester.NetFramework\TesterConstants.cs" Link="TesterConstants.cs" />
-		<Compile Include="..\Tests.NetCore\BreakableDelayer.cs" Link="BreakableDelayer.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
