@@ -1,7 +1,6 @@
-﻿namespace Prometheus
+﻿namespace Prometheus;
+
+public sealed class GrpcMiddlewareExporterOptions
 {
-    public sealed class GrpcMiddlewareExporterOptions
-    {
-        public GrpcRequestCountOptions RequestCount { get; set; } = new GrpcRequestCountOptions();
-    }
+    public GrpcRequestCountOptions RequestCount { get; set; } = new GrpcRequestCountOptions();
 }

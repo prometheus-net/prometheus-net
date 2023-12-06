@@ -78,8 +78,8 @@ internal struct ThreadSafeDouble
 
     public override bool Equals(object? obj)
     {
-        if (obj is ThreadSafeDouble)
-            return Value.Equals(((ThreadSafeDouble)obj).Value);
+        if (obj is ThreadSafeDouble other)
+            return Value.Equals(other.Value);
 
         return Value.Equals(obj);
     }

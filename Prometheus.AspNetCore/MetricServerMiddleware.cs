@@ -33,19 +33,9 @@ public sealed class MetricServerMiddleware
     private readonly CollectorRegistry _registry;
     private readonly bool _enableOpenMetrics;
 
-    private sealed record ProtocolNegotiationResult
-    {
-        public ExpositionFormat ExpositionFormat { get; }
-        public string ContentType { get; }
+    private readonly record struct ProtocolNegotiationResult(ExpositionFormat ExpositionFormat, string ContentType);
 
-        public ProtocolNegotiationResult(ExpositionFormat expositionFormat, string contentType)
-        {
-            ExpositionFormat = expositionFormat;
-            ContentType = contentType;
-        }
-    }
-
-    private IEnumerable<MediaTypeWithQualityHeaderValue> ExtractAcceptableMediaTypes(string acceptHeaderValue)
+    private static IEnumerable<MediaTypeWithQualityHeaderValue> ExtractAcceptableMediaTypes(string acceptHeaderValue)
     {
         var candidates = acceptHeaderValue.Split(',');
 
@@ -102,7 +92,7 @@ public sealed class MetricServerMiddleware
                 return response.Body;
             }
 
-            var serializer = new TextSerializer(GetResponseBodyStream(), negotiationResult.ExpositionFormat);
+            var serializer = new TextSerializer(GetResponseBodyStream, negotiationResult.ExpositionFormat);
 
             await _registry.CollectAndSerializeAsync(serializer, context.RequestAborted);
         }
@@ -118,9 +108,8 @@ public sealed class MetricServerMiddleware
 
             if (!string.IsNullOrWhiteSpace(ex.Message))
             {
-                using (var writer = new StreamWriter(response.Body, PrometheusConstants.ExportEncoding,
-                    bufferSize: -1, leaveOpen: true))
-                    await writer.WriteAsync(ex.Message);
+                using var writer = new StreamWriter(response.Body, PrometheusConstants.ExportEncoding, bufferSize: -1, leaveOpen: true);
+                await writer.WriteAsync(ex.Message);
             }
         }
     }

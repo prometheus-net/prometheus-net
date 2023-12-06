@@ -78,7 +78,7 @@ namespace Prometheus.Tests.GrpcExporter
 
             await _sut.Invoke(_httpContext);
 
-            var labels = counter.GetAllInstanceLabels().Single();
+            var labels = counter.GetAllInstanceLabelsUnsafe().Single();
             Assert.AreEqual(
                 expectedService,
                 GetLabelValueOrDefault(labels, GrpcRequestLabelNames.Service)

@@ -9,7 +9,8 @@
 Metrics.SuppressDefaultMetrics(new SuppressDefaultMetricOptions
 {
     SuppressProcessMetrics = true,
-    SuppressEventCounters = true
+    SuppressEventCounters = true,
+    SuppressDebugMetrics = true
 });
 
 // Example of static labels that conflict with .NET Meters API labels ("Bytes considered" histogram).
@@ -23,7 +24,7 @@ Metrics.DefaultRegistry.SetStaticLabels(new Dictionary<string, string>
 using var server = new KestrelMetricServer(port: 1234);
 server.Start();
 
-// Start publishing sample data via .NET Meters API. Data from this API is published by default by prometheus-net.
+// Start publishing sample data via .NET Meters API. All data from the .NET Meters API is published by default.
 CustomDotNetMeters.PublishSampleData();
 
 // Metrics published in this sample:

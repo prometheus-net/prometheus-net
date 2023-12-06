@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Prometheus;
 
 public sealed class Counter : Collector<Counter.Child>, ICounter
@@ -12,7 +14,10 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
         private ThreadSafeDouble _value;
         private ObservedExemplar _observedExemplar = ObservedExemplar.Empty;
 
-        private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
+#if NET
+        [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+        private protected override async ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel)
         {
             var exemplar = BorrowExemplar(ref _observedExemplar);
 
@@ -20,9 +25,10 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
                 Parent.NameBytes,
                 FlattenedLabelsBytes,
                 CanonicalLabel.Empty,
-                cancel,
                 Value,
-                exemplar);
+                exemplar,
+                null,
+                cancel);
 
             ReturnBorrowedExemplar(ref _observedExemplar, exemplar);
         }
@@ -44,7 +50,7 @@ public sealed class Counter : Collector<Counter.Child>, ICounter
 
             exemplar ??= GetDefaultExemplar(increment);
 
-            if (exemplar != null)
+            if (exemplar?.Length > 0)
                 RecordExemplar(exemplar, ref _observedExemplar, increment);
 
             _value.Add(increment);

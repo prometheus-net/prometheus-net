@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Prometheus;
 
 /// <summary>
@@ -12,7 +10,6 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         Parent = parent;
         InstanceLabels = instanceLabels;
         FlattenedLabels = flattenedLabels;
-        FlattenedLabelsBytes = PrometheusConstants.ExportEncoding.GetBytes(flattenedLabels.Serialize());
         _publish = publish;
         _exemplarBehavior = exemplarBehavior;
     }
@@ -66,7 +63,10 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     /// </summary>
     internal LabelSequence FlattenedLabels { get; }
 
-    internal byte[] FlattenedLabelsBytes { get; }
+    internal byte[] FlattenedLabelsBytes => NonCapturingLazyInitializer.EnsureInitialized(ref _flattenedLabelsBytes, this, _assignFlattenedLabelsBytesFunc)!;
+    private byte[]? _flattenedLabelsBytes;
+    private static readonly Action<ChildBase> _assignFlattenedLabelsBytesFunc = AssignFlattenedLabelsBytes;
+    private static void AssignFlattenedLabelsBytes(ChildBase instance) => instance._flattenedLabelsBytes = instance.FlattenedLabels.Serialize();
 
     internal readonly Collector Parent;
 
@@ -78,23 +78,23 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     /// <remarks>
     /// Subclass must check _publish and suppress output if it is false.
     /// </remarks>
-    internal Task CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
+    internal ValueTask CollectAndSerializeAsync(IMetricsSerializer serializer, CancellationToken cancel)
     {
         if (!Volatile.Read(ref _publish))
-            return Task.CompletedTask;
+            return default;
 
         return CollectAndSerializeImplAsync(serializer, cancel);
     }
 
     // Same as above, just only called if we really need to serialize this metric (if publish is true).
-    private protected abstract Task CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel);
+    private protected abstract ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer, CancellationToken cancel);
 
     /// <summary>
     /// Borrows an exemplar temporarily, to be later returned via ReturnBorrowedExemplar.
     /// Borrowing ensures that no other thread is modifying it (as exemplars are not thread-safe).
     /// You would typically want to do this while serializing the exemplar.
     /// </summary>
-    internal ObservedExemplar BorrowExemplar(ref ObservedExemplar storage)
+    internal static ObservedExemplar BorrowExemplar(ref ObservedExemplar storage)
     {
         return Interlocked.Exchange(ref storage, ObservedExemplar.Empty);
     }
@@ -102,7 +102,7 @@ public abstract class ChildBase : ICollectorChild, IDisposable
     /// <summary>
     /// Returns a borrowed exemplar to storage or the object pool, with correct handling for cases where it is Empty.
     /// </summary>
-    internal void ReturnBorrowedExemplar(ref ObservedExemplar storage, ObservedExemplar borrowed)
+    internal static void ReturnBorrowedExemplar(ref ObservedExemplar storage, ObservedExemplar borrowed)
     {
         if (borrowed == ObservedExemplar.Empty)
             return;
@@ -119,9 +119,6 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     internal void RecordExemplar(Exemplar exemplar, ref ObservedExemplar storage, double observedValue)
     {
-        if (exemplar.Length == 0)
-            return;
-
         exemplar.MarkAsConsumed();
 
         // We do the "is allowed" check only if we really have an exemplar to record, to minimize the performance impact on users who do not use exemplars.
@@ -140,12 +137,15 @@ public abstract class ChildBase : ICollectorChild, IDisposable
         MarkNewExemplarHasBeenRecorded();
 
         // We cannot record an exemplar every time we record an exemplar!
-        ExemplarsRecorded?.Inc(Exemplar.None);
+        Volatile.Read(ref ExemplarsRecorded)?.Inc(Exemplar.None);
     }
 
     protected Exemplar GetDefaultExemplar(double value)
     {
-        return _exemplarBehavior.DefaultExemplarProvider?.Invoke(Parent, value) ?? Exemplar.None;
+        if (_exemplarBehavior.DefaultExemplarProvider == null)
+            return Exemplar.None;
+
+        return _exemplarBehavior.DefaultExemplarProvider(Parent, value);
     }
 
     // May be replaced in test code.
@@ -169,18 +169,27 @@ public abstract class ChildBase : ICollectorChild, IDisposable
 
     protected void MarkNewExemplarHasBeenRecorded()
     {
+        if (_exemplarBehavior.NewExemplarMinInterval <= TimeSpan.Zero)
+            return; // No need to record the timestamp if we are not enforcing a minimum interval.
+
         _exemplarLastRecordedTimestamp.Value = ExemplarRecordingTimestampProvider();
     }
 
 
     // This is only set if and when debug metrics are enabled in the default registry.
-    private static volatile Counter? ExemplarsRecorded;
+    private static Counter? ExemplarsRecorded;
 
     static ChildBase()
     {
         Metrics.DefaultRegistry.OnStartCollectingRegistryMetrics(delegate
         {
-            ExemplarsRecorded = Metrics.CreateCounter("prometheus_net_exemplars_recorded_total", "Number of exemplars that were accepted into in-memory storage in the prometheus-net SDK.");
+            Volatile.Write(ref ExemplarsRecorded, Metrics.CreateCounter("prometheus_net_exemplars_recorded_total", "Number of exemplars that were accepted into in-memory storage in the prometheus-net SDK."));
         });
+    }
+
+    public override string ToString()
+    {
+        // Just for debugging.
+        return $"{Parent.Name}{{{FlattenedLabels}}}";
     }
 }

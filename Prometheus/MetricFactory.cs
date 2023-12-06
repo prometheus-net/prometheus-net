@@ -1,4 +1,6 @@
-﻿namespace Prometheus;
+﻿using static Prometheus.CollectorRegistry;
+
+namespace Prometheus;
 
 /// <summary>
 /// Adds metrics to a registry.
@@ -19,7 +21,7 @@ public sealed class MetricFactory : IMetricFactory
     {
     }
 
-    internal MetricFactory(CollectorRegistry registry, LabelSequence withLabels)
+    internal MetricFactory(CollectorRegistry registry, in LabelSequence withLabels)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _factoryLabels = withLabels;
@@ -85,54 +87,47 @@ public sealed class MetricFactory : IMetricFactory
 
     internal Counter CreateCounter(string name, string help, StringSequence instanceLabelNames, CounterConfiguration? configuration)
     {
-        static Counter CreateInstance(string finalName, string finalHelp, StringSequence finalInstanceLabelNames, LabelSequence finalStaticLabels, CounterConfiguration finalConfiguration, ExemplarBehavior finalExemplarBehavior)
-        {
-            return new Counter(finalName, finalHelp, finalInstanceLabelNames, finalStaticLabels, finalConfiguration.SuppressInitialValue, finalExemplarBehavior);
-        }
-
         var exemplarBehavior = configuration?.ExemplarBehavior ?? ExemplarBehavior ?? ExemplarBehavior.Default;
-        var initializer = new CollectorRegistry.CollectorInitializer<Counter, CounterConfiguration>(CreateInstance, name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? CounterConfiguration.Default, exemplarBehavior);
-        return _registry.GetOrAdd(initializer);
+        
+        return _registry.GetOrAdd(name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? CounterConfiguration.Default, exemplarBehavior, _createCounterInstanceFunc);
     }
 
     internal Gauge CreateGauge(string name, string help, StringSequence instanceLabelNames, GaugeConfiguration? configuration)
     {
-        static Gauge CreateInstance(string finalName, string finalHelp, StringSequence finalInstanceLabelNames, LabelSequence finalStaticLabels, GaugeConfiguration finalConfiguration, ExemplarBehavior finalExemplarBehavior)
-        {
-            return new Gauge(finalName, finalHelp, finalInstanceLabelNames, finalStaticLabels, finalConfiguration.SuppressInitialValue, finalExemplarBehavior);
-        }
-
-        // Note: exemplars are not supported for gauges. We just pass it along here to avoid forked APIs downsream.
+        // Note: exemplars are not supported for gauges. We just pass it along here to avoid forked APIs downstream.
         var exemplarBehavior = ExemplarBehavior ?? ExemplarBehavior.Default;
-        var initializer = new CollectorRegistry.CollectorInitializer<Gauge, GaugeConfiguration>(CreateInstance, name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? GaugeConfiguration.Default, exemplarBehavior);
-        return _registry.GetOrAdd(initializer);
+
+        return _registry.GetOrAdd(name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? GaugeConfiguration.Default, exemplarBehavior, _createGaugeInstanceFunc);
     }
 
     internal Histogram CreateHistogram(string name, string help, StringSequence instanceLabelNames, HistogramConfiguration? configuration)
     {
-        static Histogram CreateInstance(string finalName, string finalHelp, StringSequence finalInstanceLabelNames, LabelSequence finalStaticLabels, HistogramConfiguration finalConfiguration, ExemplarBehavior finalExemplarBehavior)
-        {
-            return new Histogram(finalName, finalHelp, finalInstanceLabelNames, finalStaticLabels, finalConfiguration.SuppressInitialValue, finalConfiguration.Buckets, finalExemplarBehavior);
-        }
-
         var exemplarBehavior = configuration?.ExemplarBehavior ?? ExemplarBehavior ?? ExemplarBehavior.Default;
-        var initializer = new CollectorRegistry.CollectorInitializer<Histogram, HistogramConfiguration>(CreateInstance, name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? HistogramConfiguration.Default, exemplarBehavior);
-        return _registry.GetOrAdd(initializer);
+
+        return _registry.GetOrAdd(name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? HistogramConfiguration.Default, exemplarBehavior, _createHistogramInstanceFunc);
     }
 
     internal Summary CreateSummary(string name, string help, StringSequence instanceLabelNames, SummaryConfiguration? configuration)
     {
-        static Summary CreateInstance(string finalName, string finalHelp, StringSequence finalInstanceLabelNames, LabelSequence finalStaticLabels, SummaryConfiguration finalConfiguration, ExemplarBehavior finalExemplarBehavior)
-        {
-            return new Summary(finalName, finalHelp, finalInstanceLabelNames, finalStaticLabels, finalExemplarBehavior, finalConfiguration.SuppressInitialValue,
-                finalConfiguration.Objectives, finalConfiguration.MaxAge, finalConfiguration.AgeBuckets, finalConfiguration.BufferSize);
-        }
-
-        // Note: exemplars are not supported for summaries. We just pass it along here to avoid forked APIs downsream.
+        // Note: exemplars are not supported for summaries. We just pass it along here to avoid forked APIs downstream.
         var exemplarBehavior = ExemplarBehavior ?? ExemplarBehavior.Default;
-        var initializer = new CollectorRegistry.CollectorInitializer<Summary, SummaryConfiguration>(CreateInstance, name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? SummaryConfiguration.Default, exemplarBehavior);
-        return _registry.GetOrAdd(initializer);
+
+        return _registry.GetOrAdd(name, help, instanceLabelNames, _staticLabelsLazy.Value, configuration ?? SummaryConfiguration.Default, exemplarBehavior, _createSummaryInstanceFunc);
     }
+
+    private static Counter CreateCounterInstance(string Name, string Help, in StringSequence InstanceLabelNames, in LabelSequence StaticLabels, CounterConfiguration Configuration, ExemplarBehavior ExemplarBehavior) => new(Name, Help, InstanceLabelNames, StaticLabels, Configuration.SuppressInitialValue, ExemplarBehavior);
+
+    private static Gauge CreateGaugeInstance(string Name, string Help, in StringSequence InstanceLabelNames, in LabelSequence StaticLabels, GaugeConfiguration Configuration, ExemplarBehavior ExemplarBehavior) => new(Name, Help, InstanceLabelNames, StaticLabels, Configuration.SuppressInitialValue, ExemplarBehavior);
+
+    private static Histogram CreateHistogramInstance(string Name, string Help, in StringSequence InstanceLabelNames, in LabelSequence StaticLabels, HistogramConfiguration Configuration, ExemplarBehavior ExemplarBehavior) => new(Name, Help, InstanceLabelNames, StaticLabels, Configuration.SuppressInitialValue, Configuration.Buckets, ExemplarBehavior);
+
+    private static Summary CreateSummaryInstance(string name, string help, in StringSequence instanceLabelNames, in LabelSequence staticLabels, SummaryConfiguration configuration, ExemplarBehavior exemplarBehavior) => new(name, help, instanceLabelNames, staticLabels, exemplarBehavior, configuration.SuppressInitialValue,
+            configuration.Objectives, configuration.MaxAge, configuration.AgeBuckets, configuration.BufferSize);
+
+    private static readonly CollectorInitializer<Counter, CounterConfiguration> _createCounterInstanceFunc = CreateCounterInstance;
+    private static readonly CollectorInitializer<Gauge, GaugeConfiguration>  _createGaugeInstanceFunc = CreateGaugeInstance;
+    private static readonly CollectorInitializer<Histogram, HistogramConfiguration> _createHistogramInstanceFunc = CreateHistogramInstance;
+    private static readonly CollectorInitializer<Summary, SummaryConfiguration> _createSummaryInstanceFunc = CreateSummaryInstance;
 
     /// <summary>
     /// Counters only increase in value and reset to zero when the process restarts.

@@ -9,7 +9,7 @@ namespace Prometheus;
 /// </summary>
 public class MetricServer : MetricHandler
 {
-    private readonly HttpListener _httpListener = new HttpListener();
+    private readonly HttpListener _httpListener = new();
 
     /// <summary>
     /// Only requests that match this predicate will be served by the metric server. This allows you to add authorization checks.

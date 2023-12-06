@@ -1,21 +1,13 @@
 ﻿namespace Prometheus;
 
-internal readonly struct CanonicalLabel
+internal readonly struct CanonicalLabel(byte[] name, byte[] prometheus, byte[] openMetrics)
 {
-    public static readonly CanonicalLabel Empty = new(
-        Array.Empty<byte>(), Array.Empty<byte>(), Array.Empty<byte>());
+    public static readonly CanonicalLabel Empty = new([], [], []);
 
-    public CanonicalLabel(byte[] name, byte[] prometheus, byte[] openMetrics)
-    {
-        Prometheus = prometheus;
-        OpenMetrics = openMetrics;
-        Name = name;
-    }
+    public byte[] Name { get; } = name;
 
-    public byte[] Name { get;  }
-    
-    public byte[] Prometheus { get;  }
-    public byte[] OpenMetrics { get;  }
+    public byte[] Prometheus { get; } = prometheus;
+    public byte[] OpenMetrics { get; } = openMetrics;
 
     public bool IsNotEmpty => Name.Length > 0;
 }

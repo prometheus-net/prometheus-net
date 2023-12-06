@@ -18,12 +18,12 @@ public sealed class ExemplarBehavior
     /// </summary>
     public TimeSpan NewExemplarMinInterval { get; set; } = TimeSpan.Zero;
 
-    internal static readonly ExemplarBehavior Default = new ExemplarBehavior
+    internal static readonly ExemplarBehavior Default = new()
     {
         DefaultExemplarProvider = (_, _) => Exemplar.FromTraceContext()
     };
 
-    public static ExemplarBehavior NoExemplars() => new ExemplarBehavior
+    public static ExemplarBehavior NoExemplars() => new()
     {
         DefaultExemplarProvider = (_, _) => Exemplar.None
     };

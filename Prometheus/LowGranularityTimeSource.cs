@@ -1,4 +1,6 @@
-﻿namespace Prometheus;
+﻿using System.Diagnostics;
+
+namespace Prometheus;
 
 /// <summary>
 /// We occasionally need timestamps to attach to metrics metadata. In high-performance code, calling the standard get-timestamp functions can be a nontrivial cost.
@@ -10,18 +12,34 @@ internal static class LowGranularityTimeSource
     private static double LastUnixSeconds;
 
     [ThreadStatic]
+    private static long LastStopwatchTimestamp;
+
+    [ThreadStatic]
     private static int LastTickCount;
 
     public static double GetSecondsFromUnixEpoch()
+    {
+        UpdateIfRequired();
+
+        return LastUnixSeconds;
+    }
+
+    public static long GetStopwatchTimestamp()
+    {
+        UpdateIfRequired();
+
+        return LastStopwatchTimestamp;
+    }
+
+    private static void UpdateIfRequired()
     {
         var currentTickCount = Environment.TickCount;
 
         if (LastTickCount != currentTickCount)
         {
             LastUnixSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+            LastStopwatchTimestamp = Stopwatch.GetTimestamp();
             LastTickCount = currentTickCount;
         }
-
-        return LastUnixSeconds;
     }
 }

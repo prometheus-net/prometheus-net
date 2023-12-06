@@ -1,58 +1,57 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Prometheus
+namespace Prometheus;
+
+/// <summary>
+/// Transforms external names in different character sets into Prometheus (metric or label) names.
+/// </summary>
+internal static class PrometheusNameHelpers
 {
-    /// <summary>
-    /// Transforms external names in different character sets into Prometheus (metric or label) names.
-    /// </summary>
-    internal static class PrometheusNameHelpers
+    private static readonly Regex NameRegex = new("^[a-zA-Z_][a-zA-Z0-9_]*$", RegexOptions.Compiled);
+    private const string FirstCharacterCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+    private const string NonFirstCharacterCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
+
+    public static string TranslateNameToPrometheusName(string inputName)
     {
-        private static readonly Regex NameRegex = new Regex("^[a-zA-Z_][a-zA-Z0-9_]*$", RegexOptions.Compiled);
-        private const string FirstCharacterCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
-        private const string NonFirstCharacterCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
+        // Transformations done:
+        // * all lowercase
+        // * special characters to underscore
+        // * must match: [a-zA-Z_][a-zA-Z0-9_]*
+        //   * colon is "permitted" by spec but reserved for recording rules
 
-        public static string TranslateNameToPrometheusName(string inputName)
+        var sb = new StringBuilder();
+
+        foreach (char inputCharacter in inputName)
         {
-            // Transformations done:
-            // * all lowercase
-            // * special characters to underscore
-            // * must match: [a-zA-Z_][a-zA-Z0-9_]*
-            //   * colon is "permitted" by spec but reserved for recording rules
+            // All lowercase.
+            var c = Char.ToLowerInvariant(inputCharacter);
 
-            var sb = new StringBuilder();
-
-            foreach (char inputCharacter in inputName)
+            if (sb.Length == 0)
             {
-                // All lowercase.
-                var c = Char.ToLowerInvariant(inputCharacter);
+                // If first character is not from allowed charset, prefix it with underscore to minimize first character data loss.
+                if (!FirstCharacterCharset.Contains(c))
+                    sb.Append('_');
 
-                if (sb.Length == 0)
-                {
-                    // If first character is not from allowed charset, prefix it with underscore to minimize first character data loss.
-                    if (!FirstCharacterCharset.Contains(c))
-                        sb.Append('_');
-
-                    sb.Append(c);
-                }
-                else
-                {
-                    // Standard rules.
-                    // If character is not permitted, replace with underscore. Simple as that!
-                    if (!NonFirstCharacterCharset.Contains(c))
-                        sb.Append('_');
-                    else
-                        sb.Append(c);
-                }
+                sb.Append(c);
             }
-
-            var name = sb.ToString();
-
-            // Sanity check.
-            if (!NameRegex.IsMatch(name))
-                throw new Exception("Self-check failed: generated name did not match our own naming rules.");
-
-            return name;
+            else
+            {
+                // Standard rules.
+                // If character is not permitted, replace with underscore. Simple as that!
+                if (!NonFirstCharacterCharset.Contains(c))
+                    sb.Append('_');
+                else
+                    sb.Append(c);
+            }
         }
+
+        var name = sb.ToString();
+
+        // Sanity check.
+        if (!NameRegex.IsMatch(name))
+            throw new Exception("Self-check failed: generated name did not match our own naming rules.");
+
+        return name;
     }
 }

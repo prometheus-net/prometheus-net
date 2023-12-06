@@ -11,17 +11,17 @@ AMD Ryzen 9 5950X, 1 CPU, 32 logical and 16 physical cores
 .NET SDK 8.0.100
   [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
   DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
-  Job-IZHPUA : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+  Job-PPCGVJ : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
 
 
-| Method                        | Job        | MaxIterationCount | Mean        | Error     | StdDev    | Gen0     | Gen1     | Allocated |
-|------------------------------ |----------- |------------------ |------------:|----------:|----------:|---------:|---------:|----------:|
-| PromNetCounter                | DefaultJob | Default           |    232.0 us |   1.90 us |   1.78 us |        - |        - |         - |
-| PromNetHistogram              | DefaultJob | Default           |  1,200.4 us |   8.11 us |   7.19 us |        - |        - |       2 B |
-| OTelCounter                   | DefaultJob | Default           | 10,879.7 us |  47.76 us |  44.67 us |        - |        - |      11 B |
-| OTelHistogram                 | DefaultJob | Default           | 12,310.7 us |  57.24 us |  50.75 us |        - |        - |      24 B |
-| PromNetHistogramForAdHocLabel | Job-IZHPUA | 16                |  5,765.7 us | 372.36 us | 330.09 us | 187.5000 | 171.8750 | 3184106 B |
-| OTelHistogramForAdHocLabel    | Job-IZHPUA | 16                |    348.7 us |   3.01 us |   2.67 us |   5.3711 |        - |   96000 B |
+| Method                        | Job        | MaxIterationCount | Mean        | Error    | StdDev   | Allocated |
+|------------------------------ |----------- |------------------ |------------:|---------:|---------:|----------:|
+| PromNetCounter                | DefaultJob | Default           |    230.4 μs |  1.20 μs |  1.12 μs |         - |
+| PromNetHistogram              | DefaultJob | Default           |    956.7 μs |  3.28 μs |  3.07 μs |         - |
+| OTelCounter                   | DefaultJob | Default           | 10,998.2 μs | 35.54 μs | 31.51 μs |      11 B |
+| OTelHistogram                 | DefaultJob | Default           | 12,110.3 μs | 17.08 μs | 14.26 μs |      11 B |
+| PromNetHistogramForAdHocLabel | Job-PPCGVJ | 16                |    716.2 μs | 30.20 μs | 26.77 μs |  664000 B |
+| OTelHistogramForAdHocLabel    | Job-PPCGVJ | 16                |    350.5 μs |  1.91 μs |  1.79 μs |   96000 B |
 */
 
 /// <summary>
@@ -97,7 +97,7 @@ public class SdkComparisonBenchmarks
         private readonly List<Histogram.Child> _histogramInstances = new(TimeseriesPerMetric);
         private readonly Histogram _histogramForAdHocLabels;
 
-        private readonly KestrelMetricServer _server;
+        private readonly IMetricServer _server;
 
         public PrometheusNetMetricsContext()
         {
@@ -120,10 +120,9 @@ public class SdkComparisonBenchmarks
                 _histogramInstances.Add(histogram.WithLabels(Label1Value, Label2Value, SessionIds[i]));
 
             // `AddPrometheusHttpListener` of OpenTelemetry creates an HttpListener.
-            // Start a listener/server for Prometheus Benchmarks for a fair comparison.
-            // We listen on 127.0.0.1:<random free port> to avoid firewall prompts (we do not expect to receive any traffic).
-            _server = new KestrelMetricServer("127.0.0.1", port: 0);
-            _server = new KestrelMetricServer(port: 1234);
+            // Start an equivalent listener for Prometheus to ensure a fair comparison.
+            // We listen on 127.0.0.1 to avoid firewall prompts (randomly chosen port - we do not expect to receive any traffic).
+            _server = new MetricServer("127.0.0.1", port: 8051);
             _server.Start();
         }
 
@@ -176,7 +175,7 @@ public class SdkComparisonBenchmarks
             _histogramForAdHocLabels = _meter.CreateHistogram<double>("histogramForAdHocLabels");
 
             _provider = OpenTelemetry.Sdk.CreateMeterProviderBuilder()
-                .AddView("histogram", new OpenTelemetry.Metrics.HistogramConfiguration() { RecordMinMax = false})
+                .AddView("histogram", new OpenTelemetry.Metrics.HistogramConfiguration() { RecordMinMax = false })
                 .AddMeter(_meter.Name)
                 .AddPrometheusHttpListener()
                 .Build();
@@ -222,7 +221,7 @@ public class SdkComparisonBenchmarks
 
     private MetricsContext _context;
 
-    [GlobalSetup(Targets = new string[] {nameof(OTelCounter), nameof(OTelHistogram), nameof(OTelHistogramForAdHocLabel)})]
+    [GlobalSetup(Targets = new string[] { nameof(OTelCounter), nameof(OTelHistogram), nameof(OTelHistogramForAdHocLabel) })]
     public void OpenTelemetrySetup()
     {
         _context = new OpenTelemetryMetricsContext();

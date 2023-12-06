@@ -35,8 +35,8 @@ internal struct ThreadSafeLong
 
     public override bool Equals(object? obj)
     {
-        if (obj is ThreadSafeLong)
-            return Value.Equals(((ThreadSafeLong)obj).Value);
+        if (obj is ThreadSafeLong other)
+            return Value.Equals(other.Value);
 
         return Value.Equals(obj);
     }

@@ -1,3 +1,11 @@
+using System.Numerics;
+using System.Runtime.CompilerServices;
+
+#if NET7_0_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
+
 namespace Prometheus;
 
 /// <remarks>
@@ -6,8 +14,24 @@ namespace Prometheus;
 /// </remarks>
 public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 {
-    private static readonly double[] DefaultBuckets = { .005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10 };
+    private static readonly double[] DefaultBuckets = [.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10];
+
     private readonly double[] _buckets;
+
+#if NET7_0_OR_GREATER
+    // For AVX, we need to align on 32 bytes and pin the memory. This is a buffer
+    // with extra items that we can "skip" when using the data, for alignment purposes.
+    private readonly double[] _bucketsAlignmentBuffer;
+    // How many items from the start to skip.
+    private readonly int _bucketsAlignmentBufferOffset;
+
+    private const int AvxAlignBytes = 32;
+#endif
+
+    // These labels go together with the buckets, so we do not need to allocate them for every child.
+    private readonly CanonicalLabel[] _leLabels;
+
+    private static readonly byte[] LeLabelName = "le"u8.ToArray();
 
     internal Histogram(string name, string help, StringSequence instanceLabelNames, LabelSequence staticLabels, bool suppressInitialValue, double[]? buckets, ExemplarBehavior exemplarBehavior)
         : base(name, help, instanceLabelNames, staticLabels, suppressInitialValue, exemplarBehavior)
@@ -16,6 +40,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
         {
             throw new ArgumentException("'le' is a reserved label name");
         }
+
         _buckets = buckets ?? DefaultBuckets;
 
         if (_buckets.Length == 0)
@@ -25,7 +50,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
         if (!double.IsPositiveInfinity(_buckets[_buckets.Length - 1]))
         {
-            _buckets = _buckets.Concat(new[] { double.PositiveInfinity }).ToArray();
+            _buckets = [.. _buckets, double.PositiveInfinity];
         }
 
         for (int i = 1; i < _buckets.Length; i++)
@@ -35,6 +60,37 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 throw new ArgumentException("Bucket values must be increasing");
             }
         }
+
+        _leLabels = new CanonicalLabel[_buckets.Length];
+        for (var i = 0; i < _buckets.Length; i++)
+        {
+            _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, _buckets[i]);
+        }
+
+#if NET7_0_OR_GREATER
+        if (Avx.IsSupported)
+        {
+            _bucketsAlignmentBuffer = GC.AllocateUninitializedArray<double>(_buckets.Length + (AvxAlignBytes / sizeof(double)), pinned: true);
+
+            unsafe
+            {
+                var pointer = (nuint)Unsafe.AsPointer(ref _bucketsAlignmentBuffer[0]);
+                var pointerTooFarByBytes = pointer % AvxAlignBytes;
+                var bytesUntilNextAlignedPosition = (AvxAlignBytes - pointerTooFarByBytes) % AvxAlignBytes;
+
+                if (bytesUntilNextAlignedPosition % sizeof(double) != 0)
+                    throw new Exception("Unreachable code reached - all double[] allocations are expected to be at least 8-aligned.");
+
+                _bucketsAlignmentBufferOffset = (int)(bytesUntilNextAlignedPosition / sizeof(double));
+            }
+
+            Array.Copy(_buckets, 0, _bucketsAlignmentBuffer, _bucketsAlignmentBufferOffset, _buckets.Length);
+        }
+        else
+        {
+            _bucketsAlignmentBuffer = [];
+        }
+#endif
     }
 
     private protected override Child NewChild(LabelSequence instanceLabels, LabelSequence flattenedLabels, bool publish, ExemplarBehavior exemplarBehavior)
@@ -48,16 +104,11 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
             : base(parent, instanceLabels, flattenedLabels, publish, exemplarBehavior)
         {
             Parent = parent;
-            
-            _upperBounds = Parent._buckets;
-            _bucketCounts = new ThreadSafeLong[_upperBounds.Length];
-            _leLabels = new CanonicalLabel[_upperBounds.Length];
+
+            _bucketCounts = new ThreadSafeLong[Parent._buckets.Length];
+
+            _exemplars = new ObservedExemplar[Parent._buckets.Length];
             for (var i = 0; i < Parent._buckets.Length; i++)
-            {
-                _leLabels[i] = TextSerializer.EncodeValueAsCanonicalLabel(LeLabelName, Parent._buckets[i]);
-            }
-            _exemplars = new ObservedExemplar[_upperBounds.Length];
-            for (var i = 0; i < _upperBounds.Length; i++)
             {
                 _exemplars[i] = ObservedExemplar.Empty;
             }
@@ -65,17 +116,17 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
         internal new readonly Histogram Parent;
 
-        private ThreadSafeDouble _sum = new ThreadSafeDouble(0.0D);
+        private ThreadSafeDouble _sum = new(0.0D);
         private readonly ThreadSafeLong[] _bucketCounts;
-        private readonly double[] _upperBounds;
-        private readonly CanonicalLabel[] _leLabels;
-        private static readonly byte[] SumSuffix = PrometheusConstants.ExportEncoding.GetBytes("sum");
-        private static readonly byte[] CountSuffix = PrometheusConstants.ExportEncoding.GetBytes("count");
-        private static readonly byte[] BucketSuffix = PrometheusConstants.ExportEncoding.GetBytes("bucket");
-        private static readonly byte[] LeLabelName = PrometheusConstants.ExportEncoding.GetBytes("le");
+        private static readonly byte[] SumSuffix = "sum"u8.ToArray();
+        private static readonly byte[] CountSuffix = "count"u8.ToArray();
+        private static readonly byte[] BucketSuffix = "bucket"u8.ToArray();
         private readonly ObservedExemplar[] _exemplars;
 
-        private protected override async Task CollectAndSerializeImplAsync(IMetricsSerializer serializer,
+#if NET
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+        private protected override async ValueTask CollectAndSerializeImplAsync(IMetricsSerializer serializer,
             CancellationToken cancel)
         {
             // We output sum.
@@ -85,18 +136,18 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 Parent.NameBytes,
                 FlattenedLabelsBytes,
                 CanonicalLabel.Empty,
-                cancel,
                 _sum.Value,
                 ObservedExemplar.Empty,
-                suffix: SumSuffix);
+                SumSuffix,
+                cancel);
             await serializer.WriteMetricPointAsync(
                 Parent.NameBytes,
                 FlattenedLabelsBytes,
                 CanonicalLabel.Empty,
-                cancel,
-                _bucketCounts.Sum(b => b.Value),
+                Count,
                 ObservedExemplar.Empty,
-                suffix: CountSuffix);
+                CountSuffix,
+                cancel);
 
             var cumulativeCount = 0L;
 
@@ -108,18 +159,30 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
                 await serializer.WriteMetricPointAsync(
                     Parent.NameBytes,
                     FlattenedLabelsBytes,
-                    _leLabels[i],
-                    cancel,
+                    Parent._leLabels[i],
                     cumulativeCount,
                     exemplar,
-                    suffix: BucketSuffix);
+                    BucketSuffix,
+                    cancel);
 
                 ReturnBorrowedExemplar(ref _exemplars[i], exemplar);
             }
         }
 
         public double Sum => _sum.Value;
-        public long Count => _bucketCounts.Sum(b => b.Value);
+
+        public long Count
+        {
+            get
+            {
+                long total = 0;
+
+                foreach (var count in _bucketCounts)
+                    total += count.Value;
+
+                return total;
+            }
+        }
 
         public void Observe(double val, Exemplar? exemplarLabels) => ObserveInternal(val, 1, exemplarLabels);
 
@@ -136,23 +199,74 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
 
             exemplar ??= GetDefaultExemplar(val);
 
-            for (int i = 0; i < _upperBounds.Length; i++)
-            {
-                if (val <= _upperBounds[i])
-                {
-                    _bucketCounts[i].Add(count);
+            var bucketIndex = GetBucketIndex(val);
 
-                    if (exemplar != null)
-                        RecordExemplar(exemplar, ref _exemplars[i], val);
-                   
-                    break;
-                }
-            }
+            _bucketCounts[bucketIndex].Add(count);
+
+            if (exemplar?.Length > 0)
+                RecordExemplar(exemplar, ref _exemplars[bucketIndex], val);
 
             _sum.Add(val * count);
 
             Publish();
         }
+
+        private int GetBucketIndex(double val)
+        {
+#if NET7_0_OR_GREATER
+            if (Avx.IsSupported)
+                return GetBucketIndexAvx(val);
+#endif
+
+            for (int i = 0; i < Parent._buckets.Length; i++)
+            {
+                if (val <= Parent._buckets[i])
+                    return i;
+            }
+
+            throw new Exception("Unreachable code reached.");
+        }
+
+#if NET7_0_OR_GREATER
+        /// <summary>
+        /// AVX allows us to perform 4 comparisons at the same time when finding the right bucket to increment.
+        /// The total speedup is not 4x due to various overheads but it's still 10-30% (more for wider histograms).
+        /// </summary>
+        private unsafe int GetBucketIndexAvx(double val)
+        {
+            // AVX operates on vectors of N buckets, so if the total is not divisible by N we need to check some of them manually.
+            var remaining = Parent._buckets.Length % Vector256<double>.Count;
+
+            for (int i = 0; i < Parent._buckets.Length - remaining; i += Vector256<double>.Count)
+            {
+                // The buckets are permanently pinned, no need to re-pin them here.
+                var boundPointer = (double*)Unsafe.AsPointer(ref Parent._bucketsAlignmentBuffer[Parent._bucketsAlignmentBufferOffset + i]);
+                var boundVector = Avx.LoadAlignedVector256(boundPointer);
+
+                var valVector = Vector256.Create(val);
+
+                var mask = Avx.CompareLessThanOrEqual(valVector, boundVector);
+
+                // Condenses the mask vector into a 32-bit integer where one bit represents one vector element (so 1111000.. means "first 4 items true").
+                var moveMask = Avx.MoveMask(mask);
+
+                var indexInBlock = BitOperations.TrailingZeroCount(moveMask);
+
+                if (indexInBlock == sizeof(int) * 8)
+                    continue; // All bits are zero, so we did not find a match.
+
+                return i + indexInBlock;
+            }
+
+            for (int i = Parent._buckets.Length - remaining; i < Parent._buckets.Length; i++)
+            {
+                if (val <= Parent._buckets[i])
+                    return i;
+            }
+
+            throw new Exception("Unreachable code reached.");
+        }
+#endif
     }
 
     internal override MetricType Type => MetricType.Histogram;
@@ -281,7 +395,7 @@ public sealed class Histogram : Collector<Histogram.Child>, IHistogram
             }
         }
 
-        return buckets.ToArray();
+        return [.. buckets];
     }
 
     // sum + count + buckets
