@@ -1,3 +1,5 @@
+* 8.2.1
+- Fix occasional "Collection was modified" exception when serializing metrics. #464
 * 8.2.0
 - .WithLabels() & similar now accept ReadOnlyMemory<string> as alternative to string[]. Same behavior, just easier to use if you already have a ReadOnlyMemory<string>.
 - .WithLabels() & similar now accept ReadOnlySpan<string> as alternative to string[]. This enables allocation-free metric instance creation if a metric instance with these labels is already known.
