@@ -386,33 +386,59 @@ public sealed class CollectorRegistry : ICollectorRegistry
         if (_metricFamiliesPerType == null || _metricInstancesPerType == null || _metricTimeseriesPerType == null)
             return; // Debug metrics are not enabled.
 
-        foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
+        // We copy references to the metric families to a temporary buffer to avoid having to hold locks to keep the collection consistent.
+        CollectorFamily[] familiesBuffer;
+
+        _familiesLock.EnterReadLock();
+
+        var familiesCount = _families.Count;
+        familiesBuffer = ArrayPool<CollectorFamily>.Shared.Rent(familiesCount);
+
+        try
         {
-            long families = 0;
-            long instances = 0;
-            long timeseries = 0;
-
-            foreach (var family in _families.Values)
+            try
             {
-                bool hadMatchingType = false;
-
-                family.ForEachCollector(collector =>
-                {
-                    if (collector.Type != type)
-                        return;
-
-                    hadMatchingType = true;
-                    instances += collector.ChildCount;
-                    timeseries += collector.TimeseriesCount;
-                });
-
-                if (hadMatchingType)
-                    families++;
+                _families.Values.CopyTo(familiesBuffer, 0);
+            }
+            finally
+            {
+                _familiesLock.ExitReadLock();
             }
 
-            _metricFamiliesPerType[type].Set(families);
-            _metricInstancesPerType[type].Set(instances);
-            _metricTimeseriesPerType[type].Set(timeseries);
+            foreach (MetricType type in Enum.GetValues(typeof(MetricType)))
+            {
+                long families = 0;
+                long instances = 0;
+                long timeseries = 0;
+
+                for (var i = 0; i < familiesCount; i++)
+                {
+                    var family = familiesBuffer[i];
+
+                    bool hadMatchingType = false;
+
+                    family.ForEachCollector(collector =>
+                    {
+                        if (collector.Type != type)
+                            return;
+
+                        hadMatchingType = true;
+                        instances += collector.ChildCount;
+                        timeseries += collector.TimeseriesCount;
+                    });
+
+                    if (hadMatchingType)
+                        families++;
+                }
+
+                _metricFamiliesPerType[type].Set(families);
+                _metricInstancesPerType[type].Set(instances);
+                _metricTimeseriesPerType[type].Set(timeseries);
+            }
+        }
+        finally
+        {
+            ArrayPool<CollectorFamily>.Shared.Return(familiesBuffer, clearArray: true);
         }
     }
 
