@@ -26,7 +26,7 @@ namespace Prometheus.Tests.HttpClientMetrics
             var client = new HttpClient(handler);
             await client.GetAsync(ConnectivityCheck.Url);
 
-            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode).Value);
+            Assert.AreEqual(1, handler._metric.WithLabels("GET", ConnectivityCheck.Host, HttpClientIdentity.Default.Name, ConnectivityCheck.ExpectedResponseCode, ConnectivityCheck.Url.AbsolutePath).Value);
         }
     }
 }

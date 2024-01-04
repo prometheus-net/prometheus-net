@@ -9,13 +9,15 @@ public static class HttpClientRequestLabelNames
     public const string Host = "host";
     public const string Client = "client";
     public const string Code = "code";
+    public const string Path = "path";
 
     public static readonly string[] All =
     {
         Method,
         Host,
         Client,
-        Code
+        Code,
+        Path
     };
 
     // The labels known before receiving the response.
@@ -24,6 +26,7 @@ public static class HttpClientRequestLabelNames
     {
         Method,
         Host,
-        Client
+        Client,
+        Path
     };
 }

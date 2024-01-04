@@ -83,6 +83,9 @@ internal abstract class HttpClientDelegatingHandlerBase<TCollector, TChild> : De
                 case HttpClientRequestLabelNames.Code:
                     labelValues[i] = response != null ? ((int)response.StatusCode).ToString() : "";
                     break;
+                case HttpClientRequestLabelNames.Path:
+                    labelValues[i] = request.RequestUri?.AbsolutePath ?? "";
+                    break;
                 default:
                     // We validate the label set on initialization, so this is impossible.
                     throw new NotSupportedException($"Found unsupported label on metric: {_metric.LabelNames[i]}");
