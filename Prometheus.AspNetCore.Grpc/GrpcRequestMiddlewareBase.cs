@@ -1,4 +1,6 @@
 ﻿using Grpc.AspNetCore.Server;
+using Grpc.Core;
+
 using Microsoft.AspNetCore.Http;
 
 namespace Prometheus;
@@ -75,6 +77,9 @@ internal abstract class GrpcRequestMiddlewareBase<TCollector, TChild>
                     break;
                 case GrpcRequestLabelNames.Method:
                     labelValues[i] = metadata.Method.Name;
+                    break;
+                case GrpcRequestLabelNames.Status:
+                    labelValues[i] =  context.Response?.GetStatusCode().ToString() ?? StatusCode.OK.ToString();
                     break;
                 default:
                     // Should never reach this point because we validate in ctor.
