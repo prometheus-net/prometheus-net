@@ -8,7 +8,7 @@ public static class CustomDotNetMeters
     public static void PublishSampleData()
     {
         // The meter object is the "container" for all the .NET metrics we will be publishing.
-        var meter1 = new Meter("Foobar.Wingwang.Dingdong", "vNext");
+        var meter1 = new Meter("Foobar.Wingwang.Dingdong", "vNext", tags: [new KeyValuePair<string, object?>("foo", "bar")]);
 
         // Example metric: a simple counter.
         var counter1 = meter1.CreateCounter<int>("wings-wanged", "wings", "Counts the number of wings that have been wanged.");
@@ -46,7 +46,7 @@ public static class CustomDotNetMeters
         var upDown2 = meter1.CreateObservableUpDownCounter<int>("sand-level", MeasureSandLevel, "chainlinks", "Current sand level in the tank (measured in visible chain links from the midpoint).");
 
         // Example high cardinality metric: bytes sent per connection.
-        var highCardinalityCounter1 = meter1.CreateCounter<long>("bytes-sent", "bytes", "Bytes sent per connection.");
+        var highCardinalityCounter1 = meter1.CreateCounter<long>("bytes-sent", "bytes", "Bytes sent per connection.", tags: [new KeyValuePair<string, object?>("connected", "false")]);
 
         var activeConnections = new List<Guid>();
 

@@ -17,6 +17,10 @@ public sealed class MeterAdapterTests : IDisposable
     private readonly SDM.Meter _meter = new("test");
     private readonly SDM.Counter<long> _intCounter;
     private readonly SDM.Counter<double> _floatCounter;
+#if NET8_0_OR_GREATER
+    private readonly SDM.Meter _taggedMeter = new("test", null, [new KeyValuePair<string, object>("meter", "1")]);
+    private readonly SDM.Counter<long> _taggedIntCounter;
+#endif
     private readonly IDisposable _adapter;
 
     public MeterAdapterTests()
@@ -27,6 +31,13 @@ public sealed class MeterAdapterTests : IDisposable
         _intCounter = _meter.CreateCounter<long>("int_counter");
         _floatCounter = _meter.CreateCounter<double>("float_counter");
 
+#if NET8_0_OR_GREATER
+        _taggedIntCounter = _taggedMeter.CreateCounter<long>(
+            "int_counter_tagged",
+            null, null,
+            [new KeyValuePair<string, object>("counter", "2")]);
+#endif
+
         _registry = Metrics.NewCustomRegistry();
         _metrics = Metrics.WithCustomRegistry(_registry);
 
@@ -34,7 +45,11 @@ public sealed class MeterAdapterTests : IDisposable
         {
             InstrumentFilterPredicate = instrument =>
             {
+#if NET8_0_OR_GREATER
+                return instrument.Meter == _meter || instrument.Meter == _taggedMeter;
+#else
                 return instrument.Meter == _meter;
+#endif
             },
             Registry = _registry,
             MetricFactory = _metrics,
@@ -104,6 +119,19 @@ public sealed class MeterAdapterTests : IDisposable
         Assert.AreEqual(1000, GetValue("test_int_counter", ("l1", "value")));
         Assert.AreEqual(1000, GetValue("test_int_counter"));
     }
+
+#if NET8_0_OR_GREATER
+    [TestMethod]
+    public void StaticLabels()
+    {
+        _taggedIntCounter.Add(1);
+        Assert.AreEqual(1, GetValue("test_int_counter_tagged", ("counter", "2"), ("meter", "1")));
+        _taggedIntCounter.Add(1000);
+        _taggedIntCounter.Add(1000, new("l1", "value"), new("l2", 0));
+        Assert.AreEqual(1001, GetValue("test_int_counter_tagged", ("counter", "2"), ("meter", "1")));
+        Assert.AreEqual(1000, GetValue("test_int_counter_tagged", ("counter", "2"), ("l1", "value"), ("l2", "0"), ("meter", "1")));
+    }
+#endif
 
     [TestMethod]
     public void LabelRenaming()
