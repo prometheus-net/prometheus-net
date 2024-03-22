@@ -134,7 +134,10 @@ public sealed class MeterAdapter : IDisposable
 
         // We assemble and sort the label values in a temporary buffer. If the metric instance is already known
         // to prometheus-net, this means no further memory allocation for the label values is required below.
-        var labelValuesBuffer = ArrayPool<string>.Shared.Rent(tags.Length);
+        // Even though this buffer is gotten from pool inside HandleGaugeMetric and HandleHistogramMetric,
+        // We store it in a local and return it here.
+        // This allows us to avoid needing a second try { } finally { } scope.
+        string[]? labelValuesBuffer = null;
 
         try
         {
@@ -153,55 +156,26 @@ public sealed class MeterAdapter : IDisposable
             // We do not represent any of the "counter" style .NET meter types as counters because
             // they may be re-created on the .NET Meters side at any time, decrementing the value!
 
-            if (instrument is Counter<TMeasurement>)
+            switch (instrument)
             {
-                var context = GetOrCreateGaugeContext(instrument, tags);
-                var labelValues = CopyTagValuesToLabelValues(context.PrometheusLabelValueIndexes, tags, labelValuesBuffer.AsSpan());
-
-                // A measurement is the increment.
-                context.MetricInstanceHandle.WithLease(_incrementGaugeFunc, value, labelValues);
-            }
-            else if (instrument is ObservableCounter<TMeasurement>)
-            {
-                var context = GetOrCreateGaugeContext(instrument, tags);
-                var labelValues = CopyTagValuesToLabelValues(context.PrometheusLabelValueIndexes, tags, labelValuesBuffer.AsSpan());
-
-                // A measurement is the current value. We transform it into a Set() to allow the counter to reset itself (unusual but who are we to say no).
-                context.MetricInstanceHandle.WithLease(_setGaugeFunc, value, labelValues);
-            }
+                case Counter<TMeasurement>:
 #if NET7_0_OR_GREATER
-            else if (instrument is UpDownCounter<TMeasurement>)
-            {
-                var context = GetOrCreateGaugeContext(instrument, tags);
-                var labelValues = CopyTagValuesToLabelValues(context.PrometheusLabelValueIndexes, tags, labelValuesBuffer.AsSpan());
-
-                // A measurement is the increment.
-                context.MetricInstanceHandle.WithLease(_incrementGaugeFunc, value, labelValues);
-            }
+                case UpDownCounter<TMeasurement>:
 #endif
-            else if (instrument is ObservableGauge<TMeasurement>
+                    HandleGaugeMetric(instrument, value, tags, _incrementGaugeFunc, out labelValuesBuffer);
+                    break;
+                case ObservableCounter<TMeasurement>:
 #if NET7_0_OR_GREATER
-                or ObservableUpDownCounter<TMeasurement>
+                case ObservableGauge<TMeasurement>:
 #endif
-                )
-            {
-                var context = GetOrCreateGaugeContext(instrument, tags);
-                var labelValues = CopyTagValuesToLabelValues(context.PrometheusLabelValueIndexes, tags, labelValuesBuffer.AsSpan());
-
-                // A measurement is the current value.
-                context.MetricInstanceHandle.WithLease(_setGaugeFunc, value, labelValues);
-            }
-            else if (instrument is Histogram<TMeasurement>)
-            {
-                var context = GetOrCreateHistogramContext(instrument, tags);
-                var labelValues = CopyTagValuesToLabelValues(context.PrometheusLabelValueIndexes, tags, labelValuesBuffer.AsSpan());
-
-                // A measurement is the observed value.
-                context.MetricInstanceHandle.WithLease(_observeHistogramFunc, value, labelValues);
-            }
-            else
-            {
-                Trace.WriteLine($"Instrument {instrument.Name} is of an unsupported type: {instrument.GetType().Name}.");
+                    HandleGaugeMetric(instrument, value, tags, _setGaugeFunc, out labelValuesBuffer);
+                    break;
+                case Histogram<TMeasurement>:
+                    HandleHistogramMetric(instrument, value, tags, out labelValuesBuffer);
+                    break;
+                default:
+                    Trace.WriteLine($"Instrument {instrument.Name} is of an unsupported type: {instrument.GetType().Name}.");
+                    break;
             }
         }
         catch (Exception ex)
@@ -210,8 +184,46 @@ public sealed class MeterAdapter : IDisposable
         }
         finally
         {
-            ArrayPool<string>.Shared.Return(labelValuesBuffer);
+            if (labelValuesBuffer != null)
+                ArrayPool<string>.Shared.Return(labelValuesBuffer);
         }
+    }
+
+    private void HandleGaugeMetric(
+        Instrument instrument,
+        double value,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        Action<double, IGauge> action,
+        out string[]? labelValuesBuffer)
+    {
+        var context = GetOrCreateGaugeContext(instrument, tags);
+        labelValuesBuffer = ArrayPool<string>.Shared.Rent(context.LabelsCount);
+
+        var labelValues = CopyTagValuesToLabelValues(
+            context.PrometheusLabelValueIndexes,
+            context.StaticLabelValues,
+            tags,
+            labelValuesBuffer.AsSpan());
+
+        context.MetricInstanceHandle.WithLease(action, value, labelValues);
+    }
+
+    private void HandleHistogramMetric(
+        Instrument instrument,
+        double value,
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        out string[]? labelValuesBuffer)
+    {
+        var context = GetOrCreateHistogramContext(instrument, tags);
+        labelValuesBuffer = ArrayPool<string>.Shared.Rent(context.LabelsCount);
+        var labelValues = CopyTagValuesToLabelValues(
+            context.PrometheusLabelValueIndexes,
+            context.StaticLabelValues,
+            tags,
+            labelValuesBuffer.AsSpan());
+
+        // A measurement is the observed value.
+        context.MetricInstanceHandle.WithLease(_observeHistogramFunc, value, labelValues);
     }
 
     private static void IncrementGauge(double value, IGauge gauge) => gauge.Inc(value);
@@ -244,13 +256,22 @@ public sealed class MeterAdapter : IDisposable
     //   Not all Meter tags may be preserved, as some may have conflicted with static labels and been filtered out.
     private sealed class MetricContext<TMetricInterface>(
         IManagedLifetimeMetricHandle<TMetricInterface> metricInstanceHandle,
-        int[] prometheusLabelValueIndexes)
+        int[] prometheusLabelValueIndexes,
+        string[] staticLabelValues)
         where TMetricInterface : ICollectorChild
     {
         public IManagedLifetimeMetricHandle<TMetricInterface> MetricInstanceHandle { get; } = metricInstanceHandle;
 
         // Index into the .NET Meters API labels list, indicating which original label to take the value from.
+        // If the value is negative, it represents an index into StaticLabelValues instead, bitwise NOT'ed.
         public int[] PrometheusLabelValueIndexes { get; } = prometheusLabelValueIndexes;
+
+        // Label values for .NET 8+ meters/instruments,
+        // which can have tags statically defined at the meter/instrument creation.
+        // On <= .NET 7 this is always an empty array.
+        public string[] StaticLabelValues { get; } = staticLabelValues;
+
+        public int LabelsCount => PrometheusLabelValueIndexes.Length;
     }
 
     private readonly Dictionary<CacheKey, MetricContext<IGauge>> _gaugeCache = new();
@@ -337,9 +358,14 @@ public sealed class MeterAdapter : IDisposable
         var cacheKey = new CacheKey(instrument, meterLabelNames);
 
         // Create the context before taking any locks, to avoid holding the cache too long.
-        DeterminePrometheusLabels(tags, out var prometheusLabelNames, out var prometheusLabelValueIndexes);
+        DeterminePrometheusLabels(
+            instrument,
+            tags,
+            out var prometheusLabelNames,
+            out var prometheusLabelValueIndexes,
+            out var staticLabelValues);
         var metricHandle = metricFactory(instrument, _instrumentPrometheusNames[instrument], _instrumentPrometheusHelp[instrument], prometheusLabelNames);
-        var newContext = new MetricContext<TMetricInstance>(metricHandle, prometheusLabelValueIndexes);
+        var newContext = new MetricContext<TMetricInstance>(metricHandle, prometheusLabelValueIndexes, staticLabelValues);
 
         cacheLock.EnterWriteLock();
 
@@ -367,11 +393,17 @@ public sealed class MeterAdapter : IDisposable
     }
 
     private void DeterminePrometheusLabels(
+        Instrument instrument,
         in ReadOnlySpan<KeyValuePair<string, object?>> tags,
         out string[] prometheusLabelNames,
-        out int[] prometheusLabelValueIndexes)
+        out int[] prometheusLabelValueIndexes,
+        out string[] staticLabelValues)
     {
         var originalsCount = tags.Length;
+#if NET8_0_OR_GREATER
+        var staticTags = GetStaticInstrumentTags(instrument);
+        originalsCount += staticTags.Length;
+#endif
 
         // Prometheus name of the label.
         var namesBuffer = ArrayPool<string>.Shared.Rent(originalsCount);
@@ -384,10 +416,21 @@ public sealed class MeterAdapter : IDisposable
         {
             for (var i = 0; i < tags.Length; i++)
             {
-                var prometheusName = _tagPrometheusNames.GetOrAdd(tags[i].Key, _translateTagNameToPrometheusNameFunc);
-
-                namesBuffer[i] = prometheusName;
+                namesBuffer[i] = tags[i].Key;
                 indexesBuffer[i] = i;
+            }
+
+#if NET8_0_OR_GREATER
+            for (var i = 0; i < staticTags.Length; i++)
+            {
+                namesBuffer[tags.Length + i] = staticTags[i].Key;
+                indexesBuffer[tags.Length + i] = ~i;
+            }
+#endif
+
+            for (var i = 0; i < originalsCount; i++)
+            {
+                namesBuffer[i] = _tagPrometheusNames.GetOrAdd(namesBuffer[i], _translateTagNameToPrometheusNameFunc);
             }
 
             // The order of labels matters in the prometheus-net API. However, in .NET Meters the tags are unordered.
@@ -400,28 +443,49 @@ public sealed class MeterAdapter : IDisposable
             // factory to identify conflicts with any static labels, and remove those lables from the Meters API data point
             // (static overrides dynamic) if there is a match (by just skipping them in our output index set).
             var preservedLabelCount = 0;
+#if NET8_0_OR_GREATER
+            var preservedStaticLabelCount = 0;
+#endif
 
-            for (var i = 0; i < tags.Length; i++)
+            for (var i = 0; i < originalsCount; i++)
             {
                 skipFlagsBuffer[i] = _inheritedStaticLabelNames.Contains(namesBuffer[i], StringComparer.Ordinal);
 
                 if (skipFlagsBuffer[i] == false)
+                {
                     preservedLabelCount++;
+#if NET8_0_OR_GREATER
+                    if (indexesBuffer[i] < 0)
+                        preservedStaticLabelCount++;
+#endif
+                }
             }
 
             prometheusLabelNames = new string[preservedLabelCount];
             prometheusLabelValueIndexes = new int[preservedLabelCount];
-
+#if NET8_0_OR_GREATER
+            staticLabelValues = new string[preservedStaticLabelCount];
+#else
+            staticLabelValues = [];
+#endif
             var nextIndex = 0;
 
-            for (var i = 0; i < tags.Length; i++)
+            for (var i = 0; i < originalsCount; i++)
             {
                 if (skipFlagsBuffer[i])
                     continue;
 
                 prometheusLabelNames[nextIndex] = namesBuffer[i];
-                prometheusLabelValueIndexes[nextIndex] = indexesBuffer[i];
+                var index = indexesBuffer[i];
+                prometheusLabelValueIndexes[nextIndex] = index;
                 nextIndex++;
+#if NET8_0_OR_GREATER
+                if (index < 0)
+                {
+                    var staticIndex = ~index;
+                    staticLabelValues[staticIndex] = TagValueToString(staticTags[staticIndex].Value);
+                }
+#endif
             }
         }
         finally
@@ -431,6 +495,18 @@ public sealed class MeterAdapter : IDisposable
             ArrayPool<string>.Shared.Return(namesBuffer);
         }
     }
+
+#if NET8_0_OR_GREATER
+    private static KeyValuePair<string, object?>[] GetStaticInstrumentTags(Instrument instrument)
+    {
+        if (instrument.Tags == null && instrument.Meter.Tags == null)
+            return [];
+
+        var tagsMeter = instrument.Meter.Tags ?? [];
+        var tagsInstrument = instrument.Tags ?? [];
+        return tagsMeter.Concat(tagsInstrument).ToArray();
+    }
+#endif
 
     private void OnMeasurementsCompleted(Instrument instrument, object? state)
     {
@@ -446,16 +522,29 @@ public sealed class MeterAdapter : IDisposable
 
     private static ReadOnlySpan<string> CopyTagValuesToLabelValues(
         int[] prometheusLabelValueIndexes,
+        string[] staticLabelValues,
         ReadOnlySpan<KeyValuePair<string, object?>> tags,
         Span<string> labelValues)
     {
         for (var i = 0; i < prometheusLabelValueIndexes.Length; i++)
         {
             var index = prometheusLabelValueIndexes[i];
-            labelValues[i] = tags[index].Value?.ToString() ?? "";
+#if NET8_0_OR_GREATER
+            if (index < 0)
+            {
+                labelValues[i] = staticLabelValues[~index];
+                continue;
+            }
+#endif
+            labelValues[i] = TagValueToString(tags[index].Value);
         }
 
         return labelValues[..prometheusLabelValueIndexes.Length];
+    }
+
+    private static string TagValueToString(object? value)
+    {
+        return value?.ToString() ?? "";
     }
 
     // We use these dictionaries to register Prometheus metrics on-demand for different instruments.
